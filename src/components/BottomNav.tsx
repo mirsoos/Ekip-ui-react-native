@@ -300,8 +300,13 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
         style={[
           styles.dockContainer,
           {
-            backgroundColor: colors.glassThickBg,
             borderColor: colors.glassBorderStrong,
+            ...(Platform.OS === 'web'
+              ? ({
+                  backdropFilter: isDark ? 'blur(10px) brightness(0.5)' : 'blur(10px) brightness(1)',
+                  WebkitBackdropFilter: isDark ? 'blur(10px) brightness(0.5)' : 'blur(10px) brightness(1)',
+                } as any)
+              : {}),
           },
         ]}
       >
@@ -317,8 +322,6 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
                   { translateX: lensX },
                   { scale: lensScale },
                 ],
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.60)',
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.40)',
               },
             ]}
           />
@@ -439,8 +442,8 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web'
       ? ({
           touchAction: 'none',
-          backdropFilter: 'blur(36px) saturate(150%)',
-          WebkitBackdropFilter: 'blur(36px) saturate(150%)',
+          backdropFilter: 'blur(10px) brightness(0.5)',
+          WebkitBackdropFilter: 'blur(10px) brightness(0.5)',
           userSelect: 'none',
           cursor: 'pointer',
         } as any)
@@ -451,21 +454,23 @@ const styles = StyleSheet.create({
     left: 0,
     top: 6,
     bottom: 6,
-    borderRadius: 22,
-    borderWidth: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0)',
+    borderRadius: 16,
+    borderWidth: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOpacity: 0.1,
+    shadowRadius: 30,
+    elevation: 3,
     pointerEvents: 'none',
     overflow: 'hidden',
     zIndex: 1,
     ...(Platform.OS === 'web'
-      ? {
-          backdropFilter: 'blur(20px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-        }
+      ? ({
+          boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+          backdropFilter: 'blur(12.3px)',
+          WebkitBackdropFilter: 'blur(12.3px)',
+        } as any)
       : {}),
   },
   tabItem: {
