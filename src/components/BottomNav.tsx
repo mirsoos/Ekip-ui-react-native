@@ -7,6 +7,7 @@ import {
   Platform,
   Image,
   Animated,
+  PanResponder,
   type LayoutChangeEvent,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -43,37 +44,112 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
 
   const activeIndex = Math.max(0, tabs.findIndex((t) => t.key === active));
 
-  // Layout measurements
+  // Dock measurements & animation values
   const [dockWidth, setDockWidth] = useState(0);
-  const lensAnimX = useRef(new Animated.Value(0)).current;
+  const lensX = useRef(new Animated.Value(0)).current;
+  const lensScale = useRef(new Animated.Value(active === 'create' ? 0 : 1)).current;
+  const createRotate = useRef(new Animated.Value(active === 'create' ? 1 : 0)).current;
 
+  const isDragging = useRef(false);
+  const currentLensX = useRef(0);
+  const prevActiveTab = useRef(active);
+
+  // Keep currentLensX tracked
+  useEffect(() => {
+    const id = lensX.addListener(({ value }) => {
+      currentLensX.current = value;
+    });
+    return () => {
+      lensX.removeListener(id);
+    };
+  }, [lensX]);
+
+  // Handle dock width layout
   const handleDockLayout = (e: LayoutChangeEvent) => {
     const w = e.nativeEvent.layout.width;
     if (w > 0) {
+      if (dockWidth === 0) {
+        const slotW = (w - 12) / 5;
+        const initialX = 6 + activeIndex * slotW;
+        lensX.setValue(initialX);
+        currentLensX.current = initialX;
+        lensScale.setValue(active === 'create' ? 0 : 1);
+      }
       setDockWidth(w);
     }
   };
 
-  // Animate the Liquid Glass Lens follower whenever active tab changes
+  // 1. Unified Tab Transition Animation
   useEffect(() => {
-    if (dockWidth <= 0) return;
-    const padding = 12; // 6px each side
-    const innerWidth = dockWidth - padding;
+    if (dockWidth <= 0 || isDragging.current) return;
+
+    const innerWidth = dockWidth - 12;
     const slotW = innerWidth / 5;
+    const prev = prevActiveTab.current;
+    prevActiveTab.current = active;
+
     const targetX = 6 + activeIndex * slotW;
 
-    Animated.spring(lensAnimX, {
-      toValue: targetX,
-      tension: 65,
-      friction: 9,
+    // Rotate Create plus icon smoothly: 0deg when normal, 45deg when create
+    Animated.spring(createRotate, {
+      toValue: active === 'create' ? 1 : 0,
+      tension: 70,
+      friction: 8,
       useNativeDriver: Platform.OS !== 'web',
     }).start();
-  }, [activeIndex, dockWidth]);
 
-  const slotWidth = dockWidth > 0 ? (dockWidth - 12) / 5 : '20%';
-  const isCreateActive = active === 'create';
+    if (active === 'create') {
+      // Transitioning INTO Create: slide to slot 2 and shrink to 0 inside Create button
+      Animated.parallel([
+        Animated.spring(lensX, {
+          toValue: targetX,
+          tension: 80,
+          friction: 8.5,
+          useNativeDriver: false,
+        }),
+        Animated.spring(lensScale, {
+          toValue: 0,
+          tension: 100,
+          friction: 8,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    } else if (prev === 'create') {
+      // Transitioning OUT OF Create: start at slot 2, pop from 0 to 1, and slide to targetX
+      lensX.setValue(6 + 2 * slotW);
+      Animated.parallel([
+        Animated.spring(lensScale, {
+          toValue: 1,
+          tension: 110,
+          friction: 7,
+          useNativeDriver: false,
+        }),
+        Animated.spring(lensX, {
+          toValue: targetX,
+          tension: 80,
+          friction: 8.5,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    } else {
+      // Standard tab transition (e.g. Discover -> Activity)
+      lensScale.setValue(1);
+      Animated.spring(lensX, {
+        toValue: targetX,
+        tension: 80,
+        friction: 8.5,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [active, activeIndex, dockWidth]);
 
-  const handleTabPress = (key: TabKey) => {
+  // Create Plus icon rotation interpolation
+  const plusRotation = createRotate.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '45deg'],
+  });
+
+  const handleSelectTab = (key: TabKey) => {
     if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
       try {
         navigator.vibrate(8);
@@ -84,10 +160,143 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
     onChange(key);
   };
 
+  // 2. Unified PanResponder for Drag & Drop (Touch on Mobile)
+  const dragStartRef = useRef(0);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponderCapture: () => false,
+      onMoveShouldSetPanResponderCapture: (_, gs) => Math.abs(gs.dx) > 6,
+      onPanResponderGrant: () => {
+        isDragging.current = true;
+        if (dockWidth <= 0) return;
+        const slotW = (dockWidth - 12) / 5;
+        if (active === 'create') {
+          dragStartRef.current = 6 + 2 * slotW;
+          lensX.setValue(dragStartRef.current);
+          Animated.spring(lensScale, { toValue: 1, tension: 120, friction: 7, useNativeDriver: false }).start();
+        } else {
+          dragStartRef.current = currentLensX.current;
+        }
+      },
+      onPanResponderMove: (_, gs) => {
+        if (dockWidth <= 0) return;
+        const slotW = (dockWidth - 12) / 5;
+        const minX = 6;
+        const maxX = 6 + 4 * slotW;
+        const nextX = Math.max(minX, Math.min(maxX, dragStartRef.current + gs.dx));
+        lensX.setValue(nextX);
+      },
+      onPanResponderRelease: (_, gs) => {
+        isDragging.current = false;
+        if (dockWidth <= 0) return;
+        const slotW = (dockWidth - 12) / 5;
+        const minX = 6;
+        const maxX = 6 + 4 * slotW;
+        const finalX = Math.max(minX, Math.min(maxX, dragStartRef.current + gs.dx));
+
+        let droppedIndex = Math.round((finalX - 6) / slotW);
+        droppedIndex = Math.max(0, Math.min(4, droppedIndex));
+
+        const chosenTab = tabs[droppedIndex].key;
+        handleSelectTab(chosenTab);
+
+        if (chosenTab === 'create') {
+          Animated.parallel([
+            Animated.spring(lensX, { toValue: 6 + 2 * slotW, tension: 80, friction: 8.5, useNativeDriver: false }),
+            Animated.spring(lensScale, { toValue: 0, tension: 100, friction: 8, useNativeDriver: false }),
+          ]).start();
+        } else {
+          Animated.spring(lensX, {
+            toValue: 6 + droppedIndex * slotW,
+            tension: 80,
+            friction: 8.5,
+            useNativeDriver: false,
+          }).start();
+        }
+      },
+      onPanResponderTerminate: () => {
+        isDragging.current = false;
+        if (dockWidth > 0) {
+          const slotW = (dockWidth - 12) / 5;
+          const targetX = 6 + activeIndex * slotW;
+          Animated.spring(lensX, { toValue: targetX, tension: 80, friction: 8.5, useNativeDriver: false }).start();
+        }
+      },
+    })
+  ).current;
+
+  // 3. Unified Mouse Drag & Drop on Web
+  const handleWebMouseDown = (e: React.MouseEvent) => {
+    if (Platform.OS !== 'web' || dockWidth <= 0 || e.button !== 0) return;
+
+    const startMouseX = e.clientX;
+    const slotW = (dockWidth - 12) / 5;
+    const initialDragX = active === 'create' ? 6 + 2 * slotW : currentLensX.current;
+    let hasMoved = false;
+
+    const minX = 6;
+    const maxX = 6 + 4 * slotW;
+
+    const onMouseMove = (ev: MouseEvent) => {
+      const dx = ev.clientX - startMouseX;
+      if (!hasMoved && Math.abs(dx) > 4) {
+        hasMoved = true;
+        isDragging.current = true;
+        if (active === 'create') {
+          lensX.setValue(6 + 2 * slotW);
+          Animated.spring(lensScale, { toValue: 1, tension: 120, friction: 7, useNativeDriver: false }).start();
+        }
+      }
+      if (hasMoved) {
+        const nextX = Math.max(minX, Math.min(maxX, initialDragX + dx));
+        lensX.setValue(nextX);
+      }
+    };
+
+    const onMouseUp = (ev: MouseEvent) => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+
+      if (hasMoved) {
+        isDragging.current = false;
+        const dx = ev.clientX - startMouseX;
+        const finalX = Math.max(minX, Math.min(maxX, initialDragX + dx));
+
+        let droppedIndex = Math.round((finalX - 6) / slotW);
+        droppedIndex = Math.max(0, Math.min(4, droppedIndex));
+
+        const chosenTab = tabs[droppedIndex].key;
+        handleSelectTab(chosenTab);
+
+        if (chosenTab === 'create') {
+          Animated.parallel([
+            Animated.spring(lensX, { toValue: 6 + 2 * slotW, tension: 80, friction: 8.5, useNativeDriver: false }),
+            Animated.spring(lensScale, { toValue: 0, tension: 100, friction: 8, useNativeDriver: false }),
+          ]).start();
+        } else {
+          Animated.spring(lensX, {
+            toValue: 6 + droppedIndex * slotW,
+            tension: 80,
+            friction: 8.5,
+            useNativeDriver: false,
+          }).start();
+        }
+      }
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  };
+
+  const slotWidth = dockWidth > 0 ? (dockWidth - 12) / 5 : '20%';
+
   return (
     <View style={styles.outerContainer} pointerEvents="box-none">
       <View
         onLayout={handleDockLayout}
+        {...panResponder.panHandlers}
+        {...(Platform.OS === 'web' ? { onMouseDown: handleWebMouseDown } : {})}
         style={[
           styles.dockContainer,
           {
@@ -96,92 +305,53 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
           },
         ]}
       >
-        {/* iOS 26 Liquid Glass Sliding Lens Follower */}
-        {Platform.OS === 'web' ? (
-          <View
-            // @ts-ignore
-            className="glass-lens"
-            style={{
-              position: 'absolute',
-              top: 6,
-              bottom: 6,
-              left: 6,
-              width: 'calc((100% - 12px) / 5)' as any,
-              transform: [{ translateX: `${activeIndex * 100}%` as any }],
-              transition: 'transform 0.35s cubic-bezier(0.25, 1, 0.3, 1), opacity 0.22s ease',
-              opacity: isCreateActive ? 0 : 1,
-              pointerEvents: 'none',
-              borderRadius: 22,
-              zIndex: 1,
-              borderWidth: 1,
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(255, 255, 255, 0.75)',
-            } as any}
-          >
-            <LinearGradient
-              colors={[
-                isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.90)',
-                isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.25)',
-                'transparent',
-              ]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={styles.lensTopHighlight}
-            />
-          </View>
-        ) : (
+        {/* Active Indicator (Liquid Glass Lens) */}
+        {dockWidth > 0 && (
           <Animated.View
             style={[
               styles.liquidLens,
               {
                 width: slotWidth,
-                transform: [{ translateX: lensAnimX }],
-                opacity: isCreateActive ? 0 : 1,
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(255, 255, 255, 0.75)',
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.45)',
+                opacity: lensScale,
+                transform: [
+                  { translateX: lensX },
+                  { scale: lensScale },
+                ],
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.60)',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.40)',
               },
             ]}
-          >
-            <LinearGradient
-              colors={[
-                isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.90)',
-                isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.25)',
-                'transparent',
-              ]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={styles.lensTopHighlight}
-            />
-          </Animated.View>
+          />
         )}
 
+        {/* Tab Buttons */}
         {tabs.map((tab) => {
           const isActive = tab.key === active;
           const isCreate = tab.key === 'create';
-          const IconComp = getIcon(tab.icon);
           const badgeCount = badges[tab.key] ?? 0;
+          const IconComp = getIcon(tab.icon);
 
           if (isCreate) {
             return (
               <View key={tab.key} style={styles.createSlot}>
                 <TouchableOpacity
                   activeOpacity={0.85}
-                  onPress={() => handleTabPress('create')}
-                  style={styles.createButtonWrapper}
+                  onPress={() => handleSelectTab('create')}
+                  style={styles.createOrbButton}
                 >
                   <LinearGradient
-                    colors={['#f472b6', '#3b82f6']}
+                    colors={isActive ? ['#ec4899', '#6366f1'] : ['#f472b6', '#3b82f6']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={styles.createOrb}
+                    style={styles.createOrbGradient}
                   >
-                    <IconComp
-                      size={24}
-                      color="#ffffff"
-                      strokeWidth={2.8}
-                      style={{
-                        transform: [{ rotate: isActive ? '45deg' : '0deg' }],
-                      }}
-                    />
+                    <Animated.View style={{ transform: [{ rotate: plusRotation }] }}>
+                      {React.createElement(getIcon('Plus'), {
+                        size: 24,
+                        color: '#ffffff',
+                        strokeWidth: 2.8,
+                      })}
+                    </Animated.View>
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
@@ -192,29 +362,24 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
             <TouchableOpacity
               key={tab.key}
               activeOpacity={0.7}
-              onPress={() => handleTabPress(tab.key)}
+              onPress={() => handleSelectTab(tab.key)}
               style={styles.tabItem}
             >
-              <View style={styles.iconContainer}>
+              <View style={[styles.iconContainer, { transform: [{ translateY: isActive ? -2 : 0 }] }]}>
                 {tab.key === 'profile' && me?.avatar_url ? (
                   <View
                     style={[
                       styles.avatarBorder,
-                      {
-                        borderColor: isActive ? colors.accentPink : 'transparent',
-                      },
+                      { borderColor: isActive ? colors.accentPink : 'transparent' },
                     ]}
                   >
-                    <Image
-                      source={{ uri: me.avatar_url }}
-                      style={styles.avatarImg}
-                    />
+                    <Image source={{ uri: me.avatar_url }} style={styles.avatarImg as any} />
                   </View>
                 ) : (
                   <IconComp
                     size={22}
                     color={isActive ? colors.accentPink : colors.textTertiary}
-                    strokeWidth={isActive ? 2.5 : 1.9}
+                    strokeWidth={isActive ? 2.4 : 1.9}
                   />
                 )}
 
@@ -267,28 +432,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.38,
+    shadowOpacity: 0.35,
     shadowRadius: 28,
     elevation: 14,
     overflow: 'visible',
     ...(Platform.OS === 'web'
-      ? {
+      ? ({
+          touchAction: 'none',
           backdropFilter: 'blur(36px) saturate(150%)',
           WebkitBackdropFilter: 'blur(36px) saturate(150%)',
-        }
+          userSelect: 'none',
+          cursor: 'pointer',
+        } as any)
       : {}),
   },
   liquidLens: {
     position: 'absolute',
+    left: 0,
     top: 6,
     bottom: 6,
     borderRadius: 22,
     borderWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 4,
     pointerEvents: 'none',
     overflow: 'hidden',
     zIndex: 1,
@@ -298,14 +467,6 @@ const styles = StyleSheet.create({
           WebkitBackdropFilter: 'blur(20px) saturate(180%)',
         }
       : {}),
-  },
-  lensTopHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: '10%',
-    right: '10%',
-    height: '45%',
-    borderRadius: 9999,
   },
   tabItem: {
     flex: 1,
@@ -348,22 +509,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 999,
   },
-  createButtonWrapper: {
-    marginTop: -24,
-    shadowColor: '#f472b6',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  createOrb: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  createOrbButton: {
+    marginTop: -20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.45)',
+    shadowColor: '#ec4899',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    elevation: 8,
+    // @ts-ignore
+    outlineStyle: 'none',
+  },
+  createOrbGradient: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarBorder: {
     width: 26,
@@ -373,7 +539,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   avatarImg: {
-    width: '100%',
-    height: '100%',
+    width: '100%' as any,
+    height: '100%' as any,
   },
 });
