@@ -115,6 +115,7 @@ export interface Notification {
   id: string;
   user_id: string;
   type:
+    | 'system'
     | 'chat'
     | 'friend_request'
     | 'group_request'

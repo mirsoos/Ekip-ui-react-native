@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="%LANG_ISO_CODE%" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
+    <title>EKIP — Tactical Operations & Defense Command</title>
+    <style id="expo-reset">
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #04060c;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      }
+      #root {
+        display: flex;
+        height: 100%;
+        width: 100%;
+        flex: 1;
+      }
+
+      /* Hardware Accelerated Aurora Blobs */
+      @keyframes ek-blob {
+        0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+        33% { transform: translate3d(35px, -45px, 0) scale(1.12); }
+        66% { transform: translate3d(-25px, 25px, 0) scale(0.94); }
+      }
+      @keyframes ek-blob-rev {
+        0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+        33% { transform: translate3d(-45px, 35px, 0) scale(1.1); }
+        66% { transform: translate3d(35px, -15px, 0) scale(0.95); }
+      }
+
+      .aurora-blob-1 {
+        position: absolute;
+        top: -60px;
+        left: -60px;
+        width: 440px;
+        height: 440px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(56, 189, 248, 0.40) 0%, rgba(59, 130, 246, 0.20) 50%, transparent 70%);
+        filter: blur(80px);
+        transform: translateZ(0);
+        will-change: transform;
+        animation: ek-blob 18s ease-in-out infinite;
+        pointer-events: none;
+      }
+      .aurora-blob-2 {
+        position: absolute;
+        top: 25%;
+        right: -80px;
+        width: 420px;
+        height: 420px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(244, 114, 182, 0.35) 0%, rgba(59, 130, 246, 0.20) 50%, transparent 70%);
+        filter: blur(85px);
+        transform: translateZ(0);
+        will-change: transform;
+        animation: ek-blob-rev 22s ease-in-out infinite;
+        pointer-events: none;
+      }
+      .aurora-blob-3 {
+        position: absolute;
+        bottom: -100px;
+        left: 15%;
+        width: 480px;
+        height: 480px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.30) 0%, rgba(56, 189, 248, 0.15) 50%, transparent 70%);
+        filter: blur(90px);
+        transform: translateZ(0);
+        will-change: transform;
+        animation: ek-blob 24s ease-in-out infinite;
+        pointer-events: none;
+      }
+
+      /* ============================================
+         LIQUID GLASS LENS (iOS 26 Signature Lens)
+         ============================================ */
+      .glass-lens {
+        position: absolute;
+        overflow: hidden;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.50) 0%, rgba(255, 255, 255, 0.18) 40%, rgba(255, 255, 255, 0.08) 100%),
+                    linear-gradient(110deg, rgba(56, 189, 248, 0.12) 0%, rgba(99, 102, 241, 0.08) 50%, rgba(59, 130, 246, 0.10) 100%);
+        backdrop-filter: blur(24px) saturate(210%) contrast(105%);
+        -webkit-backdrop-filter: blur(24px) saturate(210%) contrast(105%);
+        box-shadow: inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95),
+                    inset 1px 0 2.5px 0 rgba(56, 189, 248, 0.25),
+                    inset -1px 0 2.5px 0 rgba(99, 102, 241, 0.20),
+                    inset 0 -1.5px 2px 0 rgba(59, 130, 246, 0.15),
+                    inset 0 0 16px 0 rgba(255, 255, 255, 0.15),
+                    0 10px 24px -4px rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.55);
+      }
+      .dark .glass-lens, html.dark .glass-lens {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(14, 17, 27, 0.85) 42%, rgba(8, 10, 18, 0.94) 100%),
+                    linear-gradient(110deg, rgba(56, 189, 248, 0.03) 0%, rgba(99, 102, 241, 0.03) 50%, rgba(59, 130, 246, 0.03) 100%);
+        backdrop-filter: blur(28px) saturate(190%) contrast(106%);
+        -webkit-backdrop-filter: blur(28px) saturate(190%) contrast(106%);
+        box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.15),
+                    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.40),
+                    0 12px 30px -4px rgba(0, 0, 0, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .glass-lens::before {
+        content: '';
+        position: absolute;
+        top: 1px;
+        left: 8%;
+        right: 8%;
+        height: 42%;
+        border-radius: 9999px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.50) 0%, rgba(255, 255, 255, 0.10) 50%, transparent 100%);
+        pointer-events: none;
+      }
+      .dark .glass-lens::before, html.dark .glass-lens::before {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.03) 50%, transparent 100%);
+      }
+
+      /* ============================================
+         ORIGINAL EKIP-UI ENTER ANIMATIONS (Zero flicker)
+         ============================================ */
+      @keyframes ek-rise {
+        from {
+          opacity: 0;
+          transform: translate3d(0, 20px, 0) scale(0.985);
+        }
+        to {
+          opacity: 1;
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+      }
+
+      @keyframes ek-raise {
+        from {
+          opacity: 0;
+          transform: translate3d(0, 24px, 0) scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: translate3d(0, 0, 0) scale(1);
+        }
+      }
+
+      .animate-rise {
+        animation: ek-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+      }
+
+      .animate-raise {
+        animation: ek-raise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+      }
+
+      /* Target direct children AND scrollview children */
+      .screen-enter-items,
+      .screen-enter-items > * {
+        animation: ek-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      .screen-enter-items [data-testid="scrollview-content"] > *,
+      .screen-enter-items .r-flexDirection-18u37iz > *,
+      .screen-enter-items > div > div > div > * {
+        animation: ek-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      .screen-enter-items *:nth-child(1) { animation-delay: 0.02s; }
+      .screen-enter-items *:nth-child(2) { animation-delay: 0.06s; }
+      .screen-enter-items *:nth-child(3) { animation-delay: 0.10s; }
+      .screen-enter-items *:nth-child(4) { animation-delay: 0.14s; }
+      .screen-enter-items *:nth-child(5) { animation-delay: 0.18s; }
+      .screen-enter-items *:nth-child(n+6) { animation-delay: 0.22s; }
+
+      /* Never apply enter animations to overlays, sheets, or backdrops */
+      .screen-enter-items [style*="position: fixed"],
+      .screen-enter-items [style*="position:fixed"],
+      .screen-enter-items [style*="z-index: 99999"],
+      .screen-enter-items [style*="z-index:99999"],
+      .screen-enter-items .screen-overlay,
+      .screen-overlay {
+        animation: none !important;
+      }
+
+      /* ============================================
+         ORIGINAL EKIP-UI LIQUID GLASS SYSTEM
+         ============================================ */
+
+      /* Thick Liquid Glass (Bottom Sheets, Dialogs, Floating Capsules) */
+      .glass-thick {
+        background:
+          linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.55) 0%,
+            rgba(255, 255, 255, 0.24) 40%,
+            rgba(255, 255, 255, 0.14) 100%
+          ),
+          linear-gradient(
+            115deg,
+            rgba(56, 189, 248, 0.12) 0%,
+            rgba(99, 102, 241, 0.08) 50%,
+            rgba(59, 130, 246, 0.10) 100%
+          ) !important;
+        backdrop-filter: blur(34px) saturate(230%) contrast(106%) !important;
+        -webkit-backdrop-filter: blur(34px) saturate(230%) contrast(106%) !important;
+        box-shadow:
+          inset 0 2px 2.5px 0 rgba(255, 255, 255, 0.98),
+          inset 1.5px 0 3px 0 rgba(56, 189, 248, 0.35),
+          inset -1.5px 0 3px 0 rgba(99, 102, 241, 0.25),
+          inset 0 -2px 2.5px 0 rgba(59, 130, 246, 0.20),
+          inset 0 0 24px 0 rgba(255, 255, 255, 0.16),
+          0 20px 48px -8px rgba(15, 23, 42, 0.16),
+          0 6px 18px -3px rgba(15, 23, 42, 0.10) !important;
+        border: 1px solid rgba(255, 255, 255, 0.60) !important;
+      }
+
+      .dark .glass-thick,
+      html.dark .glass-thick {
+        background:
+          linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.045) 0%,
+            rgba(11, 14, 23, 0.95) 40%,
+            rgba(5, 7, 13, 0.98) 100%
+          ),
+          linear-gradient(
+            115deg,
+            rgba(56, 189, 248, 0.02) 0%,
+            rgba(168, 85, 247, 0.02) 50%,
+            rgba(244, 114, 182, 0.02) 100%
+          ) !important;
+        backdrop-filter: blur(38px) saturate(190%) contrast(108%) !important;
+        -webkit-backdrop-filter: blur(38px) saturate(190%) contrast(108%) !important;
+        box-shadow:
+          inset 0 1px 1px 0 rgba(255, 255, 255, 0.09),
+          inset 0 -1px 1.5px 0 rgba(0, 0, 0, 0.50),
+          0 24px 54px -8px rgba(0, 0, 0, 0.95),
+          0 6px 20px -3px rgba(0, 0, 0, 0.85) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      }
+
+      /* Thin Liquid Glass (Chips, Buttons, Close Triggers) */
+      .glass-thin {
+        background:
+          linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.35) 0%,
+            rgba(255, 255, 255, 0.10) 100%
+          ),
+          linear-gradient(
+            105deg,
+            rgba(56, 189, 248, 0.06) 0%,
+            rgba(59, 130, 246, 0.05) 100%
+          ) !important;
+        backdrop-filter: blur(18px) saturate(190%) !important;
+        -webkit-backdrop-filter: blur(18px) saturate(190%) !important;
+        box-shadow:
+          inset 0 1px 1px 0 rgba(255, 255, 255, 0.80),
+          inset 0.5px 0 1.5px 0 rgba(56, 189, 248, 0.20),
+          inset -0.5px 0 1.5px 0 rgba(99, 102, 241, 0.15),
+          0 4px 14px -2px rgba(15, 23, 42, 0.08) !important;
+        border: 0.5px solid rgba(255, 255, 255, 0.45) !important;
+      }
+
+      .dark .glass-thin,
+      html.dark .glass-thin {
+        background:
+          linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.025) 0%,
+            rgba(14, 18, 28, 0.72) 100%
+          ),
+          linear-gradient(
+            105deg,
+            rgba(56, 189, 248, 0.015) 0%,
+            rgba(59, 130, 246, 0.015) 100%
+          ) !important;
+        backdrop-filter: blur(20px) saturate(175%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(175%) !important;
+        box-shadow:
+          inset 0 1px 1px 0 rgba(255, 255, 255, 0.05),
+          inset 0 -0.5px 1px 0 rgba(0, 0, 0, 0.35),
+          0 6px 18px -2px rgba(0, 0, 0, 0.70) !important;
+        border: 0.5px solid rgba(255, 255, 255, 0.06) !important;
+      }
+
+      /* Specular fluid light sheen overlay */
+      .glass-specular {
+        position: relative;
+        overflow: hidden;
+      }
+      .glass-specular::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: linear-gradient(
+          126deg,
+          rgba(255, 255, 255, 0.60) 0%,
+          rgba(255, 255, 255, 0.18) 14%,
+          rgba(56, 189, 248, 0.14) 26%,
+          transparent 42%,
+          transparent 66%,
+          rgba(56, 189, 248, 0.10) 80%,
+          rgba(255, 255, 255, 0.22) 92%,
+          rgba(255, 255, 255, 0.45) 100%
+        );
+        pointer-events: none;
+        mix-blend-mode: overlay;
+      }
+      .dark .glass-specular::before,
+      html.dark .glass-specular::before {
+        background: linear-gradient(
+          126deg,
+          rgba(255, 255, 255, 0.07) 0%,
+          rgba(255, 255, 255, 0.02) 12%,
+          transparent 28%,
+          transparent 72%,
+          rgba(255, 255, 255, 0.015) 90%,
+          rgba(255, 255, 255, 0.04) 100%
+        );
+      }
+
+      /* Crisp Liquid Rim */
+      .glass-edge::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.98) 0%,
+          rgba(56, 189, 248, 0.70) 24%,
+          rgba(59, 130, 246, 0.50) 60%,
+          rgba(255, 255, 255, 0.90) 100%
+        );
+        -webkit-mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+        opacity: 0.85;
+      }
+      .dark .glass-edge::after,
+      html.dark .glass-edge::after {
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.22) 0%,
+          rgba(56, 189, 248, 0.16) 24%,
+          rgba(59, 130, 246, 0.12) 60%,
+          rgba(255, 255, 255, 0.20) 100%
+        );
+        opacity: 0.30;
+      }
+
+      /* ============================================
+         ORIGINAL EKIP-UI SHEET & OVERLAY ANIMATIONS
+         ============================================ */
+      .animate-fade {
+        animation: ek-fade 0.35s ease both !important;
+      }
+      @keyframes ek-fade {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      .animate-fade-out {
+        animation: ek-fade-out 0.55s ease both !important;
+      }
+      @keyframes ek-fade-out {
+        from { opacity: 1; }
+        to { opacity: 0; }
+      }
+
+      .animate-sheet-up {
+        animation: ek-sheet-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+      }
+      @keyframes ek-sheet-up {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+      }
+
+      .animate-sheet-down {
+        animation: ek-sheet-down 0.55s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+      }
+      @keyframes ek-sheet-down {
+        from { transform: translateY(0); }
+        to { transform: translateY(100%); }
+      }
+
+      .animate-scale-in {
+        animation: ek-scale-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+      }
+      @keyframes ek-scale-in {
+        from { opacity: 0; transform: scale(0.85); }
+        to { opacity: 1; transform: scale(1); }
+      }
+
+      .animate-scale-out {
+        animation: ek-scale-out 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+      }
+      @keyframes ek-scale-out {
+        from { opacity: 1; transform: scale(1); }
+        to { opacity: 0; transform: scale(0.85); }
+      }
+
+      .animate-pop {
+        animation: ek-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+      }
+      @keyframes ek-pop {
+        0% { transform: scale(0.7); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+
+      /* Sheet and Modal Overlay Structural Elements */
+      .screen-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        overflow: hidden;
+      }
+      .screen-overlay-sheet {
+        align-items: flex-end;
+      }
+      .screen-overlay-dialog {
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+
+      .ekip-sheet-backdrop {
+        position: absolute;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        will-change: opacity;
+      }
+      .dark .ekip-sheet-backdrop,
+      html.dark .ekip-sheet-backdrop {
+        background-color: rgba(0, 0, 0, 0.75);
+      }
+
+      .ekip-dialog-backdrop {
+        position: absolute;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.40);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        will-change: opacity;
+      }
+      .dark .ekip-dialog-backdrop,
+      html.dark .ekip-dialog-backdrop {
+        background-color: rgba(0, 0, 0, 0.75);
+      }
+
+      .ekip-sheet-container {
+        position: relative;
+        width: 100%;
+        max-height: 92%;
+        border-top-left-radius: 32px;
+        border-top-right-radius: 32px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border-bottom: none !important;
+      }
+
+      .ekip-sheet-handle {
+        width: 40px;
+        height: 5px;
+        border-radius: 9999px;
+        background-color: rgba(255, 255, 255, 0.25);
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 10px;
+        z-index: 10;
+      }
+
+      .ekip-sheet-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px 8px 20px;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 2;
+      }
+
+      .ekip-sheet-title {
+        font-size: 20px;
+        line-height: 25px;
+        font-weight: 700;
+        color: #ffffff;
+        margin-top: 6px;
+        letter-spacing: -0.01em;
+      }
+      html:not(.dark) .ekip-sheet-title {
+        color: #000000;
+      }
+
+      .ekip-sheet-close {
+        width: 32px;
+        height: 32px;
+        border-radius: 9999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: auto;
+        margin-top: 4px;
+        cursor: pointer;
+        outline: none;
+        padding: 0;
+      }
+
+      .ekip-sheet-content {
+        overflow-y: auto;
+        padding: 8px 20px 32px 20px;
+        flex: 1 1 0%;
+        position: relative;
+        z-index: 2;
+      }
+
+      /* Fast Spring Tactile Press Feedback */
+      button, [role="button"], a {
+        transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.18s ease !important;
+      }
+      button:active, [role="button"]:active, a:active {
+        transform: scale(0.96) !important;
+      }
+
+      /* Hide browser scrollbars */
+      ::-webkit-scrollbar {
+        width: 0px;
+        height: 0px;
+        display: none;
+      }
+      * {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <noscript> You need to enable JavaScript to run this app. </noscript>
+    <div id="root"></div>
+  </body>
+</html>
