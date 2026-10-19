@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
+import { LiquidLens } from './LiquidLens';
 
 export interface NotificationButtonProps {
   unreadCount: number;
@@ -9,7 +10,7 @@ export interface NotificationButtonProps {
 }
 
 export function NotificationButton({ unreadCount, onPress }: NotificationButtonProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const BellIcon = getIcon('Bell');
 
   return (
@@ -20,16 +21,25 @@ export function NotificationButton({ unreadCount, onPress }: NotificationButtonP
         style={[
           styles.button,
           {
-            backgroundColor: colors.glassThickBg,
-            borderColor: colors.glassBorder,
+            borderColor: colors.glassBorderStrong,
           },
         ]}
       >
-        <BellIcon size={18} color={colors.textPrimary} strokeWidth={2.4} />
+        <LiquidLens
+          borderRadius={19}
+          marginWidth={8}
+          scale={20}
+          blurDeviation={1.6}
+          overlayOpacity={isDark ? 0.10 : 0.22}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.iconWrap}>
+          <BellIcon size={18} color={colors.textPrimary} strokeWidth={2.4} />
+        </View>
       </TouchableOpacity>
 
       {unreadCount > 0 && (
-        <View style={styles.badge}>
+        <View style={styles.badge} pointerEvents="none">
           <Text style={styles.badgeText}>
             {unreadCount > 9 ? '9+' : unreadCount}
           </Text>
@@ -50,6 +60,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
+    ...(Platform.OS === 'web'
+      ? ({
+          cursor: 'pointer',
+        } as any)
+      : {}),
+  },
+  iconWrap: {
+    zIndex: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badge: {
     position: 'absolute',
@@ -64,6 +91,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1.5,
     borderColor: '#ffffff',
+    zIndex: 20,
   },
   badgeText: {
     color: '#ffffff',

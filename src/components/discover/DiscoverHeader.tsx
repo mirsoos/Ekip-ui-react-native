@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { GlassInput, GlassAvatar } from '../Glass';
 import { NotificationButton } from '../NotificationButton';
+import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import type { Profile } from '../../types/database';
@@ -27,7 +28,7 @@ export function DiscoverHeader({
   onOpenNotifications,
   onOpenOwnProfile,
 }: DiscoverHeaderProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const SlidersIcon = getIcon('SlidersHorizontal');
 
   return (
@@ -86,20 +87,46 @@ export function DiscoverHeader({
           style={[
             styles.filterBtn,
             {
-              backgroundColor: hasActiveFilters
-                ? 'rgba(244, 114, 182, 0.2)'
-                : colors.glassThinBg,
               borderColor: hasActiveFilters
                 ? colors.accentPink
-                : colors.glassBorder,
+                : colors.glassBorderStrong,
             },
           ]}
         >
-          <SlidersIcon
-            size={18}
-            color={hasActiveFilters ? colors.accentPink : colors.textPrimary}
-            strokeWidth={2.2}
+          <LiquidLens
+            borderRadius={20}
+            marginWidth={9}
+            scale={22}
+            blurDeviation={1.6}
+            overlayOpacity={
+              hasActiveFilters
+                ? 0.25
+                : isDark
+                ? 0.10
+                : 0.22
+            }
+            style={StyleSheet.absoluteFill}
           />
+          {hasActiveFilters && (
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor: 'rgba(244, 114, 182, 0.20)',
+                  borderRadius: 20,
+                  zIndex: 1,
+                  pointerEvents: 'none',
+                },
+              ]}
+            />
+          )}
+          <View style={styles.filterIconWrap}>
+            <SlidersIcon
+              size={18}
+              color={hasActiveFilters ? colors.accentPink : colors.textPrimary}
+              strokeWidth={2.2}
+            />
+          </View>
         </TouchableOpacity>
       </View>
     </View>
@@ -145,6 +172,23 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 20,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 6,
+    elevation: 4,
+    ...(Platform.OS === 'web'
+      ? ({
+          cursor: 'pointer',
+        } as any)
+      : {}),
+  },
+  filterIconWrap: {
+    zIndex: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
