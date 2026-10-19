@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassButton, GlassSegmented, GlassEmpty, GlassBackButton } from '../components/Glass';
+import { LiquidLens } from '../components/LiquidLens';
 import { GlassSheet, Toast } from '../components/Overlays';
 import { StatBox } from '../components/common/StatBox';
 import { ProfileHeaderCard } from '../components/profile/ProfileHeaderCard';
@@ -33,7 +34,7 @@ export function ProfileScreen({
   onOpenVerification?: () => void;
 }) {
   const { me, profiles, groups, members, badges, missions, friends, addFriend, updateFriend, addNotification } = useAppData();
-  const { theme, toggle, colors } = useTheme();
+  const { theme, toggle, colors, isDark } = useTheme();
   const [tab, setTab] = useState('activity');
   const [showActions, setShowActions] = useState(false);
   const [toast, setToast] = useState('');
@@ -114,14 +115,24 @@ export function ProfileScreen({
                 onPress={toggle}
                 style={[
                   styles.topActionBtn,
-                  { backgroundColor: colors.glassThickBg, borderColor: colors.glassBorder },
+                  { borderColor: colors.glassBorderStrong },
                 ]}
               >
-                {theme === 'dark' ? (
-                  <Sun size={18} color="#eab308" strokeWidth={2.4} />
-                ) : (
-                  <Moon size={18} color="#6366f1" strokeWidth={2.4} />
-                )}
+                <LiquidLens
+                  borderRadius={19}
+                  marginWidth={8}
+                  scale={20}
+                  blurDeviation={1.6}
+                  overlayOpacity={isDark ? 0.10 : 0.22}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View style={styles.actionIconWrap}>
+                  {theme === 'dark' ? (
+                    <Sun size={18} color="#eab308" strokeWidth={2.4} />
+                  ) : (
+                    <Moon size={18} color="#6366f1" strokeWidth={2.4} />
+                  )}
+                </View>
               </TouchableOpacity>
 
               {isOwnProfile && (
@@ -130,10 +141,20 @@ export function ProfileScreen({
                   onPress={onOpenSettings}
                   style={[
                     styles.topActionBtn,
-                    { backgroundColor: colors.glassThickBg, borderColor: colors.glassBorder },
+                    { borderColor: colors.glassBorderStrong },
                   ]}
                 >
-                  <SettingsIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+                  <LiquidLens
+                    borderRadius={19}
+                    marginWidth={8}
+                    scale={20}
+                    blurDeviation={1.6}
+                    overlayOpacity={isDark ? 0.10 : 0.22}
+                    style={StyleSheet.absoluteFill}
+                  />
+                  <View style={styles.actionIconWrap}>
+                    <SettingsIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+                  </View>
                 </TouchableOpacity>
               )}
             </View>
@@ -286,6 +307,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 4,
+    overflow: 'hidden',
+    position: 'relative',
+    ...(Platform.OS === 'web'
+      ? ({
+          cursor: 'pointer',
+        } as any)
+      : {}),
+  },
+  actionIconWrap: {
+    zIndex: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statsRow: {
     flexDirection: 'row',
