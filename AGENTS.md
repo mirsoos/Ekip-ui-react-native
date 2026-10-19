@@ -39,3 +39,17 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## Liquid Glass Lens Standard
+
+The authentic Apple Liquid Glass active indicator (e.g. `BottomNav.tsx`) follows these strict rules:
+1. **Deterministic SDF Normal Map:** Generated via `getLiquidLensNormalMap` and fed into `<feImage href={normalMapUri} preserveAspectRatio="none" result="refractionMap" />`. Never use random Perlin noise (`feTurbulence`) which produces wobbly splotches.
+2. **Inward 360° Symmetrical Refraction:** Normal vectors point inward towards the center:
+   - Left edge: $nx > 0$ (positive shift into element)
+   - Right edge: $nx < 0$ (negative shift into element)
+   - Top edge: $ny > 0$ (positive shift into element)
+   - Bottom edge: $ny < 0$ (negative shift into element)
+3. **Calm Matte Center (Zero Distortion):** Center pixels must have exact neutral value `RGB(128, 128, 128)` with zero displacement, paired with soft frosted blur (`feGaussianBlur stdDeviation="1.8"`).
+4. **Ultra-Soft Feather Fade:** The transition between the refracted margin (14px) and the calm center must use a smoothstep rise followed by a cosine-squared ($\cos^2$) falloff so the displacement glides into zero with zero derivative (no hard seams or visible boundary lines).
+5. **No 3D Bevels or Thick Embossed Rims:** Never add artificial 3D bevels, thick inset shadows, or embossed lines.
+
