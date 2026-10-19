@@ -2,6 +2,7 @@ import React, { type ReactNode, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getIcon, type IconName } from '../lib/icons';
 import { GlassButton } from './Glass';
+import { useTheme } from '../lib/theme';
 
 function getPortalTarget(): HTMLElement | null {
   if (typeof document === 'undefined') return null;
@@ -28,6 +29,7 @@ export function GlassSheet({
   fullHeight,
   contentClassName = '',
 }: GlassSheetProps) {
+  const { isDark } = useTheme();
   const [isRendered, setIsRendered] = useState(open);
 
   useEffect(() => {
@@ -65,21 +67,47 @@ export function GlassSheet({
         overflow: 'hidden',
       }}
     >
-      {/* Dynamic blurred/tinted backdrop that stays in place while sheet slides up */}
+      {/* 1. Backdrop: subtle blur and subtle darkness to prevent content clash */}
       <div
         key={`backdrop-${open}`}
         className={`ekip-sheet-backdrop ${open ? 'animate-fade' : 'animate-fade-out'}`}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: isDark ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.22)',
+          backdropFilter: 'blur(2px)',
+          WebkitBackdropFilter: 'blur(2px)',
+          willChange: 'opacity',
+        }}
       />
 
-      {/* Sheet sliding up from bottom with authentic iOS 26 liquid glass & sheen */}
+      {/* 2. Sheet sliding up from bottom with authentic liquid glass container */}
       <div
         key={`sheet-${open}`}
         onClick={(e) => e.stopPropagation()}
-        className={`ekip-sheet-container glass-thick glass-specular glass-edge ${
+        className={`ekip-sheet-container ${
           open ? 'animate-sheet-up' : 'animate-sheet-down'
         }`}
         style={{
+          position: 'relative',
+          width: '100%',
+          maxHeight: '92%',
           height: fullHeight ? '92%' : undefined,
+          borderTopLeftRadius: 32,
+          borderTopRightRadius: 32,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          backgroundColor: isDark ? 'rgba(14, 20, 34, 0.75)' : 'rgba(255, 255, 255, 0.78)',
+          backdropFilter: 'blur(32px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+          borderTop: isDark ? '1px solid rgba(255, 255, 255, 0.22)' : '1px solid rgba(255, 255, 255, 0.85)',
+          borderLeft: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.60)',
+          borderRight: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.60)',
+          borderBottom: 'none',
+          boxShadow: isDark
+            ? 'inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.25), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.45), 0 -16px 48px -8px rgba(0, 0, 0, 0.70)'
+            : 'inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px 0 rgba(255, 255, 255, 0.35), 0 -16px 48px -8px rgba(15, 23, 42, 0.35)',
         }}
       >
         {/* Top drag handle indicator */}

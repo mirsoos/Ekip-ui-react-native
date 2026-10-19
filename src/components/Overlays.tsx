@@ -80,30 +80,42 @@ export function GlassSheet({
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <View style={styles.fullscreenOverlay} pointerEvents="box-none">
-        {/* Dynamic blurred/tinted backdrop that stays in place while sheet slides up */}
+        {/* Subtle backdrop with gentle blur and darkness */}
         <TouchableWithoutFeedback onPress={onClose}>
           <Animated.View
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               styles.backdropBase,
               {
-                backgroundColor: isDark ? 'rgba(0, 0, 0, 0.72)' : 'rgba(0, 0, 0, 0.45)',
+                backgroundColor: isDark ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.22)',
                 opacity: backdropAnim,
+                ...(Platform.OS === 'web'
+                  ? ({
+                      backdropFilter: 'blur(2px)',
+                      WebkitBackdropFilter: 'blur(2px)',
+                    } as any)
+                  : {}),
               },
             ]}
           />
         </TouchableWithoutFeedback>
 
-        {/* Sheet sliding up from bottom */}
+        {/* Sheet sliding up from bottom with liquid glass container */}
         <Animated.View
           style={[
             styles.sheetContainer,
             {
-              backgroundColor: colors.glassThickBg,
+              backgroundColor: isDark ? 'rgba(18, 24, 38, 0.78)' : 'rgba(255, 255, 255, 0.78)',
               borderColor: colors.glassBorderStrong,
               height: fullHeight ? '88%' : undefined,
               maxHeight: '92%',
               transform: [{ translateY: slideAnim }],
+              ...(Platform.OS === 'web'
+                ? ({
+                    backdropFilter: 'blur(32px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+                  } as any)
+                : {}),
             },
           ]}
         >
@@ -228,7 +240,7 @@ export function GlassDialog({
         <TouchableWithoutFeedback onPress={onClose}>
           <Animated.View
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               styles.backdropBase,
               {
                 backgroundColor: isDark ? 'rgba(0, 0, 0, 0.72)' : 'rgba(0, 0, 0, 0.45)',
@@ -317,12 +329,12 @@ export function Toast({
 
 const styles = StyleSheet.create({
   fullscreenOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 99999,
     justifyContent: 'flex-end',
   },
   backdropBase: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   sheetContainer: {
     width: '100%',
@@ -370,19 +382,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dialogOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 99999,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
     ...(Platform.OS === 'web'
-      ? {
-          position: 'fixed' as const,
+      ? ({
+          position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-        }
+        } as any)
       : {}),
   },
   dialogContainer: {

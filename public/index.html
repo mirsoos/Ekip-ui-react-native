@@ -438,14 +438,16 @@
       .ekip-sheet-backdrop {
         position: absolute;
         inset: 0;
-        background-color: rgba(0, 0, 0, 0.45);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
+        background-color: rgba(0, 0, 0, 0.22) !important;
+        backdrop-filter: blur(2px) !important;
+        -webkit-backdrop-filter: blur(2px) !important;
         will-change: opacity;
       }
       .dark .ekip-sheet-backdrop,
       html.dark .ekip-sheet-backdrop {
-        background-color: rgba(0, 0, 0, 0.75);
+        background-color: rgba(0, 0, 0, 0.45) !important;
+        backdrop-filter: blur(2px) !important;
+        -webkit-backdrop-filter: blur(2px) !important;
       }
 
       .ekip-dialog-backdrop {
