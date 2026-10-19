@@ -1,9 +1,70 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { GlassCard, GlassEmpty, GlassProgress } from '../Glass';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { GlassCard, GlassEmpty } from '../Glass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import type { Mission } from '../../types/database';
+
+function MissionProgressBar({
+  progress,
+  target,
+  isComplete,
+  colors,
+  index,
+}: {
+  progress: number;
+  target: number;
+  isComplete: boolean;
+  colors: any;
+  index: number;
+}) {
+  const animVal = useRef(new Animated.Value(0)).current;
+  const pct = Math.min(100, Math.max(0, (progress / (target || 1)) * 100));
+
+  useEffect(() => {
+    animVal.setValue(0);
+    const anim = Animated.timing(animVal, {
+      toValue: pct,
+      duration: 850,
+      delay: index * 80 + 100,
+      easing: Easing.bezier(0.16, 1, 0.3, 1),
+      useNativeDriver: false,
+    });
+    anim.start();
+    return () => anim.stop();
+  }, [pct, index]);
+
+  const gradColors: [string, string] = isComplete
+    ? ['#22c55e', '#10b981']
+    : ['#f472b6', '#3b82f6'];
+
+  const width = animVal.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%'],
+  });
+
+  return (
+    <View
+      style={[
+        styles.progressTrack,
+        {
+          backgroundColor: colors.glassThinBg,
+          borderColor: colors.glassBorder,
+        },
+      ]}
+    >
+      <Animated.View style={[styles.progressBar, { width }]}>
+        <LinearGradient
+          colors={gradColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
+    </View>
+  );
+}
 
 export function ProfileMissionsList({ missions }: { missions: Mission[] }) {
   const { colors } = useTheme();
@@ -21,7 +82,7 @@ export function ProfileMissionsList({ missions }: { missions: Mission[] }) {
 
   return (
     <View style={{ gap: 10 }}>
-      {missions.map((m) => (
+      {missions.map((m, idx) => (
         <GlassCard key={m.id} variant="thin" style={styles.card}>
           <View style={styles.topRow}>
             <Text style={[styles.title, { color: colors.textPrimary }]}>
@@ -44,10 +105,12 @@ export function ProfileMissionsList({ missions }: { missions: Mission[] }) {
               </Text>
             </View>
 
-            <GlassProgress
-              value={m.progress}
-              max={m.target}
-              color={m.is_complete ? 'success' : 'accent'}
+            <MissionProgressBar
+              progress={m.progress}
+              target={m.target}
+              isComplete={m.is_complete}
+              colors={colors}
+              index={idx}
             />
           </View>
 
@@ -110,5 +173,16 @@ const styles = StyleSheet.create({
     color: '#22c55e',
     fontSize: 11,
     fontWeight: '700',
+  },
+  progressTrack: {
+    height: 9,
+    borderRadius: 999,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    borderRadius: 999,
+    overflow: 'hidden',
   },
 });
