@@ -1156,3 +1156,5 @@ const styles = StyleSheet.create({
     maxWidth: 240,
   },
 });
+
+export { LiquidLens, type LiquidLensProps } from './LiquidLens';
