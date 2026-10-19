@@ -35,6 +35,8 @@ export function getLiquidLensNormalMap(w: number, h: number, r: number, margin: 
   const data = imgData.data;
   const bx = w / 2;
   const by = h / 2;
+  const maxR = Math.min(bx, by);
+  const effectiveR = Math.max(0, Math.min(r, maxR));
 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -42,9 +44,9 @@ export function getLiquidLensNormalMap(w: number, h: number, r: number, margin: 
       const px = x - bx + 0.5;
       const py = y - by + 0.5;
 
-      const qx = Math.abs(px) - (bx - r);
-      const qy = Math.abs(py) - (by - r);
-      const d = Math.min(Math.max(qx, qy), 0) + Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) - r;
+      const qx = Math.abs(px) - (bx - effectiveR);
+      const qy = Math.abs(py) - (by - effectiveR);
+      const d = Math.min(Math.max(qx, qy), 0) + Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) - effectiveR;
 
       let rVal = 128;
       let gVal = 128;
@@ -63,13 +65,13 @@ export function getLiquidLensNormalMap(w: number, h: number, r: number, margin: 
         }
 
         const eps = 0.5;
-        const qx1 = Math.abs(px + eps) - (bx - r);
-        const qy1 = Math.abs(py) - (by - r);
-        const d1 = Math.min(Math.max(qx1, qy1), 0) + Math.hypot(Math.max(qx1, 0), Math.max(qy1, 0)) - r;
+        const qx1 = Math.abs(px + eps) - (bx - effectiveR);
+        const qy1 = Math.abs(py) - (by - effectiveR);
+        const d1 = Math.min(Math.max(qx1, qy1), 0) + Math.hypot(Math.max(qx1, 0), Math.max(qy1, 0)) - effectiveR;
 
-        const qx2 = Math.abs(px) - (bx - r);
-        const qy2 = Math.abs(py + eps) - (by - r);
-        const d2 = Math.min(Math.max(qx2, qy2), 0) + Math.hypot(Math.max(qx2, 0), Math.max(qy2, 0)) - r;
+        const qx2 = Math.abs(px) - (bx - effectiveR);
+        const qy2 = Math.abs(py + eps) - (by - effectiveR);
+        const d2 = Math.min(Math.max(qx2, qy2), 0) + Math.hypot(Math.max(qx2, 0), Math.max(qy2, 0)) - effectiveR;
 
         const gx = (d1 - d) / eps;
         const gy = (d2 - d) / eps;

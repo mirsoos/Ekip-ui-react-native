@@ -15,6 +15,8 @@ import { getIcon, type IconName } from '../lib/icons';
 import { useAppData } from '../lib/appData';
 import { useTheme } from '../lib/theme';
 
+import { LiquidLens } from './LiquidLens';
+
 export type TabKey = 'discover' | 'activity' | 'create' | 'chat' | 'profile';
 
 interface BottomNavProps {
@@ -29,75 +31,6 @@ const tabs: { key: TabKey; label: string; icon: IconName }[] = [
   { key: 'chat', label: 'Chats', icon: 'MessageCircle' },
   { key: 'profile', label: 'Profile', icon: 'User' },
 ];
-
-function getLiquidLensNormalMap(w: number, h: number, r: number, margin: number): string {
-  if (typeof document === 'undefined') return '';
-  const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return '';
-  const imgData = ctx.createImageData(w, h);
-  const data = imgData.data;
-  const bx = w / 2;
-  const by = h / 2;
-
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const idx = (y * w + x) * 4;
-      const px = x - bx + 0.5;
-      const py = y - by + 0.5;
-
-      const qx = Math.abs(px) - (bx - r);
-      const qy = Math.abs(py) - (by - r);
-      const d = Math.min(Math.max(qx, qy), 0) + Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) - r;
-
-      let rVal = 128;
-      let gVal = 128;
-
-      if (d > -margin && d <= 0) {
-        const t = (-d) / margin;
-
-        // Ultra-soft feather fade into center (smoothstep rise + cos^2 silky fadeout)
-        let strength: number;
-        if (t < 0.28) {
-          const u = t / 0.28;
-          strength = u * u * (3 - 2 * u);
-        } else {
-          const u = (t - 0.28) / 0.72;
-          strength = Math.cos(u * Math.PI * 0.5) ** 2;
-        }
-
-        const eps = 0.5;
-        const qx1 = Math.abs(px + eps) - (bx - r);
-        const qy1 = Math.abs(py) - (by - r);
-        const d1 = Math.min(Math.max(qx1, qy1), 0) + Math.hypot(Math.max(qx1, 0), Math.max(qy1, 0)) - r;
-
-        const qx2 = Math.abs(px) - (bx - r);
-        const qy2 = Math.abs(py + eps) - (by - r);
-        const d2 = Math.min(Math.max(qx2, qy2), 0) + Math.hypot(Math.max(qx2, 0), Math.max(qy2, 0)) - r;
-
-        const gx = (d1 - d) / eps;
-        const gy = (d2 - d) / eps;
-        const len = Math.hypot(gx, gy) || 1;
-
-        const nx = -(gx / len);
-        const ny = -(gy / len);
-
-        rVal = Math.round(128 + nx * 120 * strength);
-        gVal = Math.round(128 + ny * 120 * strength);
-      }
-
-      data[idx] = rVal;
-      data[idx + 1] = gVal;
-      data[idx + 2] = 128;
-      data[idx + 3] = 255;
-    }
-  }
-
-  ctx.putImageData(imgData, 0, 0);
-  return canvas.toDataURL();
-}
 
 export function BottomNav({ active, onChange }: BottomNavProps) {
   const { me, conversations, notifications } = useAppData();
@@ -115,13 +48,6 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
 
   // Dock measurements & animation values
   const [dockWidth, setDockWidth] = useState(0);
-
-  // Generate deterministic 360-degree liquid lens normal map (SDF of rounded capsule)
-  const normalMapUri = useMemo(() => {
-    if (Platform.OS !== 'web') return '';
-    const slotW = dockWidth > 0 ? Math.round((dockWidth - 12) / 5) : 74;
-    return getLiquidLensNormalMap(slotW, 48, 22, 14);
-  }, [dockWidth]);
   const lensX = useRef(new Animated.Value(0)).current;
   const lensScale = useRef(new Animated.Value(active === 'create' ? 0 : 1)).current;
   const createRotate = useRef(new Animated.Value(active === 'create' ? 1 : 0)).current;
@@ -380,11 +306,21 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
           },
         ]}
       >
-        {/* Active Indicator (Liquid Glass Lens - Rendered underneath tabs) */}
+        {/* 360° Liquid Glass Lens for the entire navbar dock */}
+        <LiquidLens
+          borderRadius={36}
+          marginWidth={16}
+          scale={36}
+          blurDeviation={2.0}
+          overlayOpacity={isDark ? 0.08 : 0.15}
+          style={StyleSheet.absoluteFill}
+        />
+
+        {/* Active Tab Sliding Pill Indicator */}
         {dockWidth > 0 && (
           <Animated.View
             style={[
-              styles.liquidLens,
+              styles.activeIndicator,
               {
                 width: slotWidth,
                 opacity: lensScale,
@@ -392,40 +328,11 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
                   { translateX: lensX },
                   { scale: lensScale },
                 ],
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.52)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(255, 255, 255, 0.72)',
               },
             ]}
-          >
-            {Platform.OS === 'web' && (
-              <svg style={{ display: 'none' }} aria-hidden="true">
-                <filter id="lg-dist" x="0%" y="0%" width="100%" height="100%">
-                  {/* 1. Center matte frost blur (فقط کمی ماته) */}
-                  <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="matteBackdrop" />
-
-                  {/* 2. Deterministic 360-degree rounded capsule lens normal map */}
-                  {normalMapUri ? (
-                    <feImage
-                      href={normalMapUri}
-                      preserveAspectRatio="none"
-                      result="refractionMap"
-                    />
-                  ) : null}
-
-                  {/* 3. Displace matte backdrop smoothly along all inner margins */}
-                  <feDisplacementMap
-                    in="matteBackdrop"
-                    in2="refractionMap"
-                    scale="36"
-                    xChannelSelector="R"
-                    yChannelSelector="G"
-                    result="refracted"
-                  />
-                </filter>
-              </svg>
-            )}
-            <View style={styles.glassFilter} />
-            <View style={styles.glassOverlay} />
-            <View style={styles.glassSpecular} />
-          </Animated.View>
+          />
         )}
 
         {/* Tab Buttons */}
@@ -548,76 +455,25 @@ const styles = StyleSheet.create({
         } as any)
       : {}),
   },
-  liquidLens: {
+  activeIndicator: {
     position: 'absolute',
     left: 0,
     top: 6,
     bottom: 6,
-    backgroundColor: 'transparent',
     borderRadius: 22,
-    borderWidth: 0,
+    borderWidth: 1,
+    zIndex: 1,
+    pointerEvents: 'none',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
-    pointerEvents: 'none',
-    overflow: 'hidden',
-    zIndex: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
     ...(Platform.OS === 'web'
       ? ({
-          boxShadow: '0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.6)',
         } as any)
       : {}),
-  },
-  glassFilter: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 0,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.001)',
-    pointerEvents: 'none',
-    ...(Platform.OS === 'web'
-      ? ({
-          backdropFilter: 'blur(0px)',
-          WebkitBackdropFilter: 'blur(0px)',
-          filter: 'url(#lg-dist)',
-          isolation: 'isolate',
-        } as any)
-      : {}),
-  },
-  glassOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 1,
-    pointerEvents: 'none',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  glassSpecular: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 2,
-    borderRadius: 22,
-    overflow: 'hidden',
-    pointerEvents: 'none',
-    ...(Platform.OS === 'web'
-      ? ({
-          boxShadow:
-            'inset 0 1px 1px rgba(255, 255, 255, 0.55), inset 0 -1px 1px rgba(255, 255, 255, 0.1)',
-        } as any)
-      : {
-          borderWidth: 1,
-          borderColor: 'rgba(255, 255, 255, 0.75)',
-        }),
   },
   tabItem: {
     flex: 1,
