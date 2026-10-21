@@ -118,11 +118,6 @@ export function ConversationScreen({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
-      <ChatHeader
-        conversation={conv}
-        onBack={onBack}
-      />
-
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
@@ -183,7 +178,7 @@ const styles = StyleSheet.create({
     paddingBottom: 110,
   },
   messagesContent: {
-    paddingTop: 8,
+    paddingTop: 84,
     paddingBottom: 16,
   },
 });

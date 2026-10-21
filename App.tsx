@@ -5,6 +5,8 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme } from './src/lib/theme';
 import { AppDataProvider } from './src/lib/appData';
 import { BottomNav, type TabKey } from './src/components/BottomNav';
+import { ChatHeader } from './src/components/chat/ChatHeader';
+import { useAppData } from './src/lib/appData';
 import { NotificationsSheet } from './src/components/notifications/NotificationsSheet';
 import type { Group } from './src/types/database';
 
@@ -55,6 +57,7 @@ export type Screen =
 
 function MainContent() {
   const { isDark } = useTheme();
+  const { conversations } = useAppData();
 
   const [authed, setAuthed] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
@@ -298,6 +301,11 @@ function MainContent() {
           </ScreenTransition>
         </SwipeNavigationContainer>
         </View>
+
+        {screen.name === 'conversation' && (() => {
+          const conv = conversations.find((c) => c.id === screen.conversationId);
+          return conv ? <ChatHeader conversation={conv} onBack={pop} /> : null;
+        })()}
 
         {showBottomNav && <BottomNav active={tab} onChange={switchTab} />}
 
