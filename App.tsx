@@ -6,6 +6,7 @@ import { ThemeProvider, useTheme } from './src/lib/theme';
 import { AppDataProvider } from './src/lib/appData';
 import { BottomNav, type TabKey } from './src/components/BottomNav';
 import { ChatHeader } from './src/components/chat/ChatHeader';
+import { SettingsHeader } from './src/components/settings/SettingsHeader';
 import { useAppData } from './src/lib/appData';
 import { NotificationsSheet } from './src/components/notifications/NotificationsSheet';
 import type { Group } from './src/types/database';
@@ -306,6 +307,8 @@ function MainContent() {
           const conv = conversations.find((c) => c.id === screen.conversationId);
           return conv ? <ChatHeader conversation={conv} onBack={pop} /> : null;
         })()}
+
+        {screen.name === 'settings' && <SettingsHeader onBack={pop} />}
 
         {showBottomNav && <BottomNav active={tab} onChange={switchTab} />}
 

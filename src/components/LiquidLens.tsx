@@ -179,6 +179,19 @@ export function LiquidLens({
         ]}
       />
 
+      {/* Dark tint base layer */}
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            borderRadius,
+            backgroundColor: '#0000007d',
+            zIndex: 0,
+          },
+        ]}
+        pointerEvents="none"
+      />
+
       {/* 2. Glass tint overlay layer */}
       <View
         style={[

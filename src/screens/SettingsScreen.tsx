@@ -5,7 +5,7 @@ import { GlassCard, GlassListItem, GlassToggle, GlassButton, GlassAvatar } from 
 import { GlassSheet, Toast } from '../components/Overlays';
 import { SettingsSection } from '../components/settings/SettingsSection';
 import { SettingsDivider } from '../components/settings/SettingsDivider';
-import { ScreenHeader } from '../components/common/ScreenHeader';
+// ScreenHeader removed - rendered via SettingsHeader outside transition container
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 
@@ -52,7 +52,7 @@ export function SettingsScreen({
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Settings" onBack={onBack} />
+      
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 84,
     paddingBottom: 40,
   },
   profileCard: {

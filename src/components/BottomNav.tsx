@@ -389,7 +389,7 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
                 ) : (
                   <IconComp
                     size={22}
-                    color={isActive ? colors.accentPink : colors.textTertiary}
+                    color={isActive ? colors.accentPink : '#ffffff'}
                     strokeWidth={isActive ? 2.4 : 1.9}
                   />
                 )}
@@ -407,7 +407,7 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
                 style={[
                   styles.tabLabel,
                   {
-                    color: isActive ? colors.textPrimary : colors.textTertiary,
+                    color: isActive ? colors.textPrimary : '#ffffff',
                     fontWeight: isActive ? '700' : '500',
                   },
                 ]}
