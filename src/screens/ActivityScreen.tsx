@@ -12,10 +12,14 @@ import { useTheme } from '../lib/theme';
 import type { Group } from '../types/database';
 
 export function ActivityScreen({
+  tab = 'created',
+  onChangeTab,
   onOpenGroup,
   onOpenProfile,
   onOpenNotifications,
 }: {
+  tab?: string;
+  onChangeTab?: (tab: string) => void;
   onOpenGroup: (group: Group) => void;
   onOpenProfile: (userId: string) => void;
   onOpenNotifications: () => void;
@@ -23,7 +27,10 @@ export function ActivityScreen({
   const { groups, members, requests, updateRequest, addNotification, notifications } = useAppData();
   const { colors, isDark } = useTheme();
 
-  const [tab, setTab] = useState('created');
+  const [internalTab, setInternalTab] = useState('created');
+  const activeTab = onChangeTab ? tab : internalTab;
+  const setActiveTab = onChangeTab || setInternalTab;
+
   const [showRequests, setShowRequests] = useState(false);
   const [requestsGroupId, setRequestsGroupId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
@@ -67,45 +74,12 @@ export function ActivityScreen({
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View
-        style={[
-          styles.headerRow,
-          {
-            backgroundColor: colors.glassThickBg,
-            borderBottomColor: colors.glassBorder,
-          },
-        ]}
-      >
-        <View style={styles.titleRow}>
-          <Text style={[styles.heading, { color: colors.textPrimary }]}>
-            My Ekip
-          </Text>
-          <NotificationButton
-            unreadCount={notifications.filter((n) => !n.is_read).length}
-            onPress={onOpenNotifications}
-          />
-        </View>
-
-        <View style={{ marginTop: 12 }}>
-          <GlassSegmented
-            options={[
-              { label: 'Created', value: 'created', icon: 'Crown' },
-              { label: 'Joined', value: 'joined', icon: 'Users' },
-              { label: 'Requested', value: 'requested', icon: 'Clock' },
-            ]}
-            value={tab}
-            onChange={setTab}
-          />
-        </View>
-      </View>
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Created Tab */}
-        {tab === 'created' && (
+        {activeTab === 'created' && (
           <View key="created" className="animate-raise" style={{ gap: 16 }}>
             {createdGroups.length === 0 ? (
               <GlassEmpty
@@ -226,7 +200,7 @@ export function ActivityScreen({
         )}
 
         {/* Joined Tab */}
-        {tab === 'joined' && (
+        {activeTab === 'joined' && (
           <View key="joined" className="animate-raise" style={{ gap: 12 }}>
             {joinedGroups.length === 0 ? (
               <GlassEmpty
@@ -278,7 +252,7 @@ export function ActivityScreen({
         )}
 
         {/* Requested Tab */}
-        {tab === 'requested' && (
+        {activeTab === 'requested' && (
           <View key="requested" className="animate-raise" style={{ gap: 12 }}>
             {myRequests.length === 0 ? (
               <GlassEmpty
@@ -383,7 +357,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 135,
     paddingBottom: 110,
   },
   cardContainer: {

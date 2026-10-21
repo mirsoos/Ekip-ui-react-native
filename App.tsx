@@ -8,6 +8,7 @@ import { BottomNav, type TabKey } from './src/components/BottomNav';
 import { ChatHeader } from './src/components/chat/ChatHeader';
 import { ChatListHeader } from './src/components/chat/ChatListHeader';
 import { DiscoverHeader } from './src/components/discover/DiscoverHeader';
+import { ActivityHeader } from './src/components/activity/ActivityHeader';
 import { SettingsHeader } from './src/components/settings/SettingsHeader';
 import { EkipActionBar } from './src/components/ekip/EkipActionBar';
 import { CreateContinueButton } from './src/components/create/CreateContinueButton';
@@ -73,6 +74,7 @@ function MainContent() {
   const [createState, setCreateState] = useState({ step: 0, canProceed: false });
   const [chatSearch, setChatSearch] = useState('');
   const [discoverSearch, setDiscoverSearch] = useState('');
+  const [activityTab, setActivityTab] = useState('created');
   const createRef = React.useRef<CreateScreenHandle>(null);
   const discoverRef = React.useRef<DiscoverScreenHandle>(null);
 
@@ -250,6 +252,8 @@ function MainContent() {
 
             {screen.name === 'activity' && (
               <ActivityScreen
+                tab={activityTab}
+                onChangeTab={setActivityTab}
                 onOpenGroup={(g) => push({ name: 'group', group: g })}
                 onOpenProfile={(uid) => push({ name: 'profile', userId: uid })}
                 onOpenNotifications={() => setIsNotificationSheetOpen(true)}
@@ -333,6 +337,15 @@ function MainContent() {
               setHistory([]);
               setScreen({ name: 'profile', userId: 'me' });
             }}
+          />
+        )}
+
+        {screen.name === 'activity' && (
+          <ActivityHeader
+            unreadCount={notifications.filter((n) => !n.is_read).length}
+            tab={activityTab}
+            onChangeTab={setActivityTab}
+            onOpenNotifications={() => setIsNotificationSheetOpen(true)}
           />
         )}
 
