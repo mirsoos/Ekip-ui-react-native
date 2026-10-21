@@ -7,6 +7,9 @@ import { AppDataProvider } from './src/lib/appData';
 import { BottomNav, type TabKey } from './src/components/BottomNav';
 import { ChatHeader } from './src/components/chat/ChatHeader';
 import { SettingsHeader } from './src/components/settings/SettingsHeader';
+import { EkipActionBar } from './src/components/ekip/EkipActionBar';
+import { CreateContinueButton } from './src/components/create/CreateContinueButton';
+import { CreateHeader } from './src/components/create/CreateHeader';
 import { useAppData } from './src/lib/appData';
 import { NotificationsSheet } from './src/components/notifications/NotificationsSheet';
 import type { Group } from './src/types/database';
@@ -16,7 +19,7 @@ import { AuthScreen } from './src/screens/AuthScreen';
 import { Onboarding } from './src/screens/Onboarding';
 import { DiscoverScreen } from './src/screens/DiscoverScreen';
 import { EkipDetail } from './src/screens/EkipDetail';
-import { CreateScreen } from './src/screens/CreateScreen';
+import { CreateScreen, type CreateScreenHandle } from './src/screens/CreateScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { ActivityScreen } from './src/screens/ActivityScreen';
 import { ChatListScreen, ConversationScreen } from './src/screens/ChatScreens';
@@ -65,6 +68,8 @@ function MainContent() {
   const [tab, setTab] = useState<TabKey>('discover');
   const [screen, setScreen] = useState<Screen>({ name: 'discover' });
   const [history, setHistory] = useState<Screen[]>([]);
+  const [createState, setCreateState] = useState({ step: 0, canProceed: false });
+  const createRef = React.useRef<CreateScreenHandle>(null);
 
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
 
@@ -205,6 +210,8 @@ function MainContent() {
 
             {screen.name === 'create' && (
               <CreateScreen
+                ref={createRef}
+                onStateChange={setCreateState}
                 onBack={() => {
                   if (history.length > 0) pop();
                   else {
@@ -309,6 +316,38 @@ function MainContent() {
         })()}
 
         {screen.name === 'settings' && <SettingsHeader onBack={pop} />}
+
+        {screen.name === 'group' && (
+          <EkipActionBar
+            group={screen.group}
+            onOpenProfile={(uid) => {
+              if (uid === 'me') setTab('profile');
+              push({ name: 'profile', userId: uid });
+            }}
+            onOpenChat={(cid) => {
+              setTab('chat');
+              push({ name: 'conversation', conversationId: cid });
+            }}
+          />
+        )}
+
+        {screen.name === 'create' && (
+          <CreateHeader
+            step={createState.step}
+            totalSteps={4}
+            onBack={() => createRef.current?.handlePrev()}
+            onOpenAI={() => createRef.current?.openAI()}
+          />
+        )}
+
+        {screen.name === 'create' && (
+          <CreateContinueButton
+            step={createState.step}
+            totalSteps={4}
+            disabled={!createState.canProceed}
+            onPress={() => createRef.current?.handleNext()}
+          />
+        )}
 
         {showBottomNav && <BottomNav active={tab} onChange={switchTab} />}
 

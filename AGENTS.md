@@ -53,3 +53,9 @@ The authentic Apple Liquid Glass active indicator (e.g. `BottomNav.tsx`) follows
 4. **Ultra-Soft Feather Fade:** The transition between the refracted margin (14px) and the calm center must use a smoothstep rise followed by a cosine-squared ($\cos^2$) falloff so the displacement glides into zero with zero derivative (no hard seams or visible boundary lines).
 5. **No 3D Bevels or Thick Embossed Rims:** Never add artificial 3D bevels, thick inset shadows, or embossed lines.
 
+## Strict Execution & Token Efficiency Rules
+1. **NEVER perform broad codebase searches or scans** (e.g. grep, find-in-files, multi-file sweeps) unless the user explicitly requests it.
+2. **ONLY open, inspect, and modify the exact file(s)** specified by the user or strictly required for the immediate task. Zero tolerance for browsing unrelated directories or files.
+3. **Execute the exact user command directly** with the absolute minimum number of tool calls, fastest turnaround time, and lowest token consumption.
+
+

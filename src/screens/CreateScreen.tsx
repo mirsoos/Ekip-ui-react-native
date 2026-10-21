@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useAppData } from '../lib/appData';
 import { GlassButton, GlassInput, GlassToggle, GlassBackButton, GlassSegmented } from '../components/Glass';
+import { LiquidLens } from '../components/LiquidLens';
 import { StepProgressBar } from '../components/common/StepProgressBar';
 import { CoverPicker } from '../components/create/CoverPicker';
 import { CategoryTypeSelector } from '../components/create/CategoryTypeSelector';
@@ -23,15 +24,25 @@ const coverOptions = [
 
 const totalSteps = 4;
 
-export function CreateScreen({
-  onBack,
-  onCreated,
-}: {
-  onBack: () => void;
-  onCreated: (group: Group) => void;
-}) {
+export interface CreateScreenHandle {
+  handleNext: () => void;
+  handlePrev: () => void;
+  openAI: () => void;
+  canProceed: () => boolean;
+  step: number;
+  totalSteps: number;
+}
+
+export const CreateScreen = React.forwardRef<
+  CreateScreenHandle,
+  {
+    onBack: () => void;
+    onCreated: (group: Group) => void;
+    onStateChange?: (state: { step: number; canProceed: boolean }) => void;
+  }
+>(function CreateScreen({ onBack, onCreated, onStateChange }, ref) {
   const { me, addGroup, addNotification } = useAppData();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const [step, setStep] = useState(0);
   const [title, setTitle] = useState('');
@@ -86,6 +97,19 @@ export function CreateScreen({
     else setStep(step - 1);
   };
 
+  React.useImperativeHandle(ref, () => ({
+    handleNext,
+    handlePrev,
+    openAI: () => setShowAI(true),
+    canProceed: () => Boolean(canProceed()),
+    step,
+    totalSteps,
+  }));
+
+  React.useEffect(() => {
+    onStateChange?.({ step, canProceed: Boolean(canProceed()) });
+  }, [step, title, description, category, minMembers, maxMembers, eventDate, eventTime]);
+
   const handleCreate = () => {
     const newGroup: Group = {
       id: `g-${Date.now()}`,
@@ -131,32 +155,6 @@ export function CreateScreen({
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View
-        style={[
-          styles.headerRow,
-          {
-            backgroundColor: colors.glassThickBg,
-            borderBottomColor: colors.glassBorder,
-          },
-        ]}
-      >
-        <GlassBackButton onPress={handlePrev} />
-        <View style={{ flex: 1, marginHorizontal: 12 }}>
-          <StepProgressBar currentStep={step} totalSteps={totalSteps} />
-        </View>
-        <TouchableOpacity
-          activeOpacity={0.75}
-          onPress={() => setShowAI(true)}
-          style={[
-            styles.aiBtn,
-            { backgroundColor: colors.glassThinBg, borderColor: colors.glassBorder },
-          ]}
-        >
-          <Sparkles size={16} color="#f472b6" strokeWidth={2.4} />
-        </TouchableOpacity>
-      </View>
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -361,27 +359,6 @@ export function CreateScreen({
         )}
       </ScrollView>
 
-      {/* Bottom control */}
-      <View
-        style={[
-          styles.footerWrap,
-          {
-            backgroundColor: colors.glassThickBg,
-            borderTopColor: colors.glassBorder,
-          },
-        ]}
-      >
-        <GlassButton
-          size="lg"
-          fullWidth
-          onPress={handleNext}
-          disabled={!canProceed()}
-          iconRight={step === totalSteps - 1 ? 'Check' : 'ArrowRight'}
-        >
-          {step === totalSteps - 1 ? 'Deploy Operation' : 'Continue'}
-        </GlassButton>
-      </View>
-
       <AISuggestionsSheet
         open={showAI}
         onClose={() => setShowAI(false)}
@@ -389,7 +366,7 @@ export function CreateScreen({
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -413,8 +390,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 90,
+    paddingTop: 84,
+    paddingBottom: 185,
   },
   stepTitle: {
     fontSize: 22,
@@ -434,11 +411,34 @@ const styles = StyleSheet.create({
   },
   footerWrap: {
     position: 'absolute',
-    bottom: 0,
+    bottom: Platform.OS === 'ios' ? 98 : 88,
     left: 0,
     right: 0,
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderTopWidth: 1,
+    zIndex: 80,
+  },
+  continueButton: {
+    position: 'relative',
+    height: 52,
+    borderRadius: 36,
+    borderWidth: 1,
+    overflow: 'visible',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
+    elevation: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  continueText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

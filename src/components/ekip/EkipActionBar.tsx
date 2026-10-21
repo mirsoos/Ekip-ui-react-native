@@ -1,47 +1,83 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { GlassCard, GlassButton } from '../Glass';
+import { View, Text, StyleSheet, Platform } from 'react-native';
+import { GlassButton } from '../Glass';
+import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
-import type { GroupRequest } from '../../types/database';
-
-export interface EkipActionBarProps {
-  isOwner: boolean;
-  isMember: boolean;
-  myRequest?: GroupRequest;
-  eligible: boolean;
-  full: boolean;
-  autoAccept: boolean;
-  onStartChat: () => void;
-  onOpenJoinSheet: () => void;
-  onCancelRequest: () => void;
-}
+import { useAppData } from '../../lib/appData';
+import type { Group } from '../../types/database';
 
 export function EkipActionBar({
-  isOwner,
-  isMember,
-  myRequest,
-  eligible,
-  full,
-  autoAccept,
-  onStartChat,
+  group,
+  onOpenProfile,
+  onOpenChat,
   onOpenJoinSheet,
   onCancelRequest,
-}: EkipActionBarProps) {
-  const { colors } = useTheme();
+}: {
+  group: Group;
+  onOpenProfile?: (userId: string) => void;
+  onOpenChat?: (conversationId: string) => void;
+  onOpenJoinSheet?: () => void;
+  onCancelRequest?: () => void;
+}) {
+  const { me, members, requests, conversations } = useAppData();
+  const { colors, isDark } = useTheme();
   const ClockIcon = getIcon('Clock');
 
+  const groupMembers = members.filter((m) => m.group_id === group.id && m.status === 'active');
+  const myRequest = requests.find((r) => r.group_id === group.id && r.user_id === 'me');
+  const isOwner = group.owner_id === 'me';
+  const isMember = groupMembers.some((m) => m.user_id === 'me');
+
+  const levelOk = !group.required_level || me.level >= group.required_level;
+  const honorOk = !group.required_honor || me.honor_score >= group.required_honor;
+  const ageOk =
+    (!group.age_min || (me.age ?? 0) >= group.age_min) &&
+    (!group.age_max || (me.age ?? 0) <= group.age_max);
+  const genderOk =
+    !group.gender_preference ||
+    group.gender_preference === 'any' ||
+    me.gender === group.gender_preference;
+  const premiumOk = !group.premium_only || me.is_premium;
+  const eligible = levelOk && honorOk && ageOk && genderOk && premiumOk;
+  const spotsLeft = group.max_members ? group.max_members - group.member_count : null;
+  const full = spotsLeft !== null && spotsLeft <= 0;
+
+  const handleStartChat = () => {
+    if (!onOpenChat) return;
+    const existing = conversations.find((c) => c.group_id === group.id);
+    if (existing) onOpenChat(existing.id);
+    else onOpenChat('c2');
+  };
+
   return (
-    <View style={styles.container}>
-      <GlassCard variant="thick" style={styles.card}>
+    <View style={styles.outerContainer} pointerEvents="box-none">
+      <View
+        style={[
+          styles.dockContainer,
+          {
+            borderColor: colors.glassBorderStrong,
+          },
+        ]}
+      >
+        {/* 360° Liquid Glass Lens */}
+        <LiquidLens
+          borderRadius={36}
+          marginWidth={16}
+          scale={36}
+          blurDeviation={2.0}
+          overlayOpacity={isDark ? 0.08 : 0.15}
+          style={StyleSheet.absoluteFill}
+        />
+
         {isOwner ? (
           <View style={styles.row}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, zIndex: 10 }}>
               <GlassButton variant="secondary" icon="Edit" fullWidth>
                 Edit
               </GlassButton>
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, zIndex: 10 }}>
               <GlassButton variant="secondary" icon="Users" fullWidth>
                 Manage
               </GlassButton>
@@ -49,17 +85,17 @@ export function EkipActionBar({
           </View>
         ) : isMember || myRequest?.status === 'accepted' ? (
           <View style={styles.row}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, zIndex: 10 }}>
               <GlassButton
                 variant="secondary"
                 icon="MessageCircle"
                 fullWidth
-                onPress={onStartChat}
+                onPress={handleStartChat}
               >
                 Chat
               </GlassButton>
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, zIndex: 10 }}>
               <GlassButton variant="secondary" icon="CheckCircle2" fullWidth>
                 Deployed
               </GlassButton>
@@ -73,52 +109,77 @@ export function EkipActionBar({
                 Pending Clearance
               </Text>
             </View>
-            <GlassButton variant="secondary" icon="X" onPress={onCancelRequest}>
-              Cancel
-            </GlassButton>
+            <View style={{ zIndex: 10 }}>
+              <GlassButton variant="secondary" icon="X" onPress={onCancelRequest}>
+                Cancel
+              </GlassButton>
+            </View>
           </View>
         ) : (
-          <GlassButton
-            fullWidth
-            size="lg"
-            icon="UserPlus"
-            onPress={onOpenJoinSheet}
-            disabled={!eligible || full}
-          >
-            {!eligible
-              ? 'Clearance Not Met'
-              : full
-              ? 'Squad Full'
-              : autoAccept
-              ? 'Deploy Now'
-              : 'Request Clearance'}
-          </GlassButton>
+          <View style={{ width: '100%', zIndex: 10 }}>
+            <GlassButton
+              fullWidth
+              size="lg"
+              icon="UserPlus"
+              onPress={onOpenJoinSheet}
+              disabled={!eligible || full}
+            >
+              {!eligible
+                ? 'Clearance Not Met'
+                : full
+                ? 'Squad Full'
+                : group.auto_accept
+                ? 'Deploy Now'
+                : 'Request Clearance'}
+            </GlassButton>
+          </View>
         )}
-      </GlassCard>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    paddingTop: 8,
+  outerContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingBottom: Platform.OS === 'ios' ? 22 : 12,
+    zIndex: 900,
   },
-  card: {
-    padding: 10,
-    borderRadius: 24,
+  dockContainer: {
+    position: 'relative',
+    borderRadius: 36,
+    borderWidth: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
+    elevation: 14,
+    overflow: 'visible',
+    ...(Platform.OS === 'web'
+      ? ({
+          userSelect: 'none',
+        } as any)
+      : {}),
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    width: '100%',
+    zIndex: 10,
   },
   pendingIndicator: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
   },
   pendingText: {
     fontSize: 13,

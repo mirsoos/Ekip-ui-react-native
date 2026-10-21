@@ -190,19 +190,6 @@ export function EkipDetail({
         </View>
       </ScrollView>
 
-      {/* Floating Bottom Action Bar */}
-      <EkipActionBar
-        isOwner={isOwner}
-        isMember={isMember}
-        myRequest={myRequest}
-        eligible={eligible}
-        full={full}
-        autoAccept={group.auto_accept}
-        onStartChat={handleStartChat}
-        onOpenJoinSheet={() => setShowJoinSheet(true)}
-        onCancelRequest={() => setShowCancel(true)}
-      />
-
       {/* Join Sheet */}
       <EkipJoinModal
         open={showJoinSheet}
@@ -255,7 +242,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 90,
   },
   bodyWrap: {
     paddingHorizontal: 16,
