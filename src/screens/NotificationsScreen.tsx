@@ -28,12 +28,6 @@ export function NotificationsScreen({
 
   return (
     <View style={styles.container}>
-      <ScreenHeader
-        title="Notifications"
-        subtitle={`${unreadCount} unread`}
-        onBack={onBack}
-      />
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -73,7 +67,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 84,
     paddingBottom: 40,
   },
 });

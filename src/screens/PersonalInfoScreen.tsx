@@ -67,12 +67,6 @@ export function PersonalInfoScreen({
 
   return (
     <View style={styles.container}>
-      <ScreenHeader
-        title="Personal Information"
-        subtitle="Operator Dossier"
-        onBack={onBack}
-      />
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -236,7 +230,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 84,
     paddingBottom: 40,
   },
   fieldLabel: {

@@ -120,22 +120,7 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <GlassBackButton onClick={onBack} />
-          <View style={{ marginLeft: 12 }}>
-            <Text style={styles.headerTitle}>Security & Access</Text>
-            <Text style={styles.headerSubtitle}>Passkeys, credentials & multi-factor shield</Text>
-          </View>
-        </View>
-        <View style={styles.badgePill}>
-          <ShieldCheck size={13} color="#10b981" />
-          <Text style={styles.badgeText}>Secured</Text>
-        </View>
-      </View>
-
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingTop: 84, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
         {/* Passkey / Biometrics Card */}
         <GlassCard variant="thick" style={styles.heroCard}>
           <View style={styles.heroHeader}>

@@ -26,18 +26,7 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <GlassBackButton onClick={onBack} />
-          <View style={{ marginLeft: 12 }}>
-            <Text style={styles.headerTitle}>Chat Theme</Text>
-            <Text style={styles.headerSubtitle}>Personalize squad conversation bubbles</Text>
-          </View>
-        </View>
-      </View>
-
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingTop: 84, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
         {/* Live Preview Card */}
         <Text style={styles.sectionHeading}>LIVE CHAT PREVIEW</Text>
         <GlassCard variant="thick" style={styles.previewCard}>

@@ -112,22 +112,7 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <GlassBackButton onClick={onBack} />
-          <View style={{ marginLeft: 12 }}>
-            <Text style={styles.headerTitle}>Identity Verification</Text>
-            <Text style={styles.headerSubtitle}>Official trust credentials & badge</Text>
-          </View>
-        </View>
-        <View style={styles.badgePill}>
-          <ShieldCheck size={14} color="#ec4899" />
-          <Text style={styles.badgeText}>{isVerified ? 'Verified' : 'Pending'}</Text>
-        </View>
-      </View>
-
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingTop: 84, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
         {/* Hero Card */}
         <GlassCard variant="thick" style={styles.heroCard}>
           <View style={styles.avatarWrap}>

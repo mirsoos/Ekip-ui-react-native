@@ -91,22 +91,7 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <GlassBackButton onClick={onBack} />
-          <View style={{ marginLeft: 12 }}>
-            <Text style={styles.headerTitle}>Location & Radar</Text>
-            <Text style={styles.headerSubtitle}>City hub, discovery radius & geofencing</Text>
-          </View>
-        </View>
-        <View style={styles.badgePill}>
-          <MapPin size={13} color="#10b981" />
-          <Text style={styles.badgeText}>GPS Active</Text>
-        </View>
-      </View>
-
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingTop: 84, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
         {/* Current Radar Card */}
         <GlassCard variant="thick" style={styles.heroCard}>
           <View style={styles.heroHeader}>

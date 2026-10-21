@@ -354,7 +354,15 @@ function MainContent() {
           return conv ? <ChatHeader conversation={conv} onBack={pop} /> : null;
         })()}
 
-        {screen.name === 'settings' && <SettingsHeader onBack={pop} />}
+        {screen.name === 'settings' && <SettingsHeader onBack={pop} title="Settings" />}
+        {screen.name === 'plans' && <SettingsHeader onBack={pop} title="Subscription Plans" />}
+        {screen.name === 'personalInfo' && <SettingsHeader onBack={pop} title="Personal Information" />}
+        {screen.name === 'verification' && <SettingsHeader onBack={pop} title="Identity Verification" />}
+        {screen.name === 'privacy' && <SettingsHeader onBack={pop} title="Privacy & Visibility" />}
+        {screen.name === 'security' && <SettingsHeader onBack={pop} title="Security & Access" />}
+        {screen.name === 'location' && <SettingsHeader onBack={pop} title="Location & Radar" />}
+        {screen.name === 'chatTheme' && <SettingsHeader onBack={pop} title="Chat Theme" />}
+        {screen.name === 'notifications' && <SettingsHeader onBack={pop} title="Notifications" />}
 
         {screen.name === 'group' && (
           <EkipActionBar

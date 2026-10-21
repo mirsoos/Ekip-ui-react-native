@@ -84,22 +84,7 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <GlassBackButton onClick={onBack} />
-          <View style={{ marginLeft: 12 }}>
-            <Text style={styles.headerTitle}>Privacy & Visibility</Text>
-            <Text style={styles.headerSubtitle}>Control who sees you and how you connect</Text>
-          </View>
-        </View>
-        <View style={styles.badgePill}>
-          <Lock size={13} color="#ec4899" />
-          <Text style={styles.badgeText}>Protected</Text>
-        </View>
-      </View>
-
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingTop: 84, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
         {/* Ghost Mode Card */}
         <GlassCard variant="thick" style={styles.heroCard}>
           <View style={styles.ghostHeader}>

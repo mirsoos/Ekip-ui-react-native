@@ -70,18 +70,7 @@ export function PlansScreen({ onBack }: PlansScreenProps) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <GlassBackButton onClick={onBack} />
-          <View style={{ marginLeft: 12 }}>
-            <Text style={styles.headerTitle}>Subscription Plans</Text>
-            <Text style={styles.headerSubtitle}>Upgrade your Ekip tactical privileges</Text>
-          </View>
-        </View>
-      </View>
-
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingTop: 84, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
         {/* Hero Badge */}
         <View style={styles.heroBadge}>
           <View style={styles.crownIcon}>
