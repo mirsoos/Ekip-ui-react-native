@@ -7,6 +7,7 @@ import { AppDataProvider } from './src/lib/appData';
 import { BottomNav, type TabKey } from './src/components/BottomNav';
 import { ChatHeader } from './src/components/chat/ChatHeader';
 import { ChatListHeader } from './src/components/chat/ChatListHeader';
+import { ChatInputBar } from './src/components/chat/ChatInputBar';
 import { DiscoverHeader } from './src/components/discover/DiscoverHeader';
 import { ActivityHeader } from './src/components/activity/ActivityHeader';
 import { SettingsHeader } from './src/components/settings/SettingsHeader';
@@ -64,7 +65,7 @@ export type Screen =
 
 function MainContent() {
   const { isDark } = useTheme();
-  const { me, conversations, notifications } = useAppData();
+  const { me, conversations, notifications, addMessage } = useAppData();
 
   const [authed, setAuthed] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
@@ -75,6 +76,7 @@ function MainContent() {
   const [chatSearch, setChatSearch] = useState('');
   const [discoverSearch, setDiscoverSearch] = useState('');
   const [activityTab, setActivityTab] = useState('created');
+  const [chatInputText, setChatInputText] = useState('');
   const createRef = React.useRef<CreateScreenHandle>(null);
   const discoverRef = React.useRef<DiscoverScreenHandle>(null);
 
@@ -351,7 +353,21 @@ function MainContent() {
 
         {screen.name === 'conversation' && (() => {
           const conv = conversations.find((c) => c.id === screen.conversationId);
-          return conv ? <ChatHeader conversation={conv} onBack={pop} /> : null;
+          return conv ? (
+            <>
+              <ChatHeader conversation={conv} onBack={pop} />
+              <ChatInputBar
+                value={chatInputText}
+                onChange={setChatInputText}
+                onSend={() => {
+                  if (!chatInputText.trim()) return;
+                  addMessage(screen.conversationId, chatInputText.trim());
+                  setChatInputText('');
+                }}
+                placeholder="Transmit secure dispatch..."
+              />
+            </>
+          ) : null;
         })()}
 
         {screen.name === 'settings' && <SettingsHeader onBack={pop} title="Settings" />}

@@ -100,13 +100,6 @@ export function ConversationScreen({
           );
         })}
       </ScrollView>
-
-      <ChatInputBar
-        value={input}
-        onChange={setInput}
-        onSend={handleSend}
-        placeholder="Transmit secure dispatch..."
-      />
     </KeyboardAvoidingView>
   );
 }
@@ -143,6 +136,6 @@ const styles = StyleSheet.create({
   },
   messagesContent: {
     paddingTop: 84,
-    paddingBottom: 16,
+    paddingBottom: 80,
   },
 });
