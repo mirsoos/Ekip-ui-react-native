@@ -7,6 +7,7 @@ import { AppDataProvider } from './src/lib/appData';
 import { BottomNav, type TabKey } from './src/components/BottomNav';
 import { ChatHeader } from './src/components/chat/ChatHeader';
 import { ChatListHeader } from './src/components/chat/ChatListHeader';
+import { DiscoverHeader } from './src/components/discover/DiscoverHeader';
 import { SettingsHeader } from './src/components/settings/SettingsHeader';
 import { EkipActionBar } from './src/components/ekip/EkipActionBar';
 import { CreateContinueButton } from './src/components/create/CreateContinueButton';
@@ -18,7 +19,7 @@ import type { Group } from './src/types/database';
 // Screens
 import { AuthScreen } from './src/screens/AuthScreen';
 import { Onboarding } from './src/screens/Onboarding';
-import { DiscoverScreen } from './src/screens/DiscoverScreen';
+import { DiscoverScreen, type DiscoverScreenHandle } from './src/screens/DiscoverScreen';
 import { EkipDetail } from './src/screens/EkipDetail';
 import { CreateScreen, type CreateScreenHandle } from './src/screens/CreateScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
@@ -62,7 +63,7 @@ export type Screen =
 
 function MainContent() {
   const { isDark } = useTheme();
-  const { conversations, notifications } = useAppData();
+  const { me, conversations, notifications } = useAppData();
 
   const [authed, setAuthed] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
@@ -71,7 +72,9 @@ function MainContent() {
   const [history, setHistory] = useState<Screen[]>([]);
   const [createState, setCreateState] = useState({ step: 0, canProceed: false });
   const [chatSearch, setChatSearch] = useState('');
+  const [discoverSearch, setDiscoverSearch] = useState('');
   const createRef = React.useRef<CreateScreenHandle>(null);
+  const discoverRef = React.useRef<DiscoverScreenHandle>(null);
 
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
 
@@ -179,6 +182,9 @@ function MainContent() {
           <ScreenTransition screenKey={`${screen.name}-${tab}-${history.length}`}>
             {screen.name === 'discover' && (
               <DiscoverScreen
+                ref={discoverRef}
+                search={discoverSearch}
+                onChangeSearch={setDiscoverSearch}
                 onOpenGroup={(g) => push({ name: 'group', group: g })}
                 onOpenProfile={(uid) => push({ name: 'profile', userId: uid })}
                 onOpenOwnProfile={() => {
@@ -312,6 +318,23 @@ function MainContent() {
           </ScreenTransition>
         </SwipeNavigationContainer>
         </View>
+
+        {screen.name === 'discover' && (
+          <DiscoverHeader
+            user={me}
+            unreadCount={notifications.filter((n) => !n.is_read).length}
+            search={discoverSearch}
+            onChangeSearch={setDiscoverSearch}
+            hasActiveFilters={false}
+            onOpenFilters={() => discoverRef.current?.openFilters()}
+            onOpenNotifications={() => setIsNotificationSheetOpen(true)}
+            onOpenOwnProfile={() => {
+              setTab('profile');
+              setHistory([]);
+              setScreen({ name: 'profile', userId: 'me' });
+            }}
+          />
+        )}
 
         {screen.name === 'conversation' && (() => {
           const conv = conversations.find((c) => c.id === screen.conversationId);

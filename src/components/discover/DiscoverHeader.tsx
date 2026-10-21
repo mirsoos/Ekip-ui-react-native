@@ -32,120 +32,152 @@ export function DiscoverHeader({
   const SlidersIcon = getIcon('SlidersHorizontal');
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.glassThickBg,
-          borderBottomColor: colors.glassBorder,
-        },
-      ]}
-    >
-      <View style={styles.topRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.cityText, { color: colors.textTertiary }]}>
-            {user.city}
-          </Text>
-          <Text style={[styles.titleText, { color: colors.textPrimary }]}>
-            Discover
-          </Text>
-        </View>
+    <View style={styles.outerContainer} pointerEvents="box-none">
+      <View
+        style={[
+          styles.container,
+          {
+            borderColor: colors.glassBorderStrong,
+          },
+        ]}
+      >
+        {/* 360° Liquid Glass Lens */}
+        <LiquidLens
+          borderRadius={28}
+          marginWidth={16}
+          scale={36}
+          blurDeviation={2.0}
+          overlayOpacity={isDark ? 0.08 : 0.15}
+          style={StyleSheet.absoluteFill}
+        />
 
-        <View style={styles.topActions}>
-          <NotificationButton
-            unreadCount={unreadCount}
-            onPress={onOpenNotifications}
-          />
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={onOpenOwnProfile}
-            style={{ marginLeft: 8 }}
-          >
-            <GlassAvatar
-              src={user.avatar_url}
-              name={`${user.first_name} ${user.last_name}`}
-              size={38}
-              online
+        <View style={styles.topRow}>
+          <View style={{ flex: 1, zIndex: 10 }}>
+            <Text style={[styles.cityText, { color: colors.textTertiary }]}>
+              {user.city}
+            </Text>
+            <Text style={[styles.titleText, { color: colors.textPrimary }]}>
+              Discover
+            </Text>
+          </View>
+
+          <View style={[styles.topActions, { zIndex: 10 }]}>
+            <NotificationButton
+              unreadCount={unreadCount}
+              onPress={onOpenNotifications}
             />
-          </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={onOpenOwnProfile}
+              style={{ marginLeft: 8 }}
+            >
+              <GlassAvatar
+                src={user.avatar_url}
+                name={`${user.first_name} ${user.last_name}`}
+                size={38}
+                online
+              />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.searchRow}>
-        <View style={{ flex: 1 }}>
-          <GlassInput
-            icon="Search"
-            placeholder="Search Ekips, tags, sectors..."
-            value={search}
-            onChangeText={onChangeSearch}
-          />
-        </View>
-
-        <TouchableOpacity
-          activeOpacity={0.75}
-          onPress={onOpenFilters}
-          style={[
-            styles.filterBtn,
-            {
-              borderColor: hasActiveFilters
-                ? colors.accentPink
-                : colors.glassBorderStrong,
-            },
-          ]}
-        >
-          <LiquidLens
-            borderRadius={20}
-            marginWidth={9}
-            scale={22}
-            blurDeviation={1.6}
-            overlayOpacity={
-              hasActiveFilters
-                ? 0.25
-                : isDark
-                ? 0.10
-                : 0.22
-            }
-            style={StyleSheet.absoluteFill}
-          />
-          {hasActiveFilters && (
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  backgroundColor: 'rgba(244, 114, 182, 0.20)',
-                  borderRadius: 20,
-                  zIndex: 1,
-                  pointerEvents: 'none',
-                },
-              ]}
-            />
-          )}
-          <View style={styles.filterIconWrap}>
-            <SlidersIcon
-              size={18}
-              color={hasActiveFilters ? colors.accentPink : colors.textPrimary}
-              strokeWidth={2.2}
+        <View style={[styles.searchRow, { zIndex: 10 }]}>
+          <View style={{ flex: 1 }}>
+            <GlassInput
+              icon="Search"
+              placeholder="Search Ekips, tags, sectors..."
+              value={search}
+              onChangeText={onChangeSearch}
+              style={{
+                backgroundColor: isDark ? '#101625' : '#f0f4fa',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+              }}
             />
           </View>
-        </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.75}
+            onPress={onOpenFilters}
+            style={[
+              styles.filterBtn,
+              {
+                borderColor: hasActiveFilters
+                  ? colors.accentPink
+                  : colors.glassBorderStrong,
+              },
+            ]}
+          >
+            <LiquidLens
+              borderRadius={20}
+              marginWidth={9}
+              scale={22}
+              blurDeviation={1.6}
+              overlayOpacity={
+                hasActiveFilters
+                  ? 0.25
+                  : isDark
+                  ? 0.10
+                  : 0.22
+              }
+              style={StyleSheet.absoluteFill}
+            />
+            {hasActiveFilters && (
+              <View
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    backgroundColor: 'rgba(244, 114, 182, 0.20)',
+                    borderRadius: 20,
+                    zIndex: 1,
+                    pointerEvents: 'none',
+                  },
+                ]}
+              />
+            )}
+            <View style={styles.filterIconWrap}>
+              <SlidersIcon
+                size={18}
+                color={hasActiveFilters ? colors.accentPink : colors.textPrimary}
+                strokeWidth={2.2}
+              />
+            </View>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingTop: Platform.OS === 'ios' ? 12 : 10,
+    zIndex: 900,
+  },
   container: {
+    position: 'relative',
+    borderRadius: 28,
+    borderWidth: 1,
     paddingHorizontal: 16,
     paddingTop: 14,
     paddingBottom: 12,
-    borderBottomWidth: 1,
-    zIndex: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
+    elevation: 14,
+    overflow: 'visible',
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 10,
+    zIndex: 10,
   },
   cityText: {
     fontSize: 11,
@@ -166,6 +198,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    zIndex: 10,
   },
   filterBtn: {
     width: 44,

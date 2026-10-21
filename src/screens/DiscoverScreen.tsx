@@ -11,28 +11,44 @@ import { cities } from '../lib/demoData';
 import { useTheme } from '../lib/theme';
 import type { Group } from '../types/database';
 
-export function DiscoverScreen({
-  onOpenGroup,
-  onOpenProfile,
-  onOpenOwnProfile,
-  onOpenAI,
-  onOpenNotifications,
-}: {
-  onOpenGroup: (group: Group) => void;
-  onOpenProfile: (userId: string) => void;
-  onOpenOwnProfile: () => void;
-  onOpenAI: () => void;
-  onOpenNotifications: () => void;
-}) {
+export interface DiscoverScreenHandle {
+  openFilters: () => void;
+}
+
+export const DiscoverScreen = React.forwardRef<
+  DiscoverScreenHandle,
+  {
+    search?: string;
+    onChangeSearch?: (val: string) => void;
+    onOpenGroup: (group: Group) => void;
+    onOpenProfile: (userId: string) => void;
+    onOpenOwnProfile: () => void;
+    onOpenAI: () => void;
+    onOpenNotifications: () => void;
+  }
+>(function DiscoverScreen(
+  {
+    search = '',
+    onChangeSearch,
+    onOpenGroup,
+    onOpenProfile,
+    onOpenOwnProfile,
+    onOpenAI,
+    onOpenNotifications,
+  },
+  ref
+) {
   const { groups, me, profiles, notifications } = useAppData();
   const { colors } = useTheme();
 
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
-  const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'work' | 'entertainment'>('all');
   const [cityFilter, setCityFilter] = useState('all');
   const [premiumOnly, setPremiumOnly] = useState(false);
+
+  React.useImperativeHandle(ref, () => ({
+    openFilters: () => setShowFilters(true),
+  }));
 
   const filtered = useMemo(() => {
     let result = [...groups];
@@ -62,23 +78,12 @@ export function DiscoverScreen({
     setCategoryFilter('all');
     setCityFilter('all');
     setPremiumOnly(false);
-    setSearch('');
+    onChangeSearch?.('');
     setShowFilters(false);
   };
 
   return (
     <View style={styles.container}>
-      <DiscoverHeader
-        user={me}
-        unreadCount={unreadCount}
-        search={search}
-        onChangeSearch={setSearch}
-        hasActiveFilters={hasActiveFilters}
-        onOpenFilters={() => setShowFilters(true)}
-        onOpenNotifications={onOpenNotifications}
-        onOpenOwnProfile={onOpenOwnProfile}
-      />
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -169,13 +174,14 @@ export function DiscoverScreen({
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   scrollContent: {
+    paddingTop: 145,
     paddingBottom: 110,
   },
   sectionWrap: {
