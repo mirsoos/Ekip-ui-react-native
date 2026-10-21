@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { GlassButton, GlassInput, GlassBackButton, GlassSegmented } from '../Glass';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { GlassInput, GlassBackButton, GlassSegmented } from '../Glass';
 import { StepProgressBar } from '../common/StepProgressBar';
+import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 
@@ -14,7 +15,7 @@ export function RegisterWizard({
   onBack: () => void;
   onComplete: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [step, setStep] = useState(0);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -44,18 +45,33 @@ export function RegisterWizard({
     else setStep(step - 1);
   };
 
+  const isFinal = step === totalSteps - 1;
+  const NextIcon = getIcon(isFinal ? 'Check' : 'ArrowRight');
+
   return (
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.container}
-    >
-      {/* Header */}
-      <View style={styles.headerRow}>
-        <GlassBackButton onPress={handlePrev} />
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <StepProgressBar currentStep={step} totalSteps={totalSteps} />
+    <View style={styles.root}>
+      {/* 360° Liquid Glass Header */}
+      <View style={styles.headerOuter} pointerEvents="box-none">
+        <View style={[styles.headerContainer, { borderColor: colors.glassBorderStrong }]}>
+          <LiquidLens
+            borderRadius={36}
+            marginWidth={16}
+            scale={36}
+            blurDeviation={2.0}
+            overlayOpacity={isDark ? 0.08 : 0.15}
+            style={StyleSheet.absoluteFill}
+          />
+          <GlassBackButton onPress={handlePrev} style={{ zIndex: 10 }} />
+          <View style={{ flex: 1, marginHorizontal: 12, zIndex: 10 }}>
+            <StepProgressBar currentStep={step} totalSteps={totalSteps} />
+          </View>
         </View>
       </View>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.container}
+      >
 
       {step === 0 && (
         <View key={0} className="animate-raise" style={{ gap: 14 }}>
@@ -187,30 +203,111 @@ export function RegisterWizard({
         </View>
       )}
 
-      <View style={{ marginTop: 28 }}>
-        <GlassButton
-          size="lg"
-          fullWidth
+      </ScrollView>
+
+      {/* 360° Liquid Glass Continue Button */}
+      <View style={styles.footerWrap} pointerEvents="box-none">
+        <TouchableOpacity
+          activeOpacity={0.85}
           onPress={handleNext}
           disabled={!canProceed()}
+          style={[
+            styles.continueButton,
+            {
+              borderColor: colors.glassBorderStrong,
+              opacity: canProceed() ? 1 : 0.45,
+            },
+          ]}
         >
-          {step === totalSteps - 1 ? 'Enter Command HQ' : 'Continue'}
-        </GlassButton>
+          <LiquidLens
+            borderRadius={36}
+            marginWidth={16}
+            scale={36}
+            blurDeviation={2.0}
+            overlayOpacity={isDark ? 0.08 : 0.15}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.buttonContent}>
+            <Text style={[styles.continueText, { color: colors.textPrimary }]}>
+              {isFinal ? 'Enter Command HQ' : 'Continue'}
+            </Text>
+            <NextIcon
+              size={18}
+              color={colors.textPrimary}
+              strokeWidth={2.4}
+              style={{ marginLeft: 8 }}
+            />
+          </View>
+        </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 40,
+  root: {
+    flex: 1,
   },
-  headerRow: {
+  headerOuter: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingTop: Platform.OS === 'ios' ? 12 : 10,
+    zIndex: 900,
+  },
+  headerContainer: {
+    position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    borderRadius: 36,
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
+    elevation: 14,
+    overflow: 'visible',
+  },
+  container: {
+    paddingHorizontal: 20,
+    paddingTop: 84,
+    paddingBottom: 110,
+  },
+  footerWrap: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 24 : 16,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    zIndex: 900,
+  },
+  continueButton: {
+    position: 'relative',
+    height: 52,
+    borderRadius: 36,
+    borderWidth: 1,
+    overflow: 'visible',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
+    elevation: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  continueText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   title: {
     fontSize: 24,
