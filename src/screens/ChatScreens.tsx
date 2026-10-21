@@ -12,56 +12,20 @@ import { useTheme } from '../lib/theme';
 export function ChatListScreen({
   onOpenConversation,
   onOpenNotifications,
+  search = '',
 }: {
   onOpenConversation: (id: string) => void;
   onOpenNotifications: () => void;
+  search?: string;
 }) {
-  const { conversations, notifications } = useAppData();
-  const { colors } = useTheme();
-  const [search, setSearch] = useState('');
+  const { conversations } = useAppData();
 
   const filtered = conversations.filter((c) =>
     c.title.toLowerCase().includes(search.toLowerCase())
   );
-  const unreadTotal = conversations.reduce((s, c) => s + c.unread_count, 0);
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View
-        style={[
-          styles.headerWrap,
-          {
-            backgroundColor: colors.glassThickBg,
-            borderBottomColor: colors.glassBorder,
-          },
-        ]}
-      >
-        <View style={styles.headerTop}>
-          <View>
-            <Text style={[styles.heading, { color: colors.textPrimary }]}>
-              Encrypted Comms
-            </Text>
-            <Text style={[styles.subheading, { color: colors.textSecondary }]}>
-              {unreadTotal} unread transmissions
-            </Text>
-          </View>
-          <NotificationButton
-            unreadCount={notifications.filter((n) => !n.is_read).length}
-            onPress={onOpenNotifications}
-          />
-        </View>
-
-        <View style={{ marginTop: 12 }}>
-          <GlassInput
-            icon="Search"
-            placeholder="Search channels & operators..."
-            value={search}
-            onChangeText={setSearch}
-          />
-        </View>
-      </View>
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
@@ -174,7 +138,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingTop: 155,
     paddingBottom: 110,
   },
   messagesContent: {

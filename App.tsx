@@ -6,6 +6,7 @@ import { ThemeProvider, useTheme } from './src/lib/theme';
 import { AppDataProvider } from './src/lib/appData';
 import { BottomNav, type TabKey } from './src/components/BottomNav';
 import { ChatHeader } from './src/components/chat/ChatHeader';
+import { ChatListHeader } from './src/components/chat/ChatListHeader';
 import { SettingsHeader } from './src/components/settings/SettingsHeader';
 import { EkipActionBar } from './src/components/ekip/EkipActionBar';
 import { CreateContinueButton } from './src/components/create/CreateContinueButton';
@@ -61,7 +62,7 @@ export type Screen =
 
 function MainContent() {
   const { isDark } = useTheme();
-  const { conversations } = useAppData();
+  const { conversations, notifications } = useAppData();
 
   const [authed, setAuthed] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
@@ -69,6 +70,7 @@ function MainContent() {
   const [screen, setScreen] = useState<Screen>({ name: 'discover' });
   const [history, setHistory] = useState<Screen[]>([]);
   const [createState, setCreateState] = useState({ step: 0, canProceed: false });
+  const [chatSearch, setChatSearch] = useState('');
   const createRef = React.useRef<CreateScreenHandle>(null);
 
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
@@ -250,6 +252,7 @@ function MainContent() {
 
             {screen.name === 'chatList' && (
               <ChatListScreen
+                search={chatSearch}
                 onOpenConversation={(id) => push({ name: 'conversation', conversationId: id })}
                 onOpenNotifications={() => setIsNotificationSheetOpen(true)}
               />
@@ -346,6 +349,16 @@ function MainContent() {
             totalSteps={4}
             disabled={!createState.canProceed}
             onPress={() => createRef.current?.handleNext()}
+          />
+        )}
+
+        {screen.name === 'chatList' && (
+          <ChatListHeader
+            unreadTotal={conversations.reduce((s, c) => s + c.unread_count, 0)}
+            notificationsCount={notifications.filter((n) => !n.is_read).length}
+            search={chatSearch}
+            onChangeSearch={setChatSearch}
+            onOpenNotifications={() => setIsNotificationSheetOpen(true)}
           />
         )}
 
