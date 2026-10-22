@@ -36,6 +36,19 @@ export function ProfileHeader({
   const capsuleAnim = useRef(new Animated.Value(initialDocked ? 1 : 0)).current;
   const isDockedRef = useRef(initialDocked);
 
+  // Avatar entrance animation when navigating into Profile screen
+  const avatarEnterAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    avatarEnterAnim.setValue(0);
+    Animated.spring(avatarEnterAnim, {
+      toValue: 1,
+      bounciness: 6,
+      speed: 12,
+      useNativeDriver: false,
+    }).start();
+  }, [profile.id]);
+
   useEffect(() => {
     const id = scrollY.addListener(({ value }) => {
       const docked = value >= 60;
@@ -100,6 +113,25 @@ export function ProfileHeader({
     outputRange: [1, 38 / 88],
     extrapolate: 'clamp',
   });
+
+  // Avatar page entrance animations
+  const avatarEnterOpacity = avatarEnterAnim.interpolate({
+    inputRange: [0, 0.4, 1],
+    outputRange: [0, 0.8, 1],
+  });
+
+  const avatarEnterScale = avatarEnterAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.65, 1],
+  });
+
+  const avatarEnterTranslateY = avatarEnterAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [20, 0],
+  });
+
+  const combinedTranslateY = Animated.add(translateY, avatarEnterTranslateY);
+  const combinedScale = Animated.multiply(scale, avatarEnterScale);
 
   return (
     <View style={styles.outerContainer} pointerEvents="box-none">
@@ -266,10 +298,11 @@ export function ProfileHeader({
         style={[
           styles.avatarContainer,
           {
+            opacity: avatarEnterOpacity,
             transform: [
-              { translateY },
+              { translateY: combinedTranslateY },
               { translateX },
-              { scale },
+              { scale: combinedScale },
             ],
             borderColor: colors.glassBorderStrong,
           },

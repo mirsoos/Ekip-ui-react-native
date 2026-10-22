@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, TouchableOpacity, StyleSheet, Platform, Animated, Easing } from 'react-native';
 import { GlassBackButton } from '../Glass';
 import { StepProgressBar } from '../common/StepProgressBar';
 import { LiquidLens } from '../LiquidLens';
@@ -20,13 +20,43 @@ export function CreateHeader({
   const { colors, isDark } = useTheme();
   const Sparkles = getIcon('Sparkles');
 
+  const enterAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    enterAnim.setValue(0);
+    Animated.timing(enterAnim, {
+      toValue: 1,
+      duration: 500,
+      easing: Easing.bezier(0.22, 1, 0.36, 1),
+      useNativeDriver: false,
+    }).start();
+  }, []);
+
+  const enterTranslateY = enterAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [20, 0],
+  });
+  const enterOpacity = enterAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+  const enterScale = enterAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.985, 1],
+  });
+
   return (
     <View style={styles.outerContainer} pointerEvents="box-none">
-      <View
+      <Animated.View
         style={[
           styles.container,
           {
             borderColor: colors.glassBorderStrong,
+            opacity: enterOpacity,
+            transform: [
+              { translateY: enterTranslateY },
+              { scale: enterScale },
+            ],
           },
         ]}
       >
@@ -56,7 +86,7 @@ export function CreateHeader({
         >
           <Sparkles size={16} color="#f472b6" strokeWidth={2.4} />
         </TouchableOpacity>
-      </View>
+      </Animated.View>
     </View>
   );
 }

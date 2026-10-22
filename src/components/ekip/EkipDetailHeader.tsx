@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Image, TouchableOpacity, StyleSheet, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassBackButton } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
@@ -23,8 +23,44 @@ export function EkipDetailHeader({
   const ShareIcon = getIcon('Share');
   const BookmarkIcon = getIcon('Bookmark');
 
+  const enterAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    enterAnim.setValue(0);
+    Animated.timing(enterAnim, {
+      toValue: 1,
+      duration: 500,
+      easing: Easing.bezier(0.22, 1, 0.36, 1),
+      useNativeDriver: false,
+    }).start();
+  }, []);
+
+  const enterTranslateY = enterAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [20, 0],
+  });
+  const enterOpacity = enterAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+  const enterScale = enterAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.985, 1],
+  });
+
   return (
-    <View style={styles.container}>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          opacity: enterOpacity,
+          transform: [
+            { translateY: enterTranslateY },
+            { scale: enterScale },
+          ],
+        },
+      ]}
+    >
       {coverUrl ? (
         <Image source={{ uri: coverUrl }} style={styles.image} />
       ) : (
@@ -84,7 +120,7 @@ export function EkipDetailHeader({
           </TouchableOpacity>
         )}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

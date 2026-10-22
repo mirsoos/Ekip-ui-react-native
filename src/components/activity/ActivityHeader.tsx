@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Platform, Animated, Easing } from 'react-native';
 import { GlassSegmented } from '../Glass';
 import { NotificationButton } from '../NotificationButton';
 import { LiquidLens } from '../LiquidLens';
@@ -18,13 +18,43 @@ export function ActivityHeader({
 }) {
   const { colors, isDark } = useTheme();
 
+  const enterAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    enterAnim.setValue(0);
+    Animated.timing(enterAnim, {
+      toValue: 1,
+      duration: 500,
+      easing: Easing.bezier(0.22, 1, 0.36, 1),
+      useNativeDriver: false,
+    }).start();
+  }, []);
+
+  const enterTranslateY = enterAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [20, 0],
+  });
+  const enterOpacity = enterAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+  const enterScale = enterAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.985, 1],
+  });
+
   return (
     <View style={styles.outerContainer} pointerEvents="box-none">
-      <View
+      <Animated.View
         style={[
           styles.container,
           {
             borderColor: colors.glassBorderStrong,
+            opacity: enterOpacity,
+            transform: [
+              { translateY: enterTranslateY },
+              { scale: enterScale },
+            ],
           },
         ]}
       >
@@ -59,7 +89,7 @@ export function ActivityHeader({
             onChange={onChangeTab}
           />
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }

@@ -401,6 +401,7 @@ function MainContent() {
           const isOwn = screen.userId === 'me' || !screen.userId;
           return (
             <ProfileHeader
+              key={screen.userId ?? 'me'}
               profile={profile}
               isOwnProfile={isOwn}
               onBack={pop}
