@@ -15,6 +15,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { getIcon, type IconName } from '../lib/icons';
 import { useTheme } from '../lib/theme';
+import { LiquidLens } from './LiquidLens';
 
 // ============================================
 // GLASS CARD
@@ -502,7 +503,7 @@ export function GlassBackButton({
   onClick?: () => void;
   style?: StyleProp<ViewStyle>;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const IconComp = getIcon('ArrowLeft');
   const handlePress = onPress ?? onClick;
 
@@ -513,13 +514,71 @@ export function GlassBackButton({
       style={[
         styles.backButton,
         {
-          backgroundColor: colors.glassThickBg,
-          borderColor: colors.glassBorder,
+          borderColor: colors.glassBorderStrong,
         },
         style,
       ]}
     >
-      <IconComp size={18} color={colors.textPrimary} strokeWidth={2.4} />
+      <LiquidLens
+        borderRadius={19}
+        marginWidth={8}
+        scale={20}
+        blurDeviation={1.6}
+        overlayOpacity={isDark ? 0.10 : 0.22}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.backButtonIconWrap}>
+        <IconComp size={18} color={colors.textPrimary} strokeWidth={2.4} />
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+// ============================================
+// GLASS CLOSE BUTTON
+// ============================================
+export function GlassCloseButton({
+  onPress,
+  onClick,
+  size = 32,
+  style,
+}: {
+  onPress?: () => void;
+  onClick?: () => void;
+  size?: number;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const { colors, isDark } = useTheme();
+  const CloseIcon = getIcon('X');
+  const handlePress = onPress ?? onClick;
+  const radius = size / 2;
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.75}
+      onPress={handlePress}
+      style={[
+        styles.closeButton,
+        {
+          width: size,
+          height: size,
+          borderRadius: radius,
+          borderColor: colors.glassBorderStrong,
+        },
+        style,
+      ]}
+    >
+      <LiquidLens
+        borderRadius={radius}
+        marginWidth={Math.max(6, Math.round(size * 0.22))}
+        scale={Math.max(14, Math.round(size * 0.55))}
+        blurDeviation={1.5}
+        overlayOpacity={isDark ? 0.10 : 0.22}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.backButtonIconWrap}>
+        <CloseIcon size={Math.round(size * 0.5)} color={colors.textPrimary} strokeWidth={2.4} />
+      </View>
     </TouchableOpacity>
   );
 }
@@ -1037,6 +1096,43 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+    overflow: 'hidden',
+    position: 'relative',
+    ...(Platform.OS === 'web'
+      ? ({
+          cursor: 'pointer',
+        } as any)
+      : {}),
+  },
+  backButtonIconWrap: {
+    zIndex: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+    overflow: 'hidden',
+    position: 'relative',
+    ...(Platform.OS === 'web'
+      ? ({
+          cursor: 'pointer',
+        } as any)
+      : {}),
   },
   segmentedContainer: {
     flexDirection: 'row',

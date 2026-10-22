@@ -11,7 +11,7 @@ import {
   Modal,
 } from 'react-native';
 import { getIcon, type IconName } from '../lib/icons';
-import { GlassButton } from './Glass';
+import { GlassButton, GlassCloseButton } from './Glass';
 import { useTheme } from '../lib/theme';
 
 // ============================================
@@ -141,19 +141,7 @@ export function GlassSheet({
             <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>
               {title ?? ''}
             </Text>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={onClose}
-              style={[
-                styles.closeButton,
-                {
-                  backgroundColor: colors.glassThinBg,
-                  borderColor: colors.glassBorder,
-                },
-              ]}
-            >
-              <CloseIcon size={16} color={colors.textSecondary} strokeWidth={2.4} />
-            </TouchableOpacity>
+            <GlassCloseButton onPress={onClose} />
           </View>
 
           {/* Scrollable content */}

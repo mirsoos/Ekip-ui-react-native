@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { GlassBackButton } from '../Glass';
+import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 
@@ -17,8 +19,7 @@ export function EkipDetailHeader({
   onShare,
   onBookmark,
 }: EkipDetailHeaderProps) {
-  const { colors } = useTheme();
-  const BackIcon = getIcon('ArrowLeft');
+  const { colors, isDark } = useTheme();
   const ShareIcon = getIcon('Share');
   const BookmarkIcon = getIcon('Bookmark');
 
@@ -34,30 +35,30 @@ export function EkipDetailHeader({
         style={styles.gradient}
       />
 
-      {/* Back button */}
-      <TouchableOpacity
-        activeOpacity={0.75}
-        onPress={onBack}
-        style={[
-          styles.actionBtn,
-          styles.backBtn,
-          { backgroundColor: colors.glassThickBg, borderColor: colors.glassBorder },
-        ]}
-      >
-        <BackIcon size={20} color={colors.textPrimary} strokeWidth={2.4} />
-      </TouchableOpacity>
+      {/* Back button with authentic Liquid Glass */}
+      <GlassBackButton onPress={onBack} style={styles.backBtn} />
 
-      {/* Top right actions */}
+      {/* Top right actions with authentic Liquid Glass */}
       <View style={styles.rightActions}>
         <TouchableOpacity
           activeOpacity={0.75}
           onPress={onShare}
           style={[
             styles.actionBtn,
-            { backgroundColor: colors.glassThickBg, borderColor: colors.glassBorder },
+            { borderColor: colors.glassBorderStrong },
           ]}
         >
-          <ShareIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+          <LiquidLens
+            borderRadius={19}
+            marginWidth={8}
+            scale={20}
+            blurDeviation={1.6}
+            overlayOpacity={isDark ? 0.10 : 0.22}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.iconWrap}>
+            <ShareIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+          </View>
         </TouchableOpacity>
 
         {onBookmark && (
@@ -66,10 +67,20 @@ export function EkipDetailHeader({
             onPress={onBookmark}
             style={[
               styles.actionBtn,
-              { backgroundColor: colors.glassThickBg, borderColor: colors.glassBorder },
+              { borderColor: colors.glassBorderStrong },
             ]}
           >
-            <BookmarkIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+            <LiquidLens
+              borderRadius={19}
+              marginWidth={8}
+              scale={20}
+              blurDeviation={1.6}
+              overlayOpacity={isDark ? 0.10 : 0.22}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.iconWrap}>
+              <BookmarkIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+            </View>
           </TouchableOpacity>
         )}
       </View>
@@ -95,9 +106,9 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   actionBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -106,11 +117,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 4,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  iconWrap: {
+    zIndex: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   backBtn: {
     position: 'absolute',
     top: 16,
     left: 16,
+    zIndex: 20,
   },
   rightActions: {
     position: 'absolute',
@@ -118,5 +137,6 @@ const styles = StyleSheet.create({
     right: 16,
     flexDirection: 'row',
     gap: 8,
+    zIndex: 20,
   },
 });

@@ -1,7 +1,7 @@
 import React, { type ReactNode, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getIcon, type IconName } from '../lib/icons';
-import { GlassButton } from './Glass';
+import { GlassButton, GlassCloseButton } from './Glass';
 import { useTheme } from '../lib/theme';
 
 function getPortalTarget(): HTMLElement | null {
@@ -120,17 +120,7 @@ export function GlassSheet({
           ) : (
             <div style={{ height: 24 }} />
           )}
-          <button
-            type="button"
-            onClick={onClose}
-            className="ekip-sheet-close glass-thin glass-specular"
-            aria-label="Close"
-          >
-            {(() => {
-              const CloseIcon = getIcon('X');
-              return <CloseIcon size={16} color="#a0aec0" strokeWidth={2.4} />;
-            })()}
-          </button>
+          <GlassCloseButton onPress={onClose} />
         </div>
 
         {/* Scrollable content */}
