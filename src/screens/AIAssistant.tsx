@@ -1,16 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
-import { ScreenHeader } from '../components/common/ScreenHeader';
+import { ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { AIChatBubble } from '../components/ai/AIChatBubble';
 import { AITypingIndicator } from '../components/ai/AITypingIndicator';
-import { ChatInputBar } from '../components/chat/ChatInputBar';
-import { useTheme } from '../lib/theme';
 
 interface AIMessage {
   id: string;
   role: 'user' | 'ai';
   body: string;
   chips?: string[];
+}
+
+export interface AIAssistantHandle {
+  sendMessage: (text: string) => void;
 }
 
 const suggestions = [
@@ -53,8 +54,10 @@ function getAIResponse(input: string): { body: string; chips?: string[] } {
   return aiResponses.default;
 }
 
-export function AIAssistant({ onBack }: { onBack: () => void }) {
-  const { colors } = useTheme();
+export const AIAssistant = React.forwardRef<
+  AIAssistantHandle,
+  { onBack: () => void }
+>(function AIAssistant({ onBack }, ref) {
   const [messages, setMessages] = useState<AIMessage[]>([
     {
       id: 'init',
@@ -63,7 +66,6 @@ export function AIAssistant({ onBack }: { onBack: () => void }) {
       chips: suggestions.slice(0, 2),
     },
   ]);
-  const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<any>(null);
 
@@ -75,7 +77,6 @@ export function AIAssistant({ onBack }: { onBack: () => void }) {
     if (!text.trim()) return;
     const userMsg: AIMessage = { id: `u-${Date.now()}`, role: 'user', body: text };
     setMessages((prev) => [...prev, userMsg]);
-    setInput('');
     setTyping(true);
 
     setTimeout(() => {
@@ -86,21 +87,19 @@ export function AIAssistant({ onBack }: { onBack: () => void }) {
     }, 1100);
   };
 
+  React.useImperativeHandle(ref, () => ({
+    sendMessage: (text: string) => send(text),
+  }));
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
-      <ScreenHeader
-        title="Command AI"
-        subtitle="Tactical Intelligence & Dispatch"
-        onBack={onBack}
-      />
-
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.messagesContent}
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
       >
         {messages.map((m) => (
@@ -115,22 +114,17 @@ export function AIAssistant({ onBack }: { onBack: () => void }) {
 
         {typing && <AITypingIndicator />}
       </ScrollView>
-
-      <ChatInputBar
-        value={input}
-        onChange={setInput}
-        onSend={() => send(input)}
-        placeholder="Query Command AI..."
-      />
     </KeyboardAvoidingView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollContent: {
-    paddingVertical: 12,
+  messagesContent: {
+    paddingTop: 84,
+    paddingBottom: 80,
+    paddingHorizontal: 16,
   },
 });

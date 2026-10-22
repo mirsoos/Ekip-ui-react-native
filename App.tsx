@@ -11,6 +11,7 @@ import { ChatInputBar } from './src/components/chat/ChatInputBar';
 import { DiscoverHeader } from './src/components/discover/DiscoverHeader';
 import { ActivityHeader } from './src/components/activity/ActivityHeader';
 import { SettingsHeader } from './src/components/settings/SettingsHeader';
+import { AIHeader } from './src/components/ai/AIHeader';
 import { EkipActionBar } from './src/components/ekip/EkipActionBar';
 import { CreateContinueButton } from './src/components/create/CreateContinueButton';
 import { CreateHeader } from './src/components/create/CreateHeader';
@@ -28,7 +29,7 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { ActivityScreen } from './src/screens/ActivityScreen';
 import { ChatListScreen, ConversationScreen } from './src/screens/ChatScreens';
 import { NotificationsScreen } from './src/screens/NotificationsScreen';
-import { AIAssistant } from './src/screens/AIAssistant';
+import { AIAssistant, type AIAssistantHandle } from './src/screens/AIAssistant';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { PlansScreen } from './src/screens/PlansScreen';
 import { PersonalInfoScreen } from './src/screens/PersonalInfoScreen';
@@ -77,8 +78,10 @@ function MainContent() {
   const [discoverSearch, setDiscoverSearch] = useState('');
   const [activityTab, setActivityTab] = useState('created');
   const [chatInputText, setChatInputText] = useState('');
+  const [aiInputText, setAiInputText] = useState('');
   const createRef = React.useRef<CreateScreenHandle>(null);
   const discoverRef = React.useRef<DiscoverScreenHandle>(null);
+  const aiRef = React.useRef<AIAssistantHandle>(null);
 
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
 
@@ -281,7 +284,7 @@ function MainContent() {
               />
             )}
 
-            {screen.name === 'ai' && <AIAssistant onBack={pop} />}
+            {screen.name === 'ai' && <AIAssistant ref={aiRef} onBack={pop} />}
 
             {screen.name === 'settings' && (
               <SettingsScreen
@@ -369,6 +372,22 @@ function MainContent() {
             </>
           ) : null;
         })()}
+
+        {screen.name === 'ai' && (
+          <>
+            <AIHeader onBack={pop} />
+            <ChatInputBar
+              value={aiInputText}
+              onChange={setAiInputText}
+              onSend={() => {
+                if (!aiInputText.trim()) return;
+                aiRef.current?.sendMessage(aiInputText.trim());
+                setAiInputText('');
+              }}
+              placeholder="Query Command AI..."
+            />
+          </>
+        )}
 
         {screen.name === 'settings' && <SettingsHeader onBack={pop} title="Settings" />}
         {screen.name === 'plans' && <SettingsHeader onBack={pop} title="Subscription Plans" />}
