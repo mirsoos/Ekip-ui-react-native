@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { GlassButton } from '../components/Glass';
+import { LiquidLens } from '../components/LiquidLens';
 import { OnboardingSlide, type SlideData } from '../components/onboarding/OnboardingSlide';
+import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 
 const slides: SlideData[] = [
@@ -33,10 +33,12 @@ const slides: SlideData[] = [
 ];
 
 export function Onboarding({ onComplete }: { onComplete: () => void }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [step, setStep] = useState(0);
   const slide = slides[step];
   const isLast = step === slides.length - 1;
+  const ArrowRight = getIcon('ArrowRight');
+  const Sparkles = getIcon('Sparkles');
 
   return (
     <View style={styles.container}>
@@ -67,14 +69,46 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
       </View>
 
       <View style={styles.actionWrap}>
-        <GlassButton
-          size="lg"
-          fullWidth
+        <TouchableOpacity
+          activeOpacity={0.85}
           onPress={() => (isLast ? onComplete() : setStep(step + 1))}
-          iconRight={isLast ? 'Sparkles' : 'ArrowRight'}
+          style={[
+            styles.nextButton,
+            {
+              borderColor: colors.glassBorderStrong,
+            },
+          ]}
         >
-          {isLast ? 'Enter Command Post' : 'Next Directive'}
-        </GlassButton>
+          {/* 360° Liquid Glass Lens */}
+          <LiquidLens
+            borderRadius={36}
+            marginWidth={16}
+            scale={36}
+            blurDeviation={2.0}
+            overlayOpacity={isDark ? 0.08 : 0.15}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.buttonContent}>
+            <Text style={[styles.nextText, { color: colors.textPrimary }]}>
+              {isLast ? 'Enter Command Post' : 'Next'}
+            </Text>
+            {isLast ? (
+              <Sparkles
+                size={18}
+                color={colors.textPrimary}
+                strokeWidth={2.4}
+                style={{ marginLeft: 8 }}
+              />
+            ) : (
+              <ArrowRight
+                size={18}
+                color={colors.textPrimary}
+                strokeWidth={2.4}
+                style={{ marginLeft: 8 }}
+              />
+            )}
+          </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -110,5 +144,29 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 320,
     marginTop: 32,
+  },
+  nextButton: {
+    position: 'relative',
+    height: 52,
+    borderRadius: 36,
+    borderWidth: 1,
+    overflow: 'visible',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
+    elevation: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  nextText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

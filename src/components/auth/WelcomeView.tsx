@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GlassButton } from '../Glass';
+import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { SocialAuthRow } from './SocialAuthRow';
 import { useTheme } from '../../lib/theme';
@@ -13,8 +13,9 @@ export function WelcomeView({
   onLogin: () => void;
   onRegister: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const Shield = getIcon('Shield');
+  const ArrowRight = getIcon('ArrowRight');
 
   return (
     <View style={styles.container}>
@@ -37,15 +38,64 @@ export function WelcomeView({
 
       {/* Primary Actions */}
       <View style={styles.actionsBox}>
-        <GlassButton size="lg" fullWidth onPress={onRegister} iconRight="ArrowRight">
-          Deploy Operator (Register)
-        </GlassButton>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={onRegister}
+          style={[
+            styles.registerButton,
+            {
+              borderColor: colors.glassBorderStrong,
+            },
+          ]}
+        >
+          {/* 360° Liquid Glass Lens */}
+          <LiquidLens
+            borderRadius={36}
+            marginWidth={16}
+            scale={36}
+            blurDeviation={2.0}
+            overlayOpacity={isDark ? 0.08 : 0.15}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.buttonContent}>
+            <Text style={[styles.registerText, { color: colors.textPrimary }]}>
+              Register
+            </Text>
+            <ArrowRight
+              size={18}
+              color={colors.textPrimary}
+              strokeWidth={2.4}
+              style={{ marginLeft: 8 }}
+            />
+          </View>
+        </TouchableOpacity>
 
-        <View style={{ marginTop: 10 }}>
-          <GlassButton variant="secondary" size="lg" fullWidth onPress={onLogin}>
-            Sign In with Clearance
-          </GlassButton>
-        </View>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={onLogin}
+          style={[
+            styles.registerButton,
+            {
+              borderColor: colors.glassBorderStrong,
+              marginTop: 10,
+            },
+          ]}
+        >
+          {/* 360° Liquid Glass Lens */}
+          <LiquidLens
+            borderRadius={36}
+            marginWidth={16}
+            scale={36}
+            blurDeviation={2.0}
+            overlayOpacity={isDark ? 0.08 : 0.15}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.buttonContent}>
+            <Text style={[styles.registerText, { color: colors.textPrimary }]}>
+              Login
+            </Text>
+          </View>
+        </TouchableOpacity>
       </View>
 
       {/* Or continue with */}
@@ -105,6 +155,30 @@ const styles = StyleSheet.create({
   actionsBox: {
     width: '100%',
     maxWidth: 340,
+  },
+  registerButton: {
+    position: 'relative',
+    height: 52,
+    borderRadius: 36,
+    borderWidth: 1,
+    overflow: 'visible',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
+    elevation: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  registerText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   dividerRow: {
     flexDirection: 'row',

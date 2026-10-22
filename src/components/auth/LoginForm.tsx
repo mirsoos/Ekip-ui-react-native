@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { GlassButton, GlassInput, GlassBackButton, GlassSegmented } from '../Glass';
+import { GlassInput, GlassBackButton, GlassSegmented } from '../Glass';
+import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 
@@ -13,7 +14,7 @@ export function LoginForm({
   onSubmit: () => void;
   onOAuth: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone' | 'username'>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -95,11 +96,32 @@ export function LoginForm({
           </Text>
         </TouchableOpacity>
 
-        <View style={{ marginTop: 10 }}>
-          <GlassButton size="lg" fullWidth onPress={onSubmit}>
-            Authorize Login
-          </GlassButton>
-        </View>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={onSubmit}
+          style={[
+            styles.submitButton,
+            {
+              borderColor: colors.glassBorderStrong,
+              marginTop: 10,
+            },
+          ]}
+        >
+          {/* 360° Liquid Glass Lens */}
+          <LiquidLens
+            borderRadius={36}
+            marginWidth={16}
+            scale={36}
+            blurDeviation={2.0}
+            overlayOpacity={isDark ? 0.08 : 0.15}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.buttonContent}>
+            <Text style={[styles.submitText, { color: colors.textPrimary }]}>
+              Authorize Login
+            </Text>
+          </View>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.dividerRow}>
@@ -114,11 +136,24 @@ export function LoginForm({
           onPress={onOAuth}
           style={[
             styles.oauthBtn,
-            { backgroundColor: colors.glassThickBg, borderColor: colors.glassBorder },
+            {
+              borderColor: colors.glassBorderStrong,
+            },
           ]}
         >
-          <Sparkles size={18} color={colors.textPrimary} style={{ marginRight: 8 }} />
-          <Text style={[styles.oauthText, { color: colors.textPrimary }]}>Apple</Text>
+          {/* 360° Liquid Glass Lens */}
+          <LiquidLens
+            borderRadius={20}
+            marginWidth={12}
+            scale={24}
+            blurDeviation={1.8}
+            overlayOpacity={isDark ? 0.08 : 0.15}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.oauthContent}>
+            <Sparkles size={18} color={colors.textPrimary} style={{ marginRight: 8 }} />
+            <Text style={[styles.oauthText, { color: colors.textPrimary }]}>Apple</Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -126,11 +161,24 @@ export function LoginForm({
           onPress={onOAuth}
           style={[
             styles.oauthBtn,
-            { backgroundColor: colors.glassThickBg, borderColor: colors.glassBorder },
+            {
+              borderColor: colors.glassBorderStrong,
+            },
           ]}
         >
-          <Globe size={18} color={colors.textPrimary} style={{ marginRight: 8 }} />
-          <Text style={[styles.oauthText, { color: colors.textPrimary }]}>Google</Text>
+          {/* 360° Liquid Glass Lens */}
+          <LiquidLens
+            borderRadius={20}
+            marginWidth={12}
+            scale={24}
+            blurDeviation={1.8}
+            overlayOpacity={isDark ? 0.08 : 0.15}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.oauthContent}>
+            <Globe size={18} color={colors.textPrimary} style={{ marginRight: 8 }} />
+            <Text style={[styles.oauthText, { color: colors.textPrimary }]}>Google</Text>
+          </View>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -155,6 +203,30 @@ const styles = StyleSheet.create({
   forgotText: {
     fontSize: 12,
   },
+  submitButton: {
+    position: 'relative',
+    height: 52,
+    borderRadius: 36,
+    borderWidth: 1,
+    overflow: 'visible',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
+    elevation: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  submitText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -173,13 +245,25 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   oauthBtn: {
+    position: 'relative',
     flex: 1,
     height: 48,
     borderRadius: 20,
     borderWidth: 1,
+    overflow: 'visible',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  oauthContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
   },
   oauthText: {
     fontSize: 14,

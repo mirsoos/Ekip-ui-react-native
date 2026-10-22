@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
-import { GlassButton, GlassBackButton } from '../Glass';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { GlassBackButton } from '../Glass';
+import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 
@@ -15,7 +16,7 @@ export function TwoFactorView({
   onBack: () => void;
   onComplete: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const Shield = getIcon('ShieldCheck');
 
   return (
@@ -69,9 +70,33 @@ export function TwoFactorView({
       </View>
 
       <View style={styles.btnWrap}>
-        <GlassButton size="lg" fullWidth onPress={onComplete} disabled={otp.length < 6}>
-          Verify Clearance
-        </GlassButton>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={onComplete}
+          disabled={otp.length < 6}
+          style={[
+            styles.verifyButton,
+            {
+              borderColor: colors.glassBorderStrong,
+              opacity: otp.length < 6 ? 0.45 : 1,
+            },
+          ]}
+        >
+          {/* 360° Liquid Glass Lens */}
+          <LiquidLens
+            borderRadius={36}
+            marginWidth={16}
+            scale={36}
+            blurDeviation={2.0}
+            overlayOpacity={isDark ? 0.08 : 0.15}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.buttonContent}>
+            <Text style={[styles.verifyText, { color: colors.textPrimary }]}>
+              Verify
+            </Text>
+          </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -135,5 +160,29 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 300,
     marginTop: 32,
+  },
+  verifyButton: {
+    position: 'relative',
+    height: 52,
+    borderRadius: 36,
+    borderWidth: 1,
+    overflow: 'visible',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
+    elevation: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  verifyText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
