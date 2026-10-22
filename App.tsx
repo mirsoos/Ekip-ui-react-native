@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, Animated } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme } from './src/lib/theme';
@@ -12,6 +12,7 @@ import { DiscoverHeader } from './src/components/discover/DiscoverHeader';
 import { ActivityHeader } from './src/components/activity/ActivityHeader';
 import { SettingsHeader } from './src/components/settings/SettingsHeader';
 import { AIHeader } from './src/components/ai/AIHeader';
+import { ProfileHeader } from './src/components/profile/ProfileHeader';
 import { EkipActionBar } from './src/components/ekip/EkipActionBar';
 import { CreateContinueButton } from './src/components/create/CreateContinueButton';
 import { CreateHeader } from './src/components/create/CreateHeader';
@@ -66,7 +67,7 @@ export type Screen =
 
 function MainContent() {
   const { isDark } = useTheme();
-  const { me, conversations, notifications, addMessage } = useAppData();
+  const { me, profiles, conversations, notifications, addMessage } = useAppData();
 
   const [authed, setAuthed] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
@@ -82,6 +83,7 @@ function MainContent() {
   const createRef = React.useRef<CreateScreenHandle>(null);
   const discoverRef = React.useRef<DiscoverScreenHandle>(null);
   const aiRef = React.useRef<AIAssistantHandle>(null);
+  const profileScrollY = React.useRef(new Animated.Value(0)).current;
 
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
 
@@ -113,7 +115,10 @@ function MainContent() {
     else if (t === 'activity') setScreen({ name: 'activity' });
     else if (t === 'create') setScreen({ name: 'create' });
     else if (t === 'chat') setScreen({ name: 'chatList' });
-    else if (t === 'profile') setScreen({ name: 'profile', userId: 'me' });
+    else if (t === 'profile') {
+      profileScrollY.setValue(0);
+      setScreen({ name: 'profile', userId: 'me' });
+    }
   };
 
   if (!authed) {
@@ -252,6 +257,7 @@ function MainContent() {
                 onOpenSettings={() => push({ name: 'settings' })}
                 onOpenPersonalInfo={() => push({ name: 'personalInfo' })}
                 onOpenVerification={() => push({ name: 'verification' })}
+                scrollY={profileScrollY}
               />
             )}
 
@@ -388,6 +394,20 @@ function MainContent() {
             />
           </>
         )}
+
+        {screen.name === 'profile' && (() => {
+          const profile = profiles.find((p) => p.id === screen.userId) ?? me;
+          const isOwn = screen.userId === 'me' || !screen.userId;
+          return (
+            <ProfileHeader
+              profile={profile}
+              isOwnProfile={isOwn}
+              onBack={pop}
+              onOpenSettings={() => push({ name: 'settings' })}
+              scrollY={profileScrollY}
+            />
+          );
+        })()}
 
         {screen.name === 'settings' && <SettingsHeader onBack={pop} title="Settings" />}
         {screen.name === 'plans' && <SettingsHeader onBack={pop} title="Subscription Plans" />}

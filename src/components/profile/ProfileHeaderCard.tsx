@@ -13,6 +13,7 @@ export function ProfileHeaderCard({
   onAddFriend,
   onOpenActions,
   onOpenVerification,
+  hideAvatar = false,
 }: {
   profile: Profile;
   isOwnProfile: boolean;
@@ -20,6 +21,7 @@ export function ProfileHeaderCard({
   onAddFriend?: () => void;
   onOpenActions?: () => void;
   onOpenVerification?: () => void;
+  hideAvatar?: boolean;
 }) {
   const { colors } = useTheme();
   const MoreHorizontal = getIcon('MoreHorizontal');
@@ -29,11 +31,15 @@ export function ProfileHeaderCard({
     <View style={styles.container}>
       <View style={styles.topRow}>
         <View style={styles.avatarWrap}>
-          <GlassAvatar
-            src={profile.avatar_url}
-            name={`${profile.first_name} ${profile.last_name}`}
-            size={90}
-          />
+          {hideAvatar ? (
+            <View style={{ width: 88, height: 88 }} />
+          ) : (
+            <GlassAvatar
+              src={profile.avatar_url}
+              name={`${profile.first_name} ${profile.last_name}`}
+              size={88}
+            />
+          )}
         </View>
 
         {!isOwnProfile && (
