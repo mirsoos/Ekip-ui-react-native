@@ -157,12 +157,13 @@ function MainContent() {
     ['discover', 'activity', 'create', 'chatList'].includes(screen.name) ||
     (screen.name === 'profile' && screen.userId === 'me');
 
-  const mainTabs: TabKey[] = ['discover', 'activity', 'chat', 'profile'];
+  const mainTabs: TabKey[] = ['discover', 'activity', 'create', 'chat', 'profile'];
   const currentMainIndex = mainTabs.indexOf(tab);
   const isMainScreen =
     history.length === 0 &&
     (screen.name === 'discover' ||
       screen.name === 'activity' ||
+      screen.name === 'create' ||
       screen.name === 'chatList' ||
       (screen.name === 'profile' && screen.userId === 'me'));
 

@@ -1,6 +1,5 @@
-import React, { useRef, useState, type ReactNode } from 'react';
+import React, { useRef, type ReactNode } from 'react';
 import {
-  View,
   PanResponder,
   Animated,
   StyleSheet,
@@ -33,15 +32,35 @@ export function SwipeNavigationContainer({
   const panX = useRef(new Animated.Value(0)).current;
   const isSwiping = useRef(false);
 
+  // Keep a ref of latest props so PanResponder always has fresh state without recreation
+  const propsRef = useRef({
+    canGoBack,
+    onGoBack,
+    canSwipeLeftTab,
+    canSwipeRightTab,
+    onSwipeNextTab,
+    onSwipePrevTab,
+  });
+
+  propsRef.current = {
+    canGoBack,
+    onGoBack,
+    canSwipeLeftTab,
+    canSwipeRightTab,
+    onSwipeNextTab,
+    onSwipePrevTab,
+  };
+
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gestureState) => {
         const { dx, dy } = gestureState;
-        // Require horizontal movement to dominate vertical by 2x and exceed 12px
-        if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.8) {
-          if (canGoBack && dx > 0) return true;
-          if (canSwipeLeftTab && dx < 0) return true;
-          if (canSwipeRightTab && dx > 0) return true;
+        const currentProps = propsRef.current;
+        // Require horizontal movement to dominate vertical by 1.8x and exceed 15px
+        if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.8) {
+          if (currentProps.canGoBack && dx > 0) return true;
+          if (currentProps.canSwipeLeftTab && dx < 0) return true;
+          if (currentProps.canSwipeRightTab && dx > 0) return true;
         }
         return false;
       },
@@ -57,22 +76,23 @@ export function SwipeNavigationContainer({
       onPanResponderRelease: (_, gestureState) => {
         const { dx, vx } = gestureState;
         isSwiping.current = false;
+        const currentProps = propsRef.current;
 
-        const threshold = 70;
-        const speedThreshold = 0.35;
+        const threshold = 50;
+        const speedThreshold = 0.25;
 
-        // Swiping right: back or prev tab
-        if (dx > threshold || (dx > 30 && vx > speedThreshold)) {
-          if (canGoBack) {
-            onGoBack();
-          } else if (canSwipeRightTab && onSwipePrevTab) {
-            onSwipePrevTab();
+        // Swiping right (dx > 0): back or prev tab
+        if (dx > threshold || (dx > 25 && vx > speedThreshold)) {
+          if (currentProps.canGoBack) {
+            currentProps.onGoBack();
+          } else if (currentProps.canSwipeRightTab && currentProps.onSwipePrevTab) {
+            currentProps.onSwipePrevTab();
           }
         }
-        // Swiping left: next tab
-        else if (dx < -threshold || (dx < -30 && vx < -speedThreshold)) {
-          if (canSwipeLeftTab && onSwipeNextTab) {
-            onSwipeNextTab();
+        // Swiping left (dx < 0): next tab
+        else if (dx < -threshold || (dx < -25 && vx < -speedThreshold)) {
+          if (currentProps.canSwipeLeftTab && currentProps.onSwipeNextTab) {
+            currentProps.onSwipeNextTab();
           }
         }
 
@@ -115,5 +135,11 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
+    ...(Platform.OS === 'web'
+      ? ({
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+        } as any)
+      : {}),
   },
 });
