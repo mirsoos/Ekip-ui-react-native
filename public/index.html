@@ -25,7 +25,7 @@
 
       /* Hardware Accelerated Aurora Blobs */
       @keyframes ek-blob {
-        0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+        0%, 100% { transform: translate3d(0, 0, 0); }
         33% { transform: translate3d(35px, -45px, 0) scale(1.12); }
         66% { transform: translate3d(-25px, 25px, 0) scale(0.94); }
       }
@@ -43,10 +43,8 @@
         height: 440px;
         border-radius: 50%;
         background: radial-gradient(circle, rgba(56, 189, 248, 0.40) 0%, rgba(59, 130, 246, 0.20) 50%, transparent 70%);
-        filter: blur(80px);
+        filter: blur(50px);
         transform: translateZ(0);
-        will-change: transform;
-        animation: ek-blob 18s ease-in-out infinite;
         pointer-events: none;
       }
       .aurora-blob-2 {
@@ -57,10 +55,8 @@
         height: 420px;
         border-radius: 50%;
         background: radial-gradient(circle, rgba(244, 114, 182, 0.35) 0%, rgba(59, 130, 246, 0.20) 50%, transparent 70%);
-        filter: blur(85px);
+        filter: blur(50px);
         transform: translateZ(0);
-        will-change: transform;
-        animation: ek-blob-rev 22s ease-in-out infinite;
         pointer-events: none;
       }
       .aurora-blob-3 {
@@ -71,10 +67,8 @@
         height: 480px;
         border-radius: 50%;
         background: radial-gradient(circle, rgba(99, 102, 241, 0.30) 0%, rgba(56, 189, 248, 0.15) 50%, transparent 70%);
-        filter: blur(90px);
+        filter: blur(50px);
         transform: translateZ(0);
-        will-change: transform;
-        animation: ek-blob 24s ease-in-out infinite;
         pointer-events: none;
       }
 
@@ -130,7 +124,7 @@
       @keyframes ek-rise {
         from {
           opacity: 0;
-          transform: translate3d(0, 20px, 0) scale(0.985);
+          transform: translate3d(0, 16px, 0);
         }
         to {
           opacity: 1;
@@ -141,7 +135,7 @@
       @keyframes ek-raise {
         from {
           opacity: 0;
-          transform: translate3d(0, 24px, 0) scale(0.96);
+          transform: translate3d(0, 20px, 0);
         }
         to {
           opacity: 1;
@@ -157,24 +151,11 @@
         animation: ek-raise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both !important;
       }
 
-      /* Target direct children AND scrollview children */
-      .screen-enter-items,
-      .screen-enter-items > * {
-        animation: ek-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+      /* Smooth hardware-accelerated screen entrance */
+      .screen-enter-items {
+        animation: ek-rise 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+        will-change: transform, opacity;
       }
-
-      .screen-enter-items [data-testid="scrollview-content"] > *,
-      .screen-enter-items .r-flexDirection-18u37iz > *,
-      .screen-enter-items > div > div > div > * {
-        animation: ek-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-      }
-
-      .screen-enter-items *:nth-child(1) { animation-delay: 0.02s; }
-      .screen-enter-items *:nth-child(2) { animation-delay: 0.06s; }
-      .screen-enter-items *:nth-child(3) { animation-delay: 0.10s; }
-      .screen-enter-items *:nth-child(4) { animation-delay: 0.14s; }
-      .screen-enter-items *:nth-child(5) { animation-delay: 0.18s; }
-      .screen-enter-items *:nth-child(n+6) { animation-delay: 0.22s; }
 
       /* Never apply enter animations to overlays, sheets, or backdrops */
       .screen-enter-items [style*="position: fixed"],

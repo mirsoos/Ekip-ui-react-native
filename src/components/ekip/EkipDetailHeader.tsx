@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import React from 'react';
+import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassBackButton } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
@@ -23,32 +23,8 @@ export function EkipDetailHeader({
   const ShareIcon = getIcon('Share');
   const BookmarkIcon = getIcon('Bookmark');
 
-  const enterAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    enterAnim.setValue(0);
-    Animated.spring(enterAnim, {
-      toValue: 1,
-      bounciness: 4,
-      speed: 14,
-      useNativeDriver: false,
-    }).start();
-  }, []);
-
-  const enterTranslateY = enterAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-85, 0],
-  });
-
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          transform: [{ translateY: enterTranslateY }],
-        },
-      ]}
-    >
+    <View style={styles.container}>
       {coverUrl ? (
         <Image source={{ uri: coverUrl }} style={styles.image} />
       ) : (
@@ -108,7 +84,7 @@ export function EkipDetailHeader({
           </TouchableOpacity>
         )}
       </View>
-    </Animated.View>
+    </View>
   );
 }
 
