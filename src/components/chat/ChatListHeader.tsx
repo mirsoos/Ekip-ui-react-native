@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
 import { NotificationButton } from '../NotificationButton';
 import { GlassInput } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
@@ -24,25 +24,17 @@ export function ChatListHeader({
 
   useEffect(() => {
     enterAnim.setValue(0);
-    Animated.timing(enterAnim, {
+    Animated.spring(enterAnim, {
       toValue: 1,
-      duration: 500,
-      easing: Easing.bezier(0.22, 1, 0.36, 1),
+      bounciness: 4,
+      speed: 14,
       useNativeDriver: false,
     }).start();
   }, []);
 
   const enterTranslateY = enterAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [20, 0],
-  });
-  const enterOpacity = enterAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1],
-  });
-  const enterScale = enterAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.985, 1],
+    outputRange: [-85, 0],
   });
 
   return (
@@ -52,11 +44,7 @@ export function ChatListHeader({
           styles.container,
           {
             borderColor: colors.glassBorderStrong,
-            opacity: enterOpacity,
-            transform: [
-              { translateY: enterTranslateY },
-              { scale: enterScale },
-            ],
+            transform: [{ translateY: enterTranslateY }],
           },
         ]}
       >
