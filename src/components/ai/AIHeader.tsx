@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassBackButton } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
@@ -10,13 +10,31 @@ export function AIHeader({ onBack }: { onBack: () => void }) {
   const { colors, isDark } = useTheme();
   const Sparkles = getIcon('Sparkles');
 
+  const enterAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    enterAnim.setValue(0);
+    Animated.spring(enterAnim, {
+      toValue: 1,
+      bounciness: 4,
+      speed: 14,
+      useNativeDriver: false,
+    }).start();
+  }, []);
+
+  const enterTranslateY = enterAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-85, 0],
+  });
+
   return (
     <View style={styles.outerContainer} pointerEvents="box-none">
-      <View
+      <Animated.View
         style={[
           styles.container,
           {
             borderColor: colors.glassBorderStrong,
+            transform: [{ translateY: enterTranslateY }],
           },
         ]}
       >
@@ -49,7 +67,7 @@ export function AIHeader({ onBack }: { onBack: () => void }) {
             Tactical Intelligence & Dispatch
           </Text>
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }
