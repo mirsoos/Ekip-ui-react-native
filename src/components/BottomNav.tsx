@@ -56,6 +56,24 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
   const currentLensX = useRef(0);
   const prevActiveTab = useRef(active);
 
+  // Entrance animation (spring physics from bottom up)
+  const enterAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    enterAnim.setValue(0);
+    Animated.spring(enterAnim, {
+      toValue: 1,
+      bounciness: 4,
+      speed: 14,
+      useNativeDriver: false,
+    }).start();
+  }, []);
+
+  const enterTranslateY = enterAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [95, 0],
+  });
+
   // Keep currentLensX tracked
   useEffect(() => {
     const id = lensX.addListener(({ value }) => {
@@ -295,7 +313,7 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
 
   return (
     <View style={styles.outerContainer} pointerEvents="box-none">
-      <View
+      <Animated.View
         onLayout={handleDockLayout}
         {...panResponder.panHandlers}
         {...(Platform.OS === 'web' ? { onMouseDown: handleWebMouseDown } : {})}
@@ -303,6 +321,7 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
           styles.dockContainer,
           {
             borderColor: colors.glassBorderStrong,
+            transform: [{ translateY: enterTranslateY }],
           },
         ]}
       >
@@ -417,7 +436,7 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
             </TouchableOpacity>
           );
         })}
-      </View>
+      </Animated.View>
     </View>
   );
 }

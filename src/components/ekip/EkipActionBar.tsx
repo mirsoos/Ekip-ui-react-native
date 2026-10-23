@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
 import { GlassButton } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
@@ -23,6 +23,23 @@ export function EkipActionBar({
   const { me, members, requests, conversations } = useAppData();
   const { colors, isDark } = useTheme();
   const ClockIcon = getIcon('Clock');
+
+  const enterAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    enterAnim.setValue(0);
+    Animated.spring(enterAnim, {
+      toValue: 1,
+      bounciness: 4,
+      speed: 14,
+      useNativeDriver: false,
+    }).start();
+  }, []);
+
+  const enterTranslateY = enterAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [95, 0],
+  });
 
   const groupMembers = members.filter((m) => m.group_id === group.id && m.status === 'active');
   const myRequest = requests.find((r) => r.group_id === group.id && r.user_id === 'me');
@@ -52,11 +69,12 @@ export function EkipActionBar({
 
   return (
     <View style={styles.outerContainer} pointerEvents="box-none">
-      <View
+      <Animated.View
         style={[
           styles.dockContainer,
           {
             borderColor: colors.glassBorderStrong,
+            transform: [{ translateY: enterTranslateY }],
           },
         ]}
       >
@@ -134,7 +152,7 @@ export function EkipActionBar({
             </GlassButton>
           </View>
         )}
-      </View>
+      </Animated.View>
     </View>
   );
 }

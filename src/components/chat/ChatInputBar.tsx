@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, TextInput, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
@@ -19,13 +19,31 @@ export function ChatInputBar({
   const { colors, isDark } = useTheme();
   const SendIcon = getIcon('Send');
 
+  const enterAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    enterAnim.setValue(0);
+    Animated.spring(enterAnim, {
+      toValue: 1,
+      bounciness: 4,
+      speed: 14,
+      useNativeDriver: false,
+    }).start();
+  }, []);
+
+  const enterTranslateY = enterAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [85, 0],
+  });
+
   return (
     <View style={styles.outerContainer} pointerEvents="box-none">
-      <View
+      <Animated.View
         style={[
           styles.dockContainer,
           {
             borderColor: colors.glassBorderStrong,
+            transform: [{ translateY: enterTranslateY }],
           },
         ]}
       >
@@ -74,7 +92,7 @@ export function ChatInputBar({
             <SendIcon size={16} color="#ffffff" strokeWidth={2.6} />
           </LinearGradient>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
     </View>
   );
 }
