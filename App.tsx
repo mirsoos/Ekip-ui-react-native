@@ -69,7 +69,7 @@ export type Screen =
 
 function MainContent() {
   const { isDark } = useTheme();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { me, profiles, conversations, notifications, addMessage } = useAppData();
 
   const [authed, setAuthed] = useState(false);
@@ -129,9 +129,9 @@ function MainContent() {
       <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#04060c' : '#ebf0fa' }]}>
         <StatusBar style={isDark ? 'light' : 'dark'} />
         <AuroraBackground />
-        <View style={styles.phoneContainer}>
+        <View nativeID="phone-container" style={styles.phoneContainer}>
           <View style={styles.screenContainer}>
-            <ScreenTransition screenKey="auth">
+            <ScreenTransition screenKey={`auth-${language}`}>
               <AuthScreen onComplete={() => setAuthed(true)} />
             </ScreenTransition>
           </View>
@@ -145,9 +145,9 @@ function MainContent() {
       <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#04060c' : '#ebf0fa' }]}>
         <StatusBar style={isDark ? 'light' : 'dark'} />
         <AuroraBackground />
-        <View style={styles.phoneContainer}>
+        <View nativeID="phone-container" style={styles.phoneContainer}>
           <View style={styles.screenContainer}>
-            <ScreenTransition screenKey="onboarding">
+            <ScreenTransition screenKey={`onboarding-${language}`}>
               <Onboarding onComplete={() => setOnboarded(true)} />
             </ScreenTransition>
           </View>
@@ -202,7 +202,7 @@ function MainContent() {
               setScreen({ name: 'discover' });
             }}
           >
-            <ScreenTransition screenKey={`${screen.name}-${tab}-${history.length}`}>
+            <ScreenTransition screenKey={`${screen.name}-${tab}-${history.length}-${language}`}>
             {screen.name === 'discover' && (
               <DiscoverScreen
                 ref={discoverRef}

@@ -5,8 +5,10 @@ import { LoginForm } from '../components/auth/LoginForm';
 import { TwoFactorView } from '../components/auth/TwoFactorView';
 import { RegisterWizard } from '../components/auth/RegisterWizard';
 import { ScreenTransition } from '../components/common/ScreenTransition';
+import { useI18n } from '../lib/i18n';
 
 export function AuthScreen({ onComplete }: { onComplete: () => void }) {
+  const { language } = useI18n();
   const [mode, setMode] = useState<'welcome' | 'login' | 'register'>('welcome');
   const [show2FA, setShow2FA] = useState(false);
   const [otp, setOtp] = useState('');
@@ -14,7 +16,7 @@ export function AuthScreen({ onComplete }: { onComplete: () => void }) {
   if (mode === 'welcome') {
     return (
       <View style={styles.container}>
-        <ScreenTransition screenKey="auth-welcome">
+        <ScreenTransition screenKey={`auth-welcome-${language}`}>
           <WelcomeView
             onLogin={() => setMode('login')}
             onRegister={() => setMode('register')}
@@ -28,7 +30,7 @@ export function AuthScreen({ onComplete }: { onComplete: () => void }) {
     if (show2FA) {
       return (
         <View style={styles.container}>
-          <ScreenTransition screenKey="auth-2fa">
+          <ScreenTransition screenKey={`auth-2fa-${language}`}>
             <TwoFactorView
               otp={otp}
               setOtp={setOtp}
@@ -41,7 +43,7 @@ export function AuthScreen({ onComplete }: { onComplete: () => void }) {
     }
     return (
       <View style={styles.container}>
-        <ScreenTransition screenKey="auth-login">
+        <ScreenTransition screenKey={`auth-login-${language}`}>
           <LoginForm
             onBack={() => setMode('welcome')}
             onSubmit={() => setShow2FA(true)}
@@ -54,7 +56,7 @@ export function AuthScreen({ onComplete }: { onComplete: () => void }) {
 
   return (
     <View style={styles.container}>
-      <ScreenTransition screenKey="auth-register">
+      <ScreenTransition screenKey={`auth-register-${language}`}>
         <RegisterWizard
           onBack={() => setMode('welcome')}
           onComplete={onComplete}
