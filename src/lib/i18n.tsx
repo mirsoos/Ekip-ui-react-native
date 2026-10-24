@@ -277,22 +277,22 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      document.documentElement.dir = lang === 'fa' ? 'rtl' : 'ltr';
+      document.documentElement.dir = 'ltr';
       document.documentElement.lang = lang;
     }
   };
 
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      document.documentElement.dir = language === 'fa' ? 'rtl' : 'ltr';
+      document.documentElement.dir = 'ltr';
       document.documentElement.lang = language;
     }
   }, [language]);
 
   const isRTL = language === 'fa';
-  const dir: 'ltr' | 'rtl' = isRTL ? 'rtl' : 'ltr';
-  const textAlign: 'left' | 'right' = isRTL ? 'right' : 'left';
-  const rowDir: 'row' | 'row-reverse' = isRTL ? 'row-reverse' : 'row';
+  const dir: 'ltr' | 'rtl' = 'ltr';
+  const textAlign: 'left' | 'right' = 'left';
+  const rowDir: 'row' | 'row-reverse' = 'row';
 
   const t = (key: TranslationKey, params?: Record<string, string | number>): string => {
     const langDict = translations[language] || translations.en;

@@ -218,7 +218,7 @@ function DedicatedErrorSheet({
           />
 
           {/* Header Row: Dedicated Alert Badge & Text (NO close 'X' button) */}
-          <View style={[styles.headerRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+          <View style={styles.headerRow}>
             <View
               style={[
                 styles.iconBox,
@@ -231,27 +231,11 @@ function DedicatedErrorSheet({
               <AlertIcon size={24} color="#f43f5e" strokeWidth={2.4} />
             </View>
 
-            <View
-              style={{
-                flex: 1,
-                marginLeft: isRTL ? 0 : 14,
-                marginRight: isRTL ? 14 : 0,
-              }}
-            >
-              <Text
-                style={[
-                  styles.mainTitle,
-                  { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
-                ]}
-              >
+            <View style={{ flex: 1, marginLeft: 14 }}>
+              <Text style={[styles.mainTitle, { color: colors.textPrimary }]}>
                 {finalTitle}
               </Text>
-              <Text
-                style={[
-                  styles.mainMessage,
-                  { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' },
-                ]}
-              >
+              <Text style={[styles.mainMessage, { color: colors.textSecondary }]}>
                 {finalMessage}
               </Text>
             </View>

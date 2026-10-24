@@ -505,8 +505,7 @@ export function GlassBackButton({
   style?: StyleProp<ViewStyle>;
 }) {
   const { colors, isDark } = useTheme();
-  const { isRTL } = useI18n();
-  const IconComp = getIcon(isRTL ? 'ArrowRight' : 'ArrowLeft');
+  const IconComp = getIcon('ArrowLeft');
   const handlePress = onPress ?? onClick;
 
   return (
@@ -936,12 +935,11 @@ export function GlassListItem({
   avatarName,
 }: GlassListItemProps) {
   const { colors } = useTheme();
-  const { isRTL } = useI18n();
   const IconComp = icon ? getIcon(icon) : null;
-  const ChevronComp = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
+  const ChevronRight = getIcon('ChevronRight');
 
   const content = (
-    <View style={[styles.listItemRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+    <View style={styles.listItemRow}>
       {avatar ? (
         <GlassAvatar src={avatar} name={avatarName ?? title} size={40} />
       ) : IconComp ? (
@@ -955,30 +953,12 @@ export function GlassListItem({
         </View>
       ) : null}
 
-      <View
-        style={{
-          flex: 1,
-          marginLeft: isRTL ? 0 : (avatar || IconComp ? 12 : 0),
-          marginRight: isRTL ? (avatar || IconComp ? 12 : 0) : 0,
-        }}
-      >
-        <Text
-          style={[
-            styles.listTitle,
-            { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
-          ]}
-          numberOfLines={1}
-        >
+      <View style={{ flex: 1, marginLeft: avatar || IconComp ? 12 : 0 }}>
+        <Text style={[styles.listTitle, { color: colors.textPrimary }]} numberOfLines={1}>
           {title}
         </Text>
         {subtitle && (
-          <Text
-            style={[
-              styles.listSubtitle,
-              { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' },
-            ]}
-            numberOfLines={1}
-          >
+          <Text style={[styles.listSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
             {subtitle}
           </Text>
         )}
@@ -986,10 +966,10 @@ export function GlassListItem({
 
       {right}
       {showChevron && (
-        <ChevronComp
+        <ChevronRight
           size={18}
           color={colors.textTertiary}
-          style={{ [isRTL ? 'marginRight' : 'marginLeft']: 6 }}
+          style={{ marginLeft: 6 }}
         />
       )}
     </View>

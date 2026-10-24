@@ -160,7 +160,7 @@ export function EkipCard({
 
         {/* Tags */}
         {group.tags && group.tags.length > 0 && (
-          <View style={[styles.tagsContainer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+          <View style={styles.tagsContainer}>
             {group.tags.slice(0, 4).map((tag) => (
               <View
                 key={tag}
@@ -178,16 +178,8 @@ export function EkipCard({
         )}
 
         {/* Footer */}
-        <View
-          style={[
-            styles.cardFooter,
-            {
-              borderTopColor: colors.divider,
-              flexDirection: isRTL ? 'row-reverse' : 'row',
-            },
-          ]}
-        >
-          <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center' }}>
+        <View style={[styles.cardFooter, { borderTopColor: colors.divider }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <GlassAvatar
               src={group.owner?.avatar_url}
               name={`${group.owner?.first_name} ${group.owner?.last_name}`}

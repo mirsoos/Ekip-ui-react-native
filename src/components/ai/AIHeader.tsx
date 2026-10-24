@@ -37,7 +37,6 @@ export function AIHeader({ onBack }: { onBack: () => void }) {
           {
             borderColor: colors.glassBorderStrong,
             transform: [{ translateY: enterTranslateY }],
-            flexDirection: isRTL ? 'row-reverse' : 'row',
           },
         ]}
       >
@@ -51,10 +50,7 @@ export function AIHeader({ onBack }: { onBack: () => void }) {
           style={StyleSheet.absoluteFill}
         />
 
-        <GlassBackButton
-          onPress={onBack}
-          style={{ [isRTL ? 'marginLeft' : 'marginRight']: 10, zIndex: 10 }}
-        />
+        <GlassBackButton onPress={onBack} style={{ marginRight: 10, zIndex: 10 }} />
 
         <View style={[styles.aiAvatar, { borderColor: colors.glassBorderStrong }]}>
           <LinearGradient
@@ -65,30 +61,11 @@ export function AIHeader({ onBack }: { onBack: () => void }) {
           </LinearGradient>
         </View>
 
-        <View
-          style={{
-            flex: 1,
-            marginLeft: isRTL ? 0 : 10,
-            marginRight: isRTL ? 10 : 0,
-            zIndex: 10,
-          }}
-        >
-          <Text
-            style={[
-              styles.title,
-              { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
-            ]}
-            numberOfLines={1}
-          >
+        <View style={{ flex: 1, marginLeft: 10, zIndex: 10 }}>
+          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
             {isRTL ? 'دستیار هوش مصنوعی' : 'Command AI'}
           </Text>
-          <Text
-            style={[
-              styles.status,
-              { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' },
-            ]}
-            numberOfLines={1}
-          >
+          <Text style={[styles.status, { color: colors.textTertiary }]} numberOfLines={1}>
             {isRTL ? 'هوش عملیاتی و دیسپچ' : 'Tactical Intelligence & Dispatch'}
           </Text>
         </View>

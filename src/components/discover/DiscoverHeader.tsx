@@ -71,7 +71,7 @@ export function DiscoverHeader({
           style={StyleSheet.absoluteFill}
         />
 
-        <View style={[styles.topRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <View style={styles.topRow}>
           <View style={{ flex: 1, zIndex: 10 }}>
             <Text style={[styles.cityText, { color: colors.textTertiary }]}>
               {user.city}
@@ -101,7 +101,7 @@ export function DiscoverHeader({
           </View>
         </View>
 
-        <View style={[styles.searchRow, { zIndex: 10, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <View style={[styles.searchRow, { zIndex: 10 }]}>
           <View style={{ flex: 1 }}>
             <GlassInput
               icon="Search"
