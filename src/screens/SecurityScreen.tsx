@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, TextInput } from 'react-native';
 import { useAppData } from '../lib/appData';
-import { GlassCard, GlassButton, GlassBackButton, GlassAvatar } from '../components/Glass';
+import { GlassCard, GlassButton } from '../components/Glass';
 import { GlassSheet, Toast } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
+import { useI18n } from '../lib/i18n';
 
 interface SecurityScreenProps {
   onBack: () => void;
@@ -20,12 +21,12 @@ interface ActiveDevice {
   type: 'phone' | 'laptop' | 'tablet';
 }
 
-const INITIAL_DEVICES: ActiveDevice[] = [
+const INITIAL_DEVICES_EN: ActiveDevice[] = [
   {
     id: 'dev-1',
     name: 'Pixel 9 Pro',
     platform: 'Android 15 · Ekip Mobile',
-    location: 'London, United Kingdom',
+    location: 'Sector 7, Command HQ',
     ip: '82.165.197.42',
     lastActive: 'Active now',
     isCurrent: true,
@@ -35,21 +36,34 @@ const INITIAL_DEVICES: ActiveDevice[] = [
     id: 'dev-2',
     name: 'MacBook Pro 16"',
     platform: 'macOS Sequoia · Safari 18.2',
-    location: 'London, United Kingdom',
+    location: 'Sector 7, Command HQ',
     ip: '82.165.197.42',
     lastActive: '2 hours ago',
     isCurrent: false,
     type: 'laptop',
   },
+];
+
+const INITIAL_DEVICES_FA: ActiveDevice[] = [
   {
-    id: 'dev-3',
-    name: 'Galaxy Tab S9',
-    platform: 'Android 14 · Ekip App',
-    location: 'Oxford, United Kingdom',
-    ip: '146.198.81.12',
-    lastActive: 'Yesterday at 18:24',
+    id: 'dev-1',
+    name: 'Pixel 9 Pro',
+    platform: 'اندروید ۱۵ · اپلیکیشن اکیپ',
+    location: 'بخش ۷، ستاد فرماندهی',
+    ip: '82.165.197.42',
+    lastActive: 'اکنون فعال',
+    isCurrent: true,
+    type: 'phone',
+  },
+  {
+    id: 'dev-2',
+    name: 'MacBook Pro 16"',
+    platform: 'مک او اس · وب اکیپ',
+    location: 'بخش ۷، ستاد فرماندهی',
+    ip: '82.165.197.42',
+    lastActive: '۲ ساعت پیش',
     isCurrent: false,
-    type: 'tablet',
+    type: 'laptop',
   },
 ];
 
@@ -58,27 +72,24 @@ const RECOVERY_CODES = [
   'EKIP-47K1-82MN',
   'EKIP-93X9-11QA',
   'EKIP-60Z3-88PP',
-  'EKIP-12B7-44VK',
-  'EKIP-75D0-39LQ',
 ];
 
 export function SecurityScreen({ onBack }: SecurityScreenProps) {
-  const { addNotification } = useAppData();
+  const { isRTL } = useI18n();
 
+  const [passkeyRegistered, setPasskeyRegistered] = useState(true);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
   const [biometricEnabled, setBiometricEnabled] = useState(true);
-  const [passkeyRegistered, setPasskeyRegistered] = useState(true);
   const [loginAlerts, setLoginAlerts] = useState(true);
 
-  const [devices, setDevices] = useState<ActiveDevice[]>(INITIAL_DEVICES);
+  const [devices, setDevices] = useState<ActiveDevice[]>(isRTL ? INITIAL_DEVICES_FA : INITIAL_DEVICES_EN);
 
   const [showPasswordSheet, setShowPasswordSheet] = useState(false);
-  const [showRecoverySheet, setShowRecoverySheet] = useState(false);
-
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  const [showRecoverySheet, setShowRecoverySheet] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
   const ShieldCheck = getIcon('ShieldCheck');
@@ -87,35 +98,33 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
   const Smartphone = getIcon('Smartphone');
   const Laptop = getIcon('Laptop');
   const Tablet = getIcon('Tablet');
-  const ChevronRight = getIcon('ChevronRight');
   const Trash = getIcon('Trash');
+  const ChevronRight = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 2800);
+    setTimeout(() => setToastMessage(''), 2600);
+  };
+
+  const handleRevokeDevice = (id: string, name: string) => {
+    setDevices((prev) => prev.filter((d) => d.id !== id));
+    showToast(isRTL ? `نشست دستگاه «${name}» پایان یافت` : `Session on ${name} revoked`);
   };
 
   const handleUpdatePassword = () => {
-    if (!newPassword || newPassword !== confirmPassword) {
-      showToast('New passwords do not match');
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      showToast(isRTL ? 'لطفاً تمامی فیلدها را پر کنید' : 'Please fill all password fields');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      showToast(isRTL ? 'رمزهای جدید یکسان نیستند' : 'New passwords do not match');
       return;
     }
     setShowPasswordSheet(false);
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
-    showToast('Master password updated successfully');
-    addNotification({
-      type: 'system',
-      title: 'Security Alert',
-      body: 'Your account credentials were changed recently.',
-      icon: 'Lock',
-    });
-  };
-
-  const handleRevokeDevice = (id: string, name: string) => {
-    setDevices((prev) => prev.filter((d) => d.id !== id));
-    showToast(`Session revoked for ${name}`);
+    showToast(isRTL ? 'رمز عبور با موفقیت تغییر کرد' : 'Master password updated successfully');
   };
 
   return (
@@ -128,16 +137,20 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
               <ShieldCheck size={22} color="#10b981" />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.heroTitle}>Biometric & Passkey Access</Text>
+              <Text style={styles.heroTitle}>
+                {isRTL ? 'ورود امن با پس‌کی و بیومتریک' : 'Biometric & Passkey Access'}
+              </Text>
               <Text style={styles.heroDesc}>
-                FIDO2 WebAuthn & biometric cryptographic hardware key
+                {isRTL
+                  ? 'استاندارد سخت‌افزاری رمزنگاری FIDO2 و اثر انگشت'
+                  : 'FIDO2 WebAuthn & biometric cryptographic hardware key'}
               </Text>
             </View>
             <Switch
               value={passkeyRegistered}
               onValueChange={(val) => {
                 setPasskeyRegistered(val);
-                showToast(`Hardware passkey ${val ? 'registered' : 'revoked'}`);
+                showToast(val ? (isRTL ? 'پس‌کی سخت‌افزاری فعال شد' : 'Hardware passkey registered') : (isRTL ? 'پس‌کی غیرفعال شد' : 'Hardware passkey revoked'));
               }}
               trackColor={{ false: 'rgba(255,255,255,0.1)', true: '#10b981' }}
               thumbColor="#fff"
@@ -146,12 +159,18 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
         </GlassCard>
 
         {/* Multi-Factor Authentication */}
-        <Text style={styles.sectionHeading}>AUTHENTICATION PROTOCOLS</Text>
+        <Text style={styles.sectionHeading}>
+          {isRTL ? 'پروتکل‌های تایید هویت' : 'AUTHENTICATION PROTOCOLS'}
+        </Text>
         <GlassCard style={styles.cardSection}>
           <View style={styles.settingRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.settingTitle}>Two-Factor Authentication (2FA)</Text>
-              <Text style={styles.settingDesc}>Require TOTP code or passkey for every login</Text>
+              <Text style={styles.settingTitle}>
+                {isRTL ? 'تایید هویت دومرحله‌ای (2FA)' : 'Two-Factor Authentication (2FA)'}
+              </Text>
+              <Text style={styles.settingDesc}>
+                {isRTL ? 'درخواست کد یکبار مصرف در هر بار ورود' : 'Require TOTP code or passkey for every login'}
+              </Text>
             </View>
             <Switch
               value={twoFactorEnabled}
@@ -165,8 +184,12 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
 
           <View style={styles.settingRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.settingTitle}>Biometric Unlock on Open</Text>
-              <Text style={styles.settingDesc}>Prompt fingerprint or face unlock upon launch</Text>
+              <Text style={styles.settingTitle}>
+                {isRTL ? 'قفل بیومتریک هنگام باز کردن برنامه' : 'Biometric Unlock on Open'}
+              </Text>
+              <Text style={styles.settingDesc}>
+                {isRTL ? 'درخواست اثر انگشت یا تشخیص چهره هنگام ورود' : 'Prompt fingerprint or face unlock upon launch'}
+              </Text>
             </View>
             <Switch
               value={biometricEnabled}
@@ -180,8 +203,12 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
 
           <View style={styles.settingRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.settingTitle}>Suspicious Activity Alerts</Text>
-              <Text style={styles.settingDesc}>Instant notification upon login from new sector</Text>
+              <Text style={styles.settingTitle}>
+                {isRTL ? 'هشدار فعالیت‌های مشکوک' : 'Suspicious Activity Alerts'}
+              </Text>
+              <Text style={styles.settingDesc}>
+                {isRTL ? 'اعلان آنی در صورت ورود از دستگاه یا منطقه جدید' : 'Instant notification upon login from new sector'}
+              </Text>
             </View>
             <Switch
               value={loginAlerts}
@@ -193,7 +220,9 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
         </GlassCard>
 
         {/* Credentials & Keys */}
-        <Text style={styles.sectionHeading}>CREDENTIALS</Text>
+        <Text style={styles.sectionHeading}>
+          {isRTL ? 'اطلاعات امنیتی و رمزها' : 'CREDENTIALS'}
+        </Text>
         <GlassCard style={styles.cardSection}>
           <TouchableOpacity
             style={styles.actionRow}
@@ -203,8 +232,12 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
               <Lock size={18} color="#ec4899" />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.settingTitle}>Change Master Password</Text>
-              <Text style={styles.settingDesc}>Last updated 24 days ago</Text>
+              <Text style={styles.settingTitle}>
+                {isRTL ? 'تغییر رمز عبور اصلی' : 'Change Master Password'}
+              </Text>
+              <Text style={styles.settingDesc}>
+                {isRTL ? 'آخرین تغییر: ۲۴ روز پیش' : 'Last updated 24 days ago'}
+              </Text>
             </View>
             <ChevronRight size={18} color="rgba(255,255,255,0.4)" />
           </TouchableOpacity>
@@ -219,15 +252,21 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
               <Key size={18} color="#f59e0b" />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.settingTitle}>Backup Recovery Codes</Text>
-              <Text style={styles.settingDesc}>Emergency one-time access tokens</Text>
+              <Text style={styles.settingTitle}>
+                {isRTL ? 'کدهای بازیابی اضطراری' : 'Backup Recovery Codes'}
+              </Text>
+              <Text style={styles.settingDesc}>
+                {isRTL ? 'کدهای یکبار مصرف برای مواقع اضطراری' : 'Emergency one-time access tokens'}
+              </Text>
             </View>
             <ChevronRight size={18} color="rgba(255,255,255,0.4)" />
           </TouchableOpacity>
         </GlassCard>
 
         {/* Active Sessions */}
-        <Text style={styles.sectionHeading}>ACTIVE SESSIONS ({devices.length})</Text>
+        <Text style={styles.sectionHeading}>
+          {isRTL ? `دستگاه‌های فعال (${devices.length})` : `ACTIVE SESSIONS (${devices.length})`}
+        </Text>
         <GlassCard style={styles.cardSection}>
           {devices.map((dev, idx) => (
             <View key={dev.id}>
@@ -246,7 +285,9 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text style={styles.settingTitle}>{dev.name}</Text>
                     {dev.isCurrent && (
-                      <Text style={styles.currentBadge}>This Device</Text>
+                      <Text style={styles.currentBadge}>
+                        {isRTL ? 'این دستگاه' : 'This Device'}
+                      </Text>
                     )}
                   </View>
                   <Text style={styles.settingDesc}>{dev.platform}</Text>
@@ -272,10 +313,10 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
       <GlassSheet
         open={showPasswordSheet}
         onClose={() => setShowPasswordSheet(false)}
-        title="Update Master Password"
+        title={isRTL ? 'به‌روزرسانی رمز عبور' : 'Update Master Password'}
       >
         <View style={{ paddingVertical: 10 }}>
-          <Text style={styles.inputLabel}>CURRENT PASSWORD</Text>
+          <Text style={styles.inputLabel}>{isRTL ? 'رمز عبور فعلی' : 'CURRENT PASSWORD'}</Text>
           <TextInput
             style={styles.input}
             secureTextEntry
@@ -284,7 +325,7 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
             placeholderTextColor="rgba(255,255,255,0.4)"
           />
 
-          <Text style={[styles.inputLabel, { marginTop: 14 }]}>NEW PASSWORD</Text>
+          <Text style={[styles.inputLabel, { marginTop: 14 }]}>{isRTL ? 'رمز عبور جدید' : 'NEW PASSWORD'}</Text>
           <TextInput
             style={styles.input}
             secureTextEntry
@@ -293,7 +334,7 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
             placeholderTextColor="rgba(255,255,255,0.4)"
           />
 
-          <Text style={[styles.inputLabel, { marginTop: 14 }]}>CONFIRM NEW PASSWORD</Text>
+          <Text style={[styles.inputLabel, { marginTop: 14 }]}>{isRTL ? 'تکرار رمز عبور جدید' : 'CONFIRM NEW PASSWORD'}</Text>
           <TextInput
             style={styles.input}
             secureTextEntry
@@ -303,8 +344,8 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
           />
 
           <View style={{ marginTop: 22 }}>
-            <GlassButton variant="primary" onClick={handleUpdatePassword}>
-              Save New Password
+            <GlassButton variant="primary" onPress={handleUpdatePassword}>
+              {isRTL ? 'ذخیره رمز عبور جدید' : 'Save New Password'}
             </GlassButton>
           </View>
         </View>
@@ -314,11 +355,13 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
       <GlassSheet
         open={showRecoverySheet}
         onClose={() => setShowRecoverySheet(false)}
-        title="Emergency Recovery Codes"
+        title={isRTL ? 'کدهای بازیابی اضطراری' : 'Emergency Recovery Codes'}
       >
         <View style={{ paddingVertical: 10 }}>
           <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 14 }}>
-            Store these emergency keys in a secure offline vault. Each key can only be used once.
+            {isRTL
+              ? 'این کدهای اضطراری را در مکانی امن و آفلاین نگهداری کنید. هر کد فقط یک بار قابل استفاده است.'
+              : 'Store these emergency keys in a secure offline vault. Each key can only be used once.'}
           </Text>
 
           <View style={styles.codesGrid}>
@@ -332,17 +375,17 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
           <View style={{ marginTop: 20 }}>
             <GlassButton
               variant="secondary"
-              onClick={() => {
-                showToast('Recovery codes copied to clipboard');
+              onPress={() => {
+                showToast(isRTL ? 'کدهای بازیابی در حافظه کپی شدند' : 'Recovery codes copied to clipboard');
               }}
             >
-              Copy All Codes
+              {isRTL ? 'کپی تمامی کدها' : 'Copy All Codes'}
             </GlassButton>
           </View>
         </View>
       </GlassSheet>
 
-      <Toast message={toastMessage} />
+      <Toast message={toastMessage} visible={Boolean(toastMessage)} />
     </View>
   );
 }
@@ -351,52 +394,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  headerSubtitle: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
-  },
-  badgePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: 'rgba(16,185,129,0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(16,185,129,0.4)',
-    gap: 4,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#10b981',
-  },
   content: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 16,
   },
   heroCard: {
     padding: 16,
-    borderRadius: 20,
+    borderRadius: 22,
     borderColor: 'rgba(16,185,129,0.3)',
     borderWidth: 1,
   },
@@ -405,14 +409,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   heroTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
     color: '#fff',
   },
@@ -420,6 +424,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: 'rgba(255,255,255,0.6)',
     marginTop: 2,
+    lineHeight: 16,
   },
   sectionHeading: {
     fontSize: 11,
@@ -431,14 +436,14 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   cardSection: {
-    padding: 16,
+    padding: 14,
     borderRadius: 20,
   },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
   settingTitle: {
     fontSize: 14,
@@ -452,8 +457,8 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    marginVertical: 10,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    marginVertical: 12,
   },
   actionRow: {
     flexDirection: 'row',
@@ -463,11 +468,12 @@ const styles = StyleSheet.create({
   deviceItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 6,
   },
   currentBadge: {
     fontSize: 10,
-    color: '#10b981',
     fontWeight: '700',
+    color: '#10b981',
     backgroundColor: 'rgba(16,185,129,0.15)',
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -477,7 +483,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: 'rgba(255,255,255,0.5)',
-    marginBottom: 6,
+    letterSpacing: 0.8,
+    marginBottom: 8,
   },
   input: {
     backgroundColor: 'rgba(255,255,255,0.06)',
@@ -495,19 +502,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   codePill: {
-    width: '48%',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
   },
   codeText: {
     fontFamily: 'monospace',
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#ec4899',
+    fontSize: 13,
+    color: '#fff',
+    letterSpacing: 1,
   },
 });

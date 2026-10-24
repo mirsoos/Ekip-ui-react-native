@@ -101,7 +101,7 @@ export const DiscoverScreen = React.forwardRef<
           <View style={styles.sectionWrap}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Featured Operation
+                {t('ekip.featured')}
               </Text>
             </View>
             <EkipCardSkeleton variant="featured" />
@@ -110,10 +110,10 @@ export const DiscoverScreen = React.forwardRef<
           <View style={styles.sectionWrap}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Featured Operation
+                {t('ekip.featured')}
               </Text>
               <Text style={[styles.sectionBadge, { color: '#f472b6' }]}>
-                PRIORITY
+                {t('ekip.priority')}
               </Text>
             </View>
             <EkipCard
@@ -170,12 +170,12 @@ export const DiscoverScreen = React.forwardRef<
           ) : filtered.length === 0 ? (
             <GlassEmpty
               icon="Search"
-              title="No missions found"
-              subtitle="Try broadening your sector or clearance search parameters."
+              title={t('discover.emptyTitle')}
+              subtitle={t('discover.emptyDesc')}
               action={
                 hasActiveFilters ? (
                   <GlassButton variant="secondary" onPress={handleResetFilters}>
-                    Reset Filters
+                    {t('discover.filterReset')}
                   </GlassButton>
                 ) : undefined
               }

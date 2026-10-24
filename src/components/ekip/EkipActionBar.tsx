@@ -5,6 +5,7 @@ import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useAppData } from '../../lib/appData';
+import { useI18n } from '../../lib/i18n';
 import type { Group } from '../../types/database';
 
 export function EkipActionBar({
@@ -22,6 +23,7 @@ export function EkipActionBar({
 }) {
   const { me, members, requests, conversations } = useAppData();
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const ClockIcon = getIcon('Clock');
 
   const enterAnim = useRef(new Animated.Value(0)).current;
@@ -92,12 +94,12 @@ export function EkipActionBar({
           <View style={styles.row}>
             <View style={{ flex: 1, zIndex: 10 }}>
               <GlassButton variant="secondary" icon="Edit" fullWidth>
-                Edit
+                {t('common.edit')}
               </GlassButton>
             </View>
             <View style={{ flex: 1, zIndex: 10 }}>
               <GlassButton variant="secondary" icon="Users" fullWidth>
-                Manage
+                {t('ekip.manage')}
               </GlassButton>
             </View>
           </View>
@@ -110,12 +112,12 @@ export function EkipActionBar({
                 fullWidth
                 onPress={handleStartChat}
               >
-                Chat
+                {t('nav.chat')}
               </GlassButton>
             </View>
             <View style={{ flex: 1, zIndex: 10 }}>
               <GlassButton variant="secondary" icon="CheckCircle2" fullWidth>
-                Deployed
+                {t('ekip.deployed')}
               </GlassButton>
             </View>
           </View>
@@ -124,12 +126,12 @@ export function EkipActionBar({
             <View style={styles.pendingIndicator}>
               <ClockIcon size={16} color={colors.textSecondary} style={{ marginRight: 6 }} />
               <Text style={[styles.pendingText, { color: colors.textSecondary }]}>
-                Pending Clearance
+                {t('ekip.pendingClearance')}
               </Text>
             </View>
             <View style={{ zIndex: 10 }}>
               <GlassButton variant="secondary" icon="X" onPress={onCancelRequest}>
-                Cancel
+                {t('ekip.cancelRequest')}
               </GlassButton>
             </View>
           </View>
@@ -143,12 +145,12 @@ export function EkipActionBar({
               disabled={!eligible || full}
             >
               {!eligible
-                ? 'Clearance Not Met'
+                ? t('ekip.clearanceNotMet')
                 : full
-                ? 'Squad Full'
+                ? t('ekip.squadFull')
                 : group.auto_accept
-                ? 'Deploy Now'
-                : 'Request Clearance'}
+                ? t('ekip.deployNow')
+                : t('common.requestJoin')}
             </GlassButton>
           </View>
         )}
@@ -169,38 +171,34 @@ const styles = StyleSheet.create({
   },
   dockContainer: {
     position: 'relative',
+    height: 70,
     borderRadius: 36,
     borderWidth: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.35,
     shadowRadius: 28,
     elevation: 14,
     overflow: 'visible',
-    ...(Platform.OS === 'web'
-      ? ({
-          userSelect: 'none',
-        } as any)
-      : {}),
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     width: '100%',
-    zIndex: 10,
   },
   pendingIndicator: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 12,
     zIndex: 10,
   },
   pendingText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
 });

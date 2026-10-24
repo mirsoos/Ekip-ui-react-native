@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppData } from '../lib/appData';
-import { GlassCard, GlassSegmented, GlassEmpty, GlassBadgeIcon, GlassButton } from '../components/Glass';
+import { GlassCard, GlassEmpty, GlassBadgeIcon, GlassButton } from '../components/Glass';
 import { Toast } from '../components/Overlays';
 import { StatBox } from '../components/common/StatBox';
 import { RequestsModal } from '../components/activity/RequestsModal';
-import { NotificationButton } from '../components/NotificationButton';
 import { getIcon, type IconName } from '../lib/icons';
 import { useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 import type { Group } from '../types/database';
 
 export function ActivityScreen({
@@ -24,12 +24,12 @@ export function ActivityScreen({
   onOpenProfile: (userId: string) => void;
   onOpenNotifications: () => void;
 }) {
-  const { groups, members, requests, updateRequest, addNotification, notifications } = useAppData();
-  const { colors, isDark } = useTheme();
+  const { groups, members, requests, updateRequest, addNotification } = useAppData();
+  const { colors } = useTheme();
+  const { t, isRTL } = useI18n();
 
   const [internalTab, setInternalTab] = useState('created');
   const activeTab = onChangeTab ? tab : internalTab;
-  const setActiveTab = onChangeTab || setInternalTab;
 
   const [showRequests, setShowRequests] = useState(false);
   const [requestsGroupId, setRequestsGroupId] = useState<string | null>(null);
@@ -43,23 +43,25 @@ export function ActivityScreen({
       members.some((m) => m.group_id === g.id && m.user_id === 'me' && m.status === 'active')
   );
 
-  const ChevronRight = getIcon('ChevronRight');
+  const ChevronRight = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
 
   const handleAccept = (reqId: string, profileName: string, groupTitle: string) => {
     updateRequest(reqId, 'accepted');
     addNotification({
       type: 'group_request',
-      title: 'Request accepted',
-      body: `You accepted ${profileName} into ${groupTitle}.`,
+      title: isRTL ? 'درخواست تایید شد' : 'Request accepted',
+      body: isRTL
+        ? `شما ${profileName} را به ${groupTitle} پذیرفتید.`
+        : `You accepted ${profileName} into ${groupTitle}.`,
       icon: 'CheckCircle2',
     });
-    setToast('Request accepted');
+    setToast(isRTL ? 'درخواست پذیرفته شد' : 'Request accepted');
     setTimeout(() => setToast(''), 2500);
   };
 
   const handleReject = (reqId: string) => {
     updateRequest(reqId, 'rejected');
-    setToast('Request rejected');
+    setToast(isRTL ? 'درخواست رد شد' : 'Request rejected');
     setTimeout(() => setToast(''), 2500);
   };
 
@@ -84,8 +86,8 @@ export function ActivityScreen({
             {createdGroups.length === 0 ? (
               <GlassEmpty
                 icon="Crown"
-                title="No created Ekips"
-                subtitle="Create your first Ekip to start gathering people."
+                title={t('activity.noCreated')}
+                subtitle={t('activity.noCreatedSub')}
               />
             ) : (
               createdGroups.map((g) => {
@@ -123,13 +125,13 @@ export function ActivityScreen({
                             {g.title}
                           </Text>
                           <Text style={styles.bannerDate}>
-                            {new Date(g.event_date).toLocaleDateString('en-US', {
+                            {new Date(g.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
                               month: 'short',
                               day: 'numeric',
                             })}
                           </Text>
                         </View>
-                        <GlassBadgeIcon icon="Crown" label="Owner" color="amber" />
+                        <GlassBadgeIcon icon="Crown" label={t('activity.owner')} color="amber" />
                       </View>
                     </TouchableOpacity>
 
@@ -140,13 +142,13 @@ export function ActivityScreen({
                         <StatBox
                           icon="Users"
                           value={groupMembers.length}
-                          label="Members"
+                          label={t('common.members')}
                           style={{ marginHorizontal: 2 }}
                         />
                         <StatBox
                           icon="UserPlus"
                           value={pendingReqs.length}
-                          label="Requests"
+                          label={t('activity.requests')}
                           highlight={pendingReqs.length > 0}
                           onPress={() => openRequests(g.id)}
                           style={{ marginHorizontal: 2 }}
@@ -154,13 +156,13 @@ export function ActivityScreen({
                         <StatBox
                           icon="Eye"
                           value={g.views}
-                          label="Views"
+                          label={t('activity.views')}
                           style={{ marginHorizontal: 2 }}
                         />
                         <StatBox
                           icon="TrendingUp"
                           value={g.member_count}
-                          label="Joined"
+                          label={t('activity.joined')}
                           style={{ marginHorizontal: 2 }}
                         />
                       </View>
@@ -175,7 +177,7 @@ export function ActivityScreen({
                             onPress={() => onOpenGroup(g)}
                             fullWidth
                           >
-                            Edit
+                            {t('common.edit')}
                           </GlassButton>
                         </View>
                         {pendingReqs.length > 0 && (
@@ -186,7 +188,7 @@ export function ActivityScreen({
                               onPress={() => openRequests(g.id)}
                               fullWidth
                             >
-                              Requests ({pendingReqs.length})
+                              {t('activity.requestsPending', { count: pendingReqs.length })}
                             </GlassButton>
                           </View>
                         )}
@@ -205,8 +207,8 @@ export function ActivityScreen({
             {joinedGroups.length === 0 ? (
               <GlassEmpty
                 icon="Users"
-                title="No joined Ekips"
-                subtitle="Discover and join Ekips to see them here."
+                title={t('activity.noJoined')}
+                subtitle={t('activity.noJoinedSub')}
               />
             ) : (
               joinedGroups.map((g) => (
@@ -233,14 +235,14 @@ export function ActivityScreen({
                         {g.title}
                       </Text>
                       <Text style={[styles.groupMeta, { color: colors.textTertiary }]}>
-                        {new Date(g.event_date).toLocaleDateString('en-US', {
+                        {new Date(g.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
                           month: 'short',
                           day: 'numeric',
                         })}{' '}
                         · {g.city}
                       </Text>
                       <View style={{ marginTop: 4, flexDirection: 'row', alignItems: 'center' }}>
-                        <GlassBadgeIcon icon="CheckCircle2" label="Member" color="green" />
+                        <GlassBadgeIcon icon="CheckCircle2" label={t('activity.joinedBadge')} color="green" />
                       </View>
                     </View>
                     <ChevronRight size={18} color={colors.textTertiary} style={{ alignSelf: 'center' }} />
@@ -257,8 +259,8 @@ export function ActivityScreen({
             {myRequests.length === 0 ? (
               <GlassEmpty
                 icon="Clock"
-                title="No requests sent"
-                subtitle="Request to join an Ekip and track its status here."
+                title={t('activity.noRequests')}
+                subtitle={t('activity.noRequestsSub')}
               />
             ) : (
               myRequests.map((r) => {
@@ -269,9 +271,9 @@ export function ActivityScreen({
                   string,
                   { icon: IconName; color: 'blue' | 'green' | 'pink'; label: string }
                 > = {
-                  pending: { icon: 'Clock', color: 'blue', label: 'Pending' },
-                  accepted: { icon: 'CheckCircle2', color: 'green', label: 'Accepted' },
-                  rejected: { icon: 'XCircle', color: 'pink', label: 'Rejected' },
+                  pending: { icon: 'Clock', color: 'blue', label: t('activity.pendingBadge') },
+                  accepted: { icon: 'CheckCircle2', color: 'green', label: t('activity.acceptedBadge') },
+                  rejected: { icon: 'XCircle', color: 'pink', label: t('activity.rejectedBadge') },
                 };
                 const sc = statusConfig[r.status] ?? statusConfig.pending;
 
@@ -299,7 +301,7 @@ export function ActivityScreen({
                           {g.title}
                         </Text>
                         <Text style={[styles.groupMeta, { color: colors.textTertiary }]}>
-                          {new Date(g.event_date).toLocaleDateString('en-US', {
+                          {new Date(g.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
                             month: 'short',
                             day: 'numeric',
                           })}

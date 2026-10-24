@@ -4,6 +4,7 @@ import { GlassAvatar, GlassBackButton } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { Conversation } from '../../types/database';
 
 export function ChatHeader({
@@ -16,6 +17,7 @@ export function ChatHeader({
   onOpenMenu?: () => void;
 }) {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const isGroup = conversation.type === 'group';
   const MoreIcon = getIcon('MoreVertical');
 
@@ -73,7 +75,7 @@ export function ChatHeader({
             {conversation.title}
           </Text>
           <Text style={[styles.status, { color: colors.textTertiary }]}>
-            {isGroup ? 'Squad Channel' : 'Encrypted Link · Active'}
+            {isGroup ? t('chat.channel') : t('chat.encryptedLink')}
           </Text>
         </View>
 
@@ -118,20 +120,20 @@ const styles = StyleSheet.create({
     overflow: 'visible',
   },
   title: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
   },
   status: {
-    fontSize: 11,
-    marginTop: 1,
+    fontSize: 12,
+    marginTop: 2,
   },
   moreBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
     zIndex: 10,
   },
 });

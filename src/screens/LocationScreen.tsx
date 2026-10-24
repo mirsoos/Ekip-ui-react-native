@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, TextInput } from 'react-native';
 import { useAppData } from '../lib/appData';
-import { GlassCard, GlassButton, GlassBackButton } from '../components/Glass';
+import { GlassCard, GlassButton } from '../components/Glass';
 import { GlassSheet, Toast } from '../components/Overlays';
 import { cities } from '../lib/demoData';
 import { getIcon } from '../lib/icons';
+import { useI18n } from '../lib/i18n';
 
 interface LocationScreenProps {
   onBack: () => void;
@@ -17,26 +18,31 @@ interface SavedPlace {
   category: 'favorite' | 'home' | 'work';
 }
 
-const INITIAL_SAVED_PLACES: SavedPlace[] = [
-  { id: 'p1', name: 'Home Base', address: 'Marina District, San Francisco, CA', category: 'home' },
-  { id: 'p2', name: 'Design Studio', address: 'SoMa, 2nd St, San Francisco, CA', category: 'work' },
-  { id: 'p3', name: 'Ferry Building Meetup Spot', address: '1 Ferry Building, San Francisco, CA', category: 'favorite' },
-];
-
 export function LocationScreen({ onBack }: LocationScreenProps) {
   const { me, updateMe, addNotification } = useAppData();
+  const { isRTL } = useI18n();
 
-  const [selectedCity, setSelectedCity] = useState(me.city || 'San Francisco');
+  const initialPlaces: SavedPlace[] = isRTL
+    ? [
+        { id: 'p1', name: 'پایگاه اصلی', address: 'بخش ۷، ستاد فرماندهی', category: 'home' },
+        { id: 'p2', name: 'قرارگاه عملیاتی', address: 'بخش ۴، پایگاه آلفا', category: 'work' },
+        { id: 'p3', name: 'محل قرار اکیپ', address: 'ایستگاه بازرسی دلتا، جاده خط‌الراس', category: 'favorite' },
+      ]
+    : [
+        { id: 'p1', name: 'Home Base', address: 'Sector 7, Command HQ', category: 'home' },
+        { id: 'p2', name: 'Forward Outpost', address: 'Sector 4, FOB Alpha', category: 'work' },
+        { id: 'p3', name: 'Muster Point Delta', address: 'Checkpoint Delta, Ridge Road', category: 'favorite' },
+      ];
+
+  const [selectedCity, setSelectedCity] = useState(me.city || cities[0]);
   const [discoveryRadius, setDiscoveryRadius] = useState<number>(15);
-  const [preciseLocationSharing, setPreciseLocationSharing] = useState(true);
   const [backgroundRadar, setBackgroundRadar] = useState(true);
   const [spotlightMyCity, setSpotlightMyCity] = useState(true);
-  const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>(INITIAL_SAVED_PLACES);
+  const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>(initialPlaces);
 
   const [showAddPlaceModal, setShowAddPlaceModal] = useState(false);
   const [newPlaceName, setNewPlaceName] = useState('');
   const [newPlaceAddress, setNewPlaceAddress] = useState('');
-  const [newPlaceCategory, setNewPlaceCategory] = useState<'favorite' | 'home' | 'work'>('favorite');
 
   const [toastMessage, setToastMessage] = useState('');
 
@@ -45,7 +51,6 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
   const Navigation = getIcon('Navigation');
   const Check = getIcon('Check');
   const Trash = getIcon('Trash');
-  const Plus = getIcon('Plus');
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -55,38 +60,36 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
   const handleCityChange = (city: string) => {
     setSelectedCity(city);
     updateMe({ city });
-    showToast(`Primary discovery city updated to ${city}`);
+    showToast(isRTL ? `منطقه رادار به «${city}» تغییر یافت` : `Primary discovery city updated to ${city}`);
     addNotification({
       type: 'system',
-      title: 'Location Updated',
-      body: `Your active radar has been relocated to ${city}.`,
+      title: isRTL ? 'منطقه عملیاتی به‌روزرسانی شد' : 'Operational Sector Changed',
+      body: isRTL ? `رادار اکتشاف شما اکنون روی ${city} تنظیم شده است.` : `Your discovery radar is now tuned to ${city}.`,
       icon: 'MapPin',
     });
   };
 
   const handleAddPlace = () => {
-    if (!newPlaceName.trim() || !newPlaceAddress.trim()) {
-      showToast('Please enter both place name and address');
+    if (!newPlaceName.trim()) {
+      showToast(isRTL ? 'لطفاً نام مکان را وارد کنید' : 'Please provide a place label');
       return;
     }
-
     const place: SavedPlace = {
-      id: `place-${Date.now()}`,
+      id: `p-${Date.now()}`,
       name: newPlaceName.trim(),
-      address: newPlaceAddress.trim(),
-      category: newPlaceCategory,
+      address: newPlaceAddress.trim() || selectedCity,
+      category: 'favorite',
     };
-
     setSavedPlaces((prev) => [place, ...prev]);
     setNewPlaceName('');
     setNewPlaceAddress('');
     setShowAddPlaceModal(false);
-    showToast('Saved favorite location added');
+    showToast(isRTL ? 'مکان برگزیده جدید اضافه شد' : 'Saved favorite location added');
   };
 
   const handleRemovePlace = (id: string, name: string) => {
     setSavedPlaces((prev) => prev.filter((p) => p.id !== id));
-    showToast(`Removed "${name}" from saved places`);
+    showToast(isRTL ? `مکان «${name}» از لیست حذف شد` : `Removed "${name}" from saved places`);
   };
 
   return (
@@ -101,7 +104,9 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={styles.heroTitle}>{selectedCity}</Text>
               <Text style={styles.heroDesc}>
-                Current Hub · Active Discovery Radius: {discoveryRadius} km
+                {isRTL
+                  ? `پایگاه فعلی · شعاع رادار فعال: ${discoveryRadius} کیلومتر`
+                  : `Current Hub · Active Discovery Radius: ${discoveryRadius} km`}
               </Text>
             </View>
           </View>
@@ -113,7 +118,7 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
                 key={r}
                 onPress={() => {
                   setDiscoveryRadius(r);
-                  showToast(`Radar radius set to ${r} km`);
+                  showToast(isRTL ? `شعاع رادار روی ${r} کیلومتر تنظیم شد` : `Radar radius set to ${r} km`);
                 }}
                 style={[
                   styles.radiusBtn,
@@ -121,7 +126,7 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
                 ]}
               >
                 <Text style={[styles.radiusBtnText, discoveryRadius === r && styles.radiusBtnTextActive]}>
-                  {r}km
+                  {r} {isRTL ? 'ک.م' : 'km'}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -129,7 +134,9 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
         </GlassCard>
 
         {/* Tactical City Hubs */}
-        <Text style={styles.sectionHeading}>SELECT OPERATIONAL SECTOR</Text>
+        <Text style={styles.sectionHeading}>
+          {isRTL ? 'انتخاب بخش عملیاتی' : 'SELECT OPERATIONAL SECTOR'}
+        </Text>
         <GlassCard style={styles.cardSection}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
             {cities.map((c) => {
@@ -155,12 +162,18 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
         </GlassCard>
 
         {/* Location Preferences */}
-        <Text style={styles.sectionHeading}>RADAR TELEMETRY</Text>
+        <Text style={styles.sectionHeading}>
+          {isRTL ? 'تنظیمات رادار موقعیت' : 'RADAR TELEMETRY'}
+        </Text>
         <GlassCard style={styles.cardSection}>
           <View style={styles.settingRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.settingTitle}>Background Geofence Radar</Text>
-              <Text style={styles.settingDesc}>Alert when squad events start within 2km</Text>
+              <Text style={styles.settingTitle}>
+                {isRTL ? 'رادار پس‌زمینه محدوده مکانی' : 'Background Geofence Radar'}
+              </Text>
+              <Text style={styles.settingDesc}>
+                {isRTL ? 'اعلان هنگام شروع رویداد در محدوده ۲ کیلومتری' : 'Alert when squad events start within 2km'}
+              </Text>
             </View>
             <Switch
               value={backgroundRadar}
@@ -174,8 +187,12 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
 
           <View style={styles.settingRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.settingTitle}>Spotlight My Local City</Text>
-              <Text style={styles.settingDesc}>Pin local squads to the top of your feed</Text>
+              <Text style={styles.settingTitle}>
+                {isRTL ? 'اولویت نمایش اکیپ‌های منطقه من' : 'Spotlight My Local City'}
+              </Text>
+              <Text style={styles.settingDesc}>
+                {isRTL ? 'پین کردن اکیپ‌های محلی در بالای فید اصلی' : 'Pin local squads to the top of your feed'}
+              </Text>
             </View>
             <Switch
               value={spotlightMyCity}
@@ -188,9 +205,13 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
 
         {/* Saved Places */}
         <View style={styles.sectionHeadingRow}>
-          <Text style={styles.sectionHeading}>SAVED LOCATIONS</Text>
+          <Text style={styles.sectionHeading}>
+            {isRTL ? 'مکان‌های ذخیره شده' : 'SAVED LOCATIONS'}
+          </Text>
           <TouchableOpacity onPress={() => setShowAddPlaceModal(true)}>
-            <Text style={styles.addText}>+ Add Place</Text>
+            <Text style={styles.addText}>
+              {isRTL ? '+ افزودن مکان' : '+ Add Place'}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -222,36 +243,40 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
       <GlassSheet
         open={showAddPlaceModal}
         onClose={() => setShowAddPlaceModal(false)}
-        title="Add Favorite Place"
+        title={isRTL ? 'افزودن مکان برگزیده' : 'Add Favorite Place'}
       >
         <View style={{ paddingVertical: 10 }}>
-          <Text style={styles.inputLabel}>LABEL NAME</Text>
+          <Text style={styles.inputLabel}>
+            {isRTL ? 'نام مکان' : 'LABEL NAME'}
+          </Text>
           <TextInput
             style={styles.input}
             value={newPlaceName}
             onChangeText={setNewPlaceName}
-            placeholder="e.g. Squad Headquarters"
+            placeholder={isRTL ? 'مثلاً قرارگاه دیده‌بانی' : 'e.g. Squad Headquarters'}
             placeholderTextColor="rgba(255,255,255,0.4)"
           />
 
-          <Text style={[styles.inputLabel, { marginTop: 14 }]}>ADDRESS OR COORDINATES</Text>
+          <Text style={[styles.inputLabel, { marginTop: 14 }]}>
+            {isRTL ? 'آدرس یا محدوده' : 'ADDRESS OR COORDINATES'}
+          </Text>
           <TextInput
             style={styles.input}
             value={newPlaceAddress}
             onChangeText={setNewPlaceAddress}
-            placeholder="e.g. 742 Evergreen Terrace"
+            placeholder={isRTL ? 'مثلاً بخش ۴، جاده خط‌الراس' : 'e.g. Checkpoint Delta, Sector 4'}
             placeholderTextColor="rgba(255,255,255,0.4)"
           />
 
           <View style={{ marginTop: 22 }}>
-            <GlassButton variant="primary" onClick={handleAddPlace}>
-              Save Place
+            <GlassButton variant="primary" onPress={handleAddPlace}>
+              {isRTL ? 'ذخیره مکان' : 'Save Place'}
             </GlassButton>
           </View>
         </View>
       </GlassSheet>
 
-      <Toast message={toastMessage} />
+      <Toast message={toastMessage} visible={Boolean(toastMessage)} />
     </View>
   );
 }
@@ -260,52 +285,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  headerSubtitle: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
-  },
-  badgePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: 'rgba(16,185,129,0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(16,185,129,0.4)',
-    gap: 4,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#10b981',
-  },
   content: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 16,
   },
   heroCard: {
     padding: 16,
-    borderRadius: 20,
+    borderRadius: 22,
     borderColor: 'rgba(16,185,129,0.3)',
     borderWidth: 1,
   },
@@ -314,15 +300,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   heroTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#fff',
   },
   heroDesc: {
@@ -332,17 +318,14 @@ const styles = StyleSheet.create({
   },
   radiusRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
     marginTop: 16,
-    paddingTop: 14,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.1)',
   },
   radiusBtn: {
     flex: 1,
     paddingVertical: 8,
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 12,
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
@@ -352,12 +335,13 @@ const styles = StyleSheet.create({
     borderColor: '#10b981',
   },
   radiusBtnText: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
     color: 'rgba(255,255,255,0.7)',
+    fontWeight: '600',
   },
   radiusBtnTextActive: {
     color: '#fff',
+    fontWeight: '700',
   },
   sectionHeading: {
     fontSize: 11,
@@ -370,25 +354,50 @@ const styles = StyleSheet.create({
   },
   sectionHeadingRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingRight: 4,
+    alignItems: 'center',
+    marginTop: 22,
+    marginBottom: 8,
+    marginHorizontal: 4,
   },
   addText: {
     fontSize: 12,
     fontWeight: '700',
     color: '#ec4899',
-    marginTop: 14,
   },
   cardSection: {
-    padding: 16,
+    padding: 14,
     borderRadius: 20,
+  },
+  cityChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  cityChipActive: {
+    backgroundColor: 'rgba(236,72,153,0.15)',
+    borderColor: '#ec4899',
+  },
+  cityChipText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '600',
+  },
+  cityChipTextActive: {
+    color: '#fff',
+    fontWeight: '700',
   },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
   settingTitle: {
     fontSize: 14,
@@ -402,31 +411,8 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    marginVertical: 10,
-  },
-  cityChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    gap: 6,
-  },
-  cityChipActive: {
-    backgroundColor: 'rgba(236,72,153,0.15)',
-    borderColor: 'rgba(236,72,153,0.5)',
-  },
-  cityChipText: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: '600',
-  },
-  cityChipTextActive: {
-    color: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    marginVertical: 12,
   },
   placeRow: {
     flexDirection: 'row',
@@ -436,7 +422,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: 'rgba(255,255,255,0.5)',
-    marginBottom: 6,
+    letterSpacing: 0.8,
+    marginBottom: 8,
   },
   input: {
     backgroundColor: 'rgba(255,255,255,0.06)',

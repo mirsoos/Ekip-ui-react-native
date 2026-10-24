@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { GlassButton, GlassInput } from '../Glass';
 import { GlassSheet } from '../Overlays';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { Group } from '../../types/database';
 
 export function EkipJoinModal({
@@ -23,19 +24,20 @@ export function EkipJoinModal({
   onClose: () => void;
 }) {
   const { colors } = useTheme();
+  const { isRTL, t } = useI18n();
 
   return (
-    <GlassSheet open={open} onClose={onClose} title={`Join ${group.title}`}>
+    <GlassSheet open={open} onClose={onClose} title={isRTL ? `پیوستن به ${group.title}` : `Join ${group.title}`}>
       <View style={{ gap: 14 }}>
         <Text style={[styles.desc, { color: colors.textSecondary }]}>
           {group.auto_accept
-            ? 'Automatic clearance enabled. You will be deployed immediately.'
-            : 'Send a clearance request note to the squad commander.'}
+            ? (isRTL ? 'پذیرش خودکار فعال است. شما بلافاصله پس از تایید عضو اکیپ خواهید شد.' : 'Automatic clearance enabled. You will be deployed immediately.')
+            : (isRTL ? 'پیام معرفی یا درخواست عضویت خود را برای سازنده اکیپ ارسال کنید.' : 'Send a clearance request note to the squad commander.')}
         </Text>
 
         {!group.auto_accept && (
           <GlassInput
-            placeholder="Transmit operator credentials / introduction..."
+            placeholder={isRTL ? 'پیام یا معرفی کوتاه خود را بنویسید...' : 'Transmit operator credentials / introduction...'}
             value={message}
             onChangeText={onChangeMessage}
             multiline
@@ -50,7 +52,9 @@ export function EkipJoinModal({
             onPress={onSubmit}
             disabled={!eligible}
           >
-            {group.auto_accept ? 'Deploy Immediately' : 'Transmit Request'}
+            {group.auto_accept
+              ? (isRTL ? 'عضویت فوری' : 'Deploy Immediately')
+              : (isRTL ? 'ارسال درخواست ورود' : 'Transmit Request')}
           </GlassButton>
         </View>
       </View>
@@ -60,7 +64,7 @@ export function EkipJoinModal({
 
 const styles = StyleSheet.create({
   desc: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
   },
 });

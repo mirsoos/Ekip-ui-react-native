@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { GlassCard, GlassAvatar } from '../Glass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { GroupMember } from '../../types/database';
 
 export function EkipMembersSection({
@@ -17,6 +18,7 @@ export function EkipMembersSection({
   onOpenProfile: (userId: string) => void;
 }) {
   const { colors } = useTheme();
+  const { isRTL } = useI18n();
   const Users = getIcon('Users');
   const activeMembers = members.filter((m) => m.status === 'active');
 
@@ -26,11 +28,13 @@ export function EkipMembersSection({
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Users size={16} color="#f472b6" strokeWidth={2.4} style={{ marginRight: 6 }} />
           <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Deployed Operatives
+            {isRTL ? 'اعضای مستقر' : 'Deployed Operatives'}
           </Text>
         </View>
         <Text style={[styles.spots, { color: colors.textTertiary }]}>
-          {memberCount} {maxMembers ? `/ ${maxMembers}` : ''} spots
+          {isRTL
+            ? `${memberCount} از ${maxMembers ?? '∞'} نفر`
+            : `${memberCount} ${maxMembers ? `/ ${maxMembers}` : ''} spots`}
         </Text>
       </View>
 
@@ -71,15 +75,15 @@ export function EkipMembersSection({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 22,
     padding: 14,
+    borderRadius: 22,
     marginBottom: 12,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   title: {
     fontSize: 14,
@@ -87,15 +91,15 @@ const styles = StyleSheet.create({
   },
   spots: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   memberItem: {
     alignItems: 'center',
-    width: 48,
+    width: 52,
   },
   memberName: {
-    fontSize: 10,
-    marginTop: 4,
-    fontWeight: '500',
+    fontSize: 11,
+    marginTop: 6,
+    textAlign: 'center',
   },
 });

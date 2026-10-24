@@ -44,7 +44,7 @@ import { AuroraBackground } from './src/components/AuroraBackground';
 import { SwipeNavigationContainer } from './src/components/common/SwipeNavigationContainer';
 import { ScreenTransition } from './src/components/common/ScreenTransition';
 import { ErrorBoundary } from './src/components/common/ErrorBoundary';
-import { I18nProvider } from './src/lib/i18n';
+import { I18nProvider, useI18n } from './src/lib/i18n';
 
 export type Screen =
   | { name: 'auth' }
@@ -69,6 +69,7 @@ export type Screen =
 
 function MainContent() {
   const { isDark } = useTheme();
+  const { t } = useI18n();
   const { me, profiles, conversations, notifications, addMessage } = useAppData();
 
   const [authed, setAuthed] = useState(false);
@@ -384,7 +385,7 @@ function MainContent() {
                   addMessage(screen.conversationId, chatInputText.trim());
                   setChatInputText('');
                 }}
-                placeholder="Transmit secure dispatch..."
+                placeholder={t('chat.transmitDispatch')}
               />
             </>
           ) : null;
@@ -401,7 +402,7 @@ function MainContent() {
                 aiRef.current?.sendMessage(aiInputText.trim());
                 setAiInputText('');
               }}
-              placeholder="Query Command AI..."
+              placeholder={t('chat.queryCommandAI')}
             />
           </>
         )}
@@ -421,15 +422,15 @@ function MainContent() {
           );
         })()}
 
-        {screen.name === 'settings' && <SettingsHeader onBack={pop} title="Settings" />}
-        {screen.name === 'plans' && <SettingsHeader onBack={pop} title="Subscription Plans" />}
-        {screen.name === 'personalInfo' && <SettingsHeader onBack={pop} title="Personal Information" />}
-        {screen.name === 'verification' && <SettingsHeader onBack={pop} title="Identity Verification" />}
-        {screen.name === 'privacy' && <SettingsHeader onBack={pop} title="Privacy & Visibility" />}
-        {screen.name === 'security' && <SettingsHeader onBack={pop} title="Security & Access" />}
-        {screen.name === 'location' && <SettingsHeader onBack={pop} title="Location & Radar" />}
-        {screen.name === 'chatTheme' && <SettingsHeader onBack={pop} title="Chat Theme" />}
-        {screen.name === 'notifications' && <SettingsHeader onBack={pop} title="Notifications" />}
+        {screen.name === 'settings' && <SettingsHeader onBack={pop} title={t('settings.headerSettings')} />}
+        {screen.name === 'plans' && <SettingsHeader onBack={pop} title={t('settings.headerPlans')} />}
+        {screen.name === 'personalInfo' && <SettingsHeader onBack={pop} title={t('settings.headerPersonalInfo')} />}
+        {screen.name === 'verification' && <SettingsHeader onBack={pop} title={t('settings.headerVerification')} />}
+        {screen.name === 'privacy' && <SettingsHeader onBack={pop} title={t('settings.headerPrivacy')} />}
+        {screen.name === 'security' && <SettingsHeader onBack={pop} title={t('settings.headerSecurity')} />}
+        {screen.name === 'location' && <SettingsHeader onBack={pop} title={t('settings.headerLocation')} />}
+        {screen.name === 'chatTheme' && <SettingsHeader onBack={pop} title={t('settings.headerChatTheme')} />}
+        {screen.name === 'notifications' && <SettingsHeader onBack={pop} title={t('settings.headerNotifications')} />}
 
         {screen.name === 'group' && (
           <EkipActionBar

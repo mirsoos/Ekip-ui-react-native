@@ -15,6 +15,7 @@ import { EkipCard } from '../components/EkipCard';
 import { ProfileScreenSkeleton } from '../components/skeleton';
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 import type { Group } from '../types/database';
 
 export function ProfileScreen({
@@ -40,6 +41,7 @@ export function ProfileScreen({
 }) {
   const { me, profiles, groups, members, badges, missions, friends, addFriend, updateFriend, addNotification } = useAppData();
   const { theme, toggle, colors, isDark } = useTheme();
+  const { t, isRTL } = useI18n();
   const [tab, setTab] = useState('activity');
   const [showActions, setShowActions] = useState(false);
   const [toast, setToast] = useState('');
@@ -75,15 +77,17 @@ export function ProfileScreen({
   const handleAddFriend = () => {
     if (existingFriend) {
       updateFriend(existingFriend.id, 'accepted');
-      setToast('Contact link confirmed');
+      setToast(isRTL ? 'پیوند ارتباطی تایید گردید' : 'Contact link confirmed');
     } else {
       addFriend(profile.id);
-      setToast('Link request dispatched');
+      setToast(isRTL ? 'درخواست پیوند ارسال شد' : 'Link request dispatched');
     }
     addNotification({
       type: 'friend_request',
-      title: 'Contact Link',
-      body: `You established comms link with ${profile.first_name}.`,
+      title: isRTL ? 'پیوند ارتباطی' : 'Contact Link',
+      body: isRTL
+        ? `شما با ${profile.first_name} پیوند ارتباطی امن برقرار کردید.`
+        : `You established comms link with ${profile.first_name}.`,
       icon: 'UserCheck',
     });
     setShowActions(false);
@@ -135,10 +139,10 @@ export function ProfileScreen({
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
-          <StatBox icon="Layers" value={myGroups.length} label="Operations" />
-          <StatBox icon="Award" value={myBadges.length} label="Medals" />
-          <StatBox icon="Users" value={myFriends.length} label="Contacts" />
-          <StatBox icon="Shield" value={profile.honor_score} label="Readiness" highlight />
+          <StatBox icon="Layers" value={myGroups.length} label={t('profile.operations')} />
+          <StatBox icon="Award" value={myBadges.length} label={t('profile.medals')} />
+          <StatBox icon="Users" value={myFriends.length} label={t('profile.contacts')} />
+          <StatBox icon="Shield" value={profile.honor_score} label={t('profile.readiness')} highlight />
         </View>
 
         {/* Level / XP Meter */}
@@ -150,10 +154,10 @@ export function ProfileScreen({
         <View style={{ paddingHorizontal: 16, marginTop: 8 }}>
           <GlassSegmented
             options={[
-              { label: 'Ops', value: 'activity', icon: 'Layers' },
-              { label: 'Medals', value: 'badges', icon: 'Award' },
-              { label: 'Directives', value: 'missions', icon: 'Target' },
-              { label: 'Contacts', value: 'friends', icon: 'Users' },
+              { label: t('profile.tabOps'), value: 'activity', icon: 'Layers' },
+              { label: t('profile.tabMedals'), value: 'badges', icon: 'Award' },
+              { label: t('profile.tabDirectives'), value: 'missions', icon: 'Target' },
+              { label: t('profile.tabContacts'), value: 'friends', icon: 'Users' },
             ]}
             value={tab}
             onChange={setTab}
@@ -167,8 +171,8 @@ export function ProfileScreen({
               {myGroups.length === 0 ? (
                 <GlassEmpty
                   icon="Layers"
-                  title="No assigned missions"
-                  subtitle="Deploy in an operation to build your field dossier."
+                  title={t('profile.noMissions')}
+                  subtitle={isRTL ? 'در عملیات‌های مختلف شرکت کنید تا پرونده شما تکمیل شود.' : 'Deploy in an operation to build your field dossier.'}
                 />
               ) : (
                 myGroups.map((g) => (
@@ -199,22 +203,22 @@ export function ProfileScreen({
       <GlassSheet
         open={showActions}
         onClose={() => setShowActions(false)}
-        title="Operative Options"
+        title={isRTL ? 'گزینه‌های کاربر' : 'Operative Options'}
       >
         <View style={{ gap: 10, paddingVertical: 8 }}>
           <GlassButton fullWidth variant="secondary" onPress={handleAddFriend}>
-            {existingFriend ? 'Confirm Contact Link' : 'Send Link Request'}
+            {existingFriend ? (isRTL ? 'تایید پیوند ارتباطی' : 'Confirm Contact Link') : (isRTL ? 'ارسال درخواست ارتباط' : 'Send Link Request')}
           </GlassButton>
           <GlassButton
             fullWidth
             variant="danger"
             onPress={() => {
               setShowActions(false);
-              setToast('Report transmitted to Command');
+              setToast(isRTL ? 'گزارش تخلف ثبت گردید' : 'Report transmitted to Command');
               setTimeout(() => setToast(''), 2500);
             }}
           >
-            File Tactical Incident Report
+            {isRTL ? 'ثبت گزارش تخلف تاکتیکی' : 'File Tactical Incident Report'}
           </GlassButton>
         </View>
       </GlassSheet>

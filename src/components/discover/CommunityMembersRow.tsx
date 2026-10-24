@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { GlassCard, GlassAvatar } from '../Glass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { Profile } from '../../types/database';
 
 export function CommunityMembersRow({
@@ -13,6 +14,7 @@ export function CommunityMembersRow({
   onOpenProfile: (id: string) => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const UsersIcon = getIcon('Users');
 
   return (
@@ -20,7 +22,7 @@ export function CommunityMembersRow({
       <View style={styles.headerRow}>
         <UsersIcon size={16} color="#f472b6" strokeWidth={2.4} style={{ marginRight: 6 }} />
         <Text style={[styles.heading, { color: colors.textPrimary }]}>
-          Active in your sector
+          {t('discover.activeInSector')}
         </Text>
       </View>
 

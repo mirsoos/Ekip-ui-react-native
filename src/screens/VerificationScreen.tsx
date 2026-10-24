@@ -4,6 +4,7 @@ import { useAppData } from '../lib/appData';
 import { GlassCard, GlassButton, GlassBackButton, GlassAvatar, GlassBadgeIcon, GlassSegmented } from '../components/Glass';
 import { GlassSheet, Toast } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
+import { useI18n } from '../lib/i18n';
 
 interface VerificationScreenProps {
   onBack: () => void;
@@ -20,6 +21,7 @@ interface DocumentDetails {
 
 export function VerificationScreen({ onBack }: VerificationScreenProps) {
   const { me, updateMe, addNotification } = useAppData();
+  const { isRTL } = useI18n();
 
   const [isVerified, setIsVerified] = useState(me.is_verified ?? true);
   const [isIdentityVerified, setIsIdentityVerified] = useState(me.is_identity_verified ?? true);
@@ -28,12 +30,12 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
   const [showFaceModal, setShowFaceModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const [selectedDocType, setSelectedDocType] = useState<DocumentType>('driver_license');
+  const [selectedDocType, setSelectedDocType] = useState<DocumentType>('national_id');
   const [docDetails, setDocDetails] = useState<DocumentDetails>({
-    type: 'driver_license',
-    docNumber: 'DL-84920194',
-    country: 'United States (California)',
-    expiryDate: '11/2029',
+    type: 'national_id',
+    docNumber: '۰۰۸۳۹۲۱۰۱۴',
+    country: isRTL ? 'جمهوری اسلامی ایران' : 'Iran',
+    expiryDate: '1410/05',
   });
 
   const [faceScanStep, setFaceScanStep] = useState<'idle' | 'scanning' | 'smiling' | 'success'>('idle');
@@ -58,27 +60,21 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
     const newStatus = !isVerified;
     setIsVerified(newStatus);
     setIsIdentityVerified(newStatus);
-    updateMe({
-      is_verified: newStatus,
-      is_identity_verified: newStatus,
+    updateMe({ is_verified: newStatus, is_identity_verified: newStatus });
+    showToast(newStatus ? (isRTL ? 'نشان تایید هویت فعال شد' : 'Verified badge activated') : (isRTL ? 'نشان تایید هویت غیرفعال شد' : 'Verified badge deactivated'));
+    addNotification({
+      type: 'system',
+      title: isRTL ? 'وضعیت تایید هویت' : 'Verification Status Changed',
+      body: newStatus
+        ? (isRTL ? 'پروفایل شما با موفقیت تایید هویت شد.' : 'Your profile is now verified.')
+        : (isRTL ? 'نشان تایید هویت از حساب شما حذف شد.' : 'Your verified status was removed.'),
+      icon: 'Shield',
     });
-
-    if (newStatus) {
-      addNotification({
-        type: 'system',
-        title: 'Identity Verified',
-        body: 'Your identity verification badge is now active across Ekip!',
-        icon: 'ShieldCheck',
-      });
-      showToast('🎉 Verification badge activated!');
-    } else {
-      showToast('Verification status set to pending');
-    }
   };
 
   const startFaceScan = () => {
-    setFaceScanStep('scanning');
     setShowFaceModal(true);
+    setFaceScanStep('scanning');
 
     setTimeout(() => {
       setFaceScanStep('smiling');
@@ -100,11 +96,11 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
       setIsIdentityVerified(true);
       setIsVerified(true);
       updateMe({ is_verified: true, is_identity_verified: true });
-      showToast('ID document successfully scanned and encrypted!');
+      showToast(isRTL ? 'مدرک هویتی با موفقیت اسکن و رمزنگاری شد!' : 'ID document successfully scanned and encrypted!');
       addNotification({
         type: 'system',
-        title: 'Document Approved',
-        body: `${selectedDocType === 'driver_license' ? "Driver's License" : selectedDocType === 'passport' ? 'Passport' : 'National ID'} verified.`,
+        title: isRTL ? 'مدرک تایید شد' : 'Document Approved',
+        body: isRTL ? 'مدرک شناسایی با موفقیت احراز گردید.' : `${selectedDocType === 'driver_license' ? "Driver's License" : selectedDocType === 'passport' ? 'Passport' : 'National ID'} verified.`,
         icon: 'BadgeCheck',
       });
     }, 2000);
@@ -128,35 +124,39 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
 
           <View style={styles.nameRow}>
             <Text style={styles.heroName}>{me.first_name} {me.last_name}</Text>
-            {isVerified && <GlassBadgeIcon icon="Verified" label="Verified" color="pink" />}
+            {isVerified && <GlassBadgeIcon icon="Verified" label={isRTL ? 'تایید شده' : 'Verified'} color="pink" />}
           </View>
           <Text style={styles.heroHandle}>@{me.username}</Text>
 
           <View style={styles.statusPill}>
             <View style={styles.dot} />
             <Text style={styles.statusText}>
-              {isVerified ? 'Level 2 Verified • Trusted Identity' : 'Verification Under Review'}
+              {isVerified
+                ? (isRTL ? 'احراز هویت سطح ۲ • هویت معتبر' : 'Level 2 Verified • Trusted Identity')
+                : (isRTL ? 'در حال بررسی احراز هویت' : 'Verification Under Review')}
             </Text>
           </View>
 
           <View style={styles.heroStatsRow}>
             <View style={styles.statBox}>
-              <Text style={styles.statVal}>99.4%</Text>
-              <Text style={styles.statLbl}>Match Score</Text>
+              <Text style={styles.statVal}>۹۹.۴٪</Text>
+              <Text style={styles.statLbl}>{isRTL ? 'تطابق بیومتریک' : 'Match Score'}</Text>
             </View>
             <View style={[styles.statBox, styles.statBoxBorder]}>
-              <Text style={styles.statVal}>Tier 2</Text>
-              <Text style={styles.statLbl}>Trust Tier</Text>
+              <Text style={styles.statVal}>{isRTL ? 'سطح ۲' : 'Tier 2'}</Text>
+              <Text style={styles.statLbl}>{isRTL ? 'سطح اعتماد' : 'Trust Tier'}</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statVal}>AES-256</Text>
-              <Text style={styles.statLbl}>Encrypted</Text>
+              <Text style={styles.statLbl}>{isRTL ? 'رمزنگاری شده' : 'Encrypted'}</Text>
             </View>
           </View>
         </GlassCard>
 
         {/* Verification Checkpoints */}
-        <Text style={styles.sectionHeading}>VERIFICATION MILESTONES</Text>
+        <Text style={styles.sectionHeading}>
+          {isRTL ? 'مراحل احراز هویت' : 'VERIFICATION MILESTONES'}
+        </Text>
 
         <GlassCard style={styles.cardItem}>
           <View style={styles.itemRow}>
@@ -164,15 +164,19 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
               <Camera size={20} color="#ec4899" />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.itemTitle}>Biometric Face Scan</Text>
-              <Text style={styles.itemDesc}>3D dynamic liveness detection</Text>
+              <Text style={styles.itemTitle}>
+                {isRTL ? 'اسکن بیومتریک چهره' : 'Biometric Face Scan'}
+              </Text>
+              <Text style={styles.itemDesc}>
+                {isRTL ? 'تشخیص زنده بودن سه‌بعدی' : '3D dynamic liveness detection'}
+              </Text>
             </View>
             <GlassButton
               variant={isIdentityVerified ? 'secondary' : 'primary'}
               size="sm"
-              onClick={startFaceScan}
+              onPress={startFaceScan}
             >
-              {isIdentityVerified ? 'Re-scan' : 'Scan'}
+              {isIdentityVerified ? (isRTL ? 'اسکن دوباره' : 'Re-scan') : (isRTL ? 'اسکن' : 'Scan')}
             </GlassButton>
           </View>
         </GlassCard>
@@ -183,15 +187,19 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
               <Lock size={20} color="#3b82f6" />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.itemTitle}>Government Photo ID</Text>
-              <Text style={styles.itemDesc}>Passport or Driver's License</Text>
+              <Text style={styles.itemTitle}>
+                {isRTL ? 'کارت شناسایی معتبر' : 'Government Photo ID'}
+              </Text>
+              <Text style={styles.itemDesc}>
+                {isRTL ? 'کارت ملی یا گذرنامه' : "Passport or Driver's License"}
+              </Text>
             </View>
             <GlassButton
               variant="secondary"
               size="sm"
-              onClick={() => setShowDocModal(true)}
+              onPress={() => setShowDocModal(true)}
             >
-              Configure
+              {isRTL ? 'تنظیمات' : 'Configure'}
             </GlassButton>
           </View>
         </GlassCard>
@@ -202,8 +210,10 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
               <Smartphone size={20} color="#10b981" />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.itemTitle}>Phone Authentication</Text>
-              <Text style={styles.itemDesc}>+1 (555) •••-4920 · Verified</Text>
+              <Text style={styles.itemTitle}>
+                {isRTL ? 'احراز شماره موبایل' : 'Phone Authentication'}
+              </Text>
+              <Text style={styles.itemDesc}>+98 912 ••• 0199 · {isRTL ? 'تایید شده' : 'Verified'}</Text>
             </View>
             <Check size={18} color="#10b981" />
           </View>
@@ -215,27 +225,37 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
               <Mail size={20} color="#f59e0b" />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.itemTitle}>Institutional Email</Text>
-              <Text style={styles.itemDesc}>alex@operator.io · Verified</Text>
+              <Text style={styles.itemTitle}>
+                {isRTL ? 'ایمیل سازمانی' : 'Institutional Email'}
+              </Text>
+              <Text style={styles.itemDesc}>vance@ekip-command.mil · {isRTL ? 'تایید شده' : 'Verified'}</Text>
             </View>
             <Check size={18} color="#10b981" />
           </View>
         </GlassCard>
 
         {/* Benefits Section */}
-        <Text style={styles.sectionHeading}>VERIFIED OPERATOR PERKS</Text>
+        <Text style={styles.sectionHeading}>
+          {isRTL ? 'مزایای کاربر تایید شده' : 'VERIFIED OPERATOR PERKS'}
+        </Text>
         <GlassCard style={styles.cardItem}>
           <View style={styles.perkRow}>
             <Award size={18} color="#ec4899" />
-            <Text style={styles.perkText}>High-priority squad creation and hosting</Text>
+            <Text style={styles.perkText}>
+              {isRTL ? 'اولویت بالا در ساخت و میزبانی اکیپ‌ها' : 'High-priority squad creation and hosting'}
+            </Text>
           </View>
           <View style={[styles.perkRow, { marginTop: 12 }]}>
             <Zap size={18} color="#ec4899" />
-            <Text style={styles.perkText}>Instant admission to private tactical missions</Text>
+            <Text style={styles.perkText}>
+              {isRTL ? 'عضویت بدون معطلی در مأموریت‌های خصوصی' : 'Instant admission to private tactical missions'}
+            </Text>
           </View>
           <View style={[styles.perkRow, { marginTop: 12 }]}>
             <Sparkles size={18} color="#ec4899" />
-            <Text style={styles.perkText}>Distinguished pink liquid glass identity badge</Text>
+            <Text style={styles.perkText}>
+              {isRTL ? 'نشان شیشه‌ای متمایز تایید هویت' : 'Distinguished pink liquid glass identity badge'}
+            </Text>
           </View>
         </GlassCard>
 
@@ -243,9 +263,11 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
         <View style={{ marginTop: 20 }}>
           <GlassButton
             variant={isVerified ? 'secondary' : 'primary'}
-            onClick={handleToggleVerification}
+            onPress={handleToggleVerification}
           >
-            {isVerified ? 'Disable Verified Badge' : 'Request Manual Verification'}
+            {isVerified
+              ? (isRTL ? 'غیرفعال‌سازی موقت نشان تایید' : 'Disable Verified Badge')
+              : (isRTL ? 'درخواست تایید دستی مدارک' : 'Request Manual Verification')}
           </GlassButton>
         </View>
       </ScrollView>
@@ -254,23 +276,23 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
       <GlassSheet
         open={showDocModal}
         onClose={() => setShowDocModal(false)}
-        title="Document Verification"
+        title={isRTL ? 'تایید مدرک شناسایی' : 'Document Verification'}
       >
         <View style={{ paddingVertical: 10 }}>
-          <Text style={styles.label}>DOCUMENT TYPE</Text>
+          <Text style={styles.label}>{isRTL ? 'نوع مدرک' : 'DOCUMENT TYPE'}</Text>
           <View style={{ marginTop: 8 }}>
             <GlassSegmented
               options={[
-                { label: "Driver's License", value: 'driver_license', icon: 'Award' },
-                { label: 'Passport', value: 'passport', icon: 'Globe' },
-                { label: 'National ID', value: 'national_id', icon: 'UserCheck' },
+                { label: isRTL ? 'کارت ملی' : 'National ID', value: 'national_id', icon: 'UserCheck' },
+                { label: isRTL ? 'گذرنامه' : 'Passport', value: 'passport', icon: 'Globe' },
+                { label: isRTL ? 'گواهینامه' : "Driver's License", value: 'driver_license', icon: 'Award' },
               ]}
               value={selectedDocType}
               onChange={(v) => setSelectedDocType(v as DocumentType)}
             />
           </View>
 
-          <Text style={[styles.label, { marginTop: 16 }]}>DOCUMENT NUMBER</Text>
+          <Text style={[styles.label, { marginTop: 16 }]}>{isRTL ? 'شماره مدرک' : 'DOCUMENT NUMBER'}</Text>
           <TextInput
             style={styles.input}
             value={docDetails.docNumber}
@@ -278,7 +300,7 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
             placeholderTextColor="rgba(255,255,255,0.4)"
           />
 
-          <Text style={[styles.label, { marginTop: 16 }]}>ISSUING JURISDICTION</Text>
+          <Text style={[styles.label, { marginTop: 16 }]}>{isRTL ? 'کشور صادرکننده' : 'ISSUING JURISDICTION'}</Text>
           <TextInput
             style={styles.input}
             value={docDetails.country}
@@ -289,10 +311,12 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
           <View style={{ marginTop: 24 }}>
             <GlassButton
               variant="primary"
-              onClick={handleScanDocument}
+              onPress={handleScanDocument}
               disabled={docScanning}
             >
-              {docScanning ? 'Encrypting & Validating...' : 'Submit ID Document'}
+              {docScanning
+                ? (isRTL ? 'در حال اعتبارسنجی و رمزنگاری...' : 'Encrypting & Validating...')
+                : (isRTL ? 'ثبت و ارسال مدرک شناسایی' : 'Submit ID Document')}
             </GlassButton>
           </View>
         </View>
@@ -302,7 +326,7 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
       <GlassSheet
         open={showFaceModal}
         onClose={() => setShowFaceModal(false)}
-        title="3D Biometric Liveness"
+        title={isRTL ? 'اسکن سه‌بعدی بیومتریک' : '3D Biometric Liveness'}
       >
         <View style={{ alignItems: 'center', paddingVertical: 20 }}>
           <View style={styles.scannerCircle}>
@@ -310,28 +334,28 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
           </View>
 
           <Text style={styles.scanStatusText}>
-            {faceScanStep === 'scanning' && 'Scanning biometric points...'}
-            {faceScanStep === 'smiling' && 'Please blink or smile naturally...'}
-            {faceScanStep === 'success' && '✓ 99.7% Biometric Match Confirmed!'}
+            {faceScanStep === 'scanning' && (isRTL ? 'در حال اسکن نقاط بیومتریک چهره...' : 'Scanning biometric points...')}
+            {faceScanStep === 'smiling' && (isRTL ? 'لطفاً پلک بزنید یا لبخند بزنید...' : 'Please blink or smile naturally...')}
+            {faceScanStep === 'success' && (isRTL ? '✓ تطابق بیومتریک ۹۹.۷٪ با موفقیت تایید شد!' : '✓ 99.7% Biometric Match Confirmed!')}
           </Text>
 
           <Text style={styles.scanDesc}>
             {faceScanStep === 'success'
-              ? 'Your cryptographic face profile has been anchored.'
-              : 'Keep your face inside the focal area and ensure good lighting.'}
+              ? (isRTL ? 'نمایه رمزنگاری شده چهره شما در سامانه ثبت گردید.' : 'Your cryptographic face profile has been anchored.')
+              : (isRTL ? 'چهره خود را درون کادر نگه داشته و از نور مناسب مطمئن شوید.' : 'Keep your face inside the focal area and ensure good lighting.')}
           </Text>
 
           {faceScanStep === 'success' && (
             <View style={{ marginTop: 20, width: '100%' }}>
-              <GlassButton variant="primary" onClick={() => setShowFaceModal(false)}>
-                Done
+              <GlassButton variant="primary" onPress={() => setShowFaceModal(false)}>
+                {isRTL ? 'تکمیل' : 'Done'}
               </GlassButton>
             </View>
           )}
         </View>
       </GlassSheet>
 
-      <Toast message={toastMessage} />
+      <Toast message={toastMessage} visible={Boolean(toastMessage)} />
     </View>
   );
 }
@@ -340,48 +364,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  headerSubtitle: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
-  },
-  badgePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: 'rgba(236,72,153,0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(236,72,153,0.4)',
-    gap: 4,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#ec4899',
-  },
   content: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 16,
   },
   heroCard: {
     padding: 20,
@@ -524,31 +509,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.5)',
     letterSpacing: 0.8,
     marginBottom: 8,
-  },
-  typeRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  typeBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  typeBtnActive: {
-    backgroundColor: 'rgba(236,72,153,0.2)',
-    borderColor: '#ec4899',
-  },
-  typeBtnText: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: '600',
-  },
-  typeBtnTextActive: {
-    color: '#fff',
   },
   input: {
     backgroundColor: 'rgba(255,255,255,0.06)',

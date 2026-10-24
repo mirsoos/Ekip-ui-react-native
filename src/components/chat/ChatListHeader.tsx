@@ -4,6 +4,7 @@ import { NotificationButton } from '../NotificationButton';
 import { GlassInput } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export function ChatListHeader({
   unreadTotal,
@@ -19,6 +20,7 @@ export function ChatListHeader({
   onOpenNotifications: () => void;
 }) {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
 
   const enterAnim = useRef(new Animated.Value(0)).current;
 
@@ -61,10 +63,10 @@ export function ChatListHeader({
         <View style={styles.headerTop}>
           <View style={{ flex: 1, zIndex: 10 }}>
             <Text style={[styles.heading, { color: colors.textPrimary }]}>
-              Encrypted Comms
+              {t('chat.encryptedComms')}
             </Text>
             <Text style={[styles.subheading, { color: colors.textSecondary }]}>
-              {unreadTotal} unread transmissions
+              {t('chat.unreadTransmissions', { count: unreadTotal })}
             </Text>
           </View>
           <View style={{ zIndex: 10 }}>
@@ -78,7 +80,7 @@ export function ChatListHeader({
         <View style={{ marginTop: 12, zIndex: 10 }}>
           <GlassInput
             icon="Search"
-            placeholder="Search channels & operators..."
+            placeholder={t('chat.searchChannels')}
             value={search}
             onChangeText={onChangeSearch}
             style={{

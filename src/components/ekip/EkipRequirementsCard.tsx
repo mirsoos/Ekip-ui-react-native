@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { GlassCard } from '../Glass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { Group, Profile } from '../../types/database';
 
 export function EkipRequirementsCard({
@@ -13,6 +14,7 @@ export function EkipRequirementsCard({
   user: Profile;
 }) {
   const { colors } = useTheme();
+  const { isRTL } = useI18n();
   const Shield = getIcon('Shield');
   const Check = getIcon('Check');
   const X = getIcon('X');
@@ -21,17 +23,17 @@ export function EkipRequirementsCard({
 
   if (group.required_level) {
     rules.push({
-      label: `Level ${group.required_level}+`,
+      label: isRTL ? `حداقل سطح ${group.required_level}` : `Level ${group.required_level}+`,
       passed: user.level >= group.required_level,
-      desc: `Your level is ${user.level}`,
+      desc: isRTL ? `سطح شما: ${user.level}` : `Your level is ${user.level}`,
     });
   }
 
   if (group.required_honor) {
     rules.push({
-      label: `Honor ${group.required_honor}+`,
+      label: isRTL ? `حداقل امتیاز ${group.required_honor}` : `Honor ${group.required_honor}+`,
       passed: user.honor_score >= group.required_honor,
-      desc: `Your score is ${user.honor_score}`,
+      desc: isRTL ? `امتیاز شما: ${user.honor_score}` : `Your score is ${user.honor_score}`,
     });
   }
 
@@ -40,25 +42,28 @@ export function EkipRequirementsCard({
     const max = group.age_max ?? 999;
     const age = user.age ?? 0;
     rules.push({
-      label: `Age ${min}-${max === 999 ? '∞' : max}`,
+      label: isRTL ? `محدوده سنی ${min} تا ${max === 999 ? 'بدون سقف' : max}` : `Age ${min}-${max === 999 ? '∞' : max}`,
       passed: age >= min && age <= max,
-      desc: `Your age is ${age}`,
+      desc: isRTL ? `سن شما: ${age}` : `Your age is ${age}`,
     });
   }
 
   if (group.gender_preference && group.gender_preference !== 'any') {
+    const genderLabel = group.gender_preference === 'male' ? (isRTL ? 'فقط آقا' : 'Male only') : (isRTL ? 'فقط خانم' : 'Female only');
     rules.push({
-      label: `${group.gender_preference} only`,
+      label: genderLabel,
       passed: user.gender === group.gender_preference,
-      desc: `Your gender: ${user.gender ?? 'Not set'}`,
+      desc: isRTL ? `جنسیت شما: ${user.gender === 'male' ? 'آقا' : 'خانم'}` : `Your gender: ${user.gender ?? 'Not set'}`,
     });
   }
 
   if (group.premium_only) {
     rules.push({
-      label: 'Omega / Premium Clearance',
+      label: isRTL ? 'فقط اشتراک ویژه' : 'Omega / Premium Clearance',
       passed: Boolean(user.is_premium),
-      desc: user.is_premium ? 'Active subscription' : 'Upgrade required',
+      desc: user.is_premium
+        ? (isRTL ? 'اشتراک فعال است' : 'Active subscription')
+        : (isRTL ? 'نیاز به اشتراک ویژه' : 'Upgrade required'),
     });
   }
 
@@ -69,7 +74,7 @@ export function EkipRequirementsCard({
       <View style={styles.header}>
         <Shield size={16} color="#f472b6" strokeWidth={2.4} style={{ marginRight: 6 }} />
         <Text style={[styles.title, { color: colors.textPrimary }]}>
-          Clearance Requirements
+          {isRTL ? 'شرایط و پیش‌نیازهای ورود' : 'Clearance Requirements'}
         </Text>
       </View>
 
@@ -110,14 +115,14 @@ export function EkipRequirementsCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 22,
     padding: 14,
+    borderRadius: 22,
     marginBottom: 12,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   title: {
     fontSize: 14,
@@ -127,11 +132,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
   ruleLabel: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
   },
   ruleDesc: {
     fontSize: 11,

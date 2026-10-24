@@ -5,28 +5,47 @@ import { GlassSheet } from '../Overlays';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 
-const suggestions = [
-  'Add an operational title like "Sector 4 Night Patrol"',
-  'Include 3-5 tags to improve tactical matching',
-  'Set clearance rank requirements for senior operators',
-  'Define exact rendezvous coordinates for smooth muster',
-  'Enable auto-accept for rapid squad deployment',
+interface Suggestion {
+  text: string;
+  applyTitle?: string;
+  applyDescription?: string;
+}
+
+const suggestions: Suggestion[] = [
+  {
+    text: 'افزودن عنوان تاکتیکی مانند "گشت شبانه در منطقه کوهستانی"',
+    applyTitle: 'گشت شبانه در منطقه کوهستانی',
+  },
+  {
+    text: 'مشخص کردن ۳ تا ۵ تگ تخصصی جهت تطبیق هوشمند اپراتورها',
+  },
+  {
+    text: 'تعیین سطح آمادگی رزمی برای جذب اپراتورهای ارشد و باسابقه',
+  },
+  {
+    text: 'ثبت دقیق مختصات و نام پایگاه استقرار جهت هماهنگی روان اعضا',
+  },
+  {
+    text: 'فعال‌سازی پذیرش خودکار جهت استقرار فوری و بدون معطلی تیم',
+  },
 ];
 
 export function AISuggestionsSheet({
   open,
   onClose,
   onApplyTitle,
+  onApplyDescription,
 }: {
   open: boolean;
   onClose: () => void;
   onApplyTitle?: (title: string) => void;
+  onApplyDescription?: (description: string) => void;
 }) {
   const { colors } = useTheme();
   const Sparkles = getIcon('Sparkles');
 
   return (
-    <GlassSheet open={open} onClose={onClose} title="AI Tactical Recommendations">
+    <GlassSheet open={open} onClose={onClose} title="پیشنهادات هوش مصنوعی">
       <View style={{ gap: 10 }}>
         {suggestions.map((s, i) => (
           <GlassCard key={i} variant="thin" style={styles.card}>
@@ -35,19 +54,18 @@ export function AISuggestionsSheet({
             </View>
             <View style={{ flex: 1, marginLeft: 10 }}>
               <Text style={[styles.text, { color: colors.textSecondary }]}>
-                {s}
+                {s.text}
               </Text>
-              {s.includes('"') && onApplyTitle && (
+              {s.applyTitle && onApplyTitle && (
                 <TouchableOpacity
                   activeOpacity={0.7}
                   onPress={() => {
-                    const match = s.match(/"([^"]+)"/);
-                    if (match) onApplyTitle(match[1]);
+                    onApplyTitle(s.applyTitle!);
                     onClose();
                   }}
                   style={{ marginTop: 4 }}
                 >
-                  <Text style={styles.applyBtn}>Use this suggestion</Text>
+                  <Text style={styles.applyBtn}>اعمال این پیشنهاد</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -56,7 +74,7 @@ export function AISuggestionsSheet({
 
         <View style={{ marginTop: 6 }}>
           <GlassButton fullWidth variant="secondary" onPress={onClose}>
-            Dismiss
+            بستن
           </GlassButton>
         </View>
       </View>
@@ -81,11 +99,13 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 12,
-    lineHeight: 16,
+    lineHeight: 18,
+    textAlign: 'right',
   },
   applyBtn: {
     color: '#f472b6',
     fontSize: 11,
     fontWeight: '700',
+    textAlign: 'right',
   },
 });

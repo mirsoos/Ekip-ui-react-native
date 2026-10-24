@@ -11,6 +11,7 @@ import { AISuggestionsSheet } from '../components/create/AISuggestionsSheet';
 import { getIcon } from '../lib/icons';
 import { allInterests } from '../lib/demoData';
 import { useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 import type { Group, GroupCategory, GroupType } from '../types/database';
 
 const coverOptions = [
@@ -43,6 +44,7 @@ export const CreateScreen = React.forwardRef<
 >(function CreateScreen({ onBack, onCreated, onStateChange }, ref) {
   const { me, addGroup, addNotification } = useAppData();
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useI18n();
 
   const [step, setStep] = useState(0);
   const [title, setTitle] = useState('');
@@ -51,9 +53,9 @@ export const CreateScreen = React.forwardRef<
   const [groupType, setGroupType] = useState<GroupType>('group');
   const [minMembers, setMinMembers] = useState('2');
   const [maxMembers, setMaxMembers] = useState('10');
-  const [city, setCity] = useState(me.city ?? 'Sector 7 - Command HQ');
+  const [city, setCity] = useState(me.city ?? 'بخش ۷ - ستاد فرماندهی');
   const [locationName, setLocationName] = useState('');
-  const [tags, setTags] = useState<string[]>(['Tactical Ops', 'Reconnaissance']);
+  const [tags, setTags] = useState<string[]>(['عملیات تاکتیکی', 'شناسایی و دیده‌بانی']);
   const [ageMin, setAgeMin] = useState('');
   const [ageMax, setAgeMax] = useState('');
   const [requiredLevel, setRequiredLevel] = useState('');
@@ -70,11 +72,11 @@ export const CreateScreen = React.forwardRef<
 
   const Sparkles = getIcon('Sparkles');
 
-  const canProceed = () => {
+  const canProceed = (): boolean => {
     if (step === 0) return title.trim().length > 2 && description.trim().length > 5;
-    if (step === 1) return minMembers && city;
+    if (step === 1) return Boolean(minMembers && city);
     if (step === 2) return true;
-    if (step === 3) return eventDate && eventTime;
+    if (step === 3) return Boolean(eventDate && eventTime);
     return true;
   };
 
@@ -101,43 +103,41 @@ export const CreateScreen = React.forwardRef<
     handleNext,
     handlePrev,
     openAI: () => setShowAI(true),
-    canProceed: () => Boolean(canProceed()),
+    canProceed,
     step,
     totalSteps,
   }));
 
   React.useEffect(() => {
-    onStateChange?.({ step, canProceed: Boolean(canProceed()) });
-  }, [step, title, description, category, minMembers, maxMembers, eventDate, eventTime]);
+    onStateChange?.({ step, canProceed: canProceed() });
+  }, [step, title, description, minMembers, city, eventDate, eventTime]);
 
   const handleCreate = () => {
     const newGroup: Group = {
       id: `g-${Date.now()}`,
       owner_id: 'me',
-      title,
-      description,
+      title: title.trim(),
+      description: description.trim(),
       category,
       group_type: groupType,
-      min_members: parseInt(minMembers) || 2,
-      max_members: maxMembers ? parseInt(maxMembers) : null,
-      city,
-      location_name: locationName || null,
-      latitude: 37.7749,
-      longitude: -122.4194,
+      min_members: parseInt(minMembers, 10) || 2,
+      max_members: parseInt(maxMembers, 10) || 10,
+      city: city.trim(),
+      location_name: locationName.trim() || null,
       tags,
-      age_min: ageMin ? parseInt(ageMin) : null,
-      age_max: ageMax ? parseInt(ageMax) : null,
-      required_level: requiredLevel ? parseInt(requiredLevel) : null,
-      required_honor: requiredHonor ? parseInt(requiredHonor) : null,
-      gender_preference: genderPref as Group['gender_preference'],
-      avg_cost: avgCost ? parseFloat(avgCost) : null,
+      age_min: ageMin ? parseInt(ageMin, 10) : null,
+      age_max: ageMax ? parseInt(ageMax, 10) : null,
+      required_level: requiredLevel ? parseInt(requiredLevel, 10) : null,
+      required_honor: requiredHonor ? parseInt(requiredHonor, 10) : null,
+      gender_preference: (genderPref as any) || 'any',
+      avg_cost: avgCost ? parseInt(avgCost, 10) : 0,
       cover_url: coverUrl,
       premium_only: premiumOnly,
       visibility: 'public',
       auto_accept: autoAccept,
       is_repeating: isRepeating,
       event_date: `${eventDate}T${eventTime}:00Z`,
-      views: 1,
+      views: 0,
       member_count: 1,
       created_at: new Date().toISOString(),
       owner: me,
@@ -146,8 +146,10 @@ export const CreateScreen = React.forwardRef<
     addGroup(newGroup);
     addNotification({
       type: 'group_request',
-      title: 'Squad Commissioned',
-      body: `"${title}" has been registered and broadcast across ${city}.`,
+      title: isRTL ? 'اکیپ جدید مستقر شد' : 'Ekip Deployed',
+      body: isRTL
+        ? `اکیپ «${title}» با موفقیت در ${city} ثبت و منتشر گردید.`
+        : `"${title}" has been registered and broadcast across ${city}.`,
       icon: 'Rocket',
     });
     onCreated(newGroup);
@@ -162,20 +164,20 @@ export const CreateScreen = React.forwardRef<
         {step === 0 && (
           <View key={0} className="animate-raise" style={{ gap: 14 }}>
             <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-              Operation Overview
+              {t('create.step0Title')}
             </Text>
             <Text style={[styles.stepSub, { color: colors.textSecondary }]}>
-              Define the title, tactical objective, and format.
+              {t('create.step0Sub')}
             </Text>
 
             <GlassInput
-              placeholder="Operation Title (e.g. Dawn Recon Patrol)"
+              placeholder={t('create.titlePlaceholder')}
               value={title}
               onChangeText={setTitle}
             />
 
             <GlassInput
-              placeholder="Detailed Mission Directives & Objectives..."
+              placeholder={t('create.descPlaceholder')}
               value={description}
               onChangeText={setDescription}
               multiline
@@ -194,16 +196,16 @@ export const CreateScreen = React.forwardRef<
         {step === 1 && (
           <View key={1} className="animate-raise" style={{ gap: 14 }}>
             <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-              Muster Point & Squad Size
+              {t('create.step1Title')}
             </Text>
             <Text style={[styles.stepSub, { color: colors.textSecondary }]}>
-              Determine squad capacity and rendezvous coordinates.
+              {t('create.step1Sub')}
             </Text>
 
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <View style={{ flex: 1 }}>
                 <GlassInput
-                  placeholder="Min Operators"
+                  placeholder={t('create.minOperators')}
                   value={minMembers}
                   onChangeText={setMinMembers}
                   keyboardType="numeric"
@@ -211,7 +213,7 @@ export const CreateScreen = React.forwardRef<
               </View>
               <View style={{ flex: 1 }}>
                 <GlassInput
-                  placeholder="Max Operators"
+                  placeholder={t('create.maxOperators')}
                   value={maxMembers}
                   onChangeText={setMaxMembers}
                   keyboardType="numeric"
@@ -221,13 +223,13 @@ export const CreateScreen = React.forwardRef<
 
             <GlassInput
               icon="MapPin"
-              placeholder="Sector / Base City"
+              placeholder={t('create.cityPlaceholder')}
               value={city}
               onChangeText={setCity}
             />
 
             <GlassInput
-              placeholder="Specific Rendezvous Point (e.g. Checkpoint Alpha)"
+              placeholder={t('create.locationPlaceholder')}
               value={locationName}
               onChangeText={setLocationName}
             />
@@ -243,16 +245,16 @@ export const CreateScreen = React.forwardRef<
         {step === 2 && (
           <View key={2} className="animate-raise" style={{ gap: 14 }}>
             <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-              Clearance & Eligibility
+              {t('create.step2Title')}
             </Text>
             <Text style={[styles.stepSub, { color: colors.textSecondary }]}>
-              Optionally set clearance prerequisites for candidates.
+              {t('create.step2Sub')}
             </Text>
 
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <View style={{ flex: 1 }}>
                 <GlassInput
-                  placeholder="Min Level Required"
+                  placeholder={t('create.minLevel')}
                   value={requiredLevel}
                   onChangeText={setRequiredLevel}
                   keyboardType="numeric"
@@ -260,7 +262,7 @@ export const CreateScreen = React.forwardRef<
               </View>
               <View style={{ flex: 1 }}>
                 <GlassInput
-                  placeholder="Min Honor Score"
+                  placeholder={t('create.minHonor')}
                   value={requiredHonor}
                   onChangeText={setRequiredHonor}
                   keyboardType="numeric"
@@ -271,7 +273,7 @@ export const CreateScreen = React.forwardRef<
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <View style={{ flex: 1 }}>
                 <GlassInput
-                  placeholder="Min Age"
+                  placeholder={t('create.minAge')}
                   value={ageMin}
                   onChangeText={setAgeMin}
                   keyboardType="numeric"
@@ -279,7 +281,7 @@ export const CreateScreen = React.forwardRef<
               </View>
               <View style={{ flex: 1 }}>
                 <GlassInput
-                  placeholder="Max Age"
+                  placeholder={t('create.maxAge')}
                   value={ageMax}
                   onChangeText={setAgeMax}
                   keyboardType="numeric"
@@ -289,13 +291,13 @@ export const CreateScreen = React.forwardRef<
 
             <View>
               <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-                Gender Preference
+                {t('create.genderPref')}
               </Text>
               <GlassSegmented
                 options={[
-                  { label: 'Any', value: 'any' },
-                  { label: 'Male', value: 'male' },
-                  { label: 'Female', value: 'female' },
+                  { label: t('create.genderAny'), value: 'any' },
+                  { label: t('create.genderMale'), value: 'male' },
+                  { label: t('create.genderFemale'), value: 'female' },
                 ]}
                 value={genderPref}
                 onChange={setGenderPref}
@@ -307,10 +309,10 @@ export const CreateScreen = React.forwardRef<
         {step === 3 && (
           <View key={3} className="animate-raise" style={{ gap: 14 }}>
             <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-              Schedule & Deployment
+              {t('create.step3Title')}
             </Text>
             <Text style={[styles.stepSub, { color: colors.textSecondary }]}>
-              Pick operational muster time and cover imagery.
+              {t('create.step3Sub')}
             </Text>
 
             <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -342,17 +344,17 @@ export const CreateScreen = React.forwardRef<
               <GlassToggle
                 checked={autoAccept}
                 onChange={setAutoAccept}
-                label="Automatic Clearance (Instant Join)"
+                label={t('create.autoAccept')}
               />
               <GlassToggle
                 checked={isRepeating}
                 onChange={setIsRepeating}
-                label="Recurring Mission Schedule"
+                label={t('create.recurring')}
               />
               <GlassToggle
                 checked={premiumOnly}
                 onChange={setPremiumOnly}
-                label="Tier-1 / Omega Clearance Only"
+                label={t('discover.filterPremiumOnly')}
               />
             </View>
           </View>
@@ -363,6 +365,7 @@ export const CreateScreen = React.forwardRef<
         open={showAI}
         onClose={() => setShowAI(false)}
         onApplyTitle={setTitle}
+        onApplyDescription={setDescription}
       />
     </View>
   );
@@ -372,26 +375,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    zIndex: 50,
-  },
-  aiBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 84,
-    paddingBottom: 185,
+    paddingHorizontal: 20,
+    paddingTop: 110,
+    paddingBottom: 120,
   },
   stepTitle: {
     fontSize: 22,
@@ -400,12 +387,11 @@ const styles = StyleSheet.create({
   },
   stepSub: {
     fontSize: 13,
-    marginTop: -4,
-    marginBottom: 6,
-    lineHeight: 18,
+    marginTop: -8,
+    marginBottom: 4,
   },
   fieldLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     marginBottom: 6,
   },

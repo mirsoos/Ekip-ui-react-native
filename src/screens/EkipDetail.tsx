@@ -13,6 +13,7 @@ import { EkipActionBar } from '../components/ekip/EkipActionBar';
 import { EkipJoinModal } from '../components/ekip/EkipJoinModal';
 import { EkipShareSheet } from '../components/ekip/EkipShareSheet';
 import { useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 import type { Group } from '../types/database';
 
 const categoryIcons: Record<string, IconName> = {
@@ -33,6 +34,7 @@ export function EkipDetail({
 }) {
   const { me, members, requests, addRequest, updateRequest, addNotification, conversations } = useAppData();
   const { colors } = useTheme();
+  const { t, isRTL } = useI18n();
 
   const [showJoinSheet, setShowJoinSheet] = useState(false);
   const [joinMessage, setJoinMessage] = useState('');
@@ -75,11 +77,13 @@ export function EkipDetail({
       });
       addNotification({
         type: 'group_request',
-        title: 'Squad Joined',
-        body: `You are now a deployed operator in ${group.title}!`,
+        title: isRTL ? 'پیوستن به اکیپ' : 'Squad Joined',
+        body: isRTL
+          ? `شما اکنون یکی از اعضای مستقر در «${group.title}» هستید!`
+          : `You are now a deployed operator in ${group.title}!`,
         icon: 'Users',
       });
-      setToast('Joined squad successfully!');
+      setToast(isRTL ? 'عضویت در اکیپ با موفقیت انجام شد!' : 'Joined squad successfully!');
     } else {
       addRequest({
         id: `r-${Date.now()}`,
@@ -91,7 +95,7 @@ export function EkipDetail({
         group,
         profile: me,
       });
-      setToast('Clearance request transmitted to command');
+      setToast(isRTL ? 'درخواست مجوز ورود برای سرگروه ارسال شد' : 'Clearance request transmitted to command');
     }
     setShowJoinSheet(false);
     setTimeout(() => setToast(''), 2500);
@@ -100,7 +104,7 @@ export function EkipDetail({
   const handleCancelRequest = () => {
     if (myRequest) {
       updateRequest(myRequest.id, 'rejected');
-      setToast('Clearance request cancelled');
+      setToast(isRTL ? 'درخواست ورود لغو گردید' : 'Clearance request cancelled');
       setShowCancel(false);
       setTimeout(() => setToast(''), 2500);
     }
@@ -128,7 +132,9 @@ export function EkipDetail({
           {/* Category Chip */}
           <View style={styles.categoryBadge}>
             <CatIcon size={12} color="#ffffff" strokeWidth={2.4} style={{ marginRight: 4 }} />
-            <Text style={styles.categoryText}>{group.category}</Text>
+            <Text style={styles.categoryText}>
+              {group.category === 'work' ? t('discover.cat.work') : t('discover.cat.entertainment')}
+            </Text>
           </View>
 
           {/* Title and Description */}

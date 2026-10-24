@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { GlassCard, GlassAvatar, GlassEmpty } from '../Glass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { Friendship } from '../../types/database';
 
 export function FriendsList({
@@ -13,14 +14,15 @@ export function FriendsList({
   onOpenProfile: (id: string) => void;
 }) {
   const { colors } = useTheme();
-  const ChevronRight = getIcon('ChevronRight');
+  const { isRTL } = useI18n();
+  const ChevronRight = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
 
   if (friends.length === 0) {
     return (
       <GlassEmpty
         icon="Users"
-        title="No linked contacts"
-        subtitle="Connect with active operatives across field operations."
+        title={isRTL ? 'هیچ مخاطبی متصل نشده است' : 'No linked contacts'}
+        subtitle={isRTL ? 'با سایر اعضای فعال در عملیات‌ها ارتباط برقرار کنید.' : 'Connect with active operatives across field operations.'}
       />
     );
   }
@@ -67,7 +69,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    borderRadius: 18,
+    borderRadius: 20,
   },
   name: {
     fontSize: 14,
@@ -75,6 +77,6 @@ const styles = StyleSheet.create({
   },
   handle: {
     fontSize: 11,
-    marginTop: 1,
+    marginTop: 2,
   },
 });

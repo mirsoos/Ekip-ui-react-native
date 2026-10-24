@@ -13,12 +13,6 @@ const categoryIcons: Record<string, IconName> = {
   work: 'Briefcase',
 };
 
-const typeLabels: Record<string, string> = {
-  solo: 'Solo',
-  couple: 'Couple',
-  group: 'Group',
-};
-
 export function EkipCard({
   group,
   onPress,
@@ -35,9 +29,20 @@ export function EkipCard({
   const myRequest = requests.find((r) => r.group_id === group.id && r.user_id === 'me');
   const isOwner = group.owner_id === 'me';
 
+  const typeLabels: Record<string, string> = {
+    solo: t('ekip.typeSolo'),
+    couple: t('ekip.typeCouple'),
+    group: t('ekip.typeGroup'),
+  };
+
+  const categoryLabels: Record<string, string> = {
+    work: t('discover.cat.work'),
+    entertainment: t('discover.cat.entertainment'),
+  };
+
   const eventDate = new Date(group.event_date);
-  const dateStr = eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const timeStr = eventDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  const dateStr = eventDate.toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', { month: 'short', day: 'numeric' });
+  const timeStr = eventDate.toLocaleTimeString(isRTL ? 'fa-IR' : 'en-US', { hour: 'numeric', minute: '2-digit' });
 
   const CatIcon = getIcon(categoryIcons[group.category] ?? 'PartyPopper');
   const CalendarIcon = getIcon('Calendar');
@@ -59,7 +64,7 @@ export function EkipCard({
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
               <CatIcon size={12} color="#f472b6" strokeWidth={2.4} style={{ marginRight: 4 }} />
               <Text style={[styles.compactType, { color: colors.textTertiary }]}>
-                {typeLabels[group.group_type]}
+                {typeLabels[group.group_type] ?? group.group_type}
               </Text>
             </View>
 
@@ -97,10 +102,10 @@ export function EkipCard({
           <View style={styles.chipsGroup}>
             <View style={styles.tagChip}>
               <CatIcon size={11} color="#ffffff" strokeWidth={2.4} style={{ marginRight: 3 }} />
-              <Text style={styles.tagChipText}>{group.category}</Text>
+              <Text style={styles.tagChipText}>{categoryLabels[group.category] ?? group.category}</Text>
             </View>
             <View style={styles.tagChip}>
-              <Text style={styles.tagChipText}>{typeLabels[group.group_type]}</Text>
+              <Text style={styles.tagChipText}>{typeLabels[group.group_type] ?? group.group_type}</Text>
             </View>
             {group.premium_only && (
               <LinearGradient
@@ -108,7 +113,7 @@ export function EkipCard({
                 style={[styles.tagChip, { borderColor: 'transparent' }]}
               >
                 <CrownIcon size={11} color="#ffffff" strokeWidth={2.4} style={{ marginRight: 3 }} />
-                <Text style={styles.tagChipText}>Premium</Text>
+                <Text style={styles.tagChipText}>{t('ekip.premium')}</Text>
               </LinearGradient>
             )}
           </View>
@@ -117,11 +122,11 @@ export function EkipCard({
           {(isOwner || myRequest) && (
             <View>
               {isOwner ? (
-                <GlassBadgeIcon icon="Crown" label="Owner" color="amber" />
+                <GlassBadgeIcon icon="Crown" label={t('activity.owner')} color="amber" />
               ) : myRequest ? (
                 <GlassBadgeIcon
                   icon={myRequest.status === 'accepted' ? 'CheckCircle2' : 'Clock'}
-                  label={myRequest.status === 'accepted' ? 'Joined' : 'Pending'}
+                  label={myRequest.status === 'accepted' ? t('activity.joinedBadge') : t('activity.pendingBadge')}
                   color={myRequest.status === 'accepted' ? 'green' : 'blue'}
                 />
               ) : null}
@@ -188,7 +193,7 @@ export function EkipCard({
             />
             <View style={{ marginLeft: 8 }}>
               <Text style={[styles.ownerName, { color: colors.textPrimary }]}>
-                @{group.owner?.username}
+                {group.owner ? `${group.owner.first_name} ${group.owner.last_name}` : ''}
               </Text>
               <Text style={[styles.ownerJob, { color: colors.textTertiary }]}>
                 {group.owner?.job}
@@ -219,38 +224,14 @@ export function EkipCard({
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 16,
+    borderRadius: 24,
     overflow: 'hidden',
-  },
-  compactCard: {
-    marginBottom: 10,
-    padding: 10,
-  },
-  compactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  compactImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 16,
-  },
-  compactType: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  compactTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  compactSub: {
-    fontSize: 12,
   },
   coverWrapper: {
     position: 'relative',
-    height: 150,
+    height: 160,
     width: '100%',
+    overflow: 'hidden',
   },
   coverImage: {
     width: '100%',
@@ -258,19 +239,20 @@ const styles = StyleSheet.create({
   },
   coverGradient: {
     position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
-    top: 0,
     bottom: 0,
   },
   topBadgesRow: {
     position: 'absolute',
-    top: 10,
-    left: 10,
-    right: 10,
+    top: 12,
+    left: 12,
+    right: 12,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 10,
   },
   chipsGroup: {
     flexDirection: 'row',
@@ -281,71 +263,72 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    borderWidth: 1,
-    borderRadius: 999,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   tagChipText: {
-    color: '#ffffff',
     fontSize: 10,
     fontWeight: '700',
+    color: '#ffffff',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   datePill: {
     position: 'absolute',
-    bottom: 10,
-    left: 10,
+    bottom: 12,
+    left: 12,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 14,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   datePillText: {
-    color: '#ffffff',
     fontSize: 11,
     fontWeight: '600',
+    color: '#ffffff',
   },
   cardBody: {
-    padding: 16,
+    padding: 14,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-    lineHeight: 22,
+    letterSpacing: -0.2,
+    marginBottom: 4,
   },
   cardDesc: {
     fontSize: 13,
-    marginTop: 5,
     lineHeight: 18,
+    marginBottom: 10,
   },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
-    marginTop: 10,
+    marginBottom: 12,
   },
   tagItem: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 999,
+    borderRadius: 8,
     borderWidth: 1,
   },
   tagItemText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 14,
-    paddingTop: 12,
+    paddingTop: 10,
     borderTopWidth: 1,
   },
   ownerName: {
@@ -357,6 +340,32 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   metaText: {
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  compactCard: {
+    padding: 10,
+    borderRadius: 18,
+  },
+  compactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  compactImage: {
+    width: 54,
+    height: 54,
+    borderRadius: 14,
+  },
+  compactType: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  compactTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  compactSub: {
+    fontSize: 11,
   },
 });

@@ -4,6 +4,7 @@ import { GlassAvatar, GlassBadgeIcon, GlassButton } from '../Glass';
 import { InfoPill } from '../common/InfoPill';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { Profile } from '../../types/database';
 
 export function ProfileHeaderCard({
@@ -24,8 +25,14 @@ export function ProfileHeaderCard({
   hideAvatar?: boolean;
 }) {
   const { colors } = useTheme();
+  const { t, isRTL } = useI18n();
   const MoreHorizontal = getIcon('MoreHorizontal');
   const Smile = getIcon('Smile');
+
+  const genderLabels: Record<string, string> = {
+    male: t('create.genderMale'),
+    female: t('create.genderFemale'),
+  };
 
   return (
     <View style={styles.container}>
@@ -59,7 +66,7 @@ export function ProfileHeaderCard({
 
             {onAddFriend && (
               <GlassButton size="sm" icon="UserPlus" onPress={onAddFriend}>
-                {isFriend ? 'Connected' : 'Connect'}
+                {isFriend ? t('profile.connected') : t('profile.connect')}
               </GlassButton>
             )}
           </View>
@@ -73,11 +80,11 @@ export function ProfileHeaderCard({
           </Text>
           {profile.is_verified && (
             <TouchableOpacity activeOpacity={0.8} onPress={onOpenVerification}>
-              <GlassBadgeIcon icon="Verified" label="Verified" color="pink" />
+              <GlassBadgeIcon icon="Verified" label={t('common.verified')} color="pink" />
             </TouchableOpacity>
           )}
           {profile.is_premium && (
-            <GlassBadgeIcon icon="Crown" label="Tier-1" color="amber" />
+            <GlassBadgeIcon icon="Crown" label={t('ekip.premium')} color="amber" />
           )}
         </View>
 
@@ -93,8 +100,8 @@ export function ProfileHeaderCard({
 
         {/* Quick info pills */}
         <View style={styles.pillsRow}>
-          {profile.age && <InfoPill icon="Calendar" label={`${profile.age} yrs`} />}
-          {profile.gender && <InfoPill icon="User" label={profile.gender} />}
+          {profile.age && <InfoPill icon="Calendar" label={t('profile.yearsOld', { age: profile.age })} />}
+          {profile.gender && <InfoPill icon="User" label={genderLabels[profile.gender] ?? profile.gender} />}
           {profile.city && <InfoPill icon="MapPin" label={profile.city} />}
           {profile.job && <InfoPill icon="Briefcase" label={profile.job} />}
           {profile.personality_type && (
@@ -111,7 +118,7 @@ export function ProfileHeaderCard({
             ]}
           >
             <Smile size={16} color="#f472b6" style={{ marginRight: 6 }} />
-            <Text style={[styles.moodLabel, { color: colors.textTertiary }]}>Status:</Text>
+            <Text style={[styles.moodLabel, { color: colors.textTertiary }]}>{isRTL ? 'وضعیت:' : 'Status:'}</Text>
             <Text style={[styles.moodVal, { color: colors.textPrimary }]}>{profile.mood}</Text>
           </View>
         )}

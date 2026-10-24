@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { GlassSheet } from '../Overlays';
 import { GlassSegmented, GlassChip, GlassToggle, GlassButton } from '../Glass';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export interface DiscoverFilterSheetProps {
   open: boolean;
@@ -30,20 +31,21 @@ export function DiscoverFilterSheet({
   onReset,
 }: DiscoverFilterSheetProps) {
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   return (
-    <GlassSheet open={open} onClose={onClose} title="Filter Ekips">
+    <GlassSheet open={open} onClose={onClose} title={t('discover.filterTitle')}>
       <View style={{ gap: 18 }}>
         {/* Category selection */}
         <View>
           <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-            Category
+            {t('discover.filterCategory')}
           </Text>
           <GlassSegmented
             options={[
-              { label: 'All', value: 'all' },
-              { label: 'Entertainment', value: 'entertainment', icon: 'PartyPopper' },
-              { label: 'Work', value: 'work', icon: 'Briefcase' },
+              { label: t('discover.cat.all'), value: 'all' },
+              { label: t('discover.cat.entertainment'), value: 'entertainment', icon: 'PartyPopper' },
+              { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' },
             ]}
             value={categoryFilter}
             onChange={(v) => onChangeCategory(v as any)}
@@ -53,14 +55,14 @@ export function DiscoverFilterSheet({
         {/* City selection */}
         <View>
           <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-            Location / Sector
+            {t('discover.filterLocation')}
           </Text>
           <View style={styles.chipsWrap}>
             <GlassChip
               active={cityFilter === 'all'}
               onPress={() => onChangeCity('all')}
             >
-              All Sectors
+              {t('discover.filterAllSectors')}
             </GlassChip>
             {cities.map((c) => (
               <GlassChip
@@ -79,7 +81,7 @@ export function DiscoverFilterSheet({
           <GlassToggle
             checked={premiumOnly}
             onChange={onChangePremiumOnly}
-            label="Tier-1 / Premium only"
+            label={t('discover.filterPremiumOnly')}
           />
         </View>
 
@@ -87,12 +89,12 @@ export function DiscoverFilterSheet({
         <View style={styles.actionsRow}>
           <View style={{ flex: 1 }}>
             <GlassButton variant="secondary" fullWidth onPress={onReset}>
-              Reset
+              {t('discover.filterReset')}
             </GlassButton>
           </View>
           <View style={{ flex: 1 }}>
             <GlassButton variant="primary" fullWidth onPress={onClose}>
-              Apply Filters
+              {t('discover.filterApply')}
             </GlassButton>
           </View>
         </View>

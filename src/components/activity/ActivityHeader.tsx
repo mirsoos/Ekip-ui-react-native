@@ -4,6 +4,7 @@ import { GlassSegmented } from '../Glass';
 import { NotificationButton } from '../NotificationButton';
 import { LiquidLens } from '../LiquidLens';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export function ActivityHeader({
   unreadCount,
@@ -17,6 +18,7 @@ export function ActivityHeader({
   onOpenNotifications: () => void;
 }) {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
 
   const enterAnim = useRef(new Animated.Value(0)).current;
 
@@ -58,7 +60,7 @@ export function ActivityHeader({
 
         <View style={styles.titleRow}>
           <Text style={[styles.heading, { color: colors.textPrimary }]}>
-            My Ekip
+            {t('activity.myEkip')}
           </Text>
           <NotificationButton
             unreadCount={unreadCount}
@@ -69,9 +71,9 @@ export function ActivityHeader({
         <View style={{ marginTop: 12, zIndex: 10 }}>
           <GlassSegmented
             options={[
-              { label: 'Created', value: 'created', icon: 'Crown' },
-              { label: 'Joined', value: 'joined', icon: 'Users' },
-              { label: 'Requested', value: 'requested', icon: 'Clock' },
+              { label: t('activity.created'), value: 'created', icon: 'Crown' },
+              { label: t('activity.joined'), value: 'joined', icon: 'Users' },
+              { label: t('activity.requestsTab'), value: 'requested', icon: 'Clock' },
             ]}
             value={tab}
             onChange={onChangeTab}

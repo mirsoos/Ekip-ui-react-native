@@ -4,17 +4,19 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard, GlassEmpty } from '../Glass';
 import { getIcon, type IconName } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { Badge } from '../../types/database';
 
 export function ProfileBadgesList({ badges }: { badges: Badge[] }) {
   const { colors } = useTheme();
+  const { isRTL } = useI18n();
 
   if (badges.length === 0) {
     return (
       <GlassEmpty
         icon="Award"
-        title="No badges earned"
-        subtitle="Complete tactical missions to unlock command medals."
+        title={isRTL ? 'هنوز مدالی دریافت نکرده‌اید' : 'No badges earned'}
+        subtitle={isRTL ? 'مأموریت‌های تاکتیکی را کامل کنید تا مدال‌های افتخار باز شوند.' : 'Complete tactical missions to unlock command medals.'}
       />
     );
   }
@@ -65,11 +67,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
   },
   desc: {
     fontSize: 11,
-    marginTop: 1,
+    marginTop: 2,
   },
 });

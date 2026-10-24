@@ -5,6 +5,7 @@ import { GlassSheet, Toast } from '../Overlays';
 import { GlassEmpty, GlassSegmented } from '../Glass';
 import { NotificationItem } from './NotificationItem';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { Group } from '../../types/database';
 
 export function NotificationsSheet({
@@ -22,6 +23,7 @@ export function NotificationsSheet({
 }) {
   const { notifications, groups, markNotificationRead, markAllNotificationsRead } = useAppData();
   const { colors } = useTheme();
+  const { t, isRTL } = useI18n();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [toastMessage, setToastMessage] = useState('');
 
@@ -43,7 +45,7 @@ export function NotificationsSheet({
 
   const handleMarkAllRead = () => {
     markAllNotificationsRead();
-    showToast('All notifications marked as read');
+    showToast(t('notifications.markedAllToast'));
   };
 
   const handleItemPress = (n: (typeof notifications)[0]) => {
@@ -59,13 +61,13 @@ export function NotificationsSheet({
 
   return (
     <>
-      <GlassSheet open={open} onClose={onClose} title="Notifications">
+      <GlassSheet open={open} onClose={onClose} title={t('notifications.title')}>
         <View style={styles.topControl}>
           <View style={{ flex: 1 }}>
             <GlassSegmented
               options={[
-                { label: 'All', value: 'all' },
-                { label: `Unread (${unreadCount})`, value: 'unread' },
+                { label: t('common.all'), value: 'all' },
+                { label: t('notifications.unreadTab', { count: unreadCount }), value: 'unread' },
               ]}
               value={filter}
               onChange={(v) => setFilter(v as 'all' | 'unread')}
@@ -74,7 +76,7 @@ export function NotificationsSheet({
 
           {unreadCount > 0 && (
             <TouchableOpacity activeOpacity={0.7} onPress={handleMarkAllRead} style={styles.markBtn}>
-              <Text style={styles.markText}>Mark all read</Text>
+              <Text style={styles.markText}>{t('notifications.markAllRead')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -83,11 +85,11 @@ export function NotificationsSheet({
           {filtered.length === 0 ? (
             <GlassEmpty
               icon="Bell"
-              title="No notifications"
+              title={isRTL ? 'هیچ اعلانی وجود ندارد' : 'No notifications'}
               subtitle={
                 filter === 'unread'
-                  ? 'All notifications have been reviewed.'
-                  : 'You have no notifications at this time.'
+                  ? (isRTL ? 'تمامی اعلان‌ها بررسی شده‌اند.' : 'All notifications have been reviewed.')
+                  : (isRTL ? 'در حال حاضر هیچ اعلان جدیدی ندارید.' : 'You have no notifications at this time.')
               }
             />
           ) : (

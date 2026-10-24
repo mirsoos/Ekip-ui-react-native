@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassAvatar } from '../Glass';
 import { useTheme, CHAT_THEMES } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { Message } from '../../types/database';
 
 export function ChatMessageBubble({
@@ -15,9 +16,10 @@ export function ChatMessageBubble({
   showAvatar?: boolean;
 }) {
   const { colors, chatTheme } = useTheme();
+  const { isRTL } = useI18n();
   const themeConfig = CHAT_THEMES[chatTheme] ?? CHAT_THEMES.default;
 
-  const time = new Date(message.created_at).toLocaleTimeString('en-US', {
+  const time = new Date(message.created_at).toLocaleTimeString(isRTL ? 'fa-IR' : 'en-US', {
     hour: 'numeric',
     minute: '2-digit',
   });
@@ -63,16 +65,14 @@ export function ChatMessageBubble({
             styles.theirBubble,
             {
               backgroundColor: themeConfig.theirBubbleBg,
-              borderColor: themeConfig.theirBubbleBorder,
+              borderColor: colors.glassBorder,
             },
           ]}
         >
-          {message.sender && (
-            <Text style={[styles.senderName, { color: themeConfig.accentHex }]}>
-              {message.sender.first_name} {message.sender.last_name}
-            </Text>
-          )}
-          <Text style={[styles.bubbleText, { color: themeConfig.theirBubbleText }]}>
+          <Text style={[styles.senderName, { color: themeConfig.accentHex }]}>
+            {message.sender?.first_name} {message.sender?.last_name}
+          </Text>
+          <Text style={[styles.bubbleText, { color: colors.textPrimary }]}>
             {message.body}
           </Text>
           <Text style={[styles.theirTime, { color: colors.textTertiary }]}>{time}</Text>
@@ -85,40 +85,39 @@ export function ChatMessageBubble({
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    marginVertical: 4,
-    paddingHorizontal: 16,
+    marginBottom: 8,
   },
   bubble: {
-    maxWidth: '78%',
+    maxWidth: '75%',
     paddingHorizontal: 14,
-    paddingVertical: 9,
+    paddingVertical: 10,
     borderRadius: 20,
   },
   myBubble: {
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: 6,
   },
   theirBubble: {
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: 6,
     borderWidth: 1,
   },
   senderName: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   bubbleText: {
     fontSize: 14,
     lineHeight: 19,
   },
   myTime: {
-    fontSize: 9,
-    color: 'rgba(255, 255, 255, 0.75)',
-    textAlign: 'right',
-    marginTop: 3,
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.7)',
+    alignSelf: 'flex-end',
+    marginTop: 4,
   },
   theirTime: {
-    fontSize: 9,
-    textAlign: 'right',
-    marginTop: 3,
+    fontSize: 10,
+    alignSelf: 'flex-end',
+    marginTop: 4,
   },
 });

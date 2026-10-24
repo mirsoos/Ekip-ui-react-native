@@ -9,6 +9,7 @@ import { ChatHeader } from '../components/chat/ChatHeader';
 import { ChatInputBar } from '../components/chat/ChatInputBar';
 import { ChatListItemSkeleton } from '../components/skeleton';
 import { useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 
 export function ChatListScreen({
   onOpenConversation,
@@ -22,6 +23,7 @@ export function ChatListScreen({
   isLoading?: boolean;
 }) {
   const { conversations } = useAppData();
+  const { t } = useI18n();
 
   const filtered = conversations.filter((c) =>
     c.title.toLowerCase().includes(search.toLowerCase())
@@ -43,8 +45,8 @@ export function ChatListScreen({
         ) : filtered.length === 0 ? (
           <GlassEmpty
             icon="MessageCircle"
-            title="No comms logs"
-            subtitle="Connect with squad operatives or start an encrypted transmission."
+            title={t('chat.noCommsLogs')}
+            subtitle={t('chat.noCommsLogsSub')}
           />
         ) : (
           filtered.map((c) => (
@@ -98,17 +100,13 @@ export function ConversationScreen({
         contentContainerStyle={styles.messagesContent}
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
       >
-        {convMessages.map((msg, index) => {
-          const isMe = msg.sender_id === 'me';
-          return (
-            <ChatMessageBubble
-              key={msg.id || index}
-              message={msg}
-              isMe={isMe}
-              showAvatar={!isMe && conv.type === 'group'}
-            />
-          );
-        })}
+        {convMessages.map((m) => (
+          <ChatMessageBubble
+            key={m.id}
+            message={m}
+            isMe={m.sender_id === 'me'}
+          />
+        ))}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -118,34 +116,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerWrap: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    zIndex: 50,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  subheading: {
-    fontSize: 12,
-    marginTop: 2,
-  },
   listContent: {
     paddingHorizontal: 16,
-    paddingTop: 155,
+    paddingTop: 150,
     paddingBottom: 110,
+    gap: 8,
   },
   messagesContent: {
-    paddingTop: 84,
-    paddingBottom: 80,
+    paddingHorizontal: 16,
+    paddingTop: 100,
+    paddingBottom: 90,
+    gap: 12,
   },
 });

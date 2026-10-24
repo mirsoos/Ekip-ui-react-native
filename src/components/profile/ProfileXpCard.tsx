@@ -4,10 +4,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard, GlassProgress } from '../Glass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { Profile } from '../../types/database';
 
 export function ProfileXpCard({ profile }: { profile: Profile }) {
   const { colors } = useTheme();
+  const { isRTL } = useI18n();
   const Shield = getIcon('Shield');
 
   return (
@@ -22,7 +24,7 @@ export function ProfileXpCard({ profile }: { profile: Profile }) {
           </LinearGradient>
           <View style={{ marginLeft: 10 }}>
             <Text style={[styles.levelTitle, { color: colors.textPrimary }]}>
-              Level {profile.level}
+              {isRTL ? `سطح ${profile.level}` : `Level ${profile.level}`}
             </Text>
             <Text style={[styles.xpText, { color: colors.textTertiary }]}>
               {profile.xp} / {profile.xp_to_next} XP
@@ -45,7 +47,7 @@ export function ProfileXpCard({ profile }: { profile: Profile }) {
       <View style={styles.bottomRow}>
         <Shield size={14} color="#22c55e" strokeWidth={2.4} style={{ marginRight: 4 }} />
         <Text style={[styles.honorLabel, { color: colors.textTertiary }]}>
-          Tactical Readiness Score
+          {isRTL ? 'نمره آمادگی تاکتیکی' : 'Tactical Readiness Score'}
         </Text>
         <Text style={[styles.honorVal, { color: colors.textPrimary }]}>
           {profile.honor_score}/100
@@ -59,25 +61,24 @@ const styles = StyleSheet.create({
   card: {
     padding: 14,
     borderRadius: 22,
-    marginBottom: 12,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   levelBadge: {
-    width: 42,
-    height: 42,
+    width: 38,
+    height: 38,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   levelNum: {
-    color: '#ffffff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
+    color: '#ffffff',
   },
   levelTitle: {
     fontSize: 14,
@@ -88,24 +89,24 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   honorScore: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '800',
   },
   reputation: {
-    fontSize: 10,
+    fontSize: 11,
     marginTop: 1,
   },
   bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 10,
   },
   honorLabel: {
     fontSize: 11,
+    flex: 1,
   },
   honorVal: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
-    marginLeft: 'auto',
   },
 });

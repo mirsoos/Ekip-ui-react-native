@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { GlassCard, GlassAvatar, GlassBadgeIcon } from '../Glass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { Profile } from '../../types/database';
 
 export function EkipHostCard({
@@ -13,8 +14,9 @@ export function EkipHostCard({
   onOpenProfile: () => void;
 }) {
   const { colors } = useTheme();
+  const { isRTL } = useI18n();
   const ShieldIcon = getIcon('Shield');
-  const ChevronRight = getIcon('ChevronRight');
+  const ChevronRight = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
 
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onOpenProfile} style={{ marginBottom: 12 }}>
@@ -41,10 +43,14 @@ export function EkipHostCard({
           <View style={styles.statsRow}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <ShieldIcon size={12} color="#22c55e" style={{ marginRight: 3 }} />
-              <Text style={styles.statText}>Honor {host.honor_score}</Text>
+              <Text style={styles.statText}>
+                {isRTL ? `اعتبار ${host.honor_score}` : `Honor ${host.honor_score}`}
+              </Text>
             </View>
             <Text style={[styles.statDot, { color: colors.textTertiary }]}>·</Text>
-            <Text style={styles.statText}>Level {host.level}</Text>
+            <Text style={styles.statText}>
+              {isRTL ? `سطح ${host.level}` : `Level ${host.level}`}
+            </Text>
           </View>
         </View>
 
@@ -62,25 +68,25 @@ const styles = StyleSheet.create({
     borderRadius: 22,
   },
   name: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
   },
   handle: {
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 2,
   },
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 6,
+    gap: 6,
   },
   statText: {
     fontSize: 11,
-    fontWeight: '600',
     color: '#22c55e',
+    fontWeight: '600',
   },
   statDot: {
-    marginHorizontal: 5,
-    fontSize: 11,
+    fontSize: 10,
   },
 });

@@ -6,6 +6,7 @@ import { ScreenHeader } from '../components/common/ScreenHeader';
 import { Toast } from '../components/Overlays';
 import { allInterests } from '../lib/demoData';
 import { useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 import type { Gender } from '../types/database';
 
 const AVATAR_PRESETS = [
@@ -26,6 +27,7 @@ export function PersonalInfoScreen({
 }) {
   const { me, updateMe } = useAppData();
   const { colors } = useTheme();
+  const { isRTL, t } = useI18n();
 
   const [firstName, setFirstName] = useState(me.first_name);
   const [lastName, setLastName] = useState(me.last_name);
@@ -36,7 +38,7 @@ export function PersonalInfoScreen({
   const [age, setAge] = useState(me.age ? String(me.age) : '34');
   const [gender, setGender] = useState<Gender>(me.gender ?? 'male');
   const [selectedAvatar, setSelectedAvatar] = useState(me.avatar_url ?? AVATAR_PRESETS[0]);
-  const [interests, setInterests] = useState<string[]>(me.interests ?? ['Tactical Ops', 'Cryptology']);
+  const [interests, setInterests] = useState<string[]>(me.interests ?? ['عملیات تاکتیکی', 'رمزنگاری']);
   const [toast, setToast] = useState('');
 
   const toggleInterest = (tag: string) => {
@@ -58,7 +60,7 @@ export function PersonalInfoScreen({
       avatar_url: selectedAvatar,
       interests,
     });
-    setToast('Dossier updated successfully');
+    setToast(isRTL ? 'اطلاعات کاربری با موفقیت به‌روزرسانی شد' : 'Dossier updated successfully');
     setTimeout(() => {
       setToast('');
       onBack();
@@ -74,7 +76,7 @@ export function PersonalInfoScreen({
         {/* Avatar Preset Selector */}
         <View style={{ gap: 8 }}>
           <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-            Operator Avatar
+            {isRTL ? 'تصویر پروفایل' : 'Operator Avatar'}
           </Text>
           <ScrollView
             horizontal
@@ -105,14 +107,14 @@ export function PersonalInfoScreen({
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <View style={{ flex: 1 }}>
               <GlassInput
-                placeholder="First Name"
+                placeholder={isRTL ? 'نام' : 'First Name'}
                 value={firstName}
                 onChangeText={setFirstName}
               />
             </View>
             <View style={{ flex: 1 }}>
               <GlassInput
-                placeholder="Last Name"
+                placeholder={isRTL ? 'نام خانوادگی' : 'Last Name'}
                 value={lastName}
                 onChangeText={setLastName}
               />
@@ -121,14 +123,14 @@ export function PersonalInfoScreen({
 
           <GlassInput
             icon="User"
-            placeholder="Callsign (username)"
+            placeholder={isRTL ? 'نام کاربری (شناسه)' : 'Callsign (username)'}
             value={username}
             onChangeText={setUsername}
           />
 
           <GlassInput
             icon="Briefcase"
-            placeholder="Tactical Role / Rank"
+            placeholder={isRTL ? 'سمت / مهارت اصلی' : 'Tactical Role / Rank'}
             value={job}
             onChangeText={setJob}
           />
@@ -137,7 +139,7 @@ export function PersonalInfoScreen({
             <View style={{ flex: 2 }}>
               <GlassInput
                 icon="MapPin"
-                placeholder="Sector HQ / City"
+                placeholder={isRTL ? 'شهر / منطقه' : 'Sector HQ / City'}
                 value={city}
                 onChangeText={setCity}
               />
@@ -145,7 +147,7 @@ export function PersonalInfoScreen({
             <View style={{ flex: 1 }}>
               <GlassInput
                 icon="Calendar"
-                placeholder="Age"
+                placeholder={isRTL ? 'سن' : 'Age'}
                 value={age}
                 onChangeText={setAge}
                 keyboardType="numeric"
@@ -154,7 +156,7 @@ export function PersonalInfoScreen({
           </View>
 
           <GlassInput
-            placeholder="Operational Bio & Clearance Summary..."
+            placeholder={isRTL ? 'بیوگرافی و معرفی کوتاه...' : 'Operational Bio & Clearance Summary...'}
             value={bio}
             onChangeText={setBio}
             multiline
@@ -163,13 +165,13 @@ export function PersonalInfoScreen({
 
           <View style={{ marginTop: 4 }}>
             <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-              Gender
+              {isRTL ? 'جنسیت' : 'Gender'}
             </Text>
             <GlassSegmented
               options={[
-                { label: 'Male', value: 'male' },
-                { label: 'Female', value: 'female' },
-                { label: 'Other', value: 'other' },
+                { label: isRTL ? 'آقا' : 'Male', value: 'male' },
+                { label: isRTL ? 'خانم' : 'Female', value: 'female' },
+                { label: isRTL ? 'سایر' : 'Other', value: 'other' },
               ]}
               value={gender ?? 'male'}
               onChange={(v) => setGender(v as Gender)}
@@ -179,7 +181,7 @@ export function PersonalInfoScreen({
           {/* Interests */}
           <View style={{ marginTop: 10 }}>
             <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-              Operational Disciplines & Skills
+              {isRTL ? 'مهارت‌ها و حوزه‌های فعالیت' : 'Operational Disciplines & Skills'}
             </Text>
             <View style={styles.chipsWrap}>
               {allInterests.map((interest) => {
@@ -213,7 +215,7 @@ export function PersonalInfoScreen({
 
           <View style={{ marginTop: 20 }}>
             <GlassButton size="lg" fullWidth onPress={handleSave}>
-              Save Dossier Changes
+              {isRTL ? 'ذخیره تغییرات' : 'Save Dossier Changes'}
             </GlassButton>
           </View>
         </View>
@@ -230,19 +232,18 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 84,
+    paddingTop: 85,
     paddingBottom: 40,
   },
   fieldLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
-    marginBottom: 6,
-    marginLeft: 2,
+    marginBottom: 4,
   },
   avatarChoice: {
     width: 60,
     height: 60,
-    borderRadius: 30,
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'transparent',
@@ -255,12 +256,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 6,
   },
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 999,
+    borderRadius: 14,
     borderWidth: 1,
   },
   chipText: {

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native
 import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export function CreateContinueButton({
   step,
@@ -16,8 +17,9 @@ export function CreateContinueButton({
   onPress: () => void;
 }) {
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useI18n();
   const isFinal = step === totalSteps - 1;
-  const IconComp = getIcon(isFinal ? 'Check' : 'ArrowRight');
+  const IconComp = getIcon(isFinal ? 'Check' : isRTL ? 'ArrowLeft' : 'ArrowRight');
 
   return (
     <View style={styles.outerContainer} pointerEvents="box-none">
@@ -45,13 +47,13 @@ export function CreateContinueButton({
 
         <View style={styles.buttonContent}>
           <Text style={[styles.continueText, { color: colors.textPrimary }]}>
-            {isFinal ? 'Deploy Operation' : 'Continue'}
+            {isFinal ? t('create.deployOperation') : t('create.continue')}
           </Text>
           <IconComp
             size={18}
             color={colors.textPrimary}
             strokeWidth={2.4}
-            style={{ marginLeft: 8 }}
+            style={{ marginHorizontal: 8 }}
           />
         </View>
       </TouchableOpacity>
@@ -62,25 +64,26 @@ export function CreateContinueButton({
 const styles = StyleSheet.create({
   outerContainer: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 104 : 94,
+    bottom: 0,
     left: 0,
     right: 0,
     paddingHorizontal: 16,
+    paddingBottom: Platform.OS === 'ios' ? 22 : 12,
     zIndex: 900,
   },
   continueButton: {
     position: 'relative',
-    height: 52,
+    height: 54,
     borderRadius: 36,
     borderWidth: 1,
-    overflow: 'visible',
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.35,
     shadowRadius: 28,
     elevation: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
+    overflow: 'visible',
   },
   buttonContent: {
     flexDirection: 'row',

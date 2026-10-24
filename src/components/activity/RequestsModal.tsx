@@ -4,6 +4,7 @@ import { GlassCard, GlassAvatar, GlassButton, GlassEmpty, GlassBadgeIcon } from 
 import { GlassSheet } from '../Overlays';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { GroupRequest } from '../../types/database';
 
 export function RequestsModal({
@@ -22,7 +23,8 @@ export function RequestsModal({
   onOpenProfile?: (userId: string) => void;
 }) {
   const { colors } = useTheme();
-  const ChevronRight = getIcon('ChevronRight');
+  const { t, isRTL } = useI18n();
+  const ChevronRight = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
 
   const handleProfilePress = (userId: string) => {
     if (onOpenProfile) {
@@ -32,13 +34,13 @@ export function RequestsModal({
   };
 
   return (
-    <GlassSheet open={open} onClose={onClose} title="Pending Join Requests">
+    <GlassSheet open={open} onClose={onClose} title={t('activity.pendingRequestsTitle')}>
       <View style={{ gap: 12 }}>
         {requests.length === 0 ? (
           <GlassEmpty
             icon="UserCheck"
-            title="All caught up"
-            subtitle="No pending requests for this Ekip."
+            title={t('activity.allCaughtUp')}
+            subtitle={t('activity.noPendingRequests')}
           />
         ) : (
           requests.map((r) => {
@@ -69,7 +71,7 @@ export function RequestsModal({
                     </View>
 
                     <Text style={[styles.meta, { color: colors.textTertiary }]} numberOfLines={1}>
-                      Level {profile.level} · Honor {profile.honor_score} {profile.city ? `· ${profile.city}` : ''}
+                      {isRTL ? `سطح ${profile.level} · اعتبار ${profile.honor_score}` : `Level ${profile.level} · Honor ${profile.honor_score}`} {profile.city ? `· ${profile.city}` : ''}
                     </Text>
                   </View>
 
@@ -93,7 +95,7 @@ export function RequestsModal({
                         onAccept(r.id, `${profile.first_name} ${profile.last_name}`, group.title)
                       }
                     >
-                      Accept
+                      {isRTL ? 'پذیرش' : 'Accept'}
                     </GlassButton>
                   </View>
                   <View style={{ flex: 1 }}>
@@ -103,7 +105,7 @@ export function RequestsModal({
                       variant="danger"
                       onPress={() => onReject(r.id)}
                     >
-                      Reject
+                      {isRTL ? 'رد درخواست' : 'Reject'}
                     </GlassButton>
                   </View>
                 </View>
@@ -139,12 +141,12 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   msgText: {
-    fontSize: 12,
+    fontSize: 13,
     fontStyle: 'italic',
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
     marginTop: 12,
   },
 });

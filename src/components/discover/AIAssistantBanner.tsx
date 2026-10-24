@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard } from '../Glass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export function AIAssistantBanner({
   onPress,
@@ -13,6 +14,7 @@ export function AIAssistantBanner({
   style?: StyleProp<ViewStyle>;
 }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const SparklesIcon = getIcon('Sparkles');
   const ChevronRight = getIcon('ChevronRight');
 
@@ -30,10 +32,10 @@ export function AIAssistantBanner({
 
         <View style={{ flex: 1, marginLeft: 12 }}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Ask Ekip AI
+            {t('discover.askAI')}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Tactical squad matchmaking & mission advice
+            {t('discover.askAISub')}
           </Text>
         </View>
 

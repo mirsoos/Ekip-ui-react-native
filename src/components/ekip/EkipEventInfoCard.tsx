@@ -4,17 +4,20 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard } from '../Glass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { Group } from '../../types/database';
 
 export function EkipEventInfoCard({ group }: { group: Group }) {
   const { colors } = useTheme();
+  const { isRTL } = useI18n();
+
   const eventDate = new Date(group.event_date);
-  const dateStr = eventDate.toLocaleDateString('en-US', {
+  const dateStr = eventDate.toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
   });
-  const timeStr = eventDate.toLocaleTimeString('en-US', {
+  const timeStr = eventDate.toLocaleTimeString(isRTL ? 'fa-IR' : 'en-US', {
     hour: 'numeric',
     minute: '2-digit',
   });
@@ -30,7 +33,7 @@ export function EkipEventInfoCard({ group }: { group: Group }) {
           style={styles.dateBox}
         >
           <Text style={styles.monthText}>
-            {eventDate.toLocaleDateString('en-US', { month: 'short' })}
+            {eventDate.toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', { month: 'short' })}
           </Text>
           <Text style={[styles.dayText, { color: colors.textPrimary }]}>
             {eventDate.getDate()}
@@ -47,7 +50,9 @@ export function EkipEventInfoCard({ group }: { group: Group }) {
               {timeStr}
             </Text>
             {group.is_repeating && (
-              <Text style={styles.repeatingTag}> · Recurring Op</Text>
+              <Text style={styles.repeatingTag}>
+                {isRTL ? ' · مأموریت دوره‌ای' : ' · Recurring Op'}
+              </Text>
             )}
           </View>
         </View>
@@ -57,7 +62,7 @@ export function EkipEventInfoCard({ group }: { group: Group }) {
         <View style={styles.locRow}>
           <MapPin size={14} color={colors.textTertiary} strokeWidth={2.2} style={{ marginRight: 5 }} />
           <Text style={[styles.locText, { color: colors.textSecondary }]} numberOfLines={1}>
-            {group.location_name ? `${group.location_name}, ` : ''}{group.city}
+            {group.location_name ? `${group.location_name}، ` : ''}{group.city}
           </Text>
         </View>
       </View>
@@ -67,13 +72,14 @@ export function EkipEventInfoCard({ group }: { group: Group }) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 22,
     padding: 14,
+    borderRadius: 22,
     marginBottom: 12,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 12,
   },
   dateBox: {
     width: 52,
@@ -83,15 +89,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   monthText: {
+    fontSize: 11,
+    fontWeight: '700',
     color: '#f472b6',
-    fontSize: 10,
-    fontWeight: '800',
     textTransform: 'uppercase',
   },
   dayText: {
     fontSize: 18,
     fontWeight: '800',
-    marginTop: -2,
+    lineHeight: 20,
   },
   dateTitle: {
     fontSize: 15,
@@ -100,18 +106,17 @@ const styles = StyleSheet.create({
   timeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 3,
+    marginTop: 2,
   },
   timeText: {
     fontSize: 12,
   },
   repeatingTag: {
-    color: '#f472b6',
     fontSize: 11,
+    color: '#3b82f6',
     fontWeight: '600',
   },
   bottomRow: {
-    marginTop: 12,
     paddingTop: 10,
     borderTopWidth: 1,
   },

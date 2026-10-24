@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard, GlassEmpty } from '../Glass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { Mission } from '../../types/database';
 
 function MissionProgressBar({
@@ -68,14 +69,15 @@ function MissionProgressBar({
 
 export function ProfileMissionsList({ missions }: { missions: Mission[] }) {
   const { colors } = useTheme();
+  const { isRTL } = useI18n();
   const CheckCircle2 = getIcon('CheckCircle2');
 
   if (missions.length === 0) {
     return (
       <GlassEmpty
         icon="Target"
-        title="No active missions"
-        subtitle="New directives are issued weekly by Command."
+        title={isRTL ? 'هیچ مأموریت فعالی وجود ندارد' : 'No active missions'}
+        subtitle={isRTL ? 'دستورالعمل‌های جدید به صورت دوره‌ای توسط ستاد اعلام می‌شوند.' : 'New directives are issued weekly by Command.'}
       />
     );
   }
@@ -98,7 +100,7 @@ export function ProfileMissionsList({ missions }: { missions: Mission[] }) {
           <View style={{ marginTop: 8 }}>
             <View style={styles.progressRow}>
               <Text style={[styles.progressLabel, { color: colors.textTertiary }]}>
-                Progress
+                {isRTL ? 'پیشرفت مأموریت' : 'Progress'}
               </Text>
               <Text style={[styles.progressCount, { color: colors.textPrimary }]}>
                 {m.progress} / {m.target}
@@ -117,7 +119,9 @@ export function ProfileMissionsList({ missions }: { missions: Mission[] }) {
           {m.is_complete && (
             <View style={styles.completeTag}>
               <CheckCircle2 size={13} color="#22c55e" strokeWidth={2.4} style={{ marginRight: 4 }} />
-              <Text style={styles.completeText}>Objective Complete</Text>
+              <Text style={styles.completeText}>
+                {isRTL ? 'هدف با موفقیت تکمیل شد' : 'Objective Complete'}
+              </Text>
             </View>
           )}
         </GlassCard>
@@ -140,12 +144,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: '700',
-    flex: 1,
   },
   reward: {
-    color: '#f472b6',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
+    color: '#f472b6',
   },
   desc: {
     fontSize: 12,
@@ -153,36 +156,44 @@ const styles = StyleSheet.create({
   },
   progressRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    alignItems: 'center',
+    marginBottom: 6,
   },
   progressLabel: {
     fontSize: 11,
+    fontWeight: '600',
   },
   progressCount: {
     fontSize: 11,
     fontWeight: '700',
   },
-  completeTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  completeText: {
-    color: '#22c55e',
-    fontSize: 11,
-    fontWeight: '700',
-  },
   progressTrack: {
-    height: 9,
-    borderRadius: 999,
+    height: 8,
+    borderRadius: 4,
     borderWidth: 1,
     overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
-    borderRadius: 999,
+    borderRadius: 4,
     overflow: 'hidden',
+  },
+  completeTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(34, 197, 94, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(34, 197, 94, 0.3)',
+  },
+  completeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#22c55e',
   },
 });
