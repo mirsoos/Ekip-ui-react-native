@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { SocialAuthRow } from './SocialAuthRow';
@@ -17,7 +16,6 @@ export function WelcomeView({
 }) {
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
-  const Sparkles = getIcon('Sparkles');
   const ArrowIcon = getIcon(isRTL ? 'ArrowLeft' : 'ArrowRight');
 
   return (
@@ -29,12 +27,11 @@ export function WelcomeView({
 
       {/* Brand logo */}
       <View style={styles.brandSection}>
-        <LinearGradient
-          colors={['rgba(244, 114, 182, 0.4)', 'rgba(59, 130, 246, 0.3)']}
+        <Image
+          source={require('../../../assets/ekip-logo-icon.jpg')}
           style={styles.logoOrb}
-        >
-          <Sparkles size={44} color="#ffffff" strokeWidth={1.8} />
-        </LinearGradient>
+          resizeMode="cover"
+        />
 
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           {t('auth.welcomeTitle')}
@@ -73,7 +70,10 @@ export function WelcomeView({
               size={18}
               color={colors.textPrimary}
               strokeWidth={2.4}
-              style={{ marginHorizontal: 8 }}
+              style={{
+                position: 'absolute',
+                ...(isRTL ? { left: 22 } : { right: 22 }),
+              }}
             />
           </View>
         </TouchableOpacity>
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   logoOrb: {
     width: 90,
     height: 90,
-    borderRadius: 30,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -154,6 +154,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 16,
     elevation: 8,
+    overflow: 'hidden',
   },
   title: {
     fontSize: 32,
@@ -186,10 +187,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonContent: {
+    width: '100%',
+    height: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
+    position: 'relative',
   },
   registerText: {
     fontSize: 16,

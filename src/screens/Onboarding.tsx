@@ -107,14 +107,20 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
                 size={18}
                 color={colors.textPrimary}
                 strokeWidth={2.4}
-                style={{ marginHorizontal: 8 }}
+                style={{
+                  position: 'absolute',
+                  ...(isRTL ? { left: 22 } : { right: 22 }),
+                }}
               />
             ) : (
               <ArrowIcon
                 size={18}
                 color={colors.textPrimary}
                 strokeWidth={2.4}
-                style={{ marginHorizontal: 8 }}
+                style={{
+                  position: 'absolute',
+                  ...(isRTL ? { left: 22 } : { right: 22 }),
+                }}
               />
             )}
           </View>
@@ -178,10 +184,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonContent: {
+    width: '100%',
+    height: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
+    position: 'relative',
   },
   nextText: {
     fontSize: 16,

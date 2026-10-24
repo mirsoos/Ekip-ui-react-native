@@ -374,6 +374,7 @@ export function GlassInput({
   style,
 }: GlassInputProps) {
   const { colors } = useTheme();
+  const { isRTL } = useI18n();
   const IconComp = icon ? getIcon(icon) : null;
 
   return (
@@ -381,6 +382,7 @@ export function GlassInput({
       style={[
         styles.inputWrapper,
         {
+          flexDirection: isRTL ? 'row-reverse' : 'row',
           backgroundColor: colors.glassThinBg,
           borderColor: colors.glassBorder,
           minHeight: multiline ? numberOfLines * 24 + 20 : 48,
@@ -392,7 +394,12 @@ export function GlassInput({
         <IconComp
           size={18}
           color={colors.textTertiary}
-          style={{ marginRight: 10, alignSelf: multiline ? 'flex-start' : 'center', marginTop: multiline ? 8 : 0 }}
+          style={{
+            marginRight: isRTL ? 0 : 10,
+            marginLeft: isRTL ? 10 : 0,
+            alignSelf: multiline ? 'flex-start' : 'center',
+            marginTop: multiline ? 8 : 0,
+          }}
         />
       )}
       <TextInput
@@ -408,6 +415,8 @@ export function GlassInput({
           styles.inputText,
           {
             color: colors.textPrimary,
+            textAlign: isRTL ? 'right' : 'left',
+            writingDirection: isRTL ? 'rtl' : 'ltr',
             textAlignVertical: multiline ? 'top' : 'center',
           },
         ]}
@@ -505,7 +514,8 @@ export function GlassBackButton({
   style?: StyleProp<ViewStyle>;
 }) {
   const { colors, isDark } = useTheme();
-  const IconComp = getIcon('ArrowLeft');
+  const { isRTL } = useI18n();
+  const IconComp = getIcon(isRTL ? 'ArrowRight' : 'ArrowLeft');
   const handlePress = onPress ?? onClick;
 
   return (

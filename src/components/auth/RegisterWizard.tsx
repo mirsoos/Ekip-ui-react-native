@@ -167,7 +167,7 @@ export function RegisterWizard({
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setAcceptTerms(!acceptTerms)}
-              style={styles.termsRow}
+              style={[styles.termsRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
             >
               <View
                 style={[
@@ -238,7 +238,10 @@ export function RegisterWizard({
               size={18}
               color={colors.textPrimary}
               strokeWidth={2.4}
-              style={{ marginHorizontal: 8 }}
+              style={{
+                position: 'absolute',
+                ...(isRTL ? { left: 22 } : { right: 22 }),
+              }}
             />
           </View>
         </TouchableOpacity>
@@ -347,10 +350,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonContent: {
+    width: '100%',
+    height: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
+    position: 'relative',
   },
   continueText: {
     fontSize: 16,
