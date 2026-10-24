@@ -43,6 +43,12 @@ export function SettingsScreen({
   const [showLanguageSheet, setShowLanguageSheet] = useState(false);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [crashTrigger, setCrashTrigger] = useState(false);
+
+  if (crashTrigger) {
+    setTimeout(() => setCrashTrigger(false), 0);
+    throw new Error('Simulated test error for ErrorBoundary verification.');
+  }
 
   const ChevronRight = getIcon('ChevronRight');
   const Moon = getIcon('Moon');
@@ -222,6 +228,18 @@ export function SettingsScreen({
               />
             </GlassCard>
           </SettingsSection>
+        </View>
+
+        {/* Test Error Boundary Simulator */}
+        <View style={{ marginTop: 20 }}>
+          <GlassButton
+            variant="secondary"
+            fullWidth
+            icon="AlertCircle"
+            onPress={() => setCrashTrigger(true)}
+          >
+            Test Error Boundary (Simulate Crash)
+          </GlassButton>
         </View>
 
         {/* Danger Zone */}

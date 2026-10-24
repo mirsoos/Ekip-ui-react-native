@@ -43,6 +43,7 @@ import { ChatThemeScreen } from './src/screens/ChatThemeScreen';
 import { AuroraBackground } from './src/components/AuroraBackground';
 import { SwipeNavigationContainer } from './src/components/common/SwipeNavigationContainer';
 import { ScreenTransition } from './src/components/common/ScreenTransition';
+import { ErrorBoundary } from './src/components/common/ErrorBoundary';
 
 export type Screen =
   | { name: 'auth' }
@@ -192,7 +193,14 @@ function MainContent() {
             }
           }}
         >
-          <ScreenTransition screenKey={`${screen.name}-${tab}-${history.length}`}>
+          <ErrorBoundary
+            onGoHome={() => {
+              setTab('discover');
+              setHistory([]);
+              setScreen({ name: 'discover' });
+            }}
+          >
+            <ScreenTransition screenKey={`${screen.name}-${tab}-${history.length}`}>
             {screen.name === 'discover' && (
               <DiscoverScreen
                 ref={discoverRef}
@@ -332,6 +340,7 @@ function MainContent() {
 
             {screen.name === 'chatTheme' && <ChatThemeScreen onBack={pop} />}
           </ScreenTransition>
+          </ErrorBoundary>
         </SwipeNavigationContainer>
         </View>
 
@@ -480,7 +489,9 @@ export default function App() {
     <SafeAreaProvider>
       <ThemeProvider>
         <AppDataProvider>
-          <MainContent />
+          <ErrorBoundary>
+            <MainContent />
+          </ErrorBoundary>
         </AppDataProvider>
       </ThemeProvider>
     </SafeAreaProvider>
