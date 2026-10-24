@@ -57,6 +57,7 @@ export function LanguageSwitcherPill({ style }: { style?: any }) {
                   setLanguage(lang.code);
                   setShowLanguageSheet(false);
                   setToastMessage(t('settings.langChanged', { lang: lang.nativeName }));
+                  setTimeout(() => setToastMessage(''), 2200);
                 }}
               >
                 <GlassCard
@@ -95,9 +96,8 @@ export function LanguageSwitcherPill({ style }: { style?: any }) {
       </GlassSheet>
 
       <Toast
-        open={Boolean(toastMessage)}
+        visible={Boolean(toastMessage)}
         message={toastMessage}
-        onClose={() => setToastMessage('')}
       />
     </>
   );
