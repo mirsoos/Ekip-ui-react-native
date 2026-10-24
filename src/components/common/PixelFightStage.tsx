@@ -12,7 +12,8 @@ type FighterPose =
   | 'GET_UP'
   | 'LOOK_AT_USER'
   | 'LIFT_UP'
-  | 'BEING_LIFTED';
+  | 'BEING_LIFTED'
+  | 'SIT_PIZZA';
 
 interface PopText {
   x: number;
@@ -45,9 +46,12 @@ interface BloodParticle {
 }
 
 /**
- * Comedic 8-Bit Pixel Brawl Stage (Cinematic / Display Only)
- * Pure non-interactive comedic brawl with retro blood splatter, knockouts,
- * unexpected events, recoveries, and breaking the 4th wall to stare at the user.
+ * Comedic 8-Bit Pixel Brawl Stage
+ * Features:
+ * 1. Confession sign ("NOT MY FAULT! 👉") during 4th-wall break
+ * 2. Ghost floating up from knocked-out body and being yanked back down ("YOINK!")
+ * 3. Peaceful pizza break that erupts into a fight over the last slice
+ * 4. Blood splatters, random events, knockbacks, and cartoon slapstick
  */
 export function PixelFightStage({ height = 230 }: { height?: number }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -93,6 +97,11 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
     let shake = 0;
     let starAngle = 0;
 
+    // Ghost state for the revive gag
+    let ghostOffset = 0;
+    let ghostAlpha = 0;
+    let armGrabY = 0;
+
     const spawnText = (x: number, y: number, text: string, color = '#fbbf24') => {
       popTexts.push({
         x,
@@ -137,27 +146,30 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
     // Comedic Scenario Sequencer
     type ScenarioType =
       | 'EXCHANGE'
-      | 'KNOCKOUT_F2'
-      | 'KNOCKOUT_F1'
-      | 'BOTH_FALL'
       | 'LOOK_AT_USER'
+      | 'KNOCKOUT_F2'
+      | 'PIZZA_BREAK'
+      | 'GHOST_REVIVE'
+      | 'BOTH_FALL'
       | 'YEET';
 
     const scenarios: ScenarioType[] = [
       'EXCHANGE',
+      'LOOK_AT_USER',
       'KNOCKOUT_F2',
-      'LOOK_AT_USER',
-      'EXCHANGE',
+      'PIZZA_BREAK',
+      'GHOST_REVIVE',
       'BOTH_FALL',
-      'LOOK_AT_USER',
       'YEET',
-      'KNOCKOUT_F1',
     ];
     let scenarioIdx = 0;
     let sceneTick = 0;
 
     const startNextScenario = (forcedType?: ScenarioType) => {
       sceneTick = 0;
+      ghostOffset = 0;
+      ghostAlpha = 0;
+      armGrabY = 0;
       if (forcedType) {
         currentScenario = forcedType;
       } else {
@@ -176,7 +188,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
 
     let currentScenario: ScenarioType = 'EXCHANGE';
 
-    // Pixel drawing helper (scale = 3.6 for retro chunky 8-bit aesthetic)
+    // Pixel drawing helper (scale = 3.6 for retro chunky 8-bit vibe)
     const P = 3.6;
 
     const drawPixelFighter = (
@@ -195,18 +207,19 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
       const hairColor = isF1 ? '#fbbf24' : '#18181b'; // Blonde cap vs Black headband
       const accessoryColor = isF1 ? '#2563eb' : '#a855f7'; // Blue cap vs Purple headband
 
-      // 4th Wall Break: Looking straight at the user
+      // 1. LOOK_AT_USER: 4th Wall Break with "NOT MY FAULT" Sign
       if (f.pose === 'LOOK_AT_USER') {
         const isBlinking = (tick % 60) > 52;
+
         // Head
         ctx.fillStyle = hairColor;
-        ctx.fillRect(-5 * P, -22 * P, 10 * P, 3 * P); // Hair top
+        ctx.fillRect(-5 * P, -22 * P, 10 * P, 3 * P);
         ctx.fillStyle = accessoryColor;
-        ctx.fillRect(-5 * P, -19 * P, 10 * P, 2 * P); // Band/cap
+        ctx.fillRect(-5 * P, -19 * P, 10 * P, 2 * P);
         ctx.fillStyle = skinColor;
-        ctx.fillRect(-4.5 * P, -17 * P, 9 * P, 7 * P); // Face
+        ctx.fillRect(-4.5 * P, -17 * P, 9 * P, 7 * P);
 
-        // Front-facing cute eyes looking out of screen
+        // Front-facing eyes
         ctx.fillStyle = '#0f172a';
         if (isBlinking) {
           ctx.fillRect(-3 * P, -13 * P, 2 * P, 0.8 * P);
@@ -214,38 +227,115 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         } else {
           ctx.fillRect(-3 * P, -14 * P, 2 * P, 2.5 * P);
           ctx.fillRect(1 * P, -14 * P, 2 * P, 2.5 * P);
-          // Catchlight
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(-3 * P, -14 * P, 1 * P, 1 * P);
           ctx.fillRect(1 * P, -14 * P, 1 * P, 1 * P);
         }
 
-        // Tiny cute mouth & blush
+        // Cute blush & mouth
         ctx.fillStyle = '#f43f5e';
-        ctx.fillRect(-4 * P, -11 * P, 1.2 * P, 1 * P); // Left blush
-        ctx.fillRect(2.8 * P, -11 * P, 1.2 * P, 1 * P); // Right blush
+        ctx.fillRect(-4 * P, -11 * P, 1.2 * P, 1 * P);
+        ctx.fillRect(2.8 * P, -11 * P, 1.2 * P, 1 * P);
         ctx.fillStyle = '#78350f';
-        ctx.fillRect(-1 * P, -11 * P, 2 * P, 1 * P); // Straight mouth
+        ctx.fillRect(-1 * P, -11 * P, 2 * P, 1 * P);
 
-        // Torso facing front (shrugging / confused)
+        // Torso facing front
         ctx.fillStyle = shirtColor;
         ctx.fillRect(-4.5 * P, -10 * P, 9 * P, 6 * P);
-
-        // Hands hanging
-        ctx.fillStyle = gloveColor;
-        ctx.fillRect(-6.5 * P, -7 * P, 2.2 * P, 3 * P);
-        ctx.fillRect(4.3 * P, -7 * P, 2.2 * P, 3 * P);
 
         // Legs
         ctx.fillStyle = pantsColor;
         ctx.fillRect(-3.5 * P, -4 * P, 3 * P, 4 * P);
         ctx.fillRect(0.5 * P, -4 * P, 3 * P, 4 * P);
 
-        // Question mark overhead
-        ctx.fillStyle = '#facc15';
-        ctx.font = 'bold 16px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('?', 0, -25 * P + Math.sin(tick * 0.1) * 2);
+        if (isF1) {
+          // Fighter 1 holds up the wooden confession sign: "NOT MY FAULT! 👉"
+          // Wooden stick
+          ctx.fillStyle = '#92400e';
+          ctx.fillRect(4 * P, -30 * P, 2 * P, 24 * P);
+
+          // Sign board
+          ctx.fillStyle = '#fef3c7'; // Wood plank parchment
+          ctx.fillRect(-6 * P, -38 * P, 26 * P, 10 * P);
+          ctx.strokeStyle = '#78350f';
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(-6 * P, -38 * P, 26 * P, 10 * P);
+
+          // Sign text: NOT MY FAULT 👉
+          ctx.fillStyle = '#dc2626';
+          ctx.font = 'bold 8px monospace';
+          ctx.textAlign = 'left';
+          ctx.fillText('NOT MY', -4 * P, -32 * P);
+          ctx.fillText('FAULT!👉', -4 * P, -24 * P);
+
+          // Hand holding stick
+          ctx.fillStyle = gloveColor;
+          ctx.fillRect(3 * P, -8 * P, 3 * P, 3 * P);
+          ctx.fillRect(-6 * P, -7 * P, 2.5 * P, 3 * P);
+        } else {
+          // Fighter 2 is shocked with sweat drop!
+          ctx.fillStyle = gloveColor;
+          ctx.fillRect(-6 * P, -8 * P, 3 * P, 3 * P);
+          ctx.fillRect(3 * P, -8 * P, 3 * P, 3 * P);
+
+          // Big sweat drop
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillRect(6 * P, -22 * P, 2.5 * P, 3.5 * P);
+
+          // Question mark overhead
+          ctx.fillStyle = '#facc15';
+          ctx.font = 'bold 16px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('!?', 0, -25 * P + Math.sin(tick * 0.15) * 2);
+        }
+
+        ctx.restore();
+        return;
+      }
+
+      // 2. SIT_PIZZA: Sitting down eating pizza
+      if (f.pose === 'SIT_PIZZA') {
+        const chewBob = Math.sin(tick * 0.4) * 1.5;
+        ctx.translate(0, chewBob);
+
+        // Head
+        ctx.fillStyle = hairColor;
+        ctx.fillRect(-3 * P, -14 * P, 6 * P, 3 * P);
+        ctx.fillStyle = accessoryColor;
+        ctx.fillRect(-3 * P, -11 * P, 6 * P, 2 * P);
+        ctx.fillStyle = skinColor;
+        ctx.fillRect(-2.5 * P, -9 * P, 5 * P, 5 * P);
+
+        // Happy closed eating eyes: ^ ^
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(-1.5 * P, -7 * P, 1.5 * P, 1 * P);
+        ctx.fillRect(0.5 * P, -7 * P, 1.5 * P, 1 * P);
+
+        // Chewing mouth
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(-0.5 * P, -5 * P, 1.5 * P, (tick % 10 > 5 ? 1.5 : 0.8) * P);
+
+        // Torso crouched
+        ctx.fillStyle = shirtColor;
+        ctx.fillRect(-3.5 * P, -4 * P, 7 * P, 5 * P);
+
+        // Crossed sitting legs
+        ctx.fillStyle = pantsColor;
+        ctx.fillRect(-4 * P, 1 * P, 8 * P, 2.5 * P);
+
+        // Hand holding pizza slice
+        ctx.fillStyle = gloveColor;
+        ctx.fillRect(isF1 ? 1 * P : -3 * P, -3 * P, 2.5 * P, 2.5 * P);
+
+        // Triangular Pizza Slice in hand
+        const px = isF1 ? 3 * P : -5 * P;
+        const py = -5 * P;
+        ctx.fillStyle = '#f59e0b'; // Cheesy yellow
+        ctx.fillRect(px, py, 3 * P, 3 * P);
+        ctx.fillStyle = '#b45309'; // Crust
+        ctx.fillRect(px - (isF1 ? 0 : 1 * P), py + 2 * P, 3 * P, 1 * P);
+        ctx.fillStyle = '#dc2626'; // Pepperoni dot
+        ctx.fillRect(px + 1 * P, py + 1 * P, 1 * P, 1 * P);
 
         ctx.restore();
         return;
@@ -256,17 +346,16 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         ctx.scale(-1, 1);
       }
 
-      // FALL POSE: Character lying completely flat on the ground
+      // 3. FALL: Character lying flat on the ground
       if (f.pose === 'FALL') {
-        // Body flat along the ground
         ctx.fillStyle = skinColor;
-        ctx.fillRect(-14 * P, -3 * P, 6 * P, 4 * P); // Head flat
+        ctx.fillRect(-14 * P, -3 * P, 6 * P, 4 * P);
         ctx.fillStyle = hairColor;
-        ctx.fillRect(-16 * P, -3 * P, 2 * P, 4 * P); // Hair
+        ctx.fillRect(-16 * P, -3 * P, 2 * P, 4 * P);
         ctx.fillStyle = accessoryColor;
         ctx.fillRect(-14 * P, -4 * P, 5 * P, 1.5 * P);
 
-        // Knocked out dizzy X eyes
+        // Knocked out dizzy X eye
         ctx.fillStyle = '#0f172a';
         ctx.font = `bold ${8 * P}px monospace`;
         ctx.fillText('x', -12 * P, -0.5 * P);
@@ -283,45 +372,42 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(8 * P, -3 * P, 2.5 * P, 3.5 * P);
 
-        // Orbiting Dizzy Stars above head!
-        for (let i = 0; i < 3; i++) {
-          const a = starAngle + (i * Math.PI * 2) / 3;
-          const sx = -11 * P + Math.cos(a) * 16;
-          const sy = -14 * P + Math.sin(a) * 5;
-          ctx.fillStyle = '#facc15';
-          ctx.fillRect(sx - 2, sy - 2, 4, 4);
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(sx - 1, sy - 1, 2, 2);
+        // Orbiting Dizzy Stars (if not currently in ghost revive sequence)
+        if (currentScenario !== 'GHOST_REVIVE') {
+          for (let i = 0; i < 3; i++) {
+            const a = starAngle + (i * Math.PI * 2) / 3;
+            const sx = -11 * P + Math.cos(a) * 16;
+            const sy = -14 * P + Math.sin(a) * 5;
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(sx - 2, sy - 2, 4, 4);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(sx - 1, sy - 1, 2, 2);
+          }
         }
 
         ctx.restore();
         return;
       }
 
-      // GET_UP POSE: Pushing up from knees, dazed
+      // 4. GET_UP: Dazed rising from knees
       if (f.pose === 'GET_UP') {
         const wobble = Math.sin(tick * 0.35) * 2;
         ctx.translate(wobble, 0);
 
-        // Head
         ctx.fillStyle = hairColor;
         ctx.fillRect(-3 * P, -14 * P, 6 * P, 3 * P);
         ctx.fillStyle = skinColor;
         ctx.fillRect(-2.5 * P, -11 * P, 5 * P, 5 * P);
 
-        // Dazed eyes
         ctx.fillStyle = '#0f172a';
         ctx.fillRect(-0.5 * P, -9 * P, 2 * P, 1.5 * P);
 
-        // Slanted crouched torso
         ctx.fillStyle = shirtColor;
         ctx.fillRect(-4 * P, -6 * P, 7 * P, 5 * P);
 
-        // Hands on ground pushing up
         ctx.fillStyle = gloveColor;
         ctx.fillRect(2 * P, -2 * P, 3 * P, 3 * P);
 
-        // Bent knees
         ctx.fillStyle = pantsColor;
         ctx.fillRect(-4 * P, -2 * P, 6 * P, 3 * P);
 
@@ -329,9 +415,8 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         return;
       }
 
-      // BEING_LIFTED POSE
+      // 5. BEING_LIFTED
       if (f.pose === 'BEING_LIFTED') {
-        // Horizontal flailing
         ctx.translate(0, -28 * P);
         ctx.fillStyle = skinColor;
         ctx.fillRect(-8 * P, -3 * P, 5 * P, 5 * P);
@@ -342,7 +427,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         ctx.fillStyle = gloveColor;
         ctx.fillRect(-4 * P, -7 * P, 3 * P, 3 * P);
         ctx.fillRect(2 * P, 3 * P, 3 * P, 3 * P);
-        // Surprise sweat drop
+
         ctx.fillStyle = '#38bdf8';
         ctx.fillRect(-10 * P, -7 * P, 2 * P, 3 * P);
 
@@ -366,9 +451,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
       // Eye
       ctx.fillStyle = '#0f172a';
       if (f.pose === 'HIT' || f.pose === 'KNOCKBACK') {
-        // Exaggerated "> <" face when hit
         ctx.fillRect(1 * P, -13 * P, 2 * P, 1.2 * P);
-        // Comic sweat drop
         ctx.fillStyle = '#38bdf8';
         ctx.fillRect(-3.5 * P, -17 * P, 2 * P, 2.5 * P);
       } else {
@@ -382,41 +465,33 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
       // Legs
       ctx.fillStyle = pantsColor;
       if (f.pose === 'KICK') {
-        // One planted leg, one comically stretched kick leg!
         ctx.fillRect(-2 * P, -4 * P, 3 * P, 5 * P);
-        ctx.fillRect(1 * P, -6 * P, 9 * P, 3.5 * P); // High kick leg!
+        ctx.fillRect(1 * P, -6 * P, 9 * P, 3.5 * P);
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(10 * P, -7 * P, 3 * P, 4.5 * P); // Big sneaker kicking
+        ctx.fillRect(10 * P, -7 * P, 3 * P, 4.5 * P);
       } else if (f.pose === 'KNOCKBACK') {
-        // Legs kicking in air
         ctx.fillRect(-5 * P, -4 * P, 3 * P, 4 * P);
         ctx.fillRect(-1 * P, -5 * P, 4 * P, 3 * P);
       } else {
-        // Normal standing legs
         ctx.fillRect(-3 * P, -4 * P, 2.6 * P, 5 * P);
         ctx.fillRect(0.4 * P, -4 * P, 2.6 * P, 5 * P);
       }
 
       // Arms & Gloves
       if (f.pose === 'PUNCH') {
-        // Exaggerated giant fist stretched forward!
         ctx.fillStyle = gloveColor;
-        ctx.fillRect(1 * P, -9 * P, 8 * P, 2.5 * P); // Extended arm
-        ctx.fillRect(8 * P, -11 * P, 5 * P, 6 * P); // COMICALLY GIANT GLOVE!
-        // Windup other hand
+        ctx.fillRect(1 * P, -9 * P, 8 * P, 2.5 * P);
+        ctx.fillRect(8 * P, -11 * P, 5 * P, 6 * P); // GIANT GLOVE!
         ctx.fillRect(-4 * P, -8 * P, 2.5 * P, 3 * P);
       } else if (f.pose === 'LIFT_UP') {
-        // Both arms raised high overhead holding the opponent!
         ctx.fillStyle = gloveColor;
         ctx.fillRect(-3 * P, -18 * P, 3 * P, 8 * P);
         ctx.fillRect(1 * P, -18 * P, 3 * P, 8 * P);
       } else if (f.pose === 'HIT' || f.pose === 'KNOCKBACK') {
-        // Arms flying backward helplessly
         ctx.fillStyle = gloveColor;
         ctx.fillRect(-6 * P, -9 * P, 3 * P, 3 * P);
         ctx.fillRect(-4 * P, -11 * P, 3 * P, 3 * P);
       } else {
-        // Bouncing boxing guard
         ctx.fillStyle = gloveColor;
         ctx.fillRect(1 * P, -8.5 * P, 3 * P, 3.5 * P);
         ctx.fillRect(-1.5 * P, -7.5 * P, 2.5 * P, 3 * P);
@@ -450,7 +525,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         if (shake < 0.2) shake = 0;
       }
 
-      // Background Retro Spotlight & Grid
+      // Retro Background Glow
       const centerX = width / 2;
       const grad = ctx.createRadialGradient(
         centerX,
@@ -465,7 +540,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, h);
 
-      // Retro 8-bit Ground line
+      // Retro Ground Line
       ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
       ctx.fillRect(0, groundY + 1, width, 2);
       ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
@@ -478,7 +553,6 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
       // SCENARIO STATE MACHINE (Comedy & Action)
       // ==========================================
       if (currentScenario === 'EXCHANGE') {
-        // Quick exchange of punches and kicks with blood splatter
         if (sceneTick === 15) {
           f1.pose = 'PUNCH';
           f2.pose = 'HIT';
@@ -506,10 +580,23 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         } else if (sceneTick > 75) {
           startNextScenario();
         }
+      } else if (currentScenario === 'LOOK_AT_USER') {
+        // GAG 1: 4th wall break + Confession Sign ("NOT MY FAULT! 👉")
+        if (sceneTick === 1) {
+          f1.pose = 'LOOK_AT_USER';
+          f2.pose = 'LOOK_AT_USER';
+          spawnText(centerX, groundY - 60, '...👀...', '#38bdf8');
+        } else if (sceneTick > 105) {
+          // Snap back to brawl!
+          f1.pose = 'PUNCH';
+          f2.pose = 'HIT';
+          shake = 5;
+          spawnText(f2.x, groundY - 45, 'OOPS!', '#ec4899');
+          spawnBlood(f2.x, groundY - 35, 1, 16);
+          startNextScenario('EXCHANGE');
+        }
       } else if (currentScenario === 'KNOCKOUT_F2') {
-        // F1 super windup -> Giga punch -> F2 flies back -> Falls -> Stars -> Gets up
         if (sceneTick < 25) {
-          // Windup
           f1.pose = 'IDLE';
           f1.x = f1.baseX - Math.sin(sceneTick * 0.4) * 3;
         } else if (sceneTick === 25) {
@@ -531,48 +618,83 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
           spawnDust(f2.x, groundY, 10);
           spawnBlood(f2.x, groundY - 4, 1, 12);
           spawnText(f2.x, groundY - 30, 'THUD!', '#fbbf24');
-        } else if (sceneTick === 110) {
-          // Gets up
+        } else if (sceneTick === 105) {
           f2.pose = 'GET_UP';
           spawnDust(f2.x, groundY, 4);
-        } else if (sceneTick === 135) {
+        } else if (sceneTick === 130) {
           f2.pose = 'IDLE';
           f2.x = f2.baseX;
           spawnText(f2.x, groundY - 45, 'READY!', '#22c55e');
-        } else if (sceneTick > 150) {
-          startNextScenario();
-        }
-      } else if (currentScenario === 'KNOCKOUT_F1') {
-        // F2 counters with kick knockout on F1
-        if (sceneTick === 20) {
-          f2.pose = 'KICK';
-          f1.pose = 'KNOCKBACK';
-          f1.y = -15;
-          shake = 8;
-          spawnText(f1.x, groundY - 50, 'BONK!', '#f43f5e');
-          spawnDust(f1.x, groundY, 8);
-          spawnBlood(f1.x, groundY - 35, -1, 28);
-        } else if (sceneTick > 20 && sceneTick < 35) {
-          f1.x -= 4;
-          f1.y += 1;
-        } else if (sceneTick === 35) {
-          f2.pose = 'IDLE';
-          f1.pose = 'FALL';
-          f1.y = 0;
-          shake = 5;
-          spawnDust(f1.x, groundY, 10);
-          spawnBlood(f1.x, groundY - 4, -1, 12);
-        } else if (sceneTick === 105) {
-          f1.pose = 'GET_UP';
-        } else if (sceneTick === 130) {
-          f1.pose = 'IDLE';
-          f1.x = f1.baseX;
-          spawnText(f1.x, groundY - 45, 'READY!', '#38bdf8');
         } else if (sceneTick > 145) {
           startNextScenario();
         }
+      } else if (currentScenario === 'PIZZA_BREAK') {
+        // GAG 2: Pizza break then brawl over last slice!
+        if (sceneTick === 1) {
+          f1.pose = 'SIT_PIZZA';
+          f2.pose = 'SIT_PIZZA';
+          f1.x = centerX - 26;
+          f2.x = centerX + 26;
+          spawnText(centerX, groundY - 55, '🍕 PIZZA TIME!', '#f59e0b');
+        } else if (sceneTick === 30 || sceneTick === 50) {
+          spawnText(centerX, groundY - 38, 'NOM!', '#fbbf24');
+        } else if (sceneTick === 72) {
+          // Fight over last slice! F2 slaps F1!
+          f2.pose = 'PUNCH';
+          f1.pose = 'HIT';
+          f1.y = -8;
+          shake = 6;
+          spawnText(centerX, groundY - 50, 'MINE! 🥊', '#f43f5e');
+          spawnBlood(f1.x, groundY - 30, -1, 18);
+        } else if (sceneTick === 90) {
+          f1.pose = 'KICK';
+          f2.pose = 'HIT';
+          shake = 6;
+          spawnText(f2.x, groundY - 45, 'NO MINE!', '#06b6d4');
+          spawnBlood(f2.x, groundY - 30, 1, 18);
+        } else if (sceneTick > 115) {
+          startNextScenario('EXCHANGE');
+        }
+      } else if (currentScenario === 'GHOST_REVIVE') {
+        // GAG 3: Knockout -> Ghost flies up -> Arm grabs ghost & yanks down!
+        if (sceneTick === 1) {
+          f1.pose = 'PUNCH';
+          f2.pose = 'KNOCKBACK';
+          f2.y = -14;
+          shake = 7;
+          spawnText(f2.x, groundY - 45, 'FATAL!', '#ef4444');
+          spawnBlood(f2.x, groundY - 30, 1, 24);
+        } else if (sceneTick === 15) {
+          f1.pose = 'IDLE';
+          f2.pose = 'FALL';
+          f2.y = 0;
+          spawnDust(f2.x, groundY, 8);
+        } else if (sceneTick > 25 && sceneTick < 70) {
+          // Ghost floats up!
+          ghostOffset = Math.min(65, ghostOffset + 1.2);
+          ghostAlpha = Math.min(0.9, ghostAlpha + 0.03);
+        } else if (sceneTick >= 70 && sceneTick < 82) {
+          // Arm shoots up from the ground to grab the ghost's ankle!
+          armGrabY = Math.min(ghostOffset, armGrabY + 6);
+        } else if (sceneTick === 82) {
+          shake = 4;
+          spawnText(f2.x - 10, groundY - ghostOffset - 15, 'YOINK!', '#facc15');
+        } else if (sceneTick > 82 && sceneTick < 96) {
+          // Yanked back down!
+          ghostOffset = Math.max(0, ghostOffset - 5);
+          armGrabY = ghostOffset;
+          ghostAlpha = Math.max(0, ghostAlpha - 0.08);
+        } else if (sceneTick === 96) {
+          // Springs back up!
+          f2.pose = 'IDLE';
+          f2.x = f2.baseX;
+          shake = 4;
+          spawnDust(f2.x, groundY, 10);
+          spawnText(f2.x, groundY - 45, 'BACK! 👻', '#38bdf8');
+        } else if (sceneTick > 115) {
+          startNextScenario();
+        }
       } else if (currentScenario === 'BOTH_FALL') {
-        // Unexpected comedic event: Both charge each other, bonk heads, and both fall down!
         if (sceneTick < 22) {
           f1.x += 1.8;
           f2.x -= 1.8;
@@ -612,23 +734,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         } else if (sceneTick > 145) {
           startNextScenario();
         }
-      } else if (currentScenario === 'LOOK_AT_USER') {
-        // 4th wall break: Sudden halt, both face screen, blink, stare at user, then resume!
-        if (sceneTick === 1) {
-          f1.pose = 'LOOK_AT_USER';
-          f2.pose = 'LOOK_AT_USER';
-          spawnText(centerX, groundY - 60, '...👀...', '#38bdf8');
-        } else if (sceneTick > 95) {
-          // Snap back to fighting
-          f1.pose = 'PUNCH';
-          f2.pose = 'HIT';
-          shake = 4;
-          spawnText(f2.x, groundY - 45, 'OOPS!', '#ec4899');
-          spawnBlood(f2.x, groundY - 35, 1, 14);
-          startNextScenario('EXCHANGE');
-        }
       } else if (currentScenario === 'YEET') {
-        // F2 lifts F1 over head and throws F1!
         if (sceneTick < 20) {
           f2.x -= 1.5;
         } else if (sceneTick === 20) {
@@ -637,7 +743,6 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
           f1.x = f2.x;
           spawnText(centerX, groundY - 55, 'YEET!', '#facc15');
         } else if (sceneTick === 42) {
-          // Throw!
           f2.pose = 'IDLE';
           f1.pose = 'KNOCKBACK';
           f1.y = -22;
@@ -668,7 +773,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         if (!b.onFloor) {
           b.x += b.vx;
           b.y += b.vy;
-          b.vy += 0.28; // gravity
+          b.vy += 0.28;
           if (b.y >= groundY + 1) {
             b.y = groundY + 1;
             b.vx = 0;
@@ -676,7 +781,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
             b.onFloor = true;
           }
         } else {
-          b.life -= 0.008; // slow fade on floor
+          b.life -= 0.008;
         }
         ctx.fillStyle = b.color;
         ctx.globalAlpha = Math.max(0, b.life);
@@ -685,9 +790,59 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         if (b.life <= 0) bloodParticles.splice(i, 1);
       }
 
+      // Render Pizza Box / Slice on ground during PIZZA_BREAK
+      if (currentScenario === 'PIZZA_BREAK') {
+        const pBoxW = 24;
+        const pBoxH = 6;
+        ctx.fillStyle = '#b45309'; // Pizza box bottom
+        ctx.fillRect(centerX - pBoxW / 2, groundY - pBoxH, pBoxW, pBoxH);
+        ctx.fillStyle = '#f59e0b'; // Whole pizza surface
+        ctx.fillRect(centerX - pBoxW / 2 + 2, groundY - pBoxH - 2, pBoxW - 4, 2);
+        // Pepperoni dots
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(centerX - 4, groundY - pBoxH - 2, 2, 2);
+        ctx.fillRect(centerX + 3, groundY - pBoxH - 2, 2, 2);
+      }
+
       // Render Fighters
       drawPixelFighter(f1, true, sceneTick);
       drawPixelFighter(f2, false, sceneTick);
+
+      // Render Ghost & Grab Arm during GHOST_REVIVE
+      if (currentScenario === 'GHOST_REVIVE' && ghostAlpha > 0) {
+        ctx.save();
+        const gx = f2.x - 12;
+        const gy = groundY - ghostOffset;
+
+        // Reaching Arm from ground
+        if (armGrabY > 0) {
+          ctx.fillStyle = '#f59e0b'; // Gold boxing glove
+          ctx.fillRect(gx + 2, groundY - armGrabY, 4 * P, 4 * P);
+          ctx.fillStyle = '#ec4899'; // Arm sleeve
+          ctx.fillRect(gx + 4, groundY - armGrabY + 4 * P, 2.5 * P, armGrabY - 4 * P);
+        }
+
+        // Ghost body
+        ctx.globalAlpha = ghostAlpha;
+        ctx.fillStyle = '#f8fafc'; // Translucent white ghost
+        ctx.fillRect(gx - 4 * P, gy - 8 * P, 8 * P, 7 * P); // Ghost head
+        ctx.fillRect(gx - 5 * P, gy - 5 * P, 10 * P, 5 * P); // Ghost body
+        // Ghost wavy tail
+        const tailWave = Math.sin(sceneTick * 0.4) * 2;
+        ctx.fillRect(gx - 3 * P + tailWave, gy, 3 * P, 3 * P);
+        ctx.fillRect(gx + 1 * P - tailWave, gy, 3 * P, 3 * P);
+
+        // Angel Halo
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(gx - 3 * P, gy - 11 * P, 6 * P, 1.5 * P);
+
+        // Cute Ghost Eyes: o o
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(gx - 2.5 * P, gy - 6 * P, 1.5 * P, 1.5 * P);
+        ctx.fillRect(gx + 1 * P, gy - 6 * P, 1.5 * P, 1.5 * P);
+
+        ctx.restore();
+      }
 
       // Render Dust Particles
       for (let i = dustParticles.length - 1; i >= 0; i--) {
@@ -700,7 +855,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         if (d.life <= 0) dustParticles.splice(i, 1);
       }
 
-      // Render Pop Texts ("POW!", "BONK!", etc.)
+      // Render Pop Texts ("POW!", "YOINK!", "MINE!", etc.)
       ctx.font = '900 13px monospace';
       ctx.textAlign = 'center';
       for (let i = popTexts.length - 1; i >= 0; i--) {
@@ -711,7 +866,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         ctx.translate(t.x, t.y);
         ctx.scale(t.scale, t.scale);
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillText(t.text, 1, 1); // Drop shadow
+        ctx.fillText(t.text, 1, 1);
         ctx.fillStyle = t.color;
         ctx.globalAlpha = Math.max(0, t.life);
         ctx.fillText(t.text, 0, 0);
