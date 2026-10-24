@@ -3,15 +3,18 @@ import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
 import { GlassBackButton } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export function SettingsHeader({
   onBack,
-  title = 'Settings',
+  title,
 }: {
   onBack: () => void;
   title?: string;
 }) {
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useI18n();
+  const displayTitle = title ?? t('settings.title');
 
   const enterAnim = useRef(new Animated.Value(0)).current;
 
@@ -38,6 +41,7 @@ export function SettingsHeader({
           {
             borderColor: colors.glassBorderStrong,
             transform: [{ translateY: enterTranslateY }],
+            flexDirection: isRTL ? 'row-reverse' : 'row',
           },
         ]}
       >
@@ -51,11 +55,20 @@ export function SettingsHeader({
           style={StyleSheet.absoluteFill}
         />
 
-        <GlassBackButton onPress={onBack} style={{ marginRight: 12, zIndex: 10 }} />
+        <GlassBackButton
+          onPress={onBack}
+          style={{ [isRTL ? 'marginLeft' : 'marginRight']: 12, zIndex: 10 }}
+        />
 
         <View style={{ flex: 1, zIndex: 10 }}>
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
-            {title}
+          <Text
+            style={[
+              styles.title,
+              { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+            ]}
+            numberOfLines={1}
+          >
+            {displayTitle}
           </Text>
         </View>
       </Animated.View>

@@ -10,6 +10,7 @@ import { DiscoverFilterSheet } from '../components/discover/DiscoverFilterSheet'
 import { EkipCardSkeleton, CommunityMembersRowSkeleton } from '../components/skeleton';
 import { cities } from '../lib/demoData';
 import { useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 import type { Group } from '../types/database';
 
 export interface DiscoverScreenHandle {
@@ -43,6 +44,7 @@ export const DiscoverScreen = React.forwardRef<
 ) {
   const { groups, me, profiles, notifications } = useAppData();
   const { colors } = useTheme();
+  const { t, isRTL } = useI18n();
 
   const [showFilters, setShowFilters] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'work' | 'entertainment'>('all');
@@ -136,9 +138,9 @@ export const DiscoverScreen = React.forwardRef<
         <View style={styles.categoryWrap}>
           <GlassSegmented
             options={[
-              { label: 'All Operations', value: 'all' },
-              { label: 'Entertainment', value: 'entertainment', icon: 'PartyPopper' },
-              { label: 'Work & Recon', value: 'work', icon: 'Briefcase' },
+              { label: t('discover.cat.all'), value: 'all' },
+              { label: t('discover.cat.entertainment'), value: 'entertainment', icon: 'PartyPopper' },
+              { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' },
             ]}
             value={categoryFilter}
             onChange={(v) => setCategoryFilter(v as any)}
@@ -147,8 +149,17 @@ export const DiscoverScreen = React.forwardRef<
 
         {/* Operational Feed */}
         <View key={categoryFilter} className="animate-raise" style={styles.sectionWrap}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 12 }]}>
-            All Squads {isLoading ? '' : `(${filtered.length})`}
+          <Text
+            style={[
+              styles.sectionTitle,
+              {
+                color: colors.textPrimary,
+                marginBottom: 12,
+                textAlign: isRTL ? 'right' : 'left',
+              },
+            ]}
+          >
+            {t('discover.allSquads')} {isLoading ? '' : `(${filtered.length})`}
           </Text>
 
           {isLoading ? (

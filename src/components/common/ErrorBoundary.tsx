@@ -15,6 +15,7 @@ import { GlassButton } from '../Glass';
 import { PixelFightStage } from './PixelFightStage';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 function getPortalTarget(): HTMLElement | null {
   if (typeof document === 'undefined') return null;
@@ -100,8 +101,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
  * Custom Dedicated Error Bottom Sheet
  */
 function DedicatedErrorSheet({
-  title = 'System Notice',
-  message = 'An unexpected issue occurred while rendering this screen.',
+  title,
+  message,
   error,
   errorInfo,
   onRetry,
@@ -115,7 +116,11 @@ function DedicatedErrorSheet({
   onGoHome?: () => void;
 }) {
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useI18n();
   const [showDetails, setShowDetails] = useState(false);
+
+  const finalTitle = title ?? t('error.boundaryTitle');
+  const finalMessage = message ?? t('error.boundaryMessage');
 
   const AlertIcon = getIcon('AlertCircle');
   const ChevronDown = getIcon('ChevronDown');
@@ -213,7 +218,7 @@ function DedicatedErrorSheet({
           />
 
           {/* Header Row: Dedicated Alert Badge & Text (NO close 'X' button) */}
-          <View style={styles.headerRow}>
+          <View style={[styles.headerRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <View
               style={[
                 styles.iconBox,
@@ -226,12 +231,28 @@ function DedicatedErrorSheet({
               <AlertIcon size={24} color="#f43f5e" strokeWidth={2.4} />
             </View>
 
-            <View style={{ flex: 1, marginLeft: 14 }}>
-              <Text style={[styles.mainTitle, { color: colors.textPrimary }]}>
-                {title}
+            <View
+              style={{
+                flex: 1,
+                marginLeft: isRTL ? 0 : 14,
+                marginRight: isRTL ? 14 : 0,
+              }}
+            >
+              <Text
+                style={[
+                  styles.mainTitle,
+                  { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+                ]}
+              >
+                {finalTitle}
               </Text>
-              <Text style={[styles.mainMessage, { color: colors.textSecondary }]}>
-                {message}
+              <Text
+                style={[
+                  styles.mainMessage,
+                  { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' },
+                ]}
+              >
+                {finalMessage}
               </Text>
             </View>
           </View>
@@ -244,7 +265,7 @@ function DedicatedErrorSheet({
               fullWidth
               onPress={() => handleAction(onRetry)}
             >
-              Try Again
+              {t('error.tryAgain')}
             </GlassButton>
 
             {onGoHome && (
@@ -254,7 +275,7 @@ function DedicatedErrorSheet({
                 fullWidth
                 onPress={() => handleAction(onGoHome)}
               >
-                Go to Discover
+                {t('error.goHome')}
               </GlassButton>
             )}
           </View>

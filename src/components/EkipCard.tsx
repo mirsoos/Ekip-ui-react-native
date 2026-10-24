@@ -6,6 +6,7 @@ import { GlassCard, GlassAvatar, GlassBadgeIcon } from './Glass';
 import { getIcon, type IconName } from '../lib/icons';
 import { useAppData } from '../lib/appData';
 import { useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 
 const categoryIcons: Record<string, IconName> = {
   entertainment: 'PartyPopper',
@@ -29,6 +30,7 @@ export function EkipCard({
 }) {
   const { requests } = useAppData();
   const { colors } = useTheme();
+  const { isRTL, t } = useI18n();
 
   const myRequest = requests.find((r) => r.group_id === group.id && r.user_id === 'me');
   const isOwner = group.owner_id === 'me';
@@ -138,19 +140,27 @@ export function EkipCard({
 
       {/* Body */}
       <View style={styles.cardBody}>
-        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
+        <Text
+          style={[
+            styles.cardTitle,
+            { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+          ]}
+        >
           {group.title}
         </Text>
         <Text
           numberOfLines={2}
-          style={[styles.cardDesc, { color: colors.textSecondary }]}
+          style={[
+            styles.cardDesc,
+            { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' },
+          ]}
         >
           {group.description}
         </Text>
 
         {/* Tags */}
         {group.tags && group.tags.length > 0 && (
-          <View style={styles.tagsContainer}>
+          <View style={[styles.tagsContainer, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             {group.tags.slice(0, 4).map((tag) => (
               <View
                 key={tag}
@@ -168,8 +178,16 @@ export function EkipCard({
         )}
 
         {/* Footer */}
-        <View style={[styles.cardFooter, { borderTopColor: colors.divider }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View
+          style={[
+            styles.cardFooter,
+            {
+              borderTopColor: colors.divider,
+              flexDirection: isRTL ? 'row-reverse' : 'row',
+            },
+          ]}
+        >
+          <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center' }}>
             <GlassAvatar
               src={group.owner?.avatar_url}
               name={`${group.owner?.first_name} ${group.owner?.last_name}`}

@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getIcon, type IconName } from '../lib/icons';
 import { useAppData } from '../lib/appData';
 import { useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 
 import { LiquidLens } from './LiquidLens';
 
@@ -35,6 +36,15 @@ const tabs: { key: TabKey; label: string; icon: IconName }[] = [
 export function BottomNav({ active, onChange }: BottomNavProps) {
   const { me, conversations, notifications } = useAppData();
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
+
+  const tabLabels: Record<TabKey, string> = {
+    discover: t('nav.discover'),
+    activity: t('nav.activity'),
+    create: t('nav.create'),
+    chat: t('nav.chat'),
+    profile: t('nav.profile'),
+  };
 
   const unreadChats = conversations.reduce((s, c) => s + c.unread_count, 0);
   const unreadNotifs = notifications.filter((n) => !n.is_read).length;
@@ -431,7 +441,7 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
                   },
                 ]}
               >
-                {tab.label}
+                {tabLabels[tab.key] || tab.label}
               </Text>
             </TouchableOpacity>
           );

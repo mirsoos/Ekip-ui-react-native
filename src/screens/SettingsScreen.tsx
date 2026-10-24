@@ -8,11 +8,7 @@ import { SettingsDivider } from '../components/settings/SettingsDivider';
 // ScreenHeader removed - rendered via SettingsHeader outside transition container
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
-
-const LANGUAGES = [
-  { id: 'en', name: 'English', nativeName: 'English (US)', flag: '🇺🇸' },
-  { id: 'fa', name: 'Persian', nativeName: 'فارسی', flag: '🇮🇷' },
-] as const;
+import { useI18n, LANGUAGES } from '../lib/i18n';
 
 export function SettingsScreen({
   onBack,
@@ -39,7 +35,7 @@ export function SettingsScreen({
 }) {
   const { me } = useAppData();
   const { theme, toggle, colors } = useTheme();
-  const [language, setLanguage] = useState<'en' | 'fa'>('en');
+  const { language, setLanguage, t, isRTL } = useI18n();
   const [showLanguageSheet, setShowLanguageSheet] = useState(false);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -92,10 +88,10 @@ export function SettingsScreen({
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={[styles.plusTitle, { color: colors.textPrimary }]}>
-                Ekip Operator Plus
+                {t('settings.plusTitle')}
               </Text>
               <Text style={[styles.plusSub, { color: colors.textSecondary }]}>
-                Unrestricted sector radar, priority deployment & tactical medals
+                {t('settings.plusSub')}
               </Text>
             </View>
             <ChevronRight size={18} color={colors.textTertiary} />
@@ -104,13 +100,13 @@ export function SettingsScreen({
 
         {/* Account Section */}
         <View style={{ marginTop: 20 }}>
-          <SettingsSection title="Clearance & Identity">
+          <SettingsSection title={t('settings.account')}>
             <GlassCard style={styles.sectionCard}>
               <GlassListItem
                 icon="User"
                 iconBg="rgba(59, 130, 246, 0.2)"
-                title="Personal Information"
-                subtitle="Callsign, bio, sector dossier"
+                title={t('settings.personalInfo')}
+                subtitle={t('settings.personalInfoSub')}
                 onPress={onOpenPersonalInfo}
                 showChevron
               />
@@ -118,13 +114,13 @@ export function SettingsScreen({
               <GlassListItem
                 icon="ShieldCheck"
                 iconBg="rgba(244, 114, 182, 0.22)"
-                title="Identity Verification (KYC)"
-                subtitle="Biometric credentials & badges"
+                title={t('settings.verification')}
+                subtitle={t('settings.verificationSub')}
                 onPress={onOpenVerification}
                 right={
                   <View style={styles.verifiedBadge}>
                     <Text style={styles.verifiedText}>
-                      {me.is_verified ? 'Verified' : 'Pending'}
+                      {me.is_verified ? t('common.verified') : 'Pending'}
                     </Text>
                   </View>
                 }
@@ -134,8 +130,8 @@ export function SettingsScreen({
               <GlassListItem
                 icon="Lock"
                 iconBg="rgba(168, 85, 247, 0.2)"
-                title="Privacy & Ghost Mode"
-                subtitle="Radar visibility & contact permissions"
+                title={t('settings.privacy')}
+                subtitle={t('settings.privacySub')}
                 onPress={onOpenPrivacy}
                 showChevron
               />
@@ -152,8 +148,8 @@ export function SettingsScreen({
               <GlassListItem
                 icon="MapPin"
                 iconBg="rgba(234, 179, 8, 0.2)"
-                title="Sector Radar & Location"
-                subtitle="Muster radius & GPS precision"
+                title={t('settings.location')}
+                subtitle={t('settings.locationSub')}
                 onPress={onOpenLocation}
                 showChevron
               />
@@ -163,13 +159,13 @@ export function SettingsScreen({
 
         {/* Preferences / System Interface Section */}
         <View style={{ marginTop: 20 }}>
-          <SettingsSection title="System Interface & Preferences">
+          <SettingsSection title={t('settings.preferences')}>
             <GlassCard style={styles.sectionCard}>
               {/* Language Selector */}
               <GlassListItem
                 icon="Globe"
                 iconBg="rgba(59, 130, 246, 0.2)"
-                title="Language / زبان"
+                title={t('settings.language')}
                 subtitle={language === 'fa' ? 'فارسی (Persian)' : 'English (US)'}
                 onPress={() => setShowLanguageSheet(true)}
                 right={
@@ -187,8 +183,8 @@ export function SettingsScreen({
               <GlassListItem
                 icon="Palette"
                 iconBg="rgba(244, 114, 182, 0.2)"
-                title="Comms Glass Theme"
-                subtitle="Liquid Crystal, Neon Aurora, Obsidian..."
+                title={t('settings.commsTheme')}
+                subtitle={t('settings.commsThemeSub')}
                 onPress={onOpenChatTheme}
                 showChevron
               />
@@ -206,10 +202,10 @@ export function SettingsScreen({
                   </View>
                   <View style={{ marginLeft: 12 }}>
                     <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>
-                      Dark Appearance
+                      {t('settings.darkMode')}
                     </Text>
                     <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
-                      Low-light covert HUD
+                      {t('settings.darkModeSub')}
                     </Text>
                   </View>
                 </View>
@@ -221,8 +217,8 @@ export function SettingsScreen({
               <GlassListItem
                 icon="Bell"
                 iconBg="rgba(239, 68, 68, 0.2)"
-                title="Notification Protocols"
-                subtitle="Tactical dispatches & alert sound"
+                title={t('settings.notifications')}
+                subtitle={t('settings.notificationsSub')}
                 onPress={onOpenNotifications}
                 showChevron
               />
@@ -238,14 +234,14 @@ export function SettingsScreen({
             icon="AlertCircle"
             onPress={() => setCrashTrigger(true)}
           >
-            Test Error Boundary (Simulate Crash)
+            {t('settings.testError')}
           </GlassButton>
         </View>
 
         {/* Danger Zone */}
         <View style={{ marginTop: 24, marginBottom: 40 }}>
           <GlassButton variant="danger" fullWidth onPress={onSignOut} icon="LogOut">
-            Terminate Session (Sign Out)
+            {t('settings.signOut')}
           </GlassButton>
         </View>
       </ScrollView>
@@ -254,20 +250,18 @@ export function SettingsScreen({
       <GlassSheet
         open={showLanguageSheet}
         onClose={() => setShowLanguageSheet(false)}
-        title="Language / زبان"
+        title={t('settings.selectLanguage')}
       >
         <View style={{ gap: 10, paddingVertical: 8 }}>
           {LANGUAGES.map((lang) => {
-            const isSelected = language === lang.id;
+            const isSelected = language === lang.code;
             return (
               <TouchableOpacity
-                key={lang.id}
+                key={lang.code}
                 activeOpacity={0.8}
                 onPress={() => {
-                  setLanguage(lang.id);
-                  setToastMessage(
-                    lang.id === 'fa' ? 'زبان برنامه به فارسی تغییر کرد' : 'Language set to English'
-                  );
+                  setLanguage(lang.code);
+                  setToastMessage(t('settings.langChanged', { lang: lang.nativeName }));
                   setShowLanguageSheet(false);
                 }}
               >
@@ -282,9 +276,9 @@ export function SettingsScreen({
                     },
                   ]}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 12 }}>
                     <Text style={{ fontSize: 24 }}>{lang.flag}</Text>
-                    <View>
+                    <View style={{ alignItems: isRTL ? 'flex-end' : 'flex-start' }}>
                       <Text style={[styles.langOptionTitle, { color: colors.textPrimary }]}>
                         {lang.nativeName}
                       </Text>

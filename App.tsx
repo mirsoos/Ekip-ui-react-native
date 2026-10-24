@@ -44,6 +44,7 @@ import { AuroraBackground } from './src/components/AuroraBackground';
 import { SwipeNavigationContainer } from './src/components/common/SwipeNavigationContainer';
 import { ScreenTransition } from './src/components/common/ScreenTransition';
 import { ErrorBoundary } from './src/components/common/ErrorBoundary';
+import { I18nProvider } from './src/lib/i18n';
 
 export type Screen =
   | { name: 'auth' }
@@ -487,13 +488,15 @@ function MainContent() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <AppDataProvider>
-          <ErrorBoundary>
-            <MainContent />
-          </ErrorBoundary>
-        </AppDataProvider>
-      </ThemeProvider>
+      <I18nProvider>
+        <ThemeProvider>
+          <AppDataProvider>
+            <ErrorBoundary>
+              <MainContent />
+            </ErrorBoundary>
+          </AppDataProvider>
+        </ThemeProvider>
+      </I18nProvider>
     </SafeAreaProvider>
   );
 }

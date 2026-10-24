@@ -5,6 +5,7 @@ import { NotificationButton } from '../NotificationButton';
 import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { Profile } from '../../types/database';
 
 export interface DiscoverHeaderProps {
@@ -29,6 +30,7 @@ export function DiscoverHeader({
   onOpenOwnProfile,
 }: DiscoverHeaderProps) {
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useI18n();
   const SlidersIcon = getIcon('SlidersHorizontal');
 
   const enterAnim = useRef(new Animated.Value(0)).current;
@@ -69,13 +71,13 @@ export function DiscoverHeader({
           style={StyleSheet.absoluteFill}
         />
 
-        <View style={styles.topRow}>
+        <View style={[styles.topRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
           <View style={{ flex: 1, zIndex: 10 }}>
             <Text style={[styles.cityText, { color: colors.textTertiary }]}>
               {user.city}
             </Text>
             <Text style={[styles.titleText, { color: colors.textPrimary }]}>
-              Discover
+              {t('discover.title')}
             </Text>
           </View>
 
@@ -99,11 +101,11 @@ export function DiscoverHeader({
           </View>
         </View>
 
-        <View style={[styles.searchRow, { zIndex: 10 }]}>
+        <View style={[styles.searchRow, { zIndex: 10, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
           <View style={{ flex: 1 }}>
             <GlassInput
               icon="Search"
-              placeholder="Search Ekips, tags, sectors..."
+              placeholder={t('discover.searchPlaceholder')}
               value={search}
               onChangeText={onChangeSearch}
               style={{

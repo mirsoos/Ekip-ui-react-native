@@ -15,6 +15,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { getIcon, type IconName } from '../lib/icons';
 import { useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 import { LiquidLens } from './LiquidLens';
 
 // ============================================
@@ -504,7 +505,8 @@ export function GlassBackButton({
   style?: StyleProp<ViewStyle>;
 }) {
   const { colors, isDark } = useTheme();
-  const IconComp = getIcon('ArrowLeft');
+  const { isRTL } = useI18n();
+  const IconComp = getIcon(isRTL ? 'ArrowRight' : 'ArrowLeft');
   const handlePress = onPress ?? onClick;
 
   return (
@@ -934,11 +936,12 @@ export function GlassListItem({
   avatarName,
 }: GlassListItemProps) {
   const { colors } = useTheme();
+  const { isRTL } = useI18n();
   const IconComp = icon ? getIcon(icon) : null;
-  const ChevronRight = getIcon('ChevronRight');
+  const ChevronComp = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
 
   const content = (
-    <View style={styles.listItemRow}>
+    <View style={[styles.listItemRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
       {avatar ? (
         <GlassAvatar src={avatar} name={avatarName ?? title} size={40} />
       ) : IconComp ? (
@@ -952,12 +955,30 @@ export function GlassListItem({
         </View>
       ) : null}
 
-      <View style={{ flex: 1, marginLeft: avatar || IconComp ? 12 : 0 }}>
-        <Text style={[styles.listTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+      <View
+        style={{
+          flex: 1,
+          marginLeft: isRTL ? 0 : (avatar || IconComp ? 12 : 0),
+          marginRight: isRTL ? (avatar || IconComp ? 12 : 0) : 0,
+        }}
+      >
+        <Text
+          style={[
+            styles.listTitle,
+            { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+          ]}
+          numberOfLines={1}
+        >
           {title}
         </Text>
         {subtitle && (
-          <Text style={[styles.listSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+          <Text
+            style={[
+              styles.listSubtitle,
+              { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' },
+            ]}
+            numberOfLines={1}
+          >
             {subtitle}
           </Text>
         )}
@@ -965,10 +986,10 @@ export function GlassListItem({
 
       {right}
       {showChevron && (
-        <ChevronRight
+        <ChevronComp
           size={18}
           color={colors.textTertiary}
-          style={{ marginLeft: 6 }}
+          style={{ [isRTL ? 'marginRight' : 'marginLeft']: 6 }}
         />
       )}
     </View>
