@@ -63,10 +63,10 @@ export function AIHeader({ onBack }: { onBack: () => void }) {
 
         <View style={{ flex: 1, marginLeft: 10, zIndex: 10 }}>
           <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
-            {isRTL ? 'دستیار هوش مصنوعی' : 'Command AI'}
+            {isRTL ? 'دستیار هوشمند اکیپ' : 'Ekip AI Assistant'}
           </Text>
           <Text style={[styles.status, { color: colors.textTertiary }]} numberOfLines={1}>
-            {isRTL ? 'هوش عملیاتی و دیسپچ' : 'Tactical Intelligence & Dispatch'}
+            {isRTL ? 'پیشنهاد دورهمی و کافه‌گردی' : 'Hangout & Event Planning'}
           </Text>
         </View>
       </Animated.View>

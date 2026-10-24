@@ -77,13 +77,13 @@ export function EkipDetail({
       });
       addNotification({
         type: 'group_request',
-        title: isRTL ? 'پیوستن به اکیپ' : 'Squad Joined',
+        title: isRTL ? 'پیوستن به اکیپ' : 'Ekip Joined',
         body: isRTL
-          ? `شما اکنون یکی از اعضای مستقر در «${group.title}» هستید!`
-          : `You are now a deployed operator in ${group.title}!`,
+          ? `شما عضو اکیپ «${group.title}» شدید!`
+          : `You joined ${group.title}!`,
         icon: 'Users',
       });
-      setToast(isRTL ? 'عضویت در اکیپ با موفقیت انجام شد!' : 'Joined squad successfully!');
+      setToast(isRTL ? 'عضویت در اکیپ با موفقیت انجام شد!' : 'Joined Ekip successfully!');
     } else {
       addRequest({
         id: `r-${Date.now()}`,
@@ -95,7 +95,7 @@ export function EkipDetail({
         group,
         profile: me,
       });
-      setToast(isRTL ? 'درخواست مجوز ورود برای سرگروه ارسال شد' : 'Clearance request transmitted to command');
+      setToast(isRTL ? 'درخواست عضویت برای میزبان اکیپ ارسال شد' : 'Join request sent to the host');
     }
     setShowJoinSheet(false);
     setTimeout(() => setToast(''), 2500);
@@ -104,7 +104,7 @@ export function EkipDetail({
   const handleCancelRequest = () => {
     if (myRequest) {
       updateRequest(myRequest.id, 'rejected');
-      setToast(isRTL ? 'درخواست ورود لغو گردید' : 'Clearance request cancelled');
+      setToast(isRTL ? 'درخواست عضویت لغو شد' : 'Join request cancelled');
       setShowCancel(false);
       setTimeout(() => setToast(''), 2500);
     }

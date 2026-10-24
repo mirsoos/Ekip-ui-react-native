@@ -76,8 +76,8 @@ export function ProfileMissionsList({ missions }: { missions: Mission[] }) {
     return (
       <GlassEmpty
         icon="Target"
-        title={isRTL ? 'هیچ مأموریت فعالی وجود ندارد' : 'No active missions'}
-        subtitle={isRTL ? 'دستورالعمل‌های جدید به صورت دوره‌ای توسط ستاد اعلام می‌شوند.' : 'New directives are issued weekly by Command.'}
+        title={isRTL ? 'هیچ چالش فعالی وجود ندارد' : 'No active challenges'}
+        subtitle={isRTL ? 'چالش‌ها و ماموریت‌های جدید به زودی اضافه خواهند شد.' : 'New social challenges are added periodically.'}
       />
     );
   }
@@ -100,7 +100,7 @@ export function ProfileMissionsList({ missions }: { missions: Mission[] }) {
           <View style={{ marginTop: 8 }}>
             <View style={styles.progressRow}>
               <Text style={[styles.progressLabel, { color: colors.textTertiary }]}>
-                {isRTL ? 'پیشرفت مأموریت' : 'Progress'}
+                {isRTL ? 'میزان پیشرفت' : 'Progress'}
               </Text>
               <Text style={[styles.progressCount, { color: colors.textPrimary }]}>
                 {m.progress} / {m.target}
@@ -120,7 +120,7 @@ export function ProfileMissionsList({ missions }: { missions: Mission[] }) {
             <View style={styles.completeTag}>
               <CheckCircle2 size={13} color="#22c55e" strokeWidth={2.4} style={{ marginRight: 4 }} />
               <Text style={styles.completeText}>
-                {isRTL ? 'هدف با موفقیت تکمیل شد' : 'Objective Complete'}
+                {isRTL ? 'تکمیل شد' : 'Completed'}
               </Text>
             </View>
           )}

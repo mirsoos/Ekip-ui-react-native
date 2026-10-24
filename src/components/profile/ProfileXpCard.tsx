@@ -47,7 +47,7 @@ export function ProfileXpCard({ profile }: { profile: Profile }) {
       <View style={styles.bottomRow}>
         <Shield size={14} color="#22c55e" strokeWidth={2.4} style={{ marginRight: 4 }} />
         <Text style={[styles.honorLabel, { color: colors.textTertiary }]}>
-          {isRTL ? 'نمره آمادگی تاکتیکی' : 'Tactical Readiness Score'}
+          {isRTL ? 'امتیاز خوش‌قولی و اعتماد' : 'Community Trust Score'}
         </Text>
         <Text style={[styles.honorVal, { color: colors.textPrimary }]}>
           {profile.honor_score}/100

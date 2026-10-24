@@ -59,7 +59,7 @@ export function EkipRequirementsCard({
 
   if (group.premium_only) {
     rules.push({
-      label: isRTL ? 'فقط اشتراک ویژه' : 'Omega / Premium Clearance',
+      label: isRTL ? 'فقط اعضای ویژه' : 'Premium Members Only',
       passed: Boolean(user.is_premium),
       desc: user.is_premium
         ? (isRTL ? 'اشتراک فعال است' : 'Active subscription')
@@ -74,7 +74,7 @@ export function EkipRequirementsCard({
       <View style={styles.header}>
         <Shield size={16} color="#f472b6" strokeWidth={2.4} style={{ marginRight: 6 }} />
         <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {isRTL ? 'شرایط و پیش‌نیازهای ورود' : 'Clearance Requirements'}
+          {isRTL ? 'شرایط حضور در برنامه' : 'Participation Requirements'}
         </Text>
       </View>
 

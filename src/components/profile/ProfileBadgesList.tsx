@@ -15,8 +15,8 @@ export function ProfileBadgesList({ badges }: { badges: Badge[] }) {
     return (
       <GlassEmpty
         icon="Award"
-        title={isRTL ? 'هنوز مدالی دریافت نکرده‌اید' : 'No badges earned'}
-        subtitle={isRTL ? 'مأموریت‌های تاکتیکی را کامل کنید تا مدال‌های افتخار باز شوند.' : 'Complete tactical missions to unlock command medals.'}
+        title={isRTL ? 'هنوز نشانی دریافت نکرده‌اید' : 'No badges earned'}
+        subtitle={isRTL ? 'در دورهمی‌ها شرکت کنید و چالش‌ها را کامل کنید تا نشان‌ها فعال شوند.' : 'Join hangouts and complete challenges to unlock badges.'}
       />
     );
   }

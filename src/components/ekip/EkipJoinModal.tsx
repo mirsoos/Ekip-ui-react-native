@@ -31,13 +31,13 @@ export function EkipJoinModal({
       <View style={{ gap: 14 }}>
         <Text style={[styles.desc, { color: colors.textSecondary }]}>
           {group.auto_accept
-            ? (isRTL ? 'پذیرش خودکار فعال است. شما بلافاصله پس از تایید عضو اکیپ خواهید شد.' : 'Automatic clearance enabled. You will be deployed immediately.')
-            : (isRTL ? 'پیام معرفی یا درخواست عضویت خود را برای سازنده اکیپ ارسال کنید.' : 'Send a clearance request note to the squad commander.')}
+            ? (isRTL ? 'پذیرش خودکار فعال است. شما بلافاصله پس از تایید عضو اکیپ خواهید شد.' : 'Instant join is enabled. You will join the Ekip right away.')
+            : (isRTL ? 'پیام معرفی یا درخواست عضویت خود را برای میزبان اکیپ ارسال کنید.' : 'Send a friendly intro message to the host.')}
         </Text>
 
         {!group.auto_accept && (
           <GlassInput
-            placeholder={isRTL ? 'پیام یا معرفی کوتاه خود را بنویسید...' : 'Transmit operator credentials / introduction...'}
+            placeholder={isRTL ? 'سلام! معرفی کوتاه یا پیامی برای میزبان بنویسید...' : 'Say hi and write a short message to the host...'}
             value={message}
             onChangeText={onChangeMessage}
             multiline
@@ -53,8 +53,8 @@ export function EkipJoinModal({
             disabled={!eligible}
           >
             {group.auto_accept
-              ? (isRTL ? 'عضویت فوری' : 'Deploy Immediately')
-              : (isRTL ? 'ارسال درخواست ورود' : 'Transmit Request')}
+              ? (isRTL ? 'پیوستن به اکیپ' : 'Join Ekip')
+              : (isRTL ? 'ارسال درخواست عضویت' : 'Send Request')}
           </GlassButton>
         </View>
       </View>

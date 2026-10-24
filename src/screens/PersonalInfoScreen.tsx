@@ -35,10 +35,10 @@ export function PersonalInfoScreen({
   const [job, setJob] = useState(me.job ?? '');
   const [city, setCity] = useState(me.city ?? '');
   const [bio, setBio] = useState(me.bio ?? '');
-  const [age, setAge] = useState(me.age ? String(me.age) : '34');
+  const [age, setAge] = useState(me.age ? String(me.age) : '28');
   const [gender, setGender] = useState<Gender>(me.gender ?? 'male');
   const [selectedAvatar, setSelectedAvatar] = useState(me.avatar_url ?? AVATAR_PRESETS[0]);
-  const [interests, setInterests] = useState<string[]>(me.interests ?? ['عملیات تاکتیکی', 'رمزنگاری']);
+  const [interests, setInterests] = useState<string[]>(me.interests ?? ['بوردگیم', 'کافه‌گردی']);
   const [toast, setToast] = useState('');
 
   const toggleInterest = (tag: string) => {

@@ -94,19 +94,19 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={styles.ghostTitle}>
-                {isRTL ? 'حالت روح تاکتیکی (مخفی)' : 'Tactical Ghost Mode'}
+                {isRTL ? 'حالت مخفی (Ghost Mode)' : 'Incognito Mode'}
               </Text>
               <Text style={styles.ghostDesc}>
                 {isRTL
-                  ? 'مخفی کردن حضور در رادار اکیپ‌ها در عین فعال بودن'
-                  : 'Hide your presence from squad radar while remaining active'}
+                  ? 'مشاهده اکیپ‌ها بدون نمایش وضعیت آنلاین به سایر کاربران'
+                  : 'Browse Ekips without showing your online presence'}
               </Text>
             </View>
             <Switch
               value={ghostMode}
               onValueChange={(val) => {
                 setGhostMode(val);
-                showToast(val ? (isRTL ? 'حالت روح فعال شد' : 'Ghost mode engaged') : (isRTL ? 'حالت روح غیرفعال شد' : 'Ghost mode disengaged'));
+                showToast(val ? (isRTL ? 'حالت مخفی فعال شد' : 'Incognito activated') : (isRTL ? 'حالت مخفی غیرفعال شد' : 'Incognito deactivated'));
               }}
               trackColor={{ false: 'rgba(255,255,255,0.1)', true: '#ec4899' }}
               thumbColor="#fff"
@@ -114,9 +114,9 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
           </View>
         </GlassCard>
 
-        {/* Visibility Matrix */}
+        {/* Visibility */}
         <Text style={styles.sectionHeading}>
-          {isRTL ? 'رادار و قابلیت رویت' : 'DISCOVERY & RADAR'}
+          {isRTL ? 'قابلیت مشاهده و حریم خصوصی' : 'VISIBILITY & PRIVACY'}
         </Text>
         <GlassCard style={styles.cardSection}>
           <View style={styles.settingRow}>
@@ -125,7 +125,7 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
                 {isRTL ? 'پروفایل خصوصی' : 'Private Profile'}
               </Text>
               <Text style={styles.settingDesc}>
-                {isRTL ? 'فقط اعضای تایید شده اکیپ‌ها آمار شما را ببینند' : 'Only approved squad members see your stats'}
+                {isRTL ? 'فقط دوستان و اعضای اکیپ مشترک اطلاعات شما را ببینند' : 'Only friends and shared Ekip members see full info'}
               </Text>
             </View>
             <Switch

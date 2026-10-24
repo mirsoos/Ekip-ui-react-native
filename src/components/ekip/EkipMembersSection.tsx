@@ -28,7 +28,7 @@ export function EkipMembersSection({
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Users size={16} color="#f472b6" strokeWidth={2.4} style={{ marginRight: 6 }} />
           <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {isRTL ? 'اعضای مستقر' : 'Deployed Operatives'}
+            {isRTL ? 'اعضای اکیپ' : 'Ekip Members'}
           </Text>
         </View>
         <Text style={[styles.spots, { color: colors.textTertiary }]}>

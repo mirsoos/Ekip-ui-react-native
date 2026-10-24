@@ -13,20 +13,20 @@ interface Suggestion {
 
 const suggestions: Suggestion[] = [
   {
-    text: 'افزودن عنوان تاکتیکی مانند "گشت شبانه در منطقه کوهستانی"',
-    applyTitle: 'گشت شبانه در منطقه کوهستانی',
+    text: 'عنوانی خودمانی و جذاب مثل «دورهمی بوردگیم و کافه‌گردی آخر هفته»',
+    applyTitle: 'دورهمی بوردگیم و کافه‌گردی آخر هفته',
   },
   {
-    text: 'مشخص کردن ۳ تا ۵ تگ تخصصی جهت تطبیق هوشمند اپراتورها',
+    text: 'افزودن ۳ تا ۵ تگ مرتبط (مثل #کافه #بوردگیم #دورهمی) برای دیده شدن بهتر',
   },
   {
-    text: 'تعیین سطح آمادگی رزمی برای جذب اپراتورهای ارشد و باسابقه',
+    text: 'مشخص کردن نام کافه یا آدرس دقیق برای ایجاد حس اعتماد در اعضا',
   },
   {
-    text: 'ثبت دقیق مختصات و نام پایگاه استقرار جهت هماهنگی روان اعضا',
+    text: 'تعیین بازه سنی متناسب با برنامه (مثلاً ۲۰ تا ۳۵ سال)',
   },
   {
-    text: 'فعال‌سازی پذیرش خودکار جهت استقرار فوری و بدون معطلی تیم',
+    text: 'فعال‌سازی پذیرش خودکار برای پیوستن سریع و بدون معطلی بچه‌ها',
   },
 ];
 
@@ -45,7 +45,7 @@ export function AISuggestionsSheet({
   const Sparkles = getIcon('Sparkles');
 
   return (
-    <GlassSheet open={open} onClose={onClose} title="پیشنهادات هوش مصنوعی">
+    <GlassSheet open={open} onClose={onClose} title="پیشنهادات هوشمند ساخت اکیپ">
       <View style={{ gap: 10 }}>
         {suggestions.map((s, i) => (
           <GlassCard key={i} variant="thin" style={styles.card}>
@@ -65,7 +65,7 @@ export function AISuggestionsSheet({
                   }}
                   style={{ marginTop: 4 }}
                 >
-                  <Text style={styles.applyBtn}>اعمال این پیشنهاد</Text>
+                  <Text style={styles.applyBtn}>اعمال این عنوان</Text>
                 </TouchableOpacity>
               )}
             </View>

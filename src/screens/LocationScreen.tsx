@@ -24,14 +24,14 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
 
   const initialPlaces: SavedPlace[] = isRTL
     ? [
-        { id: 'p1', name: 'پایگاه اصلی', address: 'بخش ۷، ستاد فرماندهی', category: 'home' },
-        { id: 'p2', name: 'قرارگاه عملیاتی', address: 'بخش ۴، پایگاه آلفا', category: 'work' },
-        { id: 'p3', name: 'محل قرار اکیپ', address: 'ایستگاه بازرسی دلتا، جاده خط‌الراس', category: 'favorite' },
+        { id: 'p1', name: 'خانه', address: 'تهران، سعادت‌آباد، خیابان سرو', category: 'home' },
+        { id: 'p2', name: 'محل کار / دفتر', address: 'تهران، کارخانه نوآوری آزادی', category: 'work' },
+        { id: 'p3', name: 'کافه محبوب دورهمی', address: 'تهران، خیابان انقلاب، کافه بوردگیم فکری', category: 'favorite' },
       ]
     : [
-        { id: 'p1', name: 'Home Base', address: 'Sector 7, Command HQ', category: 'home' },
-        { id: 'p2', name: 'Forward Outpost', address: 'Sector 4, FOB Alpha', category: 'work' },
-        { id: 'p3', name: 'Muster Point Delta', address: 'Checkpoint Delta, Ridge Road', category: 'favorite' },
+        { id: 'p1', name: 'Home', address: 'Saadat Abad, Sarv St', category: 'home' },
+        { id: 'p2', name: 'Work / Office', address: 'Azadi Innovation Factory', category: 'work' },
+        { id: 'p3', name: 'Favorite Cafe', address: 'Enghelab St, Fekri Boardgame Cafe', category: 'favorite' },
       ];
 
   const [selectedCity, setSelectedCity] = useState(me.city || cities[0]);
@@ -105,8 +105,8 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
               <Text style={styles.heroTitle}>{selectedCity}</Text>
               <Text style={styles.heroDesc}>
                 {isRTL
-                  ? `پایگاه فعلی · شعاع رادار فعال: ${discoveryRadius} کیلومتر`
-                  : `Current Hub · Active Discovery Radius: ${discoveryRadius} km`}
+                  ? `موقعیت فعلی · فاصله جستجوی اکیپ‌ها: ${discoveryRadius} کیلومتر`
+                  : `Current Hub · Search Distance: ${discoveryRadius} km`}
               </Text>
             </View>
           </View>
@@ -118,7 +118,7 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
                 key={r}
                 onPress={() => {
                   setDiscoveryRadius(r);
-                  showToast(isRTL ? `شعاع رادار روی ${r} کیلومتر تنظیم شد` : `Radar radius set to ${r} km`);
+                  showToast(isRTL ? `فاصله جستجو روی ${r} کیلومتر تنظیم شد` : `Search radius set to ${r} km`);
                 }}
                 style={[
                   styles.radiusBtn,
@@ -133,9 +133,9 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
           </View>
         </GlassCard>
 
-        {/* Tactical City Hubs */}
+        {/* City Hubs */}
         <Text style={styles.sectionHeading}>
-          {isRTL ? 'انتخاب بخش عملیاتی' : 'SELECT OPERATIONAL SECTOR'}
+          {isRTL ? 'انتخاب شهر یا منطقه' : 'SELECT CITY & NEIGHBORHOOD'}
         </Text>
         <GlassCard style={styles.cardSection}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
@@ -163,16 +163,16 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
 
         {/* Location Preferences */}
         <Text style={styles.sectionHeading}>
-          {isRTL ? 'تنظیمات رادار موقعیت' : 'RADAR TELEMETRY'}
+          {isRTL ? 'تنظیمات موقعیت مکانی' : 'LOCATION PREFERENCES'}
         </Text>
         <GlassCard style={styles.cardSection}>
           <View style={styles.settingRow}>
             <View style={{ flex: 1 }}>
               <Text style={styles.settingTitle}>
-                {isRTL ? 'رادار پس‌زمینه محدوده مکانی' : 'Background Geofence Radar'}
+                {isRTL ? 'اعلان دورهمی‌های نزدیک من' : 'Nearby Hangout Alerts'}
               </Text>
               <Text style={styles.settingDesc}>
-                {isRTL ? 'اعلان هنگام شروع رویداد در محدوده ۲ کیلومتری' : 'Alert when squad events start within 2km'}
+                {isRTL ? 'اعلان هنگام تشکیل اکیپ جدید در محدوده ۲ کیلومتری' : 'Alert when new Ekips form within 2km'}
               </Text>
             </View>
             <Switch

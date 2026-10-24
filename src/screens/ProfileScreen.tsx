@@ -77,17 +77,17 @@ export function ProfileScreen({
   const handleAddFriend = () => {
     if (existingFriend) {
       updateFriend(existingFriend.id, 'accepted');
-      setToast(isRTL ? 'پیوند ارتباطی تایید گردید' : 'Contact link confirmed');
+      setToast(isRTL ? 'درخواست دوستی تایید شد' : 'Friend request accepted');
     } else {
       addFriend(profile.id);
-      setToast(isRTL ? 'درخواست پیوند ارسال شد' : 'Link request dispatched');
+      setToast(isRTL ? 'درخواست دوستی ارسال شد' : 'Friend request sent');
     }
     addNotification({
       type: 'friend_request',
-      title: isRTL ? 'پیوند ارتباطی' : 'Contact Link',
+      title: isRTL ? 'دوستی جدید' : 'New Friend',
       body: isRTL
-        ? `شما با ${profile.first_name} پیوند ارتباطی امن برقرار کردید.`
-        : `You established comms link with ${profile.first_name}.`,
+        ? `شما با ${profile.first_name} دوست شدید.`
+        : `You are now connected with ${profile.first_name}.`,
       icon: 'UserCheck',
     });
     setShowActions(false);
@@ -172,7 +172,7 @@ export function ProfileScreen({
                 <GlassEmpty
                   icon="Layers"
                   title={t('profile.noMissions')}
-                  subtitle={isRTL ? 'در عملیات‌های مختلف شرکت کنید تا پرونده شما تکمیل شود.' : 'Deploy in an operation to build your field dossier.'}
+                  subtitle={isRTL ? 'در اکیپ‌ها و دورهمی‌های مختلف شرکت کنید تا آمار فعالیت شما ثبت شود.' : 'Join Ekips and hangouts to build your activity stats.'}
                 />
               ) : (
                 myGroups.map((g) => (

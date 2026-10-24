@@ -51,7 +51,7 @@ export function EkipEventInfoCard({ group }: { group: Group }) {
             </Text>
             {group.is_repeating && (
               <Text style={styles.repeatingTag}>
-                {isRTL ? ' · مأموریت دوره‌ای' : ' · Recurring Op'}
+                {isRTL ? ' · برنامه هفتگی و منظم' : ' · Recurring'}
               </Text>
             )}
           </View>

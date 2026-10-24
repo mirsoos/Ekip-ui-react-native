@@ -21,48 +21,49 @@ export function PlansScreen({ onBack }: PlansScreenProps) {
     ? [
         {
           id: 'free',
-          name: 'نیروی عملیاتی',
+          name: 'کاربر عادی',
           price: 'رایگان',
           period: 'همیشگی',
-          description: 'دسترسی استاندارد به اکیپ‌های عمومی و رادار منطقه',
+          description: 'دسترسی استاندارد به دورهمی‌های عمومی و کشف اکیپ‌های اطراف',
           current: true,
           perks: [
             'عضویت در حداکثر ۵ اکیپ همزمان',
-            'پیام‌رسانی مستقیم با اعضای تایید شده',
-            'شعاع رادار استاندارد (۱۵ کیلومتر)',
-            'شخصی‌سازی پایه پروفایل و مشخصات',
+            'گفتگوی مستقیم با دوستان و اعضای اکیپ',
+            'جستجوی دورهمی‌های اطراف تا شعاع ۱۵ کیلومتر',
+            'شخصی‌سازی پایه پروفایل و علایق',
           ],
           color: '#3b82f6',
         },
         {
           id: 'pro',
-          name: 'سرگروه تاکتیکی',
-          price: '۹۹,۰۰۰ ت',
+          name: 'عضو طلایی (Ekip Pro)',
+          price: '۶۹,۰۰۰ ت',
           period: 'ماهانه',
-          description: 'امکانات پیشرفته برای سرگروه‌ها و برگزارکنندگان اکیپ',
+          description: 'امکانات ویژه برای میزبانان فعال، برگزارکنندگان ایونت و تفریحات',
           current: false,
           recommended: true,
           perks: [
-            'ساخت و میزبانی نامحدود اکیپ‌ها',
-            'اولویت نمایش در فید و رادار منطقه',
-            'اشتراک مختصات زنده GPS با دقت بالا',
-            'تم‌های شیشه‌ای سفارشی و مدال‌های ویژه',
-            'دستیار هوش مصنوعی با برنامه‌ریزی دقیق',
+            'ساخت و میزبانی نامحدود اکیپ‌ها و دورهمی‌ها',
+            'پین شدن و اولویت نمایش در صفحه کاوش',
+            'نشان طلایی در پروفایل و کنار نام در چت',
+            'پوسته‌های شیشه‌ای اختصاصی چت و نشان‌های خاص',
+            'دسترسی کامل به دستیار هوشمند برنامه‌ریزی',
           ],
           color: '#ec4899',
         },
         {
           id: 'elite',
-          name: 'فرمانده ارشد',
-          price: '۲۴۹,۰۰۰ ت',
+          name: 'میزبان ویژه (Ekip VIP)',
+          price: '۱۴۹,۰۰۰ ت',
           period: 'ماهانه',
-          description: 'بالاترین سطح دسترسی برای سازمان‌ها، تیم‌های بزرگ و VIP',
+          description: 'بالاترین سطح دسترسی برای برگزارکنندگان رویدادهای بزرگ و کافه‌ها',
           current: false,
           perks: [
-            'تمام امکانات سطح سرگروه',
-            'نشان طلایی فرمانده و احراز هویت ویژه',
-            'دسترسی اختصاصی به سرورهای با امنیت کوانتومی',
-            'پشتیبانی VIP و اولویت در استقرار',
+            'تمامی امکانات سطح عضو طلایی',
+            'تیک رسمی تایید هویت و اصالت حساب',
+            'محدوده جستجوی نامحدود در تمام شهرهای کشور',
+            'تخفیف‌های اختصاصی کافه‌ها و بوردگیم‌های همکار',
+            'پشتیبانی اختصاصی و اولویت در پیشنهادات هفتگی',
           ],
           color: '#f59e0b',
         },
@@ -70,74 +71,83 @@ export function PlansScreen({ onBack }: PlansScreenProps) {
     : [
         {
           id: 'free',
-          name: 'Operative',
+          name: 'Standard',
           price: '$0',
           period: 'forever',
-          description: 'Standard access to community squads and radar discovery',
+          description: 'Standard access to public hangouts and nearby discovery',
           current: true,
           perks: [
-            'Join up to 5 concurrent squads',
-            'Direct messaging with verified members',
-            'Standard radar discovery range (15km)',
-            'Basic profile customization',
+            'Join up to 5 concurrent Ekips',
+            'Direct messaging with friends & members',
+            'Discovery range up to 15km',
+            'Basic profile & interests setup',
           ],
           color: '#3b82f6',
         },
         {
           id: 'pro',
-          name: 'Squad Leader',
-          price: '$9.99',
+          name: 'Ekip Pro',
+          price: '$4.99',
           period: 'month',
-          description: 'Advanced capabilities for squad creators and community organizers',
+          description: 'Advanced perks for community hosts and active event planners',
           current: false,
           recommended: true,
           perks: [
-            'Unlimited active squad hosting',
-            'Priority feed ranking on tactical radar',
-            'High-precision live GPS coordinate sharing',
-            'Custom glass themes and squad badges',
-            'AI Assistant co-pilot with deep scheduling',
+            'Unlimited active Ekip hosting',
+            'Priority placement on Discover feed',
+            'Golden badge on profile & chats',
+            'Custom glass themes and exclusive stickers',
+            'Unlimited AI Assistant hangout planner',
           ],
           color: '#ec4899',
         },
         {
           id: 'elite',
-          name: 'Tactical Commander',
-          price: '$24.99',
+          name: 'Ekip VIP',
+          price: '$9.99',
           period: 'month',
-          description: 'Maximum tier for enterprise leaders, VIPs & large networks',
+          description: 'Top tier for premier organizers, communities & cafes',
           current: false,
           perks: [
-            'All Squad Leader tier capabilities',
-            'Exclusive golden badge & identity endorsement',
-            'Direct access to quantum encrypted channels',
-            'Dedicated tactical support line',
+            'All Ekip Pro features included',
+            'Official verified blue checkmark',
+            'Nationwide discovery without radius limits',
+            'Exclusive cafe partner discounts',
+            'VIP priority support line',
           ],
           color: '#f59e0b',
         },
       ];
 
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingTop: 90, paddingBottom: 60 }}>
-        <View style={styles.heroBadge}>
-          <View style={styles.crownIcon}>
-            <Crown size={32} color="#fff" />
-          </View>
-          <Text style={styles.heroTitle}>
-            {isRTL ? 'طرح‌های اشتراک اکانت' : 'Clearance & Subscriptions'}
-          </Text>
-          <Text style={styles.heroDesc}>
-            {isRTL
-              ? 'امکانات پیشرفته تاکتیکی، اولویت در رادار و مدال‌های اختصاصی را باز کنید'
-              : 'Unlock advanced sector radar range, priority deployment & tactical honors'}
-          </Text>
+    <ScrollView
+      contentContainerStyle={[
+        styles.container,
+        { alignItems: 'center' },
+      ]}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Header Info */}
+      <View style={styles.header}>
+        <View style={styles.iconCircle}>
+          <Crown size={32} color="#ec4899" strokeWidth={2.4} />
         </View>
+        <Text style={styles.title}>
+          {isRTL ? 'ارتقای حساب کاربری' : 'Upgrade Membership'}
+        </Text>
+        <Text style={styles.subtitle}>
+          {isRTL
+            ? 'با پلن‌های ویژه اکیپ، دورهمی‌های پرطرفدارتری بسازید و از امکانات اختصاصی لذت ببرید.'
+            : 'Unlock premium perks, host unlimited hangouts, and stand out in your city.'}
+        </Text>
+      </View>
 
+      {/* Plans List */}
+      <View style={styles.plansList}>
         {plans.map((p) => (
           <GlassCard
             key={p.id}
-            variant="thin"
+            glow={p.recommended}
             style={[
               styles.planCard,
               p.recommended && styles.recommendedCard,
@@ -145,164 +155,192 @@ export function PlansScreen({ onBack }: PlansScreenProps) {
           >
             {p.recommended && (
               <View style={styles.recommendedBadge}>
-                <Sparkles size={12} color="#fff" />
-                <Text style={styles.recommendedText}>
-                  {isRTL ? 'محبوب‌ترین طرح' : 'MOST POPULAR'}
+                <Sparkles size={12} color="#ffffff" strokeWidth={2.5} />
+                <Text style={styles.recommendedBadgeText}>
+                  {isRTL ? 'پیشنهاد ویژه' : 'POPULAR'}
                 </Text>
               </View>
             )}
 
             <View style={styles.planHeader}>
               <View>
-                <Text style={[styles.planName, { color: p.color }]}>{p.name}</Text>
+                <Text style={styles.planName}>{p.name}</Text>
                 <Text style={styles.planDesc}>{p.description}</Text>
               </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.planPrice}>{p.price}</Text>
-                <Text style={styles.planPeriod}>/{p.period}</Text>
+              <View style={styles.priceContainer}>
+                <Text style={[styles.priceText, { color: p.color }]}>
+                  {p.price}
+                </Text>
+                <Text style={styles.periodText}>/ {p.period}</Text>
               </View>
             </View>
 
             <View style={styles.divider} />
 
+            {/* Perks */}
             <View style={styles.perksList}>
-              {p.perks.map((perk, i) => (
-                <View key={i} style={styles.perkItem}>
-                  <Check size={16} color={p.color} />
+              {p.perks.map((perk, idx) => (
+                <View key={idx} style={styles.perkItem}>
+                  <View style={[styles.checkCircle, { backgroundColor: `${p.color}20` }]}>
+                    <Check size={12} color={p.color} strokeWidth={3} />
+                  </View>
                   <Text style={styles.perkText}>{perk}</Text>
                 </View>
               ))}
             </View>
 
-            <View style={{ marginTop: 16 }}>
-              {p.current ? (
-                <GlassButton variant="secondary" disabled>
-                  {isRTL ? 'طرح فعال فعلی شما' : 'Current Active Plan'}
-                </GlassButton>
-              ) : (
-                <GlassButton
-                  variant={p.recommended ? 'primary' : 'secondary'}
-                  onPress={() => {
-                    setToastMessage(isRTL ? `طرح «${p.name}» انتخاب گردید` : `Selected ${p.name} plan checkout`);
-                  }}
-                >
-                  {isRTL ? `ارتقا به طرح ${p.name}` : `Upgrade to ${p.name}`}
-                </GlassButton>
-              )}
+            <View style={styles.actionContainer}>
+              <GlassButton
+                variant={p.current ? 'secondary' : p.recommended ? 'primary' : 'secondary'}
+                fullWidth
+                onPress={() => {
+                  if (p.current) {
+                    setToastMessage(isRTL ? 'این پلن در حال حاضر برای شما فعال است' : 'You are currently on this tier');
+                  } else {
+                    setToastMessage(isRTL ? `درخواست ارتقا به ${p.name} ثبت شد` : `Upgrade requested for ${p.name}`);
+                  }
+                }}
+              >
+                {p.current
+                  ? (isRTL ? 'پلن فعلی شما' : 'Current Tier')
+                  : (isRTL ? `انتخاب ${p.name}` : `Select ${p.name}`)}
+              </GlassButton>
             </View>
           </GlassCard>
         ))}
-      </ScrollView>
+      </View>
 
-      <Toast message={toastMessage} visible={Boolean(toastMessage)} />
-    </View>
+      <Toast
+        open={Boolean(toastMessage)}
+        message={toastMessage}
+        onClose={() => setToastMessage('')}
+      />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
+    paddingTop: 100,
+    paddingBottom: 40,
     paddingHorizontal: 16,
   },
-  heroBadge: {
+  header: {
     alignItems: 'center',
-    paddingVertical: 14,
-    marginBottom: 10,
+    marginBottom: 24,
+    maxWidth: 420,
   },
-  crownIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 20,
-    backgroundColor: '#f59e0b',
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(236, 72, 153, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
-    shadowColor: '#f59e0b',
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
   },
-  heroTitle: {
-    fontSize: 20,
+  title: {
+    fontSize: 24,
     fontWeight: '800',
-    color: '#fff',
-  },
-  heroDesc: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.6)',
+    color: '#ffffff',
+    marginBottom: 8,
     textAlign: 'center',
-    marginTop: 4,
-    paddingHorizontal: 24,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.65)',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  plansList: {
+    width: '100%',
+    maxWidth: 460,
+    gap: 16,
   },
   planCard: {
-    padding: 18,
-    borderRadius: 22,
-    marginBottom: 16,
+    padding: 20,
+    borderRadius: 24,
+    position: 'relative',
+    overflow: 'hidden',
   },
   recommendedCard: {
-    borderColor: '#ec4899',
+    borderColor: 'rgba(236, 72, 153, 0.4)',
     borderWidth: 1.5,
-    backgroundColor: 'rgba(236,72,153,0.08)',
   },
   recommendedBadge: {
+    position: 'absolute',
+    top: 14,
+    left: 14,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ec4899',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 8,
-    marginBottom: 12,
+    paddingHorizontal: 8,
+    borderRadius: 12,
     gap: 4,
   },
-  recommendedText: {
-    fontSize: 9,
+  recommendedBadgeText: {
+    color: '#ffffff',
+    fontSize: 10,
     fontWeight: '800',
-    color: '#fff',
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
   },
   planHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    marginTop: 10,
+    marginBottom: 14,
   },
   planName: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginBottom: 4,
   },
   planDesc: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.6)',
-    marginTop: 2,
-    maxWidth: 200,
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.6)',
+    lineHeight: 16,
+    marginBottom: 10,
   },
-  planPrice: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#fff',
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
   },
-  planPeriod: {
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.5)',
+  priceText: {
+    fontSize: 26,
+    fontWeight: '900',
+  },
+  periodText: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.5)',
   },
   divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    marginVertical: 14,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    marginBottom: 14,
   },
   perksList: {
     gap: 10,
+    marginBottom: 18,
   },
   perkItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
+  checkCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   perkText: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.85)',
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.85)',
     flex: 1,
+  },
+  actionContainer: {
+    marginTop: 4,
   },
 });

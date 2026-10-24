@@ -132,19 +132,19 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
             <View style={styles.dot} />
             <Text style={styles.statusText}>
               {isVerified
-                ? (isRTL ? 'احراز هویت سطح ۲ • هویت معتبر' : 'Level 2 Verified • Trusted Identity')
+                ? (isRTL ? 'حساب کاربری تایید شده • هویت معتبر' : 'Verified Account • Trusted Profile')
                 : (isRTL ? 'در حال بررسی احراز هویت' : 'Verification Under Review')}
             </Text>
           </View>
 
           <View style={styles.heroStatsRow}>
             <View style={styles.statBox}>
-              <Text style={styles.statVal}>۹۹.۴٪</Text>
-              <Text style={styles.statLbl}>{isRTL ? 'تطابق بیومتریک' : 'Match Score'}</Text>
+              <Text style={styles.statVal}>۹۹٪</Text>
+              <Text style={styles.statLbl}>{isRTL ? 'اعتبار هویت' : 'Trust Score'}</Text>
             </View>
             <View style={[styles.statBox, styles.statBoxBorder]}>
               <Text style={styles.statVal}>{isRTL ? 'سطح ۲' : 'Tier 2'}</Text>
-              <Text style={styles.statLbl}>{isRTL ? 'سطح اعتماد' : 'Trust Tier'}</Text>
+              <Text style={styles.statLbl}>{isRTL ? 'سطح کاربری' : 'Trust Tier'}</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statVal}>AES-256</Text>

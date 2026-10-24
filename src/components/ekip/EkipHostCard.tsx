@@ -44,7 +44,7 @@ export function EkipHostCard({
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <ShieldIcon size={12} color="#22c55e" style={{ marginRight: 3 }} />
               <Text style={styles.statText}>
-                {isRTL ? `اعتبار ${host.honor_score}` : `Honor ${host.honor_score}`}
+                {isRTL ? `خوش‌قولی ${host.honor_score}` : `Trust ${host.honor_score}`}
               </Text>
             </View>
             <Text style={[styles.statDot, { color: colors.textTertiary }]}>·</Text>
