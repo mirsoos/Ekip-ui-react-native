@@ -1,10 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { SocialAuthRow } from './SocialAuthRow';
+import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export function WelcomeView({
   onLogin,
@@ -14,25 +16,31 @@ export function WelcomeView({
   onRegister: () => void;
 }) {
   const { colors, isDark } = useTheme();
-  const Shield = getIcon('Shield');
-  const ArrowRight = getIcon('ArrowRight');
+  const { t, isRTL } = useI18n();
+  const Sparkles = getIcon('Sparkles');
+  const ArrowIcon = getIcon(isRTL ? 'ArrowLeft' : 'ArrowRight');
 
   return (
     <View style={styles.container}>
+      {/* Top Language Switcher Bar */}
+      <View style={styles.langBar}>
+        <LanguageSwitcherPill />
+      </View>
+
       {/* Brand logo */}
       <View style={styles.brandSection}>
         <LinearGradient
           colors={['rgba(244, 114, 182, 0.4)', 'rgba(59, 130, 246, 0.3)']}
           style={styles.logoOrb}
         >
-          <Shield size={44} color="#ffffff" strokeWidth={1.8} />
+          <Sparkles size={44} color="#ffffff" strokeWidth={1.8} />
         </LinearGradient>
 
         <Text style={[styles.title, { color: colors.textPrimary }]}>
-          EKIP
+          {t('auth.welcomeTitle')}
         </Text>
         <Text style={[styles.tagline, { color: colors.textSecondary }]}>
-          Tactical Operations & Squad Deployment Comms
+          {t('auth.welcomeTagline')}
         </Text>
       </View>
 
@@ -59,13 +67,13 @@ export function WelcomeView({
           />
           <View style={styles.buttonContent}>
             <Text style={[styles.registerText, { color: colors.textPrimary }]}>
-              Register
+              {t('auth.register')}
             </Text>
-            <ArrowRight
+            <ArrowIcon
               size={18}
               color={colors.textPrimary}
               strokeWidth={2.4}
-              style={{ marginLeft: 8 }}
+              style={{ marginHorizontal: 8 }}
             />
           </View>
         </TouchableOpacity>
@@ -92,7 +100,7 @@ export function WelcomeView({
           />
           <View style={styles.buttonContent}>
             <Text style={[styles.registerText, { color: colors.textPrimary }]}>
-              Login
+              {t('auth.login')}
             </Text>
           </View>
         </TouchableOpacity>
@@ -102,7 +110,7 @@ export function WelcomeView({
       <View style={styles.dividerRow}>
         <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
         <Text style={[styles.dividerText, { color: colors.textTertiary }]}>
-          or continue with
+          {t('auth.orContinueWith')}
         </Text>
         <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
       </View>
@@ -110,7 +118,7 @@ export function WelcomeView({
       <SocialAuthRow onSelect={onLogin} />
 
       <Text style={[styles.disclaimer, { color: colors.textTertiary }]}>
-        By proceeding you confirm adherence to Sector Operational Guidelines and Encrypted Comms Protocols.
+        {t('auth.disclaimer')}
       </Text>
     </View>
   );
@@ -122,6 +130,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 28,
+    position: 'relative',
+  },
+  langBar: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 52 : 24,
+    right: 20,
+    zIndex: 100,
   },
   brandSection: {
     alignItems: 'center',
@@ -149,8 +164,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginTop: 8,
-    maxWidth: 260,
-    lineHeight: 20,
+    maxWidth: 280,
+    lineHeight: 22,
   },
   actionsBox: {
     width: '100%',
@@ -194,13 +209,12 @@ const styles = StyleSheet.create({
   dividerText: {
     fontSize: 11,
     marginHorizontal: 10,
-    textTransform: 'uppercase',
   },
   disclaimer: {
     fontSize: 11,
     textAlign: 'center',
     marginTop: 30,
-    maxWidth: 280,
-    lineHeight: 16,
+    maxWidth: 300,
+    lineHeight: 18,
   },
 });

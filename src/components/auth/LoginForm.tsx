@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { GlassInput, GlassBackButton, GlassSegmented } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
+import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export function LoginForm({
   onBack,
@@ -15,6 +17,8 @@ export function LoginForm({
   onOAuth: () => void;
 }) {
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useI18n();
+
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone' | 'username'>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,22 +33,26 @@ export function LoginForm({
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.container}
     >
-      <GlassBackButton onPress={onBack} style={{ marginBottom: 20 }} />
+      {/* Top Header Row with Back Button and Language Switcher */}
+      <View style={styles.topBar}>
+        <GlassBackButton onPress={onBack} />
+        <LanguageSwitcherPill />
+      </View>
 
-      <Text style={[styles.heading, { color: colors.textPrimary }]}>
-        Welcome Back
+      <Text style={[styles.heading, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
+        {t('auth.loginTitle')}
       </Text>
-      <Text style={[styles.subheading, { color: colors.textSecondary }]}>
-        Authenticate with tactical clearance
+      <Text style={[styles.subheading, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
+        {t('auth.loginSubtitle')}
       </Text>
 
       {/* Tabs */}
       <View style={{ marginTop: 20 }}>
         <GlassSegmented
           options={[
-            { label: 'Email', value: 'email' },
-            { label: 'Radio/Phone', value: 'phone' },
-            { label: 'Callsign', value: 'username' },
+            { label: t('auth.tabEmail'), value: 'email' },
+            { label: t('auth.tabPhone'), value: 'phone' },
+            { label: t('auth.tabUsername'), value: 'username' },
           ]}
           value={loginMethod}
           onChange={(v) => setLoginMethod(v as any)}
@@ -57,7 +65,7 @@ export function LoginForm({
           {loginMethod === 'email' && (
             <GlassInput
               icon="Mail"
-              placeholder="Tactical Email Address"
+              placeholder={t('auth.emailPlaceholder')}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -66,7 +74,7 @@ export function LoginForm({
           {loginMethod === 'phone' && (
             <GlassInput
               icon="Phone"
-              placeholder="Radio / Phone Number"
+              placeholder={t('auth.phonePlaceholder')}
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
@@ -75,7 +83,7 @@ export function LoginForm({
           {loginMethod === 'username' && (
             <GlassInput
               icon="User"
-              placeholder="Operator Callsign (username)"
+              placeholder={t('auth.usernamePlaceholder')}
               value={username}
               onChangeText={setUsername}
             />
@@ -84,15 +92,15 @@ export function LoginForm({
 
         <GlassInput
           icon="Lock"
-          placeholder="Security Key / Password"
+          placeholder={t('auth.passwordPlaceholder')}
           value={password}
           onChangeText={setPassword}
           secure
         />
 
-        <TouchableOpacity style={{ alignSelf: 'flex-end', marginTop: 2 }}>
+        <TouchableOpacity style={{ alignSelf: isRTL ? 'flex-start' : 'flex-end', marginTop: 2 }}>
           <Text style={[styles.forgotText, { color: colors.textSecondary }]}>
-            Forgot credentials?
+            {t('auth.forgotPassword')}
           </Text>
         </TouchableOpacity>
 
@@ -118,7 +126,7 @@ export function LoginForm({
           />
           <View style={styles.buttonContent}>
             <Text style={[styles.submitText, { color: colors.textPrimary }]}>
-              Authorize Login
+              {t('auth.loginSubmit')}
             </Text>
           </View>
         </TouchableOpacity>
@@ -126,7 +134,7 @@ export function LoginForm({
 
       <View style={styles.dividerRow}>
         <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
-        <Text style={[styles.dividerText, { color: colors.textTertiary }]}>or</Text>
+        <Text style={[styles.dividerText, { color: colors.textTertiary }]}>{t('auth.or')}</Text>
         <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
       </View>
 
@@ -151,7 +159,7 @@ export function LoginForm({
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.oauthContent}>
-            <Sparkles size={18} color={colors.textPrimary} style={{ marginRight: 8 }} />
+            <Sparkles size={18} color={colors.textPrimary} style={{ marginHorizontal: 8 }} />
             <Text style={[styles.oauthText, { color: colors.textPrimary }]}>Apple</Text>
           </View>
         </TouchableOpacity>
@@ -176,7 +184,7 @@ export function LoginForm({
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.oauthContent}>
-            <Globe size={18} color={colors.textPrimary} style={{ marginRight: 8 }} />
+            <Globe size={18} color={colors.textPrimary} style={{ marginHorizontal: 8 }} />
             <Text style={[styles.oauthText, { color: colors.textPrimary }]}>Google</Text>
           </View>
         </TouchableOpacity>
@@ -191,6 +199,12 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 40,
   },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
   heading: {
     fontSize: 28,
     fontWeight: '800',
@@ -198,10 +212,12 @@ const styles = StyleSheet.create({
   },
   subheading: {
     fontSize: 14,
-    marginTop: 4,
+    marginTop: 6,
+    lineHeight: 20,
   },
   forgotText: {
     fontSize: 12,
+    fontWeight: '600',
   },
   submitButton: {
     position: 'relative',
@@ -237,27 +253,28 @@ const styles = StyleSheet.create({
     height: 1,
   },
   dividerText: {
-    fontSize: 12,
-    marginHorizontal: 12,
+    fontSize: 11,
+    marginHorizontal: 10,
+    textTransform: 'uppercase',
   },
   oauthRow: {
     flexDirection: 'row',
     gap: 12,
   },
   oauthBtn: {
-    position: 'relative',
     flex: 1,
+    position: 'relative',
     height: 48,
     borderRadius: 20,
     borderWidth: 1,
     overflow: 'visible',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 16,
-    elevation: 8,
-    alignItems: 'center',
+    elevation: 6,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   oauthContent: {
     flexDirection: 'row',

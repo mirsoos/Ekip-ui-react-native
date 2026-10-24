@@ -1,54 +1,64 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { LiquidLens } from '../components/LiquidLens';
 import { OnboardingSlide, type SlideData } from '../components/onboarding/OnboardingSlide';
+import { LanguageSwitcherPill } from '../components/common/LanguageSwitcherPill';
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
-
-const slides: SlideData[] = [
-  {
-    icon: 'Compass',
-    title: 'Deploy Across Sectors',
-    desc: 'Locate tactical squads and high-readiness teams across your operational sectors.',
-    color: '#f472b6',
-  },
-  {
-    icon: 'Plus',
-    title: 'Initiate Operations',
-    desc: 'Assemble an Ekip unit in seconds. Establish clearance thresholds, rules of engagement, and muster points.',
-    color: '#3b82f6',
-  },
-  {
-    icon: 'MessageCircle',
-    title: 'Encrypted Radio Comms',
-    desc: 'Secure end-to-end tactical comms and channel dispatching keep your operators synchronized.',
-    color: '#10b981',
-  },
-  {
-    icon: 'Trophy',
-    title: 'Rank Up & Earn Medals',
-    desc: 'Earn Command XP, execute special directives, earn honors, and upgrade clearance to Commander.',
-    color: '#eab308',
-  },
-];
+import { useI18n } from '../lib/i18n';
 
 export function Onboarding({ onComplete }: { onComplete: () => void }) {
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useI18n();
   const [step, setStep] = useState(0);
+
+  const slides: SlideData[] = [
+    {
+      icon: 'Compass',
+      title: t('onboarding.slide1Title'),
+      desc: t('onboarding.slide1Desc'),
+      color: '#f472b6',
+    },
+    {
+      icon: 'Plus',
+      title: t('onboarding.slide2Title'),
+      desc: t('onboarding.slide2Desc'),
+      color: '#3b82f6',
+    },
+    {
+      icon: 'MessageCircle',
+      title: t('onboarding.slide3Title'),
+      desc: t('onboarding.slide3Desc'),
+      color: '#10b981',
+    },
+    {
+      icon: 'Trophy',
+      title: t('onboarding.slide4Title'),
+      desc: t('onboarding.slide4Desc'),
+      color: '#eab308',
+    },
+  ];
+
   const slide = slides[step];
   const isLast = step === slides.length - 1;
-  const ArrowRight = getIcon('ArrowRight');
+  const ArrowIcon = getIcon(isRTL ? 'ArrowLeft' : 'ArrowRight');
   const Sparkles = getIcon('Sparkles');
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={onComplete}
-        style={styles.skipBtn}
-      >
-        <Text style={[styles.skipText, { color: colors.textSecondary }]}>Skip</Text>
-      </TouchableOpacity>
+      {/* Top Header with Language Switcher & Skip button */}
+      <View style={styles.topHeader}>
+        <LanguageSwitcherPill />
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={onComplete}
+          style={styles.skipBtn}
+        >
+          <Text style={[styles.skipText, { color: colors.textSecondary }]}>
+            {t('onboarding.skip')}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       <OnboardingSlide slide={slide} />
 
@@ -90,21 +100,21 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
           />
           <View style={styles.buttonContent}>
             <Text style={[styles.nextText, { color: colors.textPrimary }]}>
-              {isLast ? 'Enter Command Post' : 'Next'}
+              {isLast ? t('onboarding.getStarted') : t('onboarding.next')}
             </Text>
             {isLast ? (
               <Sparkles
                 size={18}
                 color={colors.textPrimary}
                 strokeWidth={2.4}
-                style={{ marginLeft: 8 }}
+                style={{ marginHorizontal: 8 }}
               />
             ) : (
-              <ArrowRight
+              <ArrowIcon
                 size={18}
                 color={colors.textPrimary}
                 strokeWidth={2.4}
-                style={{ marginLeft: 8 }}
+                style={{ marginHorizontal: 8 }}
               />
             )}
           </View>
@@ -121,11 +131,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
-  skipBtn: {
+  topHeader: {
     position: 'absolute',
-    top: 40,
-    right: 24,
-    padding: 8,
+    top: Platform.OS === 'ios' ? 52 : 24,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    zIndex: 100,
+  },
+  skipBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
   },
   skipText: {
     fontSize: 14,
@@ -133,21 +151,21 @@ const styles = StyleSheet.create({
   },
   dotsRow: {
     flexDirection: 'row',
-    gap: 6,
-    marginTop: 32,
+    gap: 8,
+    marginVertical: 32,
+    alignItems: 'center',
   },
   dot: {
-    height: 6,
-    borderRadius: 3,
+    height: 8,
+    borderRadius: 4,
   },
   actionWrap: {
     width: '100%',
     maxWidth: 320,
-    marginTop: 32,
   },
   nextButton: {
     position: 'relative',
-    height: 52,
+    height: 54,
     borderRadius: 36,
     borderWidth: 1,
     overflow: 'visible',

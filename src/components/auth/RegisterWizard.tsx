@@ -3,8 +3,10 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from '
 import { GlassInput, GlassBackButton, GlassSegmented } from '../Glass';
 import { StepProgressBar } from '../common/StepProgressBar';
 import { LiquidLens } from '../LiquidLens';
+import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 const totalSteps = 4;
 
@@ -16,13 +18,15 @@ export function RegisterWizard({
   onComplete: () => void;
 }) {
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useI18n();
+
   const [step, setStep] = useState(0);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [gender, setGender] = useState('Male');
   const [age, setAge] = useState('');
   const [username, setUsername] = useState('');
-  const [city, setCity] = useState('Sector 7 - Command HQ');
+  const [city, setCity] = useState(isRTL ? 'تهران - انقلاب' : 'Tehran - Enghelab');
   const [password, setPassword] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(true);
 
@@ -46,11 +50,11 @@ export function RegisterWizard({
   };
 
   const isFinal = step === totalSteps - 1;
-  const NextIcon = getIcon(isFinal ? 'Check' : 'ArrowRight');
+  const NextIcon = getIcon(isFinal ? 'Check' : isRTL ? 'ArrowLeft' : 'ArrowRight');
 
   return (
     <View style={styles.root}>
-      {/* 360° Liquid Glass Header */}
+      {/* 360° Liquid Glass Header with Language Switcher */}
       <View style={styles.headerOuter} pointerEvents="box-none">
         <View style={[styles.headerContainer, { borderColor: colors.glassBorderStrong }]}>
           <LiquidLens
@@ -62,9 +66,10 @@ export function RegisterWizard({
             style={StyleSheet.absoluteFill}
           />
           <GlassBackButton onPress={handlePrev} style={{ zIndex: 10 }} />
-          <View style={{ flex: 1, marginHorizontal: 12, zIndex: 10 }}>
+          <View style={{ flex: 1, marginHorizontal: 8, zIndex: 10 }}>
             <StepProgressBar currentStep={step} totalSteps={totalSteps} />
           </View>
+          <LanguageSwitcherPill style={{ zIndex: 10 }} />
         </View>
       </View>
 
@@ -72,137 +77,135 @@ export function RegisterWizard({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.container}
       >
-
-      {step === 0 && (
-        <View key={0} className="animate-raise" style={{ gap: 14 }}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Operator Identity
-          </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Initialize your official command credentials.
-          </Text>
-
-          <GlassInput
-            icon="User"
-            placeholder="First Name"
-            value={firstName}
-            onChangeText={setFirstName}
-          />
-          <GlassInput
-            icon="User"
-            placeholder="Last Name"
-            value={lastName}
-            onChangeText={setLastName}
-          />
-
-          <View style={{ marginTop: 6 }}>
-            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-              Gender Classification
+        {step === 0 && (
+          <View key={0} className="animate-raise" style={{ gap: 14 }}>
+            <Text style={[styles.title, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
+              {t('auth.regStep0Title')}
             </Text>
-            <GlassSegmented
-              options={[
-                { label: 'Male', value: 'Male', icon: 'User' },
-                { label: 'Female', value: 'Female', icon: 'UserCheck' },
-                { label: 'Other', value: 'Other', icon: 'Sparkles' },
-              ]}
-              value={gender}
-              onChange={setGender}
+            <Text style={[styles.subtitle, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
+              {t('auth.regStep0Sub')}
+            </Text>
+
+            <GlassInput
+              icon="User"
+              placeholder={t('auth.firstName')}
+              value={firstName}
+              onChangeText={setFirstName}
+            />
+            <GlassInput
+              icon="User"
+              placeholder={t('auth.lastName')}
+              value={lastName}
+              onChangeText={setLastName}
+            />
+
+            <View style={{ marginTop: 6 }}>
+              <Text style={[styles.fieldLabel, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
+                {t('auth.genderLabel')}
+              </Text>
+              <GlassSegmented
+                options={[
+                  { label: t('auth.genderMale'), value: 'Male', icon: 'User' },
+                  { label: t('auth.genderFemale'), value: 'Female', icon: 'UserCheck' },
+                  { label: t('auth.genderOther'), value: 'Other', icon: 'Sparkles' },
+                ]}
+                value={gender}
+                onChange={setGender}
+              />
+            </View>
+          </View>
+        )}
+
+        {step === 1 && (
+          <View key={1} className="animate-raise" style={{ gap: 14 }}>
+            <Text style={[styles.title, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
+              {t('auth.regStep1Title')}
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
+              {t('auth.regStep1Sub')}
+            </Text>
+
+            <GlassInput
+              icon="User"
+              placeholder={t('auth.username')}
+              value={username}
+              onChangeText={setUsername}
+            />
+            <GlassInput
+              icon="Calendar"
+              placeholder={t('auth.age')}
+              value={age}
+              onChangeText={setAge}
+              keyboardType="numeric"
+            />
+            <GlassInput
+              icon="MapPin"
+              placeholder={t('auth.city')}
+              value={city}
+              onChangeText={setCity}
             />
           </View>
-        </View>
-      )}
+        )}
 
-      {step === 1 && (
-        <View key={1} className="animate-raise" style={{ gap: 14 }}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Command Callsign
-          </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Choose your unique operator tag and operational zone.
-          </Text>
+        {step === 2 && (
+          <View key={2} className="animate-raise" style={{ gap: 14 }}>
+            <Text style={[styles.title, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
+              {t('auth.regStep2Title')}
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
+              {t('auth.regStep2Sub')}
+            </Text>
 
-          <GlassInput
-            icon="User"
-            placeholder="Callsign (e.g. ghost.lead)"
-            value={username}
-            onChangeText={setUsername}
-          />
-          <GlassInput
-            icon="Calendar"
-            placeholder="Age"
-            value={age}
-            onChangeText={setAge}
-            keyboardType="numeric"
-          />
-          <GlassInput
-            icon="MapPin"
-            placeholder="Operational Sector / City"
-            value={city}
-            onChangeText={setCity}
-          />
-        </View>
-      )}
+            <GlassInput
+              icon="Lock"
+              placeholder={t('auth.passwordMin')}
+              value={password}
+              onChangeText={setPassword}
+              secure
+            />
 
-      {step === 2 && (
-        <View key={2} className="animate-raise" style={{ gap: 14 }}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Security Protocols
-          </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Configure your master encryption password.
-          </Text>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setAcceptTerms(!acceptTerms)}
+              style={styles.termsRow}
+            >
+              <View
+                style={[
+                  styles.checkbox,
+                  {
+                    backgroundColor: acceptTerms ? '#f472b6' : 'transparent',
+                    borderColor: acceptTerms ? '#f472b6' : colors.glassBorder,
+                  },
+                ]}
+              >
+                {acceptTerms && <Check size={12} color="#ffffff" strokeWidth={3} />}
+              </View>
+              <Text style={[styles.termsText, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
+                {t('auth.acceptTerms')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
-          <GlassInput
-            icon="Lock"
-            placeholder="Master Passkey (min 6 chars)"
-            value={password}
-            onChangeText={setPassword}
-            secure
-          />
-
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setAcceptTerms(!acceptTerms)}
-            style={styles.termsRow}
-          >
+        {step === 3 && (
+          <View key={3} className="animate-raise" style={{ gap: 14, alignItems: 'center', paddingVertical: 20 }}>
             <View
               style={[
-                styles.checkbox,
-                {
-                  backgroundColor: acceptTerms ? '#f472b6' : 'transparent',
-                  borderColor: acceptTerms ? '#f472b6' : colors.glassBorder,
-                },
+                styles.readyCircle,
+                { backgroundColor: 'rgba(34, 197, 94, 0.15)', borderColor: '#22c55e' },
               ]}
             >
-              {acceptTerms && <Check size={12} color="#ffffff" strokeWidth={3} />}
+              <Check size={40} color="#22c55e" strokeWidth={2.4} />
             </View>
-            <Text style={[styles.termsText, { color: colors.textSecondary }]}>
-              I accept the Command Directives and Comms Encryption Terms.
+
+            <Text style={[styles.title, { color: colors.textPrimary, textAlign: 'center' }]}>
+              {t('auth.regStep3Title')}
             </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {step === 3 && (
-        <View key={3} className="animate-raise" style={{ gap: 14, alignItems: 'center', paddingVertical: 20 }}>
-          <View
-            style={[
-              styles.readyCircle,
-              { backgroundColor: 'rgba(34, 197, 94, 0.15)', borderColor: '#22c55e' },
-            ]}
-          >
-            <Check size={40} color="#22c55e" strokeWidth={2.4} />
+            <Text style={[styles.subtitle, { color: colors.textSecondary, textAlign: 'center' }]}>
+              {t('auth.regStep3Sub', { name: firstName || (isRTL ? 'کاربر عزیز' : 'Friend') })}
+            </Text>
           </View>
-
-          <Text style={[styles.title, { color: colors.textPrimary, textAlign: 'center' }]}>
-            Clearance Verified
-          </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary, textAlign: 'center' }]}>
-            Welcome aboard, Operator {firstName}. Your encrypted dossier has been registered in the sector database.
-          </Text>
-        </View>
-      )}
-
+        )}
       </ScrollView>
 
       {/* 360° Liquid Glass Continue Button */}
@@ -229,13 +232,13 @@ export function RegisterWizard({
           />
           <View style={styles.buttonContent}>
             <Text style={[styles.continueText, { color: colors.textPrimary }]}>
-              {isFinal ? 'Enter Command HQ' : 'Continue'}
+              {isFinal ? t('auth.enterApp') : t('create.continue')}
             </Text>
             <NextIcon
               size={18}
               color={colors.textPrimary}
               strokeWidth={2.4}
-              style={{ marginLeft: 8 }}
+              style={{ marginHorizontal: 8 }}
             />
           </View>
         </TouchableOpacity>
@@ -259,55 +262,22 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     position: 'relative',
-    flexDirection: 'row',
-    alignItems: 'center',
+    height: 60,
     borderRadius: 36,
     borderWidth: 1,
-    paddingVertical: 10,
     paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 14,
-    overflow: 'visible',
+    shadowRadius: 24,
+    elevation: 10,
   },
   container: {
-    paddingHorizontal: 20,
-    paddingTop: 84,
+    paddingHorizontal: 24,
+    paddingTop: 88,
     paddingBottom: 110,
-  },
-  footerWrap: {
-    position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 24 : 16,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 16,
-    zIndex: 900,
-  },
-  continueButton: {
-    position: 'relative',
-    height: 52,
-    borderRadius: 36,
-    borderWidth: 1,
-    overflow: 'visible',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  continueText: {
-    fontSize: 16,
-    fontWeight: '700',
   },
   title: {
     fontSize: 24,
@@ -317,6 +287,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 13,
     marginTop: 4,
+    marginBottom: 6,
     lineHeight: 18,
   },
   fieldLabel: {
@@ -339,9 +310,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   termsText: {
-    fontSize: 12,
     flex: 1,
-    lineHeight: 16,
+    fontSize: 12,
+    lineHeight: 18,
   },
   readyCircle: {
     width: 80,
@@ -350,6 +321,39 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
+  },
+  footerWrap: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingBottom: Platform.OS === 'ios' ? 22 : 12,
+    zIndex: 900,
+  },
+  continueButton: {
+    position: 'relative',
+    height: 64,
+    borderRadius: 36,
+    borderWidth: 1,
+    overflow: 'visible',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
+    elevation: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  continueText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

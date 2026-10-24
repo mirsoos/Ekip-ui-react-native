@@ -2,8 +2,10 @@ import React from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { GlassBackButton } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
+import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export function TwoFactorView({
   otp,
@@ -17,12 +19,14 @@ export function TwoFactorView({
   onComplete: () => void;
 }) {
   const { colors, isDark } = useTheme();
+  const { t, isRTL } = useI18n();
   const Shield = getIcon('ShieldCheck');
 
   return (
     <View style={styles.container}>
-      <View style={styles.backWrap}>
+      <View style={styles.topBar}>
         <GlassBackButton onPress={onBack} />
+        <LanguageSwitcherPill />
       </View>
 
       <View
@@ -34,11 +38,11 @@ export function TwoFactorView({
         <Shield size={38} color="#22c55e" strokeWidth={1.8} />
       </View>
 
-      <Text style={[styles.title, { color: colors.textPrimary }]}>
-        Biometric / 2FA Clearance
+      <Text style={[styles.title, { color: colors.textPrimary, textAlign: 'center' }]}>
+        {t('auth.2faTitle')}
       </Text>
-      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-        Enter the 6-digit cryptographic security code from your command authenticator.
+      <Text style={[styles.subtitle, { color: colors.textSecondary, textAlign: 'center' }]}>
+        {t('auth.2faSubtitle')}
       </Text>
 
       <View style={styles.inputWrap}>
@@ -93,7 +97,7 @@ export function TwoFactorView({
           />
           <View style={styles.buttonContent}>
             <Text style={[styles.verifyText, { color: colors.textPrimary }]}>
-              Verify
+              {t('auth.verify')}
             </Text>
           </View>
         </TouchableOpacity>
@@ -109,10 +113,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 28,
   },
-  backWrap: {
+  topBar: {
     position: 'absolute',
-    top: 30,
+    top: 40,
     left: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    zIndex: 10,
   },
   iconCircle: {
     width: 80,
@@ -126,30 +135,32 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '800',
-    textAlign: 'center',
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 13,
     textAlign: 'center',
     marginTop: 8,
-    lineHeight: 18,
     maxWidth: 280,
+    lineHeight: 18,
   },
   inputWrap: {
     alignItems: 'center',
-    marginTop: 28,
+    marginTop: 32,
+    width: '100%',
   },
   otpInput: {
     fontSize: 32,
     fontWeight: '800',
-    letterSpacing: 10,
+    letterSpacing: 14,
     textAlign: 'center',
-    width: 220,
+    width: '100%',
+    padding: 0,
   },
   dotsRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 10,
+    gap: 12,
+    marginTop: 16,
   },
   dot: {
     width: 10,
@@ -158,8 +169,8 @@ const styles = StyleSheet.create({
   },
   btnWrap: {
     width: '100%',
-    maxWidth: 300,
-    marginTop: 32,
+    maxWidth: 340,
+    marginTop: 40,
   },
   verifyButton: {
     position: 'relative',
