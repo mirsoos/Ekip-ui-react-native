@@ -252,21 +252,33 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
           // Fighter 1 holds up the wooden confession sign: "NOT MY FAULT! 👉"
           // Wooden stick
           ctx.fillStyle = '#92400e';
-          ctx.fillRect(4 * P, -30 * P, 2 * P, 24 * P);
+          ctx.fillRect(4 * P, -34 * P, 2 * P, 28 * P);
 
-          // Sign board
+          // Sign board - large, clear wooden board
+          const signW = 34 * P;
+          const signH = 16 * P;
+          const signX = -9 * P;
+          const signY = -48 * P;
+
           ctx.fillStyle = '#fef3c7'; // Wood plank parchment
-          ctx.fillRect(-6 * P, -38 * P, 26 * P, 10 * P);
+          ctx.fillRect(signX, signY, signW, signH);
           ctx.strokeStyle = '#78350f';
-          ctx.lineWidth = 1.5;
-          ctx.strokeRect(-6 * P, -38 * P, 26 * P, 10 * P);
+          ctx.lineWidth = 2;
+          ctx.strokeRect(signX, signY, signW, signH);
+
+          // Wood grain details
+          ctx.fillStyle = '#fde68a';
+          ctx.fillRect(signX + 2, signY + 3, signW - 4, 1.5);
+          ctx.fillRect(signX + 2, signY + 11 * P, signW - 4, 1.5);
 
           // Sign text: NOT MY FAULT 👉
-          ctx.fillStyle = '#dc2626';
-          ctx.font = 'bold 8px monospace';
-          ctx.textAlign = 'left';
-          ctx.fillText('NOT MY', -4 * P, -32 * P);
-          ctx.fillText('FAULT!👉', -4 * P, -24 * P);
+          ctx.fillStyle = '#b91c1c'; // Bold dark red
+          ctx.font = '900 11px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const textCenterX = signX + signW / 2;
+          ctx.fillText('NOT MY', textCenterX, signY + 5 * P);
+          ctx.fillText('FAULT! 👉', textCenterX, signY + 11 * P);
 
           // Hand holding stick
           ctx.fillStyle = gloveColor;
@@ -680,19 +692,26 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
           shake = 4;
           spawnText(f2.x - 10, groundY - ghostOffset - 15, 'YOINK!', '#facc15');
         } else if (sceneTick > 82 && sceneTick < 96) {
-          // Yanked back down!
-          ghostOffset = Math.max(0, ghostOffset - 5);
+          // Yanked back down into body!
+          ghostOffset = Math.max(0, ghostOffset - 6);
           armGrabY = ghostOffset;
-          ghostAlpha = Math.max(0, ghostAlpha - 0.08);
-        } else if (sceneTick === 96) {
-          // Springs back up!
-          f2.pose = 'IDLE';
-          f2.x = f2.baseX;
-          shake = 4;
-          spawnDust(f2.x, groundY, 10);
-          spawnText(f2.x, groundY - 45, 'BACK! 👻', '#38bdf8');
-        } else if (sceneTick > 115) {
-          startNextScenario();
+          ghostAlpha = Math.max(0, (ghostOffset / 65) * 0.9);
+        } else if (sceneTick >= 96) {
+          // Ghost is 100% gone inside the body!
+          ghostOffset = 0;
+          ghostAlpha = 0;
+          armGrabY = 0;
+          if (sceneTick === 96) {
+            // Springs back up!
+            f2.pose = 'IDLE';
+            f2.x = f2.baseX;
+            shake = 4;
+            spawnDust(f2.x, groundY, 10);
+            spawnText(f2.x, groundY - 45, 'REVIVED!', '#38bdf8');
+          }
+          if (sceneTick > 115) {
+            startNextScenario();
+          }
         }
       } else if (currentScenario === 'BOTH_FALL') {
         if (sceneTick < 22) {
@@ -809,7 +828,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
       drawPixelFighter(f2, false, sceneTick);
 
       // Render Ghost & Grab Arm during GHOST_REVIVE
-      if (currentScenario === 'GHOST_REVIVE' && ghostAlpha > 0) {
+      if (currentScenario === 'GHOST_REVIVE' && ghostAlpha > 0.05 && ghostOffset > 3) {
         ctx.save();
         const gx = f2.x - 12;
         const gy = groundY - ghostOffset;
