@@ -7,16 +7,19 @@ import { ChatListItem } from '../components/chat/ChatListItem';
 import { ChatMessageBubble } from '../components/chat/ChatMessageBubble';
 import { ChatHeader } from '../components/chat/ChatHeader';
 import { ChatInputBar } from '../components/chat/ChatInputBar';
+import { ChatListItemSkeleton } from '../components/skeleton';
 import { useTheme } from '../lib/theme';
 
 export function ChatListScreen({
   onOpenConversation,
   onOpenNotifications,
   search = '',
+  isLoading = false,
 }: {
   onOpenConversation: (id: string) => void;
   onOpenNotifications: () => void;
   search?: string;
+  isLoading?: boolean;
 }) {
   const { conversations } = useAppData();
 
@@ -30,7 +33,14 @@ export function ChatListScreen({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
       >
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <>
+            <ChatListItemSkeleton />
+            <ChatListItemSkeleton />
+            <ChatListItemSkeleton />
+            <ChatListItemSkeleton />
+          </>
+        ) : filtered.length === 0 ? (
           <GlassEmpty
             icon="MessageCircle"
             title="No comms logs"

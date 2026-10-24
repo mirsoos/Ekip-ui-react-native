@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAppData } from '../lib/appData';
 import { EkipCard } from '../components/EkipCard';
@@ -7,6 +7,7 @@ import { DiscoverHeader } from '../components/discover/DiscoverHeader';
 import { AIAssistantBanner } from '../components/discover/AIAssistantBanner';
 import { CommunityMembersRow } from '../components/discover/CommunityMembersRow';
 import { DiscoverFilterSheet } from '../components/discover/DiscoverFilterSheet';
+import { EkipCardSkeleton, CommunityMembersRowSkeleton } from '../components/skeleton';
 import { cities } from '../lib/demoData';
 import { useTheme } from '../lib/theme';
 import type { Group } from '../types/database';
@@ -25,6 +26,7 @@ export const DiscoverScreen = React.forwardRef<
     onOpenOwnProfile: () => void;
     onOpenAI: () => void;
     onOpenNotifications: () => void;
+    isLoading?: boolean;
   }
 >(function DiscoverScreen(
   {
@@ -35,6 +37,7 @@ export const DiscoverScreen = React.forwardRef<
     onOpenOwnProfile,
     onOpenAI,
     onOpenNotifications,
+    isLoading = false,
   },
   ref
 ) {
@@ -92,7 +95,16 @@ export const DiscoverScreen = React.forwardRef<
         <AIAssistantBanner onPress={onOpenAI} />
 
         {/* Featured Squad */}
-        {featured && (
+        {isLoading ? (
+          <View style={styles.sectionWrap}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                Featured Operation
+              </Text>
+            </View>
+            <EkipCardSkeleton variant="featured" />
+          </View>
+        ) : featured ? (
           <View style={styles.sectionWrap}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
@@ -108,13 +120,17 @@ export const DiscoverScreen = React.forwardRef<
               onPress={() => onOpenGroup(featured)}
             />
           </View>
-        )}
+        ) : null}
 
         {/* Active Operatives Row */}
-        <CommunityMembersRow
-          profiles={otherProfiles}
-          onOpenProfile={onOpenProfile}
-        />
+        {isLoading ? (
+          <CommunityMembersRowSkeleton />
+        ) : (
+          <CommunityMembersRow
+            profiles={otherProfiles}
+            onOpenProfile={onOpenProfile}
+          />
+        )}
 
         {/* Category Filter Pills */}
         <View style={styles.categoryWrap}>
@@ -132,10 +148,15 @@ export const DiscoverScreen = React.forwardRef<
         {/* Operational Feed */}
         <View key={categoryFilter} className="animate-raise" style={styles.sectionWrap}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 12 }]}>
-            All Squads ({filtered.length})
+            All Squads {isLoading ? '' : `(${filtered.length})`}
           </Text>
 
-          {filtered.length === 0 ? (
+          {isLoading ? (
+            <>
+              <EkipCardSkeleton />
+              <EkipCardSkeleton />
+            </>
+          ) : filtered.length === 0 ? (
             <GlassEmpty
               icon="Search"
               title="No missions found"

@@ -12,6 +12,7 @@ import { ProfileBadgesList } from '../components/profile/ProfileBadgesList';
 import { ProfileMissionsList } from '../components/profile/ProfileMissionsList';
 import { FriendsList } from '../components/profile/FriendsList';
 import { EkipCard } from '../components/EkipCard';
+import { ProfileScreenSkeleton } from '../components/skeleton';
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import type { Group } from '../types/database';
@@ -25,6 +26,7 @@ export function ProfileScreen({
   onOpenPersonalInfo,
   onOpenVerification,
   scrollY: externalScrollY,
+  isLoading = false,
 }: {
   userId?: string;
   isOwnProfile: boolean;
@@ -34,6 +36,7 @@ export function ProfileScreen({
   onOpenPersonalInfo?: () => void;
   onOpenVerification?: () => void;
   scrollY?: Animated.Value;
+  isLoading?: boolean;
 }) {
   const { me, profiles, groups, members, badges, missions, friends, addFriend, updateFriend, addNotification } = useAppData();
   const { theme, toggle, colors, isDark } = useTheme();
@@ -86,6 +89,14 @@ export function ProfileScreen({
     setShowActions(false);
     setTimeout(() => setToast(''), 2500);
   };
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <ProfileScreenSkeleton />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
