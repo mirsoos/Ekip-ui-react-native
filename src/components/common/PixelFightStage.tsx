@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Platform, Text } from 'react-native';
 
-// Discrete animation poses as requested by user
+// Discrete animation poses
 type FighterPose =
   | 'IDLE'
   | 'PUNCH'
@@ -33,10 +33,21 @@ interface DustParticle {
   life: number;
 }
 
+interface BloodParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  color: string;
+  life: number;
+  onFloor: boolean;
+}
+
 /**
- * Comedic 8-Bit Pixel Brawl Stage
- * Features two exaggerated cartoon pixel characters with discrete animation states,
- * knockouts, recoveries, unexpected comical events, and breaking the 4th wall to stare at the user.
+ * Comedic 8-Bit Pixel Brawl Stage (Cinematic / Display Only)
+ * Pure non-interactive comedic brawl with retro blood splatter, knockouts,
+ * unexpected events, recoveries, and breaking the 4th wall to stare at the user.
  */
 export function PixelFightStage({ height = 230 }: { height?: number }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -56,7 +67,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
     canvas.height = h;
 
     // Ground line
-    const groundY = h - 32;
+    const groundY = h - 30;
 
     // Fighters state
     const f1 = {
@@ -65,8 +76,6 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
       y: 0,
       pose: 'IDLE' as FighterPose,
       facing: 1 as 1 | -1,
-      hp: 100,
-      blinkTimer: 0,
     };
 
     const f2 = {
@@ -75,13 +84,12 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
       y: 0,
       pose: 'IDLE' as FighterPose,
       facing: -1 as 1 | -1,
-      hp: 100,
-      blinkTimer: 0,
     };
 
     // Visual FX
     const popTexts: PopText[] = [];
     const dustParticles: DustParticle[] = [];
+    const bloodParticles: BloodParticle[] = [];
     let shake = 0;
     let starAngle = 0;
 
@@ -110,8 +118,31 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
       }
     };
 
+    const spawnBlood = (x: number, y: number, dir: number, count = 18) => {
+      const bloodColors = ['#ef4444', '#dc2626', '#b91c1c', '#f87171', '#991b1b'];
+      for (let i = 0; i < count; i++) {
+        bloodParticles.push({
+          x: x + (Math.random() - 0.5) * 8,
+          y: y + (Math.random() - 0.5) * 8,
+          vx: dir * (Math.random() * 3.5 + 1.2) + (Math.random() - 0.5) * 2.2,
+          vy: -Math.random() * 3.8 - 1,
+          size: Math.random() < 0.4 ? 4 : Math.random() < 0.7 ? 3 : 2,
+          color: bloodColors[Math.floor(Math.random() * bloodColors.length)],
+          life: 1,
+          onFloor: false,
+        });
+      }
+    };
+
     // Comedic Scenario Sequencer
-    type ScenarioType = 'EXCHANGE' | 'KNOCKOUT_F2' | 'KNOCKOUT_F1' | 'BOTH_FALL' | 'LOOK_AT_USER' | 'YEET';
+    type ScenarioType =
+      | 'EXCHANGE'
+      | 'KNOCKOUT_F2'
+      | 'KNOCKOUT_F1'
+      | 'BOTH_FALL'
+      | 'LOOK_AT_USER'
+      | 'YEET';
+
     const scenarios: ScenarioType[] = [
       'EXCHANGE',
       'KNOCKOUT_F2',
@@ -145,7 +176,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
 
     let currentScenario: ScenarioType = 'EXCHANGE';
 
-    // Pixel drawing helper (scale = 3.6 for retro chunky 8-bit vibe)
+    // Pixel drawing helper (scale = 3.6 for retro chunky 8-bit aesthetic)
     const P = 3.6;
 
     const drawPixelFighter = (
@@ -200,7 +231,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         ctx.fillStyle = shirtColor;
         ctx.fillRect(-4.5 * P, -10 * P, 9 * P, 6 * P);
 
-        // Hands hanging or slightly raised
+        // Hands hanging
         ctx.fillStyle = gloveColor;
         ctx.fillRect(-6.5 * P, -7 * P, 2.2 * P, 3 * P);
         ctx.fillRect(4.3 * P, -7 * P, 2.2 * P, 3 * P);
@@ -421,7 +452,14 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
 
       // Background Retro Spotlight & Grid
       const centerX = width / 2;
-      const grad = ctx.createRadialGradient(centerX, groundY - 40, 10, centerX, groundY - 40, 160);
+      const grad = ctx.createRadialGradient(
+        centerX,
+        groundY - 40,
+        10,
+        centerX,
+        groundY - 40,
+        160
+      );
       grad.addColorStop(0, 'rgba(56, 189, 248, 0.08)');
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = grad;
@@ -440,7 +478,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
       // SCENARIO STATE MACHINE (Comedy & Action)
       // ==========================================
       if (currentScenario === 'EXCHANGE') {
-        // Quick exchange of punches and kicks
+        // Quick exchange of punches and kicks with blood splatter
         if (sceneTick === 15) {
           f1.pose = 'PUNCH';
           f2.pose = 'HIT';
@@ -448,6 +486,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
           shake = 4;
           spawnText(f2.x, groundY - 45, 'POW!', '#ef4444');
           spawnDust(f2.x, groundY);
+          spawnBlood(f2.x, groundY - 35, 1, 16);
         } else if (sceneTick === 28) {
           f1.pose = 'IDLE';
           f2.pose = 'IDLE';
@@ -459,6 +498,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
           shake = 5;
           spawnText(f1.x, groundY - 45, 'WHACK!', '#f59e0b');
           spawnDust(f1.x, groundY);
+          spawnBlood(f1.x, groundY - 35, -1, 16);
         } else if (sceneTick === 58) {
           f1.pose = 'IDLE';
           f2.pose = 'IDLE';
@@ -479,6 +519,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
           shake = 8;
           spawnText(f2.x, groundY - 50, 'K.O.!', '#f43f5e');
           spawnDust(f2.x, groundY, 8);
+          spawnBlood(f2.x, groundY - 35, 1, 28);
         } else if (sceneTick > 25 && sceneTick < 40) {
           f2.x += 4;
           f2.y += 1;
@@ -488,6 +529,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
           f2.y = 0;
           shake = 5;
           spawnDust(f2.x, groundY, 10);
+          spawnBlood(f2.x, groundY - 4, 1, 12);
           spawnText(f2.x, groundY - 30, 'THUD!', '#fbbf24');
         } else if (sceneTick === 110) {
           // Gets up
@@ -496,7 +538,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         } else if (sceneTick === 135) {
           f2.pose = 'IDLE';
           f2.x = f2.baseX;
-          spawnText(f2.x, groundY - 45, '+99 HP', '#22c55e');
+          spawnText(f2.x, groundY - 45, 'READY!', '#22c55e');
         } else if (sceneTick > 150) {
           startNextScenario();
         }
@@ -509,6 +551,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
           shake = 8;
           spawnText(f1.x, groundY - 50, 'BONK!', '#f43f5e');
           spawnDust(f1.x, groundY, 8);
+          spawnBlood(f1.x, groundY - 35, -1, 28);
         } else if (sceneTick > 20 && sceneTick < 35) {
           f1.x -= 4;
           f1.y += 1;
@@ -518,12 +561,13 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
           f1.y = 0;
           shake = 5;
           spawnDust(f1.x, groundY, 10);
+          spawnBlood(f1.x, groundY - 4, -1, 12);
         } else if (sceneTick === 105) {
           f1.pose = 'GET_UP';
         } else if (sceneTick === 130) {
           f1.pose = 'IDLE';
           f1.x = f1.baseX;
-          spawnText(f1.x, groundY - 45, 'REVIVE!', '#38bdf8');
+          spawnText(f1.x, groundY - 45, 'READY!', '#38bdf8');
         } else if (sceneTick > 145) {
           startNextScenario();
         }
@@ -536,6 +580,8 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         } else if (sceneTick === 22) {
           shake = 10;
           spawnText(centerX, groundY - 50, 'HEAD BONK!', '#f59e0b');
+          spawnBlood(centerX - 8, groundY - 35, -1, 14);
+          spawnBlood(centerX + 8, groundY - 35, 1, 14);
           f1.pose = 'KNOCKBACK';
           f2.pose = 'KNOCKBACK';
           f1.y = -10;
@@ -553,6 +599,8 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
           shake = 6;
           spawnDust(f1.x, groundY, 8);
           spawnDust(f2.x, groundY, 8);
+          spawnBlood(f1.x, groundY - 4, -1, 8);
+          spawnBlood(f2.x, groundY - 4, 1, 8);
         } else if (sceneTick === 105) {
           f1.pose = 'GET_UP';
           f2.pose = 'GET_UP';
@@ -576,6 +624,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
           f2.pose = 'HIT';
           shake = 4;
           spawnText(f2.x, groundY - 45, 'OOPS!', '#ec4899');
+          spawnBlood(f2.x, groundY - 35, 1, 14);
           startNextScenario('EXCHANGE');
         }
       } else if (currentScenario === 'YEET') {
@@ -600,6 +649,7 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
           f1.y = 0;
           shake = 7;
           spawnDust(f1.x, groundY, 10);
+          spawnBlood(f1.x, groundY - 4, -1, 24);
           spawnText(f1.x, groundY - 30, 'SLAM!', '#ef4444');
         } else if (sceneTick === 115) {
           f1.pose = 'GET_UP';
@@ -610,6 +660,29 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         } else if (sceneTick > 150) {
           startNextScenario();
         }
+      }
+
+      // Render Blood Particles
+      for (let i = bloodParticles.length - 1; i >= 0; i--) {
+        const b = bloodParticles[i];
+        if (!b.onFloor) {
+          b.x += b.vx;
+          b.y += b.vy;
+          b.vy += 0.28; // gravity
+          if (b.y >= groundY + 1) {
+            b.y = groundY + 1;
+            b.vx = 0;
+            b.vy = 0;
+            b.onFloor = true;
+          }
+        } else {
+          b.life -= 0.008; // slow fade on floor
+        }
+        ctx.fillStyle = b.color;
+        ctx.globalAlpha = Math.max(0, b.life);
+        ctx.fillRect(Math.round(b.x), Math.round(b.y), b.size, b.size);
+        ctx.globalAlpha = 1.0;
+        if (b.life <= 0) bloodParticles.splice(i, 1);
       }
 
       // Render Fighters
@@ -646,39 +719,6 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
         if (t.life <= 0) popTexts.splice(i, 1);
       }
 
-      // Retro Arcade Top Header: 8-Bit Health Bars & Comedy Status
-      const barW = 75;
-      const barH = 7;
-      const barY = 16;
-
-      // F1 Health Bar (Cyan)
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(centerX - barW - 20, barY, barW, barH);
-      ctx.fillStyle = f1.pose === 'FALL' ? '#64748b' : '#38bdf8';
-      ctx.fillRect(
-        centerX - barW - 18,
-        barY + 1.5,
-        (barW - 4) * (f1.pose === 'FALL' ? 0.05 : 1),
-        barH - 3
-      );
-
-      // F2 Health Bar (Pink)
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(centerX + 20, barY, barW, barH);
-      ctx.fillStyle = f2.pose === 'FALL' ? '#64748b' : '#ec4899';
-      ctx.fillRect(
-        centerX + 22,
-        barY + 1.5,
-        (barW - 4) * (f2.pose === 'FALL' ? 0.05 : 1),
-        barH - 3
-      );
-
-      // Center VS / 404 tag
-      ctx.fillStyle = '#facc15';
-      ctx.font = '900 10px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(currentScenario === 'LOOK_AT_USER' ? '?!' : 'VS', centerX, barY + 6.5);
-
       ctx.restore();
 
       animId = requestAnimationFrame(render);
@@ -686,20 +726,8 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
 
     animId = requestAnimationFrame(render);
 
-    // Click on stage: triggers hilarious 4th-wall break or instant comical bonk!
-    const handleClick = () => {
-      if (currentScenario === 'LOOK_AT_USER') {
-        startNextScenario('BOTH_FALL');
-      } else {
-        startNextScenario('LOOK_AT_USER');
-      }
-    };
-
-    canvas.addEventListener('click', handleClick);
-
     return () => {
       cancelAnimationFrame(animId);
-      canvas.removeEventListener('click', handleClick);
     };
   }, [height]);
 
@@ -719,10 +747,10 @@ export function PixelFightStage({ height = 230 }: { height?: number }) {
           width: '100%',
           height: '100%',
           display: 'block',
-          cursor: 'pointer',
+          cursor: 'default',
+          userSelect: 'none',
         }}
       />
-      <Text style={styles.hintText}>👾 Tap fighters to interact</Text>
     </View>
   );
 }
@@ -733,15 +761,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-  },
-  hintText: {
-    position: 'absolute',
-    top: 4,
-    color: 'rgba(255, 255, 255, 0.3)',
-    fontSize: 9,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    pointerEvents: 'none',
   },
   nativeText: {
     color: '#f43f5e',
