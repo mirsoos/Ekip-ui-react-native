@@ -1,58 +1,27 @@
-import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
+import React from 'react';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GlassBackButton } from '../Glass';
-import { LiquidLens } from '../LiquidLens';
+import { FloatingGlassHeader } from '../common/FloatingGlassHeader';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 
-export function AIHeader({ onBack }: { onBack: () => void }) {
-  const { colors, isDark } = useTheme();
+export function AIHeader({
+  onBack,
+  onOpenMenu,
+}: {
+  onBack: () => void;
+  onOpenMenu?: () => void;
+}) {
+  const { colors } = useTheme();
   const { isRTL } = useI18n();
   const Sparkles = getIcon('Sparkles');
-
-  const enterAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    enterAnim.setValue(0);
-    Animated.spring(enterAnim, {
-      toValue: 1,
-      bounciness: 4,
-      speed: 14,
-      useNativeDriver: false,
-    }).start();
-  }, []);
-
-  const enterTranslateY = enterAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-85, 0],
-  });
+  const MoreIcon = getIcon('MoreVertical');
 
   return (
-    <View style={styles.outerContainer} pointerEvents="box-none">
-      <Animated.View
-        style={[
-          styles.container,
-          {
-            flexDirection: isRTL ? 'row-reverse' : 'row',
-            borderColor: colors.glassBorderStrong,
-            transform: [{ translateY: enterTranslateY }],
-          },
-        ]}
-      >
-        {/* 360° Liquid Glass Lens */}
-        <LiquidLens
-          borderRadius={36}
-          marginWidth={16}
-          scale={36}
-          blurDeviation={2.0}
-          overlayOpacity={isDark ? 0.08 : 0.15}
-          style={StyleSheet.absoluteFill}
-        />
-
-        <GlassBackButton onPress={onBack} style={{ zIndex: 10 }} />
-
+    <FloatingGlassHeader
+      onBack={onBack}
+      leading={
         <View style={[styles.aiAvatar, { borderColor: colors.glassBorderStrong }]}>
           <LinearGradient
             colors={['#8b5cf6', '#ec4899']}
@@ -61,58 +30,26 @@ export function AIHeader({ onBack }: { onBack: () => void }) {
             <Sparkles size={18} color="#ffffff" strokeWidth={2.4} />
           </LinearGradient>
         </View>
-
-        <View style={{ flex: 1, zIndex: 10 }}>
-          <Text
-            style={[
-              styles.title,
-              { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
-            ]}
-            numberOfLines={1}
-          >
-            {isRTL ? 'دستیار هوشمند اکیپ' : 'Ekip AI Assistant'}
-          </Text>
-          <Text
-            style={[
-              styles.status,
-              { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' },
-            ]}
-            numberOfLines={1}
-          >
-            {isRTL ? 'پیشنهاد دورهمی و کافه‌گردی' : 'Hangout & Event Planning'}
-          </Text>
-        </View>
-      </Animated.View>
-    </View>
+      }
+      title={isRTL ? 'دستیار هوشمند اکیپ' : 'Ekip AI Assistant'}
+      subtitle={isRTL ? 'پیشنهاد دورهمی و کافه‌گردی' : 'Hangout & Event Planning'}
+      trailing={
+        <TouchableOpacity
+          activeOpacity={0.75}
+          onPress={onOpenMenu}
+          style={[
+            styles.moreBtn,
+            { backgroundColor: colors.glassThinBg, borderColor: colors.glassBorder },
+          ]}
+        >
+          <MoreIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+        </TouchableOpacity>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  outerContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 12,
-    paddingTop: Platform.OS === 'ios' ? 12 : 10,
-    zIndex: 900,
-  },
-  container: {
-    position: 'relative',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    borderRadius: 36,
-    borderWidth: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 14,
-    overflow: 'visible',
-  },
   aiAvatar: {
     width: 38,
     height: 38,
@@ -127,12 +64,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  status: {
-    fontSize: 11,
-    marginTop: 1,
+  moreBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    zIndex: 10,
   },
 });
