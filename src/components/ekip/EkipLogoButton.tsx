@@ -24,56 +24,124 @@ export function EkipLogoButton({
   onPress,
   size = 44,
 }: EkipLogoButtonProps) {
-  const burstAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(active ? 1.08 : 1)).current;
+  const activeAnim = useRef(new Animated.Value(active ? 1 : 0)).current;
   const pressAnim = useRef(new Animated.Value(1)).current;
+  const pulseAnim = useRef(new Animated.Value(0)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
+
+  const heartbeatLoopRef = useRef<Animated.CompositeAnimation | null>(null);
+  const floatLoopRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
     if (active) {
-      burstAnim.setValue(0);
-      Animated.sequence([
-        Animated.timing(burstAnim, {
-          toValue: 1,
-          duration: 120,
-          easing: Easing.out(Easing.cubic),
+      // Transition to active state
+      Animated.spring(activeAnim, {
+        toValue: 1,
+        tension: 130,
+        friction: 8,
+        useNativeDriver: false,
+      }).start();
+
+      // Continuous rhythmic heartbeat pulse behind the logo (Lub-dub rhythm)
+      pulseAnim.setValue(0);
+      const heartbeatAnimation = Animated.loop(
+        Animated.sequence([
+          // Beat 1: first thump
+          Animated.timing(pulseAnim, {
+            toValue: 0.65,
+            duration: 160,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: false,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 0.2,
+            duration: 120,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: false,
+          }),
+          // Beat 2: second stronger thump
+          Animated.timing(pulseAnim, {
+            toValue: 1.0,
+            duration: 200,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: false,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 0,
+            duration: 360,
+            easing: Easing.out(Easing.quad),
+            useNativeDriver: false,
+          }),
+          // Resting interval between heartbeats
+          Animated.delay(650),
+        ])
+      );
+      heartbeatLoopRef.current = heartbeatAnimation;
+      heartbeatAnimation.start();
+
+      // Continuous subtle breathing/floating micro-animation on the 3 pieces
+      floatAnim.setValue(0);
+      const floatAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(floatAnim, {
+            toValue: 1,
+            duration: 1300,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: false,
+          }),
+          Animated.timing(floatAnim, {
+            toValue: 0,
+            duration: 1300,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: false,
+          }),
+        ])
+      );
+      floatLoopRef.current = floatAnimation;
+      floatAnimation.start();
+    } else {
+      // Stop continuous loops when inactive
+      if (heartbeatLoopRef.current) {
+        heartbeatLoopRef.current.stop();
+        heartbeatLoopRef.current = null;
+      }
+      if (floatLoopRef.current) {
+        floatLoopRef.current.stop();
+        floatLoopRef.current = null;
+      }
+
+      Animated.parallel([
+        Animated.spring(activeAnim, {
+          toValue: 0,
+          tension: 140,
+          friction: 9,
           useNativeDriver: false,
         }),
-        Animated.spring(burstAnim, {
+        Animated.timing(pulseAnim, {
           toValue: 0,
-          tension: 95,
-          friction: 6.5,
+          duration: 180,
+          useNativeDriver: false,
+        }),
+        Animated.spring(floatAnim, {
+          toValue: 0,
+          tension: 140,
+          friction: 9,
           useNativeDriver: false,
         }),
       ]).start();
-
-      Animated.spring(scaleAnim, {
-        toValue: 1.08,
-        tension: 110,
-        friction: 7,
-        useNativeDriver: false,
-      }).start();
-    } else {
-      Animated.spring(burstAnim, {
-        toValue: 0,
-        tension: 100,
-        friction: 8,
-        useNativeDriver: false,
-      }).start();
-
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 100,
-        friction: 8,
-        useNativeDriver: false,
-      }).start();
     }
+
+    return () => {
+      if (heartbeatLoopRef.current) heartbeatLoopRef.current.stop();
+      if (floatLoopRef.current) floatLoopRef.current.stop();
+    };
   }, [active]);
 
   const handlePressIn = () => {
     Animated.spring(pressAnim, {
-      toValue: 0.92,
-      tension: 180,
-      friction: 8,
+      toValue: 0.90,
+      tension: 200,
+      friction: 10,
       useNativeDriver: false,
     }).start();
   };
@@ -81,39 +149,69 @@ export function EkipLogoButton({
   const handlePressOut = () => {
     Animated.spring(pressAnim, {
       toValue: 1,
-      tension: 120,
-      friction: 6,
+      tension: 140,
+      friction: 7,
       useNativeDriver: false,
     }).start();
   };
 
-  // Dimensional ratios derived from user's updated SVG viewBoxes:
-  // top: 1000 x 270 (wRatio = 1.0,  hRatio = 0.27)
+  // Dimensional ratios derived from updated SVGs:
+  // top: 1000 x 270 (hRatio = 0.27)
   // mid: 900 x 270  (wRatio = 0.90, hRatio = 0.27)
-  // bot: 1000 x 240 (wRatio = 1.0,  hRatio = 0.24)
+  // bot: 1000 x 240 (hRatio = 0.24)
   const pieceHeight = Math.round(size * 0.27);
   const midWidth = Math.round(size * 0.90);
   const botHeight = Math.round(size * 0.24);
-  const gap = 2;
-  const totalH = pieceHeight + gap + pieceHeight + gap + botHeight;
+  const baseGap = 2;
 
-  // Separation displacement in pixels during burst
-  const topTranslateY = burstAnim.interpolate({
+  // Active vs Inactive base transforms
+  const baseScale = activeAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, -3.5],
+    outputRange: [0.92, 1.05],
   });
 
-  const midScale = burstAnim.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [1, 1.06, 1.02],
-  });
-
-  const botTranslateY = burstAnim.interpolate({
+  const opacityAnim = activeAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 3.5],
+    outputRange: [0.42, 1],
   });
 
-  const combinedScale = Animated.multiply(scaleAnim, pressAnim);
+  // Heartbeat micro-pulse on the logo itself
+  const logoHeartbeat = pulseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.04],
+  });
+
+  const combinedScale = Animated.multiply(
+    Animated.multiply(baseScale, pressAnim),
+    logoHeartbeat
+  );
+
+  // Subtle continuous micro-animation on each piece (while active)
+  const topTranslateY = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -1.2],
+  });
+
+  const midTranslateX = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1.4],
+  });
+
+  const botTranslateY = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1.0],
+  });
+
+  // Heartbeat pulse behind the logo
+  const pulseScale = pulseAnim.interpolate({
+    inputRange: [0, 0.65, 1],
+    outputRange: [0.88, 1.15, 1.28],
+  });
+
+  const pulseOpacity = pulseAnim.interpolate({
+    inputRange: [0, 0.2, 0.65, 1],
+    outputRange: [0, 0.40, 0.25, 0.55],
+  });
 
   const imgStyle = {
     width: size,
@@ -127,44 +225,43 @@ export function EkipLogoButton({
 
   return (
     <TouchableOpacity
-      activeOpacity={0.9}
+      activeOpacity={0.88}
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       style={styles.container}
     >
-      {/* Ambient soft glow when active */}
-      {active && (
-        <View
-          style={[
-            styles.ambientGlow,
-            {
-              width: size + 8,
-              height: totalH + 8,
-              borderRadius: 14,
-            },
-          ]}
-        />
-      )}
+      {/* Heartbeat pulse element behind the logo */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.heartbeatPulse,
+          {
+            opacity: pulseOpacity,
+            transform: [{ scale: pulseScale }],
+          },
+        ]}
+      />
 
+      {/* 3-piece SVG logo stack */}
       <Animated.View
         style={[
           styles.logoStack,
           {
             width: size,
-            height: totalH,
-            gap,
+            opacity: opacityAnim,
             transform: [{ scale: combinedScale }],
           },
         ]}
       >
-        {/* TOP PIECE (Blue Arc with tail) */}
+        {/* TOP PIECE (Blue Speech Arc) */}
         <Animated.View
           style={{
             width: size,
             height: pieceHeight,
             alignItems: 'flex-start',
             justifyContent: 'center',
+            marginBottom: baseGap,
             transform: [{ translateY: topTranslateY }],
             zIndex: 3,
           }}
@@ -176,14 +273,15 @@ export function EkipLogoButton({
           />
         </Animated.View>
 
-        {/* MID PIECE (Orange Arc with tail) */}
+        {/* MID PIECE (Orange Speech Arc - 90% width) */}
         <Animated.View
           style={{
             width: midWidth,
             height: pieceHeight,
             alignItems: 'flex-start',
             justifyContent: 'center',
-            transform: [{ scale: midScale }],
+            marginBottom: baseGap,
+            transform: [{ translateX: midTranslateX }],
             zIndex: 2,
           }}
         >
@@ -205,7 +303,7 @@ export function EkipLogoButton({
           />
         </Animated.View>
 
-        {/* BOT PIECE (Green Capsule) */}
+        {/* BOT PIECE (Green Capsule Foundation) */}
         <Animated.View
           style={{
             width: size,
@@ -223,9 +321,6 @@ export function EkipLogoButton({
           />
         </Animated.View>
       </Animated.View>
-
-      {/* Subtle indicator dot below when active */}
-      {active && <View style={styles.activeDot} />}
     </TouchableOpacity>
   );
 }
@@ -243,33 +338,22 @@ const styles = StyleSheet.create({
   logoStack: {
     alignItems: 'flex-start',
     justifyContent: 'center',
+    zIndex: 2,
   },
-  ambientGlow: {
+  heartbeatPulse: {
     position: 'absolute',
-    backgroundColor: 'rgba(0, 122, 255, 0.12)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 110, 30, 0.16)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 130, 40, 0.32)',
+    zIndex: 1,
     pointerEvents: 'none',
-    shadowColor: '#007fe8',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.45,
-    shadowRadius: 14,
-    elevation: 4,
     ...(Platform.OS === 'web'
       ? ({
-          filter: 'blur(8px)',
+          boxShadow: '0 0 14px rgba(255, 110, 30, 0.22)',
         } as any)
       : {}),
-  },
-  activeDot: {
-    position: 'absolute',
-    bottom: 2,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#00a0ff',
-    shadowColor: '#007fe8',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.8,
-    shadowRadius: 3,
-    elevation: 3,
   },
 });
