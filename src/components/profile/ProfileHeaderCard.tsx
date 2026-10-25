@@ -36,7 +36,7 @@ export function ProfileHeaderCard({
 
   return (
     <View style={styles.container}>
-      <View style={styles.topRow}>
+      <View style={[styles.topRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <View style={styles.avatarWrap}>
           {hideAvatar ? (
             <View style={{ width: 88, height: 88 }} />
@@ -50,7 +50,7 @@ export function ProfileHeaderCard({
         </View>
 
         {!isOwnProfile && (
-          <View style={styles.actionsGroup}>
+          <View style={[styles.actionsGroup, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             {onOpenActions && (
               <TouchableOpacity
                 activeOpacity={0.75}
@@ -73,9 +73,9 @@ export function ProfileHeaderCard({
         )}
       </View>
 
-      <View style={{ marginTop: 12 }}>
-        <View style={styles.nameRow}>
-          <Text style={[styles.name, { color: colors.textPrimary }]}>
+      <View style={{ marginTop: 12, alignItems: isRTL ? 'flex-end' : 'flex-start' }}>
+        <View style={[styles.nameRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+          <Text style={[styles.name, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
             {profile.first_name} {profile.last_name}
           </Text>
           {profile.is_verified && (
@@ -88,18 +88,18 @@ export function ProfileHeaderCard({
           )}
         </View>
 
-        <Text style={[styles.handle, { color: colors.textTertiary }]}>
+        <Text style={[styles.handle, { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' }]}>
           @{profile.username}
         </Text>
 
         {profile.bio && (
-          <Text style={[styles.bio, { color: colors.textSecondary }]}>
+          <Text style={[styles.bio, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
             {profile.bio}
           </Text>
         )}
 
         {/* Quick info pills */}
-        <View style={styles.pillsRow}>
+        <View style={[styles.pillsRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
           {profile.age && <InfoPill icon="Calendar" label={t('profile.yearsOld', { age: profile.age })} />}
           {profile.gender && <InfoPill icon="User" label={genderLabels[profile.gender] ?? profile.gender} />}
           {profile.city && <InfoPill icon="MapPin" label={profile.city} />}

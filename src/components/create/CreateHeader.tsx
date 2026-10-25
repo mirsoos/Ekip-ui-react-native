@@ -5,6 +5,7 @@ import { StepProgressBar } from '../common/StepProgressBar';
 import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export function CreateHeader({
   step,
@@ -18,6 +19,7 @@ export function CreateHeader({
   onOpenAI: () => void;
 }) {
   const { colors, isDark } = useTheme();
+  const { isRTL } = useI18n();
   const Sparkles = getIcon('Sparkles');
 
   const enterAnim = useRef(new Animated.Value(0)).current;
@@ -43,6 +45,7 @@ export function CreateHeader({
         style={[
           styles.container,
           {
+            flexDirection: isRTL ? 'row-reverse' : 'row',
             borderColor: colors.glassBorderStrong,
             transform: [{ translateY: enterTranslateY }],
           },

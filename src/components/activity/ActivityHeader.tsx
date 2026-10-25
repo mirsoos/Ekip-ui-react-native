@@ -18,7 +18,7 @@ export function ActivityHeader({
   onOpenNotifications: () => void;
 }) {
   const { colors, isDark } = useTheme();
-  const { t } = useI18n();
+  const { t, isRTL } = useI18n();
 
   const enterAnim = useRef(new Animated.Value(0)).current;
 
@@ -58,8 +58,8 @@ export function ActivityHeader({
           style={StyleSheet.absoluteFill}
         />
 
-        <View style={styles.titleRow}>
-          <Text style={[styles.heading, { color: colors.textPrimary }]}>
+        <View style={[styles.titleRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+          <Text style={[styles.heading, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
             {t('activity.myEkip')}
           </Text>
           <NotificationButton

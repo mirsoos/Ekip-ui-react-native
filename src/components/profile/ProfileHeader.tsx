@@ -5,6 +5,7 @@ import { GlassBackButton } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 import type { Profile } from '../../types/database';
 
 export function ProfileHeader({
@@ -21,6 +22,7 @@ export function ProfileHeader({
   scrollY: Animated.Value;
 }) {
   const { theme, toggle, colors, isDark } = useTheme();
+  const { isRTL } = useI18n();
   const Sun = getIcon('Sun');
   const Moon = getIcon('Moon');
   const SettingsIcon = getIcon('Settings');
@@ -28,7 +30,9 @@ export function ProfileHeader({
   const SCROLL_DISTANCE = 65;
   const isIOS = Platform.OS === 'ios';
   const targetTranslateY = isIOS ? -140 : -142;
-  const targetTranslateX = !isOwnProfile && onBack ? 29 : -15;
+  const targetTranslateX = isRTL
+    ? (!isOwnProfile && onBack ? -29 : 15)
+    : (!isOwnProfile && onBack ? 29 : -15);
 
   const initialDocked = ((scrollY as any)?._value ?? 0) >= 60;
   const [isDocked, setIsDocked] = useState(initialDocked);
@@ -141,6 +145,7 @@ export function ProfileHeader({
           style={[
             styles.container,
             {
+              flexDirection: isRTL ? 'row-reverse' : 'row',
               borderColor: colors.glassBorderStrong,
               transform: [{ translateY: capsuleTranslateY }],
             },
@@ -231,6 +236,7 @@ export function ProfileHeader({
         style={[
           styles.unscrolledBar,
           {
+            flexDirection: isRTL ? 'row-reverse' : 'row',
             transform: [{ translateY: unscrolledTranslateY }],
           },
         ]}
@@ -298,6 +304,7 @@ export function ProfileHeader({
         style={[
           styles.avatarContainer,
           {
+            [isRTL ? 'right' : 'left']: 16,
             opacity: avatarEnterOpacity,
             transform: [
               { translateY: combinedTranslateY },
@@ -419,7 +426,6 @@ const styles = StyleSheet.create({
   avatarContainer: {
     position: 'absolute',
     top: 136,
-    left: 16,
     width: 88,
     height: 88,
     borderRadius: 44,

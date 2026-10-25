@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { getIcon, type IconName } from '../lib/icons';
 import { GlassButton, GlassCloseButton } from './Glass';
 import { useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 
 function getPortalTarget(): HTMLElement | null {
   if (typeof document === 'undefined') return null;
@@ -30,6 +31,7 @@ export function GlassSheet({
   contentClassName = '',
 }: GlassSheetProps) {
   const { isDark } = useTheme();
+  const { isRTL } = useI18n();
   const [isRendered, setIsRendered] = useState(open);
 
   useEffect(() => {
@@ -114,11 +116,27 @@ export function GlassSheet({
         <div className="ekip-sheet-handle" />
 
         {/* Sheet header */}
-        <div className="ekip-sheet-header">
+        <div
+          className="ekip-sheet-header"
+          style={{
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+            gap: 12,
+          }}
+        >
           {title ? (
-            <h2 className="ekip-sheet-title">{title}</h2>
+            <h2
+              className="ekip-sheet-title"
+              style={{
+                margin: '6px 0 0 0',
+                textAlign: isRTL ? 'right' : 'left',
+                direction: isRTL ? 'rtl' : 'ltr',
+                flex: 1,
+              }}
+            >
+              {title}
+            </h2>
           ) : (
-            <div style={{ height: 24 }} />
+            <div style={{ flex: 1, height: 24 }} />
           )}
           <GlassCloseButton onPress={onClose} />
         </div>

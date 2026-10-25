@@ -17,7 +17,7 @@ export function ChatHeader({
   onOpenMenu?: () => void;
 }) {
   const { colors, isDark } = useTheme();
-  const { t } = useI18n();
+  const { t, isRTL } = useI18n();
   const isGroup = conversation.type === 'group';
   const MoreIcon = getIcon('MoreVertical');
 
@@ -44,6 +44,7 @@ export function ChatHeader({
         style={[
           styles.container,
           {
+            flexDirection: isRTL ? 'row-reverse' : 'row',
             borderColor: colors.glassBorderStrong,
             transform: [{ translateY: enterTranslateY }],
           },
@@ -59,7 +60,7 @@ export function ChatHeader({
           style={StyleSheet.absoluteFill}
         />
 
-        <GlassBackButton onPress={onBack} style={{ marginRight: 10, zIndex: 10 }} />
+        <GlassBackButton onPress={onBack} style={{ zIndex: 10 }} />
 
         <View style={{ zIndex: 10 }}>
           <GlassAvatar
@@ -70,11 +71,22 @@ export function ChatHeader({
           />
         </View>
 
-        <View style={{ flex: 1, marginLeft: 10, zIndex: 10 }}>
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+        <View style={{ flex: 1, zIndex: 10 }}>
+          <Text
+            style={[
+              styles.title,
+              { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+            ]}
+            numberOfLines={1}
+          >
             {conversation.title}
           </Text>
-          <Text style={[styles.status, { color: colors.textTertiary }]}>
+          <Text
+            style={[
+              styles.status,
+              { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' },
+            ]}
+          >
             {isGroup ? t('chat.channel') : t('chat.encryptedLink')}
           </Text>
         </View>
@@ -108,6 +120,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     borderRadius: 36,
     borderWidth: 1,
     paddingVertical: 8,

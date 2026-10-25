@@ -24,7 +24,7 @@ export function TwoFactorView({
 
   return (
     <View style={styles.container}>
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <GlassBackButton onPress={onBack} />
         <LanguageSwitcherPill />
       </View>

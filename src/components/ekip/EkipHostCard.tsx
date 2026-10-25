@@ -20,15 +20,15 @@ export function EkipHostCard({
 
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onOpenProfile} style={{ marginBottom: 12 }}>
-      <GlassCard variant="thin" style={styles.card}>
+      <GlassCard variant="thin" style={[styles.card, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <GlassAvatar
           src={host.avatar_url}
           name={`${host.first_name} ${host.last_name}`}
           size={46}
         />
 
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <View style={{ flex: 1, marginLeft: isRTL ? 0 : 12, marginRight: isRTL ? 12 : 0, alignItems: isRTL ? 'flex-end' : 'flex-start' }}>
+          <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 6 }}>
             <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
               {host.first_name} {host.last_name}
             </Text>
@@ -36,13 +36,13 @@ export function EkipHostCard({
             {host.is_premium && <GlassBadgeIcon icon="Crown" label="" color="amber" />}
           </View>
 
-          <Text style={[styles.handle, { color: colors.textTertiary }]} numberOfLines={1}>
+          <Text style={[styles.handle, { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={1}>
             @{host.username} {host.job ? `· ${host.job}` : ''}
           </Text>
 
-          <View style={styles.statsRow}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <ShieldIcon size={12} color="#22c55e" style={{ marginRight: 3 }} />
+          <View style={[styles.statsRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+            <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center' }}>
+              <ShieldIcon size={12} color="#22c55e" style={{ marginRight: isRTL ? 0 : 3, marginLeft: isRTL ? 3 : 0 }} />
               <Text style={styles.statText}>
                 {isRTL ? `خوش‌قولی ${host.honor_score}` : `Trust ${host.honor_score}`}
               </Text>

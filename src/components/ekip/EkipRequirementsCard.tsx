@@ -71,8 +71,8 @@ export function EkipRequirementsCard({
 
   return (
     <GlassCard variant="thin" style={styles.card}>
-      <View style={styles.header}>
-        <Shield size={16} color="#f472b6" strokeWidth={2.4} style={{ marginRight: 6 }} />
+      <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <Shield size={16} color="#f472b6" strokeWidth={2.4} style={{ marginRight: isRTL ? 0 : 6, marginLeft: isRTL ? 6 : 0 }} />
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           {isRTL ? 'شرایط حضور در برنامه' : 'Participation Requirements'}
         </Text>
@@ -80,12 +80,12 @@ export function EkipRequirementsCard({
 
       <View style={{ gap: 8 }}>
         {rules.map((rule) => (
-          <View key={rule.label} style={styles.ruleRow}>
+          <View key={rule.label} style={[styles.ruleRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <Text style={[styles.ruleLabel, { color: colors.textSecondary }]}>
               {rule.label}
             </Text>
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 6 }}>
               <Text style={[styles.ruleDesc, { color: colors.textTertiary }]}>
                 {rule.desc}
               </Text>

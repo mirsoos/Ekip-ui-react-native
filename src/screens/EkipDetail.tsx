@@ -130,24 +130,24 @@ export function EkipDetail({
 
         <View style={styles.bodyWrap}>
           {/* Category Chip */}
-          <View style={styles.categoryBadge}>
-            <CatIcon size={12} color="#ffffff" strokeWidth={2.4} style={{ marginRight: 4 }} />
+          <View style={[styles.categoryBadge, { alignSelf: isRTL ? 'flex-end' : 'flex-start', flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+            <CatIcon size={12} color="#ffffff" strokeWidth={2.4} style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }} />
             <Text style={styles.categoryText}>
               {group.category === 'work' ? t('discover.cat.work') : t('discover.cat.entertainment')}
             </Text>
           </View>
 
           {/* Title and Description */}
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
+          <Text style={[styles.title, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
             {group.title}
           </Text>
-          <Text style={[styles.desc, { color: colors.textSecondary }]}>
+          <Text style={[styles.desc, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
             {group.description}
           </Text>
 
           {/* Tags */}
           {group.tags && group.tags.length > 0 && (
-            <View style={styles.tagsWrap}>
+            <View style={[styles.tagsWrap, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
               {group.tags.map((tag) => (
                 <View
                   key={tag}

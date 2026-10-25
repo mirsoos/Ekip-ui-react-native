@@ -794,6 +794,7 @@ export function GlassProgress({
   style,
 }: GlassProgressProps) {
   const { colors } = useTheme();
+  const { isRTL } = useI18n();
   const pct = Math.min(100, Math.max(0, (value / (max || 1)) * 100));
 
   const gradColors: [string, string] =
@@ -807,14 +808,18 @@ export function GlassProgress({
     <View
       style={[
         styles.progressTrack,
-        { backgroundColor: colors.glassThinBg, borderColor: colors.glassBorder },
+        {
+          flexDirection: isRTL ? 'row-reverse' : 'row',
+          backgroundColor: colors.glassThinBg,
+          borderColor: colors.glassBorder,
+        },
         style,
       ]}
     >
       <LinearGradient
         colors={gradColors}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
+        start={{ x: isRTL ? 1 : 0, y: 0 }}
+        end={{ x: isRTL ? 0 : 1, y: 0 }}
         style={[styles.progressBar, { width: `${pct}%` }]}
       />
     </View>

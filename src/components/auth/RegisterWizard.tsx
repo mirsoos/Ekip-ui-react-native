@@ -56,7 +56,7 @@ export function RegisterWizard({
     <View style={styles.root}>
       {/* 360° Liquid Glass Header with Language Switcher */}
       <View style={styles.headerOuter} pointerEvents="box-none">
-        <View style={[styles.headerContainer, { borderColor: colors.glassBorderStrong }]}>
+        <View style={[styles.headerContainer, { flexDirection: isRTL ? 'row-reverse' : 'row', borderColor: colors.glassBorderStrong }]}>
           <LiquidLens
             borderRadius={36}
             marginWidth={16}

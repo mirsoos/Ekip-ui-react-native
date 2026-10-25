@@ -34,7 +34,7 @@ export function LoginForm({
       contentContainerStyle={styles.container}
     >
       {/* Top Header Row with Back Button and Language Switcher */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <GlassBackButton onPress={onBack} />
         <LanguageSwitcherPill />
       </View>

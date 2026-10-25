@@ -39,6 +39,7 @@ export function SettingsHeader({
         style={[
           styles.container,
           {
+            flexDirection: isRTL ? 'row-reverse' : 'row',
             borderColor: colors.glassBorderStrong,
             transform: [{ translateY: enterTranslateY }],
           },
@@ -54,10 +55,23 @@ export function SettingsHeader({
           style={StyleSheet.absoluteFill}
         />
 
-        <GlassBackButton onPress={onBack} style={{ marginRight: 12, zIndex: 10 }} />
+        <GlassBackButton
+          onPress={onBack}
+          style={{
+            marginRight: isRTL ? 0 : 12,
+            marginLeft: isRTL ? 12 : 0,
+            zIndex: 10,
+          }}
+        />
 
         <View style={{ flex: 1, zIndex: 10 }}>
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+          <Text
+            style={[
+              styles.title,
+              { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+            ]}
+            numberOfLines={1}
+          >
             {displayTitle}
           </Text>
         </View>

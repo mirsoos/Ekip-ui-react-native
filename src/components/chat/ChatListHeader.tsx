@@ -20,7 +20,7 @@ export function ChatListHeader({
   onOpenNotifications: () => void;
 }) {
   const { colors, isDark } = useTheme();
-  const { t } = useI18n();
+  const { t, isRTL } = useI18n();
 
   const enterAnim = useRef(new Animated.Value(0)).current;
 
@@ -60,12 +60,12 @@ export function ChatListHeader({
           style={StyleSheet.absoluteFill}
         />
 
-        <View style={styles.headerTop}>
+        <View style={[styles.headerTop, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
           <View style={{ flex: 1, zIndex: 10 }}>
-            <Text style={[styles.heading, { color: colors.textPrimary }]}>
+            <Text style={[styles.heading, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
               {t('chat.encryptedComms')}
             </Text>
-            <Text style={[styles.subheading, { color: colors.textSecondary }]}>
+            <Text style={[styles.subheading, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
               {t('chat.unreadTransmissions', { count: unreadTotal })}
             </Text>
           </View>

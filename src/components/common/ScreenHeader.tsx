@@ -2,6 +2,7 @@ import React, { type ReactNode } from 'react';
 import { View, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { GlassBackButton } from '../Glass';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export interface ScreenHeaderProps {
   title: string;
@@ -19,26 +20,28 @@ export function ScreenHeader({
   style,
 }: ScreenHeaderProps) {
   const { colors } = useTheme();
+  const { isRTL } = useI18n();
 
   return (
     <View
       style={[
         styles.container,
         {
+          flexDirection: isRTL ? 'row-reverse' : 'row',
           backgroundColor: colors.glassThickBg,
           borderBottomColor: colors.glassBorder,
         },
         style,
       ]}
     >
-      <View style={styles.leftRow}>
-        {onBack && <GlassBackButton onPress={onBack} style={{ marginRight: 10 }} />}
+      <View style={[styles.leftRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        {onBack && <GlassBackButton onPress={onBack} style={{ marginRight: isRTL ? 0 : 10, marginLeft: isRTL ? 10 : 0 }} />}
         <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+          <Text style={[styles.title, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={1}>
             {title}
           </Text>
           {subtitle && (
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+            <Text style={[styles.subtitle, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={1}>
               {subtitle}
             </Text>
           )}

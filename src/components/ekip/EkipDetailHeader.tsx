@@ -5,6 +5,7 @@ import { GlassBackButton } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export interface EkipDetailHeaderProps {
   coverUrl: string;
@@ -20,6 +21,7 @@ export function EkipDetailHeader({
   onBookmark,
 }: EkipDetailHeaderProps) {
   const { colors, isDark } = useTheme();
+  const { isRTL } = useI18n();
   const ShareIcon = getIcon('Share');
   const BookmarkIcon = getIcon('Bookmark');
 
@@ -36,10 +38,28 @@ export function EkipDetailHeader({
       />
 
       {/* Back button with authentic Liquid Glass */}
-      <GlassBackButton onPress={onBack} style={styles.backBtn} />
+      <GlassBackButton
+        onPress={onBack}
+        style={[
+          styles.backBtn,
+          {
+            left: isRTL ? 'auto' : 16,
+            right: isRTL ? 16 : 'auto',
+          },
+        ]}
+      />
 
       {/* Top right actions with authentic Liquid Glass */}
-      <View style={styles.rightActions}>
+      <View
+        style={[
+          styles.rightActions,
+          {
+            left: isRTL ? 16 : 'auto',
+            right: isRTL ? 'auto' : 16,
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+          },
+        ]}
+      >
         <TouchableOpacity
           activeOpacity={0.75}
           onPress={onShare}
@@ -128,14 +148,11 @@ const styles = StyleSheet.create({
   backBtn: {
     position: 'absolute',
     top: 16,
-    left: 16,
     zIndex: 20,
   },
   rightActions: {
     position: 'absolute',
     top: 16,
-    right: 16,
-    flexDirection: 'row',
     gap: 8,
     zIndex: 20,
   },

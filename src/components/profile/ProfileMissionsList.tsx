@@ -20,6 +20,7 @@ function MissionProgressBar({
   colors: any;
   index: number;
 }) {
+  const { isRTL } = useI18n();
   const animVal = useRef(new Animated.Value(0)).current;
   const pct = Math.min(100, Math.max(0, (progress / (target || 1)) * 100));
 
@@ -50,6 +51,7 @@ function MissionProgressBar({
       style={[
         styles.progressTrack,
         {
+          flexDirection: isRTL ? 'row-reverse' : 'row',
           backgroundColor: colors.glassThinBg,
           borderColor: colors.glassBorder,
         },
@@ -58,8 +60,8 @@ function MissionProgressBar({
       <Animated.View style={[styles.progressBar, { width }]}>
         <LinearGradient
           colors={gradColors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+          start={{ x: isRTL ? 1 : 0, y: 0 }}
+          end={{ x: isRTL ? 0 : 1, y: 0 }}
           style={StyleSheet.absoluteFill}
         />
       </Animated.View>
@@ -86,19 +88,19 @@ export function ProfileMissionsList({ missions }: { missions: Mission[] }) {
     <View style={{ gap: 10 }}>
       {missions.map((m, idx) => (
         <GlassCard key={m.id} variant="thin" style={styles.card}>
-          <View style={styles.topRow}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>
+          <View style={[styles.topRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+            <Text style={[styles.title, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
               {m.title}
             </Text>
             <Text style={styles.reward}>+{m.xp_reward} XP</Text>
           </View>
 
-          <Text style={[styles.desc, { color: colors.textSecondary }]}>
+          <Text style={[styles.desc, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
             {m.description}
           </Text>
 
           <View style={{ marginTop: 8 }}>
-            <View style={styles.progressRow}>
+            <View style={[styles.progressRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
               <Text style={[styles.progressLabel, { color: colors.textTertiary }]}>
                 {isRTL ? 'میزان پیشرفت' : 'Progress'}
               </Text>
@@ -117,8 +119,8 @@ export function ProfileMissionsList({ missions }: { missions: Mission[] }) {
           </View>
 
           {m.is_complete && (
-            <View style={styles.completeTag}>
-              <CheckCircle2 size={13} color="#22c55e" strokeWidth={2.4} style={{ marginRight: 4 }} />
+            <View style={[styles.completeTag, { alignSelf: isRTL ? 'flex-end' : 'flex-start', flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+              <CheckCircle2 size={13} color="#22c55e" strokeWidth={2.4} style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }} />
               <Text style={styles.completeText}>
                 {isRTL ? 'تکمیل شد' : 'Completed'}
               </Text>

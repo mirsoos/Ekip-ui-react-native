@@ -13,6 +13,7 @@ import {
 import { getIcon, type IconName } from '../lib/icons';
 import { GlassButton, GlassCloseButton } from './Glass';
 import { useTheme } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 
 // ============================================
 // GLASS SHEET (Bottom Sheet Modal)
@@ -33,6 +34,7 @@ export function GlassSheet({
   fullHeight,
 }: GlassSheetProps) {
   const { colors, isDark } = useTheme();
+  const { isRTL } = useI18n();
   const CloseIcon = getIcon('X');
 
   const [visible, setVisible] = useState(open);
@@ -137,8 +139,21 @@ export function GlassSheet({
           />
 
           {/* Sheet header */}
-          <View style={styles.sheetHeader}>
-            <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>
+          <View
+            style={[
+              styles.sheetHeader,
+              { flexDirection: isRTL ? 'row-reverse' : 'row' },
+            ]}
+          >
+            <Text
+              style={[
+                styles.sheetTitle,
+                {
+                  color: colors.textPrimary,
+                  textAlign: isRTL ? 'right' : 'left',
+                },
+              ]}
+            >
               {title ?? ''}
             </Text>
             <GlassCloseButton onPress={onClose} />

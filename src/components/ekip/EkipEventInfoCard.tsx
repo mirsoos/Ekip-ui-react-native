@@ -27,7 +27,7 @@ export function EkipEventInfoCard({ group }: { group: Group }) {
 
   return (
     <GlassCard style={styles.card}>
-      <View style={styles.topRow}>
+      <View style={[styles.topRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <LinearGradient
           colors={['rgba(244, 114, 182, 0.25)', 'rgba(59, 130, 246, 0.25)']}
           style={styles.dateBox}
@@ -40,12 +40,12 @@ export function EkipEventInfoCard({ group }: { group: Group }) {
           </Text>
         </LinearGradient>
 
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={[styles.dateTitle, { color: colors.textPrimary }]}>
+        <View style={{ flex: 1, marginLeft: isRTL ? 0 : 12, marginRight: isRTL ? 12 : 0 }}>
+          <Text style={[styles.dateTitle, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
             {dateStr}
           </Text>
-          <View style={styles.timeRow}>
-            <Clock size={13} color={colors.textTertiary} strokeWidth={2.2} style={{ marginRight: 4 }} />
+          <View style={[styles.timeRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+            <Clock size={13} color={colors.textTertiary} strokeWidth={2.2} style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }} />
             <Text style={[styles.timeText, { color: colors.textTertiary }]}>
               {timeStr}
             </Text>
@@ -59,9 +59,9 @@ export function EkipEventInfoCard({ group }: { group: Group }) {
       </View>
 
       <View style={[styles.bottomRow, { borderTopColor: colors.divider }]}>
-        <View style={styles.locRow}>
-          <MapPin size={14} color={colors.textTertiary} strokeWidth={2.2} style={{ marginRight: 5 }} />
-          <Text style={[styles.locText, { color: colors.textSecondary }]} numberOfLines={1}>
+        <View style={[styles.locRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+          <MapPin size={14} color={colors.textTertiary} strokeWidth={2.2} style={{ marginRight: isRTL ? 0 : 5, marginLeft: isRTL ? 5 : 0 }} />
+          <Text style={[styles.locText, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={1}>
             {group.location_name ? `${group.location_name}، ` : ''}{group.city}
           </Text>
         </View>

@@ -71,17 +71,26 @@ export function DiscoverHeader({
           style={StyleSheet.absoluteFill}
         />
 
-        <View style={styles.topRow}>
+        <View style={[styles.topRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
           <View style={{ flex: 1, zIndex: 10 }}>
-            <Text style={[styles.cityText, { color: colors.textTertiary }]}>
+            <Text style={[styles.cityText, { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' }]}>
               {user.city}
             </Text>
-            <Text style={[styles.titleText, { color: colors.textPrimary }]}>
+            <Text style={[styles.titleText, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
               {t('discover.title')}
             </Text>
           </View>
 
-          <View style={[styles.topActions, { zIndex: 10 }]}>
+          <View
+            style={[
+              styles.topActions,
+              {
+                zIndex: 10,
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+                gap: 8,
+              },
+            ]}
+          >
             <NotificationButton
               unreadCount={unreadCount}
               onPress={onOpenNotifications}
@@ -89,7 +98,6 @@ export function DiscoverHeader({
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={onOpenOwnProfile}
-              style={{ marginLeft: 8 }}
             >
               <GlassAvatar
                 src={user.avatar_url}
