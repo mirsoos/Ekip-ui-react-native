@@ -17,6 +17,7 @@ import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 
 import { LiquidLens } from './LiquidLens';
+import { EkipLogoButton } from './ekip/EkipLogoButton';
 
 export type TabKey = 'discover' | 'activity' | 'create' | 'chat' | 'profile';
 
@@ -374,26 +375,11 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
           if (isCreate) {
             return (
               <View key={tab.key} style={styles.createSlot}>
-                <TouchableOpacity
-                  activeOpacity={0.85}
+                <EkipLogoButton
+                  active={isActive}
                   onPress={() => handleSelectTab('create')}
-                  style={styles.createOrbButton}
-                >
-                  <LinearGradient
-                    colors={isActive ? ['#ec4899', '#6366f1'] : ['#f472b6', '#3b82f6']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.createOrbGradient}
-                  >
-                    <Animated.View style={{ transform: [{ rotate: plusRotation }] }}>
-                      {React.createElement(getIcon('Plus'), {
-                        size: 24,
-                        color: '#ffffff',
-                        strokeWidth: 2.8,
-                      })}
-                    </Animated.View>
-                  </LinearGradient>
-                </TouchableOpacity>
+                  size={44}
+                />
               </View>
             );
           }
@@ -545,27 +531,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 999,
   },
-  createOrbButton: {
-    marginTop: -20,
+  createLogoButton: {
     width: 48,
     height: 48,
-    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#ec4899',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
-    elevation: 8,
     // @ts-ignore
     outlineStyle: 'none',
   },
-  createOrbGradient: {
+  createLogoImage: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   avatarBorder: {
     width: 26,
