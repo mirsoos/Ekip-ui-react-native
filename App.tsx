@@ -106,12 +106,6 @@ function MainContent() {
   };
 
   const switchTab = (t: TabKey) => {
-    if (t === 'create' && (tab === 'create' || screen.name === 'create')) {
-      setTab('discover');
-      setHistory([]);
-      setScreen({ name: 'discover' });
-      return;
-    }
     setTab(t);
     setHistory([]);
     if (t === 'discover') setScreen({ name: 'discover' });

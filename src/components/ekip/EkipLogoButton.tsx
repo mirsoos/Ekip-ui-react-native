@@ -24,12 +24,11 @@ export function EkipLogoButton({
   onPress,
   size = 44,
 }: EkipLogoButtonProps) {
-  // Main logo transforms
-  const logoScaleAnim = useRef(new Animated.Value(active ? 1.0 : 0.92)).current;
-  const opacityAnim = useRef(new Animated.Value(active ? 1.0 : 0.45)).current;
+  // Main logo transforms (Always full 1.0 opacity - never dimmed when inactive)
+  const logoScaleAnim = useRef(new Animated.Value(1.0)).current;
   const pressAnim = useRef(new Animated.Value(1)).current;
 
-  // Deconstructed SVG pieces mechanical up/down separation & spring shock
+  // Mechanical separation of the 3 SVG pieces
   const pieceSeparationAnim = useRef(new Animated.Value(0)).current;
 
   // Continuous subtle up/down breathing wave on the SVG pieces (while active)
@@ -41,20 +40,23 @@ export function EkipLogoButton({
   const pulseOrangeAnim = useRef(new Animated.Value(0)).current;
   const pulseGreenAnim = useRef(new Animated.Value(0)).current;
 
+  // Master fade for pulse waves (smooth 280ms dissolution on exit, never abrupt disappearance)
+  const pulseContainerFade = useRef(new Animated.Value(active ? 1 : 0)).current;
+
   const timeoutsRef = useRef<any[]>([]);
   const isRunningRef = useRef(false);
 
   useEffect(() => {
-    // Clear any pending timeouts
-    timeoutsRef.current.forEach((t) => clearTimeout(t));
-    timeoutsRef.current = [];
-
     if (active) {
       isRunningRef.current = true;
+      timeoutsRef.current.forEach((t) => clearTimeout(t));
+      timeoutsRef.current = [];
+
+      // Fade in pulse container immediately
+      pulseContainerFade.setValue(1);
 
       // 1. Entrance Squash & Bounce Shock: 1.0 -> 0.85 -> 1.18 -> 1.0
-      opacityAnim.setValue(1.0);
-      logoScaleAnim.setValue(0.95);
+      logoScaleAnim.setValue(0.96);
       pieceSeparationAnim.setValue(0);
 
       Animated.sequence([
@@ -124,7 +126,7 @@ export function EkipLogoButton({
           Animated.timing(anim, {
             toValue: 1,
             duration: PULSE_DURATION,
-            easing: Easing.out(Easing.quad), // Power1.easeOut
+            easing: Easing.out(Easing.quad),
             useNativeDriver: false,
           }).start(({ finished }) => {
             if (finished && isRunningRef.current) {
@@ -141,7 +143,6 @@ export function EkipLogoButton({
         }
       };
 
-      // Exact color sequence: 1. Blue (0ms) -> 2. Orange (700ms) -> 3. Green (1400ms)
       runSinglePulseLoop(pulseBlueAnim, 0);
       runSinglePulseLoop(pulseOrangeAnim, STAGGER_INTERVAL);
       runSinglePulseLoop(pulseGreenAnim, STAGGER_INTERVAL * 2);
@@ -149,42 +150,58 @@ export function EkipLogoButton({
     } else {
       isRunningRef.current = false;
 
-      // Inactive: Stop floating loop and reset pulse values
+      // 1. Smoothly dissolve any active pulse rings over 280ms (no sudden pop or jarring cut)
+      Animated.timing(pulseContainerFade, {
+        toValue: 0,
+        duration: 280,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false,
+      }).start(() => {
+        timeoutsRef.current.forEach((t) => clearTimeout(t));
+        timeoutsRef.current = [];
+        pulseBlueAnim.setValue(0);
+        pulseOrangeAnim.setValue(0);
+        pulseGreenAnim.setValue(0);
+      });
+
+      // 2. Stop floating loop
       if (floatLoopRef.current) {
         floatLoopRef.current.stop();
         floatLoopRef.current = null;
       }
 
-      pulseBlueAnim.setValue(0);
-      pulseOrangeAnim.setValue(0);
-      pulseGreenAnim.setValue(0);
-
-      // Return SVG pieces to baseline resting position
+      // 3. Dignified, smooth magnetic lock & settle on exit:
+      // The pieces smoothly lock back into unified alignment,
+      // and the logo performs a soft cushion settle to 1.0 (natural size, full vibrant color)
       Animated.parallel([
         Animated.spring(pieceSeparationAnim, {
           toValue: 0,
-          tension: 100,
-          friction: 9,
+          tension: 130,
+          friction: 11,
           useNativeDriver: false,
         }),
         Animated.spring(floatAnim, {
           toValue: 0,
-          tension: 100,
-          friction: 9,
+          tension: 130,
+          friction: 11,
           useNativeDriver: false,
         }),
-        Animated.spring(logoScaleAnim, {
-          toValue: 0.92,
-          tension: 85,
-          friction: 9,
-          useNativeDriver: false,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 0.45,
-          duration: 220,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: false,
-        }),
+        Animated.sequence([
+          // Subtle cushioned latch as the tab disengages
+          Animated.timing(logoScaleAnim, {
+            toValue: 0.96,
+            duration: 90,
+            easing: Easing.bezier(0.25, 1, 0.5, 1),
+            useNativeDriver: false,
+          }),
+          // Gentle spring settlement to normal size 1.0
+          Animated.spring(logoScaleAnim, {
+            toValue: 1.0,
+            tension: 140,
+            friction: 9,
+            useNativeDriver: false,
+          }),
+        ]),
       ]).start();
     }
 
@@ -324,51 +341,54 @@ export function EkipLogoButton({
       onPressOut={handlePressOut}
       style={styles.container}
     >
-      {/* 3 Sequential Brand-Colored Pulse Rings - ACTIVE ONLY (1. Blue -> 2. Orange -> 3. Green) */}
-      {active && (
-        <>
-          {/* 1. آبی لوگو (Blue Pulse) */}
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.pulseRing,
-              styles.pulseBlue,
-              { width: logoWidth, height: totalLogoHeight, borderRadius: logoBorderRadius },
-              getPulseStyle(pulseBlueAnim),
-            ]}
-          />
+      {/* 3 Sequential Brand-Colored Pulse Rings (Capsule shape, smoothly fades out on exit) */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.pulseContainer,
+          { opacity: pulseContainerFade },
+        ]}
+      >
+        {/* 1. آبی لوگو (Blue Pulse) */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.pulseRing,
+            styles.pulseBlue,
+            { width: logoWidth, height: totalLogoHeight, borderRadius: logoBorderRadius },
+            getPulseStyle(pulseBlueAnim),
+          ]}
+        />
 
-          {/* 2. نارنجی لوگو (Orange Pulse) */}
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.pulseRing,
-              styles.pulseOrange,
-              { width: logoWidth, height: totalLogoHeight, borderRadius: logoBorderRadius },
-              getPulseStyle(pulseOrangeAnim),
-            ]}
-          />
+        {/* 2. نارنجی لوگو (Orange Pulse) */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.pulseRing,
+            styles.pulseOrange,
+            { width: logoWidth, height: totalLogoHeight, borderRadius: logoBorderRadius },
+            getPulseStyle(pulseOrangeAnim),
+          ]}
+        />
 
-          {/* 3. سبز لوگو (Green Pulse) */}
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.pulseRing,
-              styles.pulseGreen,
-              { width: logoWidth, height: totalLogoHeight, borderRadius: logoBorderRadius },
-              getPulseStyle(pulseGreenAnim),
-            ]}
-          />
-        </>
-      )}
+        {/* 3. سبز لوگو (Green Pulse) */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.pulseRing,
+            styles.pulseGreen,
+            { width: logoWidth, height: totalLogoHeight, borderRadius: logoBorderRadius },
+            getPulseStyle(pulseGreenAnim),
+          ]}
+        />
+      </Animated.View>
 
-      {/* 3-Piece SVG Logo Stack with kinetic up/down animations */}
+      {/* 3-Piece SVG Logo Stack with kinetic up/down animations (Full vibrancy at all times) */}
       <Animated.View
         style={[
           styles.logoStack,
           {
             width: size,
-            opacity: opacityAnim,
             transform: [{ scale: combinedScale }],
           },
         ]}
@@ -454,6 +474,17 @@ const styles = StyleSheet.create({
     overflow: 'visible',
     // @ts-ignore
     outlineStyle: 'none',
+  },
+  pulseContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+    pointerEvents: 'none',
   },
   logoStack: {
     alignItems: 'flex-start',
