@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Animated, Easing } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassBackButton } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
@@ -8,7 +9,7 @@ import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Profile } from '../../types/database';
 
-export function ProfileHeader({
+export function ProfileHeaderComponent({
   profile,
   isOwnProfile,
   onBack,
@@ -21,6 +22,7 @@ export function ProfileHeader({
   onOpenSettings: () => void;
   scrollY: Animated.Value;
 }) {
+  const insets = useSafeAreaInsets();
   const { theme, toggle, colors, isDark } = useTheme();
   const { isRTL } = useI18n();
   const Sun = getIcon('Sun');
@@ -49,7 +51,7 @@ export function ProfileHeader({
       toValue: 1,
       bounciness: 6,
       speed: 12,
-      useNativeDriver: false,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, [profile.id]);
 
@@ -137,8 +139,10 @@ export function ProfileHeader({
   const combinedTranslateY = Animated.add(translateY, avatarEnterTranslateY);
   const combinedScale = Animated.multiply(scale, avatarEnterScale);
 
+  const topPad = Platform.OS === 'web' ? 10 : Math.max(10, insets.top + 6);
+
   return (
-    <View style={styles.outerContainer} pointerEvents="box-none">
+    <View style={[styles.outerContainer, { paddingTop: topPad }]} pointerEvents="box-none">
       {/* Docked Authentic Liquid Glass Header Capsule with Slide Enter/Exit */}
       {isMounted && (
         <Animated.View
@@ -236,6 +240,7 @@ export function ProfileHeader({
         style={[
           styles.unscrolledBar,
           {
+            top: topPad,
             flexDirection: isRTL ? 'row-reverse' : 'row',
             transform: [{ translateY: unscrolledTranslateY }],
           },
@@ -337,6 +342,8 @@ export function ProfileHeader({
   );
 }
 
+export const ProfileHeader = React.memo(ProfileHeaderComponent);
+
 const styles = StyleSheet.create({
   outerContainer: {
     position: 'absolute',
@@ -344,7 +351,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 12,
-    paddingTop: Platform.OS === 'ios' ? 12 : 10,
     zIndex: 900,
   },
   container: {
@@ -355,11 +361,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 14,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+          elevation: 14,
+        }),
     overflow: 'visible',
     ...(Platform.OS === 'web'
       ? ({
@@ -369,7 +386,6 @@ const styles = StyleSheet.create({
   },
   unscrolledBar: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 12 : 10,
     left: 12,
     right: 12,
     flexDirection: 'row',
@@ -405,11 +421,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 6,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 6,
+          elevation: 4,
+        }),
     overflow: 'hidden',
     position: 'relative',
     ...(Platform.OS === 'web'
@@ -431,11 +458,22 @@ const styles = StyleSheet.create({
     borderRadius: 44,
     borderWidth: 2.5,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 12,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.35,
+          shadowRadius: 12,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.35,
+          shadowRadius: 12,
+          elevation: 12,
+        }),
     zIndex: 950,
   },
   avatarImage: {

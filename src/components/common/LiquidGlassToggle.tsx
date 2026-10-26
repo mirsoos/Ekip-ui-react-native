@@ -26,7 +26,7 @@ export interface LiquidGlassToggleProps {
   theme?: 'light' | 'dark';
 }
 
-export function LiquidGlassToggle({
+export function LiquidGlassToggleComponent({
   checked,
   onChange,
   size = 'sm',
@@ -80,7 +80,7 @@ export function LiquidGlassToggle({
       toValue: checked ? 0 : 1,
       duration: 380,
       easing: Easing.bezier(0.4, 0, 0.2, 1),
-      useNativeDriver: false,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, [checked]);
 
@@ -277,6 +277,8 @@ export function LiquidGlassToggle({
   );
 }
 
+export const LiquidGlassToggle = React.memo(LiquidGlassToggleComponent);
+
 // Aliases
 export { LiquidGlassToggle as NeumorphicRadioToggle };
 export { LiquidGlassToggle as GooeyToggle };
@@ -298,11 +300,22 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     direction: 'ltr',
-    shadowColor: '#000000',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 2,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000000',
+          shadowOffset: { width: 2, height: 2 },
+          shadowOpacity: 0.3,
+          shadowRadius: 4,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000000',
+          shadowOffset: { width: 2, height: 2 },
+          shadowOpacity: 0.3,
+          shadowRadius: 4,
+          elevation: 2,
+        }),
   },
   nativeHighlight: {
     position: 'absolute',

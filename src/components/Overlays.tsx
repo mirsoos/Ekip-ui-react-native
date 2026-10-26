@@ -299,15 +299,27 @@ export function Toast({
   message,
   icon = 'CheckCircle2',
   visible,
+  open,
+  onClose,
 }: {
   message: string;
   icon?: IconName;
   visible?: boolean;
+  open?: boolean;
+  onClose?: () => void;
 }) {
   const { colors } = useTheme();
   const IconComp = getIcon(icon);
 
-  const isVisible = visible !== undefined ? visible : Boolean(message);
+  const isVisible = open !== undefined ? open : visible !== undefined ? visible : Boolean(message);
+
+  useEffect(() => {
+    if (isVisible && onClose) {
+      const timer = setTimeout(() => onClose(), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, onClose]);
+
   if (!isVisible || !message) return null;
 
   return (
@@ -348,11 +360,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderBottomWidth: 0,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -12 },
-    shadowOpacity: 0.45,
-    shadowRadius: 36,
-    elevation: 24,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -12 },
+          shadowOpacity: 0.45,
+          shadowRadius: 36,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -12 },
+          shadowOpacity: 0.45,
+          shadowRadius: 36,
+          elevation: 24,
+        }),
     zIndex: 100000,
   },
   sheetHandleBar: {
@@ -406,17 +429,24 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 1,
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.45,
-    shadowRadius: 32,
-    elevation: 24,
-    ...(Platform.OS === 'web'
+    ...(Platform.OS === 'ios'
       ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.45,
+          shadowRadius: 32,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.45,
+          shadowRadius: 32,
+          elevation: 24,
           backdropFilter: 'blur(32px) saturate(190%)',
           WebkitBackdropFilter: 'blur(32px) saturate(190%)',
-        }
-      : {}),
+        }),
   },
   dialogTitle: {
     fontSize: 20,
@@ -444,11 +474,22 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 6,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25,
+          shadowRadius: 12,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25,
+          shadowRadius: 12,
+          elevation: 6,
+        }),
   },
   toastText: {
     fontSize: 13,

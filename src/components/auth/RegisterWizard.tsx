@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassInput, GlassBackButton, GlassSegmented } from '../Glass';
 import { StepProgressBar } from '../common/StepProgressBar';
 import { LiquidLens } from '../LiquidLens';
@@ -10,13 +11,14 @@ import { useI18n } from '../../lib/i18n';
 
 const totalSteps = 4;
 
-export function RegisterWizard({
+export function RegisterWizardComponent({
   onBack,
   onComplete,
 }: {
   onBack: () => void;
   onComplete: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
 
@@ -55,7 +57,15 @@ export function RegisterWizard({
   return (
     <View style={styles.root}>
       {/* 360° Liquid Glass Header with Language Switcher */}
-      <View style={styles.headerOuter} pointerEvents="box-none">
+      <View
+        style={[
+          styles.headerOuter,
+          {
+            paddingTop: Platform.OS === 'web' ? 10 : Math.max(10, insets.top + 6),
+          },
+        ]}
+        pointerEvents="box-none"
+      >
         <View style={[styles.headerContainer, { flexDirection: isRTL ? 'row-reverse' : 'row', borderColor: colors.glassBorderStrong }]}>
           <LiquidLens
             borderRadius={36}
@@ -209,7 +219,15 @@ export function RegisterWizard({
       </ScrollView>
 
       {/* 360° Liquid Glass Continue Button */}
-      <View style={styles.footerWrap} pointerEvents="box-none">
+      <View
+        style={[
+          styles.footerWrap,
+          {
+            paddingBottom: Platform.OS === 'web' ? 12 : Math.max(12, insets.bottom + 6),
+          },
+        ]}
+        pointerEvents="box-none"
+      >
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={handleNext}
@@ -271,11 +289,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.35,
-    shadowRadius: 24,
-    elevation: 10,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.35,
+          shadowRadius: 24,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.35,
+          shadowRadius: 24,
+          elevation: 10,
+        }),
   },
   container: {
     paddingHorizontal: 24,
@@ -341,11 +370,22 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     borderWidth: 1,
     overflow: 'visible',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 14,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+          elevation: 14,
+        }),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -363,3 +403,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+export const RegisterWizard = React.memo(RegisterWizardComponent);

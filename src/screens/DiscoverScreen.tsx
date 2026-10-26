@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { EkipCard } from '../components/EkipCard';
 import { GlassEmpty, GlassButton, GlassSegmented } from '../components/Glass';
@@ -43,6 +44,7 @@ export const DiscoverScreen = React.forwardRef<
   ref
 ) {
   const { groups, me, profiles, notifications } = useAppData();
+  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
 
@@ -91,7 +93,13 @@ export const DiscoverScreen = React.forwardRef<
     <View style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          Platform.OS !== 'web' && {
+            paddingTop: 135 + insets.top,
+            paddingBottom: 90 + insets.bottom,
+          },
+        ]}
       >
         {/* AI Assistant Banner */}
         <AIAssistantBanner onPress={onOpenAI} />

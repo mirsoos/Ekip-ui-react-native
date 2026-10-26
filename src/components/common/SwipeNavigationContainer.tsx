@@ -19,7 +19,7 @@ interface SwipeNavigationContainerProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function SwipeNavigationContainer({
+export const SwipeNavigationContainer = React.memo(function SwipeNavigationContainer({
   children,
   canGoBack,
   onGoBack,
@@ -53,11 +53,15 @@ export function SwipeNavigationContainer({
 
   const panResponder = useRef(
     PanResponder.create({
+      onStartShouldSetPanResponderCapture: () => false,
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponderCapture: () => false,
       onMoveShouldSetPanResponder: (_, gestureState) => {
         const { dx, dy } = gestureState;
         const currentProps = propsRef.current;
-        // Require horizontal movement to dominate vertical by 1.8x and exceed 15px
-        if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.8) {
+        // Require horizontal swipe to clearly dominate vertical (2.5x) and exceed 28px threshold
+        // Never steal taps or vertical scroll gestures from children
+        if (Math.abs(dx) > 28 && Math.abs(dx) > Math.abs(dy) * 2.5) {
           if (currentProps.canGoBack && dx > 0) return true;
           if (currentProps.canSwipeLeftTab && dx < 0) return true;
           if (currentProps.canSwipeRightTab && dx > 0) return true;
@@ -117,6 +121,7 @@ export function SwipeNavigationContainer({
   return (
     <Animated.View
       {...panResponder.panHandlers}
+      renderToHardwareTextureAndroid={true}
       style={[
         styles.container,
         style,
@@ -128,7 +133,7 @@ export function SwipeNavigationContainer({
       {children}
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

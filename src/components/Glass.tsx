@@ -32,7 +32,7 @@ export interface GlassCardProps {
   onClick?: () => void;
 }
 
-export function GlassCard({
+export function GlassCardComponent({
   children,
   style,
   variant = 'default',
@@ -42,9 +42,6 @@ export function GlassCard({
 }: GlassCardProps) {
   const { isDark, colors } = useTheme();
   const handlePress = onPress ?? onClick;
-
-  const tint = isDark ? 'dark' : 'light';
-  const intensity = variant === 'thick' ? 45 : variant === 'thin' ? 20 : 30;
 
   const bg =
     variant === 'thick'
@@ -59,19 +56,28 @@ export function GlassCard({
     borderWidth: 1,
     borderRadius: 24,
     overflow: 'hidden',
-    shadowColor: colors.cardShadow,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: glow ? 0.35 : 0.18,
-    shadowRadius: glow ? 16 : 8,
-    elevation: glow ? 8 : 4,
     position: 'relative',
-    ...(Platform.OS === 'web'
+    ...(Platform.OS === 'ios'
       ? {
+          shadowColor: colors.cardShadow,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: glow ? 0.35 : 0.18,
+          shadowRadius: glow ? 16 : 8,
+        }
+      : Platform.OS === 'android'
+      ? {
+          elevation: 0,
+        }
+      : {
+          shadowColor: colors.cardShadow,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: glow ? 0.35 : 0.18,
+          shadowRadius: glow ? 16 : 8,
+          elevation: glow ? 8 : 4,
           backdropFilter: `blur(${variant === 'thick' ? 24 : variant === 'thin' ? 12 : 16}px) saturate(180%)`,
           WebkitBackdropFilter: `blur(${variant === 'thick' ? 24 : variant === 'thin' ? 12 : 16}px) saturate(180%)`,
           transform: 'translateZ(0)',
-        }
-      : {}),
+        }),
   };
 
   const content = (
@@ -85,7 +91,7 @@ export function GlassCard({
         ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={[StyleSheet.absoluteFillObject, { pointerEvents: 'none' }]}
+        style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}
       />
       {children}
     </>
@@ -123,7 +129,7 @@ export interface GlassButtonProps {
   fullWidth?: boolean;
 }
 
-export function GlassButton({
+export function GlassButtonComponent({
   children,
   onPress,
   onClick,
@@ -283,7 +289,7 @@ export interface GlassChipProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function GlassChip({
+export function GlassChipComponent({
   children,
   active,
   onPress,
@@ -364,7 +370,7 @@ export interface GlassInputProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function GlassInput({
+export function GlassInputComponent({
   value,
   onChangeText,
   placeholder,
@@ -439,7 +445,7 @@ export interface GlassAvatarProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function GlassAvatar({
+export function GlassAvatarComponent({
   src,
   name,
   size = 44,
@@ -506,7 +512,7 @@ export function GlassAvatar({
 // ============================================
 // GLASS BACK BUTTON
 // ============================================
-export function GlassBackButton({
+export function GlassBackButtonComponent({
   onPress,
   onClick,
   style,
@@ -550,7 +556,7 @@ export function GlassBackButton({
 // ============================================
 // GLASS CLOSE BUTTON
 // ============================================
-export function GlassCloseButton({
+export function GlassCloseButtonComponent({
   onPress,
   onClick,
   size = 32,
@@ -606,7 +612,7 @@ export interface GlassSegmentedProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function GlassSegmented({
+export function GlassSegmentedComponent({
   options,
   value,
   onChange,
@@ -789,7 +795,7 @@ export interface GlassProgressProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function GlassProgress({
+export function GlassProgressComponent({
   value,
   max,
   color = 'accent',
@@ -831,7 +837,7 @@ export function GlassProgress({
 // ============================================
 // GLASS BADGE ICON
 // ============================================
-export function GlassBadgeIcon({
+export function GlassBadgeIconComponent({
   icon,
   label,
   color = 'pink',
@@ -874,7 +880,7 @@ export function GlassBadgeIcon({
 // ============================================
 // GLASS TOGGLE (SWITCH)
 // ============================================
-export function GlassToggle({
+export function GlassToggleComponent({
   checked,
   onChange,
   label,
@@ -916,7 +922,7 @@ export interface GlassListItemProps {
   avatarName?: string;
 }
 
-export function GlassListItem({
+export function GlassListItemComponent({
   icon,
   iconBg,
   title,
@@ -928,11 +934,12 @@ export function GlassListItem({
   avatarName,
 }: GlassListItemProps) {
   const { colors } = useTheme();
+  const { isRTL } = useI18n();
   const IconComp = icon ? getIcon(icon) : null;
-  const ChevronRight = getIcon('ChevronRight');
+  const ChevronIcon = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
 
   const content = (
-    <View style={styles.listItemRow}>
+    <View style={[styles.listItemRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
       {avatar ? (
         <GlassAvatar src={avatar} name={avatarName ?? title} size={40} />
       ) : IconComp ? (
@@ -946,12 +953,30 @@ export function GlassListItem({
         </View>
       ) : null}
 
-      <View style={{ flex: 1, marginLeft: avatar || IconComp ? 12 : 0 }}>
-        <Text style={[styles.listTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+      <View
+        style={{
+          flex: 1,
+          marginLeft: isRTL ? 0 : avatar || IconComp ? 12 : 0,
+          marginRight: isRTL ? (avatar || IconComp ? 12 : 0) : 0,
+        }}
+      >
+        <Text
+          style={[
+            styles.listTitle,
+            { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+          ]}
+          numberOfLines={1}
+        >
           {title}
         </Text>
         {subtitle && (
-          <Text style={[styles.listSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+          <Text
+            style={[
+              styles.listSubtitle,
+              { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' },
+            ]}
+            numberOfLines={1}
+          >
             {subtitle}
           </Text>
         )}
@@ -959,10 +984,13 @@ export function GlassListItem({
 
       {right}
       {showChevron && (
-        <ChevronRight
+        <ChevronIcon
           size={18}
           color={colors.textTertiary}
-          style={{ marginLeft: 6 }}
+          style={{
+            marginLeft: isRTL ? 0 : 6,
+            marginRight: isRTL ? 6 : 0,
+          }}
         />
       )}
     </View>
@@ -982,7 +1010,7 @@ export function GlassListItem({
 // ============================================
 // GLASS SECTION HEADER
 // ============================================
-export function GlassSectionHeader({
+export function GlassSectionHeaderComponent({
   title,
   action,
 }: {
@@ -990,10 +1018,11 @@ export function GlassSectionHeader({
   action?: ReactNode;
 }) {
   const { colors } = useTheme();
+  const { isRTL } = useI18n();
 
   return (
-    <View style={styles.sectionHeader}>
-      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+    <View style={[styles.sectionHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+      <Text style={[styles.sectionTitle, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
         {title}
       </Text>
       {action}
@@ -1004,7 +1033,7 @@ export function GlassSectionHeader({
 // ============================================
 // GLASS EMPTY STATE
 // ============================================
-export function GlassEmpty({
+export function GlassEmptyComponent({
   icon,
   title,
   subtitle,
@@ -1090,11 +1119,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 6,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 6,
+          elevation: 4,
+        }),
     overflow: 'hidden',
     position: 'relative',
     ...(Platform.OS === 'web'
@@ -1115,11 +1155,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 6,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 6,
+          elevation: 4,
+        }),
     overflow: 'hidden',
     position: 'relative',
     ...(Platform.OS === 'web'
@@ -1135,6 +1186,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 4,
     overflow: 'hidden',
+    direction: 'ltr',
   },
   segmentedLens: {
     position: 'absolute',
@@ -1143,11 +1195,22 @@ const styles = StyleSheet.create({
     left: 4,
     borderRadius: 16,
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.22,
-    shadowRadius: 8,
-    elevation: 4,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.22,
+          shadowRadius: 8,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.22,
+          shadowRadius: 8,
+          elevation: 4,
+        }),
     pointerEvents: 'none',
     zIndex: 1,
   },
@@ -1246,5 +1309,20 @@ const styles = StyleSheet.create({
     maxWidth: 240,
   },
 });
+
+export const GlassCard = React.memo(GlassCardComponent);
+export const GlassButton = React.memo(GlassButtonComponent);
+export const GlassChip = React.memo(GlassChipComponent);
+export const GlassInput = React.memo(GlassInputComponent);
+export const GlassAvatar = React.memo(GlassAvatarComponent);
+export const GlassBackButton = React.memo(GlassBackButtonComponent);
+export const GlassCloseButton = React.memo(GlassCloseButtonComponent);
+export const GlassSegmented = React.memo(GlassSegmentedComponent);
+export const GlassProgress = React.memo(GlassProgressComponent);
+export const GlassBadgeIcon = React.memo(GlassBadgeIconComponent);
+export const GlassToggle = React.memo(GlassToggleComponent);
+export const GlassListItem = React.memo(GlassListItemComponent);
+export const GlassSectionHeader = React.memo(GlassSectionHeaderComponent);
+export const GlassEmpty = React.memo(GlassEmptyComponent);
 
 export { LiquidLens, type LiquidLensProps } from './LiquidLens';

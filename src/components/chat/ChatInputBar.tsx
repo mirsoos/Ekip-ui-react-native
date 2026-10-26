@@ -1,11 +1,13 @@
 import React, { useRef, useEffect } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
-export function ChatInputBar({
+export function ChatInputBarComponent({
   value,
   onChange,
   onSend,
@@ -16,7 +18,9 @@ export function ChatInputBar({
   onSend: () => void;
   placeholder?: string;
 }) {
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { isRTL } = useI18n();
   const SendIcon = getIcon('Send');
 
   const enterAnim = useRef(new Animated.Value(0)).current;
@@ -27,7 +31,7 @@ export function ChatInputBar({
       toValue: 1,
       bounciness: 4,
       speed: 14,
-      useNativeDriver: false,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, []);
 
@@ -37,11 +41,20 @@ export function ChatInputBar({
   });
 
   return (
-    <View style={styles.outerContainer} pointerEvents="box-none">
+    <View
+      style={[
+        styles.outerContainer,
+        {
+          paddingBottom: Platform.OS === 'web' ? 10 : Math.max(10, insets.bottom + 6),
+        },
+      ]}
+      pointerEvents="box-none"
+    >
       <Animated.View
         style={[
           styles.dockContainer,
           {
+            flexDirection: isRTL ? 'row-reverse' : 'row',
             borderColor: colors.glassBorderStrong,
             transform: [{ translateY: enterTranslateY }],
           },
@@ -71,7 +84,13 @@ export function ChatInputBar({
             onChangeText={onChange}
             placeholder={placeholder}
             placeholderTextColor={colors.textTertiary}
-            style={[styles.input, { color: colors.textPrimary }]}
+            style={[
+              styles.input,
+              {
+                color: colors.textPrimary,
+                textAlign: isRTL ? 'right' : 'left',
+              },
+            ]}
             onSubmitEditing={onSend}
             returnKeyType="send"
           />
@@ -97,6 +116,8 @@ export function ChatInputBar({
   );
 }
 
+export const ChatInputBar = React.memo(ChatInputBarComponent);
+
 const styles = StyleSheet.create({
   outerContainer: {
     position: 'absolute',
@@ -104,7 +125,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 12,
-    paddingBottom: Platform.OS === 'ios' ? 14 : 10,
     paddingTop: 6,
     zIndex: 900,
   },
@@ -117,11 +137,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 6,
     gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 14,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+          elevation: 14,
+        }),
     overflow: 'visible',
   },
   inputBox: {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassCard, GlassButton } from '../components/Glass';
 import { Toast } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
@@ -10,6 +11,7 @@ interface PlansScreenProps {
 }
 
 export function PlansScreen({ onBack }: PlansScreenProps) {
+  const insets = useSafeAreaInsets();
   const { isRTL } = useI18n();
   const Crown = getIcon('Crown');
   const Check = getIcon('Check');
@@ -124,6 +126,10 @@ export function PlansScreen({ onBack }: PlansScreenProps) {
       contentContainerStyle={[
         styles.container,
         { alignItems: 'center' },
+        Platform.OS !== 'web' && {
+          paddingTop: 80 + insets.top,
+          paddingBottom: 40 + insets.bottom,
+        },
       ]}
       showsVerticalScrollIndicator={false}
     >

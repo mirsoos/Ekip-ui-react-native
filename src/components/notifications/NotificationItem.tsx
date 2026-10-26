@@ -18,7 +18,7 @@ const typeConfig: Record<string, { color: string; bg: string }> = {
   achievement: { color: '#eab308', bg: 'rgba(234, 179, 8, 0.15)' },
 };
 
-export function NotificationItem({
+export function NotificationItemComponent({
   notification,
   onPress,
 }: {
@@ -36,6 +36,7 @@ export function NotificationItem({
         variant={notification.is_read ? 'thin' : 'default'}
         style={[
           styles.card,
+          { flexDirection: isRTL ? 'row-reverse' : 'row' },
           !notification.is_read && { borderColor: 'rgba(244, 114, 182, 0.4)' },
         ]}
       >
@@ -43,19 +44,42 @@ export function NotificationItem({
           <IconComp size={20} color={cfg.color} strokeWidth={2.2} />
         </View>
 
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <View style={styles.topRow}>
-            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+        <View
+          style={{
+            flex: 1,
+            marginLeft: isRTL ? 0 : 12,
+            marginRight: isRTL ? 12 : 0,
+          }}
+        >
+          <View style={[styles.topRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+            <Text
+              style={[
+                styles.title,
+                { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+              ]}
+              numberOfLines={1}
+            >
               {notification.title}
             </Text>
             {!notification.is_read && <View style={styles.unreadDot} />}
           </View>
 
-          <Text style={[styles.body, { color: colors.textSecondary }]} numberOfLines={2}>
+          <Text
+            style={[
+              styles.body,
+              { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' },
+            ]}
+            numberOfLines={2}
+          >
             {notification.body}
           </Text>
 
-          <Text style={[styles.time, { color: colors.textTertiary }]}>
+          <Text
+            style={[
+              styles.time,
+              { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' },
+            ]}
+          >
             {formatNotificationTime(notification.created_at, isRTL)}
           </Text>
         </View>
@@ -63,6 +87,8 @@ export function NotificationItem({
     </TouchableOpacity>
   );
 }
+
+export const NotificationItem = React.memo(NotificationItemComponent);
 
 function formatNotificationTime(iso: string, isRTL: boolean): string {
   if (!iso) return '';

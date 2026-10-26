@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, type ReactNode } from 'react';
 import { View, Text, StyleSheet, Platform, Animated, type StyleProp, type ViewStyle } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassBackButton } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
 import { useTheme } from '../../lib/theme';
@@ -24,7 +25,7 @@ export interface FloatingGlassHeaderProps {
   pillStyle?: StyleProp<ViewStyle>;
 }
 
-export function FloatingGlassHeader({
+export function FloatingGlassHeaderComponent({
   title,
   subtitle,
   onBack,
@@ -34,6 +35,7 @@ export function FloatingGlassHeader({
   style,
   pillStyle,
 }: FloatingGlassHeaderProps) {
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
 
@@ -45,7 +47,7 @@ export function FloatingGlassHeader({
       toValue: 1,
       bounciness: 4,
       speed: 14,
-      useNativeDriver: false,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, []);
 
@@ -55,7 +57,16 @@ export function FloatingGlassHeader({
   });
 
   return (
-    <View style={[styles.outerContainer, style]} pointerEvents="box-none">
+    <View
+      style={[
+        styles.outerContainer,
+        {
+          paddingTop: Platform.OS === 'web' ? 10 : Math.max(10, insets.top + 6),
+        },
+        style,
+      ]}
+      pointerEvents="box-none"
+    >
       <Animated.View
         style={[
           styles.container,
@@ -136,6 +147,8 @@ export function FloatingGlassHeader({
   );
 }
 
+export const FloatingGlassHeader = React.memo(FloatingGlassHeaderComponent);
+
 const styles = StyleSheet.create({
   outerContainer: {
     position: 'absolute',
@@ -143,7 +156,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 12,
-    paddingTop: Platform.OS === 'ios' ? 12 : 10,
     zIndex: 900,
   },
   container: {
@@ -155,11 +167,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 14,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+          elevation: 14,
+        }),
     overflow: 'visible',
   },
   title: {

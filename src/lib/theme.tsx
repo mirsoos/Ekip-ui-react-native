@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 
 export type Theme = 'light' | 'dark';
@@ -96,7 +96,7 @@ export const CHAT_THEMES: Record<ChatThemeId, ChatThemeConfig> = {
 export interface ThemeColors {
   isDark: boolean;
   bgCanvas: string;
-  bgCanvasGrad: [string, string, string];
+  bgCanvasGrad: [string, string, ...string[]];
   glassBg: string;
   glassThickBg: string;
   glassThinBg: string;
@@ -173,18 +173,31 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemColorScheme = useColorScheme();
-  const [theme, setTheme] = useState<Theme>(systemColorScheme === 'light' ? 'light' : 'dark');
-  const [chatTheme, setChatTheme] = useState<ChatThemeId>('default');
+  const [theme, setThemeState] = useState<Theme>(systemColorScheme === 'light' ? 'light' : 'dark');
+  const [chatTheme, setChatThemeState] = useState<ChatThemeId>('default');
 
-  const toggle = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
+  const toggle = useCallback(() => {
+    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  }, []);
+
+  const setTheme = useCallback((t: Theme) => {
+    setThemeState(t);
+  }, []);
+
+  const setChatTheme = useCallback((ct: ChatThemeId) => {
+    setChatThemeState(ct);
+  }, []);
 
   const isDark = theme === 'dark';
-  const colors = isDark ? darkColors : lightColors;
+  const colors = useMemo(() => (isDark ? darkColors : lightColors), [isDark]);
+
+  const value = useMemo(
+    () => ({ theme, isDark, colors, toggle, setTheme, chatTheme, setChatTheme }),
+    [theme, isDark, colors, toggle, setTheme, chatTheme, setChatTheme]
+  );
 
   return (
-    <ThemeContext.Provider value={{ theme, isDark, colors, toggle, setTheme, chatTheme, setChatTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Image, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassBackButton } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
@@ -20,13 +21,15 @@ export function EkipDetailHeader({
   onShare,
   onBookmark,
 }: EkipDetailHeaderProps) {
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
   const ShareIcon = getIcon('Share');
   const BookmarkIcon = getIcon('Bookmark');
+  const topInset = Platform.OS === 'web' ? 16 : Math.max(16, insets.top + 8);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, Platform.OS !== 'web' && { height: 220 + insets.top }]}>
       {coverUrl ? (
         <Image source={{ uri: coverUrl }} style={styles.image} />
       ) : (
@@ -43,6 +46,7 @@ export function EkipDetailHeader({
         style={[
           styles.backBtn,
           {
+            top: topInset,
             left: isRTL ? 'auto' : 16,
             right: isRTL ? 16 : 'auto',
           },
@@ -54,6 +58,7 @@ export function EkipDetailHeader({
         style={[
           styles.rightActions,
           {
+            top: topInset,
             left: isRTL ? 16 : 'auto',
             right: isRTL ? 'auto' : 16,
             flexDirection: isRTL ? 'row-reverse' : 'row',
@@ -136,7 +141,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
-    elevation: 4,
+    elevation: Platform.OS === 'android' ? 0 : 4,
     overflow: 'hidden',
     position: 'relative',
   },

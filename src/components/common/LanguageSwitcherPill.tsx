@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { GlassSheet, Toast } from '../Overlays';
 import { GlassCard } from '../Glass';
 import { useI18n, LANGUAGES } from '../../lib/i18n';
 import { useTheme } from '../../lib/theme';
 import { getIcon } from '../../lib/icons';
 
-export function LanguageSwitcherPill({ style }: { style?: any }) {
+export function LanguageSwitcherPillComponent({ style }: { style?: any }) {
   const { language, setLanguage, t, isRTL } = useI18n();
   const { colors } = useTheme();
   const [showLanguageSheet, setShowLanguageSheet] = useState(false);
@@ -111,11 +111,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 20,
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 8,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 8,
+          elevation: 4,
+        }),
   },
   flag: {
     fontSize: 14,
@@ -150,3 +161,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+export const LanguageSwitcherPill = React.memo(LanguageSwitcherPillComponent);

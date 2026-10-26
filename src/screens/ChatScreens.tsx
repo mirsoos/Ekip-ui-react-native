@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassInput, GlassEmpty } from '../components/Glass';
 import { NotificationButton } from '../components/NotificationButton';
@@ -22,6 +23,7 @@ export function ChatListScreen({
   search?: string;
   isLoading?: boolean;
 }) {
+  const insets = useSafeAreaInsets();
   const { conversations } = useAppData();
   const { t } = useI18n();
 
@@ -33,7 +35,13 @@ export function ChatListScreen({
     <View style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          Platform.OS !== 'web' && {
+            paddingTop: 135 + insets.top,
+            paddingBottom: 90 + insets.bottom,
+          },
+        ]}
       >
         {isLoading ? (
           <>
@@ -69,6 +77,7 @@ export function ConversationScreen({
   conversationId: string;
   onBack: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   const { conversations, messages, addMessage } = useAppData();
   const { colors } = useTheme();
   const [input, setInput] = useState('');
@@ -97,7 +106,13 @@ export function ConversationScreen({
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.messagesContent}
+        contentContainerStyle={[
+          styles.messagesContent,
+          Platform.OS !== 'web' && {
+            paddingTop: 75 + insets.top,
+            paddingBottom: 75 + insets.bottom,
+          },
+        ]}
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
       >
         {convMessages.map((m) => (

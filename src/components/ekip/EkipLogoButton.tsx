@@ -8,10 +8,59 @@ import {
   Animated,
   Easing,
 } from 'react-native';
+import { SvgXml } from 'react-native-svg';
 
 const TOP_SVG = Platform.OS === 'web' ? '/top-logo.svg' : require('../../../assets/top-logo.svg');
 const MID_SVG = Platform.OS === 'web' ? '/mid-logo.svg' : require('../../../assets/mid-logo.svg');
 const BOT_SVG = Platform.OS === 'web' ? '/bot-logo.svg' : require('../../../assets/bot-logo.svg');
+
+const TOP_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 270" width="100%" height="100%" preserveAspectRatio="xMinYMid meet">
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#006cdb"/>
+      <stop offset="35%" stop-color="#007fe8"/>
+      <stop offset="70%" stop-color="#0096f5"/>
+      <stop offset="100%" stop-color="#00a6ff"/>
+    </linearGradient>
+    <linearGradient id="blueBorder" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.45)"/>
+      <stop offset="100%" stop-color="rgba(0,60,150,0.5)"/>
+    </linearGradient>
+  </defs>
+  <path d="M 165 4 H 885 A 110 110 0 0 1 885 224 H 165 C 80 224, 30 248, 2 266 L 2 110 C 2 50, 75 4, 165 4 Z" fill="url(#blueGrad)" stroke="url(#blueBorder)" stroke-width="1.5" />
+</svg>`;
+
+const MID_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 270" width="100%" height="100%" preserveAspectRatio="xMinYMid meet">
+  <defs>
+    <linearGradient id="orangeGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#e64600"/>
+      <stop offset="35%" stop-color="#f55a00"/>
+      <stop offset="70%" stop-color="#ff7b00"/>
+      <stop offset="100%" stop-color="#ffa600"/>
+    </linearGradient>
+    <linearGradient id="orangeBorder" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.45)"/>
+      <stop offset="100%" stop-color="rgba(150,35,0,0.5)"/>
+    </linearGradient>
+  </defs>
+  <path d="M 165 4 H 785 A 110 110 0 0 1 785 224 H 165 C 80 224, 30 248, 2 266 L 2 110 C 2 50, 75 4, 165 4 Z" fill="url(#orangeGrad)" stroke="url(#orangeBorder)" stroke-width="1.5" />
+</svg>`;
+
+const BOT_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 240" width="100%" height="100%" preserveAspectRatio="xMinYMid meet">
+  <defs>
+    <linearGradient id="greenGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#1b9338"/>
+      <stop offset="40%" stop-color="#3ea935"/>
+      <stop offset="85%" stop-color="#80c33a"/>
+      <stop offset="100%" stop-color="#91cc3b"/>
+    </linearGradient>
+    <linearGradient id="greenBorder" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.45)"/>
+      <stop offset="100%" stop-color="rgba(15,90,30,0.45)"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="6" width="996" height="228" rx="114" fill="url(#greenGrad)" stroke="url(#greenBorder)" stroke-width="1.5" />
+</svg>`;
 
 export interface EkipLogoButtonProps {
   active: boolean;
@@ -19,7 +68,7 @@ export interface EkipLogoButtonProps {
   size?: number;
 }
 
-export function EkipLogoButton({
+export const EkipLogoButton = React.memo(function EkipLogoButton({
   active,
   onPress,
   size = 44,
@@ -405,11 +454,15 @@ export function EkipLogoButton({
             zIndex: 3,
           }}
         >
-          <Image
-            source={typeof TOP_SVG === 'string' ? { uri: TOP_SVG } : TOP_SVG}
-            style={[imgStyle, { height: pieceHeight }]}
-            resizeMode="contain"
-          />
+          {Platform.OS === 'web' ? (
+            <Image
+              source={typeof TOP_SVG === 'string' ? { uri: TOP_SVG } : TOP_SVG}
+              style={[imgStyle, { height: pieceHeight }]}
+              resizeMode="contain"
+            />
+          ) : (
+            <SvgXml xml={TOP_XML} width={size} height={pieceHeight} />
+          )}
         </Animated.View>
 
         {/* MID PIECE (Orange Speech Arc - subtle sway) */}
@@ -424,22 +477,26 @@ export function EkipLogoButton({
             zIndex: 2,
           }}
         >
-          <Image
-            source={typeof MID_SVG === 'string' ? { uri: MID_SVG } : MID_SVG}
-            style={[
-              {
-                width: midWidth,
-                height: pieceHeight,
-                ...(Platform.OS === 'web'
-                  ? ({
-                      objectFit: 'contain',
-                      objectPosition: 'left center',
-                    } as any)
-                  : {}),
-              },
-            ]}
-            resizeMode="contain"
-          />
+          {Platform.OS === 'web' ? (
+            <Image
+              source={typeof MID_SVG === 'string' ? { uri: MID_SVG } : MID_SVG}
+              style={[
+                {
+                  width: midWidth,
+                  height: pieceHeight,
+                  ...(Platform.OS === 'web'
+                    ? ({
+                        objectFit: 'contain',
+                        objectPosition: 'left center',
+                      } as any)
+                    : {}),
+                },
+              ]}
+              resizeMode="contain"
+            />
+          ) : (
+            <SvgXml xml={MID_XML} width={midWidth} height={pieceHeight} />
+          )}
         </Animated.View>
 
         {/* BOT PIECE (Green Capsule Foundation - animates up and down) */}
@@ -453,16 +510,20 @@ export function EkipLogoButton({
             zIndex: 1,
           }}
         >
-          <Image
-            source={typeof BOT_SVG === 'string' ? { uri: BOT_SVG } : BOT_SVG}
-            style={[imgStyle, { height: botHeight }]}
-            resizeMode="contain"
-          />
+          {Platform.OS === 'web' ? (
+            <Image
+              source={typeof BOT_SVG === 'string' ? { uri: BOT_SVG } : BOT_SVG}
+              style={[imgStyle, { height: botHeight }]}
+              resizeMode="contain"
+            />
+          ) : (
+            <SvgXml xml={BOT_XML} width={size} height={botHeight} />
+          )}
         </Animated.View>
       </Animated.View>
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -497,7 +558,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     zIndex: 1,
     pointerEvents: 'none',
-    boxSizing: 'border-box',
+    ...(Platform.OS === 'web'
+      ? ({
+          boxSizing: 'border-box',
+        } as any)
+      : {}),
   },
   pulseBlue: {
     borderColor: '#0084f0',

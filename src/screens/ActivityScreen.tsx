@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassEmpty, GlassBadgeIcon, GlassButton } from '../components/Glass';
@@ -25,6 +26,7 @@ export function ActivityScreen({
   onOpenNotifications: () => void;
 }) {
   const { groups, members, requests, updateRequest, addNotification } = useAppData();
+  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
 
@@ -78,7 +80,13 @@ export function ActivityScreen({
     <View style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          Platform.OS !== 'web' && {
+            paddingTop: 125 + insets.top,
+            paddingBottom: 90 + insets.bottom,
+          },
+        ]}
       >
         {/* Created Tab */}
         {activeTab === 'created' && (
@@ -377,7 +385,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   bannerGradient: {
-    ...StyleSheet.absoluteFillObject,
+    ...(StyleSheet.absoluteFill as object),
   },
   bannerContent: {
     position: 'absolute',

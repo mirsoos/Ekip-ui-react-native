@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AIChatBubble } from '../components/ai/AIChatBubble';
 import { AITypingIndicator } from '../components/ai/AITypingIndicator';
 import { useI18n } from '../lib/i18n';
@@ -112,6 +113,7 @@ export const AIAssistant = React.forwardRef<
   AIAssistantHandle,
   { onBack: () => void }
 >(function AIAssistant({ onBack }, ref) {
+  const insets = useSafeAreaInsets();
   const { isRTL } = useI18n();
   const suggestions = isRTL ? suggestionsFa : suggestionsEn;
 
@@ -158,7 +160,13 @@ export const AIAssistant = React.forwardRef<
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.messagesContent}
+        contentContainerStyle={[
+          styles.messagesContent,
+          Platform.OS !== 'web' && {
+            paddingTop: 76 + insets.top,
+            paddingBottom: 70 + insets.bottom,
+          },
+        ]}
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
       >
         {messages.map((m) => (

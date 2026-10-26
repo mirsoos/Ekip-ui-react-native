@@ -1,12 +1,13 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NotificationButton } from '../NotificationButton';
 import { GlassInput } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 
-export function ChatListHeader({
+export function ChatListHeaderComponent({
   unreadTotal,
   notificationsCount,
   search,
@@ -19,6 +20,7 @@ export function ChatListHeader({
   onChangeSearch: (val: string) => void;
   onOpenNotifications: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
 
@@ -30,7 +32,7 @@ export function ChatListHeader({
       toValue: 1,
       bounciness: 4,
       speed: 14,
-      useNativeDriver: false,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, []);
 
@@ -40,7 +42,15 @@ export function ChatListHeader({
   });
 
   return (
-    <View style={styles.outerContainer} pointerEvents="box-none">
+    <View
+      style={[
+        styles.outerContainer,
+        {
+          paddingTop: Platform.OS === 'web' ? 10 : Math.max(10, insets.top + 6),
+        },
+      ]}
+      pointerEvents="box-none"
+    >
       <Animated.View
         style={[
           styles.container,
@@ -94,6 +104,8 @@ export function ChatListHeader({
   );
 }
 
+export const ChatListHeader = React.memo(ChatListHeaderComponent);
+
 const styles = StyleSheet.create({
   outerContainer: {
     position: 'absolute',
@@ -101,7 +113,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 12,
-    paddingTop: Platform.OS === 'ios' ? 12 : 10,
     zIndex: 900,
   },
   container: {
@@ -111,11 +122,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 14,
     paddingBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 14,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+          elevation: 14,
+        }),
     overflow: 'visible',
   },
   headerTop: {

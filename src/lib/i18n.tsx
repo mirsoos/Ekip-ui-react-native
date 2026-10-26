@@ -1,5 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
 import { I18nManager, Platform } from 'react-native';
+
+if (Platform.OS !== 'web') {
+  try {
+    I18nManager.allowRTL(false);
+    I18nManager.forceRTL(false);
+  } catch (e) {}
+}
 
 export type Language = 'en' | 'fa';
 
@@ -612,13 +619,13 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('fa');
 
-  const setLanguage = (lang: Language) => {
+  const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       document.documentElement.dir = 'ltr';
       document.documentElement.lang = lang;
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -632,7 +639,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const textAlign: 'left' | 'right' = isRTL ? 'right' : 'left';
   const rowDir: 'row' | 'row-reverse' = isRTL ? 'row-reverse' : 'row';
 
-  const t = (key: TranslationKey, params?: Record<string, string | number>): string => {
+  const t = useCallback((key: TranslationKey, params?: Record<string, string | number>): string => {
     const dict = translations[language] ?? translations.en;
     let text = dict[key] ?? translations.en[key] ?? (key as string);
     if (params) {
@@ -641,20 +648,23 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       });
     }
     return text;
-  };
+  }, [language]);
+
+  const value = useMemo(
+    () => ({
+      language,
+      isRTL,
+      dir,
+      textAlign,
+      rowDir,
+      setLanguage,
+      t,
+    }),
+    [language, isRTL, dir, textAlign, rowDir, setLanguage, t]
+  );
 
   return (
-    <I18nContext.Provider
-      value={{
-        language,
-        isRTL,
-        dir,
-        textAlign,
-        rowDir,
-        setLanguage,
-        t,
-      }}
-    >
+    <I18nContext.Provider value={value}>
       {children}
     </I18nContext.Provider>
   );

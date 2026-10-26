@@ -7,7 +7,7 @@ import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 
-export function WelcomeView({
+export function WelcomeViewComponent({
   onLogin,
   onRegister,
 }: {
@@ -178,11 +178,22 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     borderWidth: 1,
     overflow: 'visible',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 14,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+          elevation: 14,
+        }),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -222,3 +233,5 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
+
+export const WelcomeView = React.memo(WelcomeViewComponent);

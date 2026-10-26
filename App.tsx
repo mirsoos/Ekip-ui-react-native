@@ -90,12 +90,12 @@ function MainContent() {
 
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
 
-  const push = (s: Screen) => {
+  const push = React.useCallback((s: Screen) => {
     setHistory((prev) => [...prev, screen]);
     setScreen(s);
-  };
+  }, [screen]);
 
-  const pop = () => {
+  const pop = React.useCallback(() => {
     setHistory((prev) => {
       if (prev.length === 0) return prev;
       const next = [...prev];
@@ -103,9 +103,9 @@ function MainContent() {
       setScreen(last);
       return next;
     });
-  };
+  }, []);
 
-  const switchTab = (t: TabKey) => {
+  const switchTab = React.useCallback((t: TabKey) => {
     setTab(t);
     setHistory([]);
     if (t === 'discover') setScreen({ name: 'discover' });
@@ -116,7 +116,7 @@ function MainContent() {
       profileScrollY.setValue(0);
       setScreen({ name: 'profile', userId: 'me' });
     }
-  };
+  }, [profileScrollY]);
 
   if (!authed) {
     return (
@@ -165,7 +165,10 @@ function MainContent() {
       (screen.name === 'profile' && screen.userId === 'me'));
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#04060c' : '#ebf0fa' }]}>
+    <SafeAreaView
+      edges={Platform.OS === 'web' ? undefined : ['left', 'right']}
+      style={[styles.safeArea, { backgroundColor: isDark ? '#04060c' : '#ebf0fa' }]}
+    >
       <StatusBar style={isDark ? 'light' : 'dark'} />
 
       {/* Dynamic Aurora Ambient Lighting */}

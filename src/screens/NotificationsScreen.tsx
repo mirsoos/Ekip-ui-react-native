@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { ScreenHeader } from '../components/common/ScreenHeader';
 import { NotificationFilterTabs } from '../components/notifications/NotificationFilterTabs';
@@ -13,6 +14,7 @@ export function NotificationsScreen({
   onBack: () => void;
   onOpenConversation?: (id: string) => void;
 }) {
+  const insets = useSafeAreaInsets();
   const { notifications, markNotificationRead, markAllNotificationsRead } = useAppData();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
@@ -30,7 +32,13 @@ export function NotificationsScreen({
     <View style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          Platform.OS !== 'web' && {
+            paddingTop: 76 + insets.top,
+            paddingBottom: 40 + insets.bottom,
+          },
+        ]}
       >
         <NotificationFilterTabs
           filter={filter}

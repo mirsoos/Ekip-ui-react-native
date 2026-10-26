@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassInput, GlassAvatar } from '../Glass';
 import { NotificationButton } from '../NotificationButton';
 import { LiquidLens } from '../LiquidLens';
@@ -19,7 +20,7 @@ export interface DiscoverHeaderProps {
   onOpenOwnProfile: () => void;
 }
 
-export function DiscoverHeader({
+export function DiscoverHeaderComponent({
   user,
   unreadCount,
   search,
@@ -29,6 +30,7 @@ export function DiscoverHeader({
   onOpenNotifications,
   onOpenOwnProfile,
 }: DiscoverHeaderProps) {
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
   const SlidersIcon = getIcon('SlidersHorizontal');
@@ -41,7 +43,7 @@ export function DiscoverHeader({
       toValue: 1,
       bounciness: 4,
       speed: 14,
-      useNativeDriver: false,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, []);
 
@@ -51,7 +53,15 @@ export function DiscoverHeader({
   });
 
   return (
-    <View style={styles.outerContainer} pointerEvents="box-none">
+    <View
+      style={[
+        styles.outerContainer,
+        {
+          paddingTop: Platform.OS === 'web' ? 10 : Math.max(10, insets.top + 6),
+        },
+      ]}
+      pointerEvents="box-none"
+    >
       <Animated.View
         style={[
           styles.container,
@@ -109,7 +119,7 @@ export function DiscoverHeader({
           </View>
         </View>
 
-        <View style={[styles.searchRow, { zIndex: 10 }]}>
+        <View style={[styles.searchRow, { zIndex: 10, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
           <View style={{ flex: 1 }}>
             <GlassInput
               icon="Search"
@@ -176,6 +186,8 @@ export function DiscoverHeader({
   );
 }
 
+export const DiscoverHeader = React.memo(DiscoverHeaderComponent);
+
 const styles = StyleSheet.create({
   outerContainer: {
     position: 'absolute',
@@ -183,7 +195,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 12,
-    paddingTop: Platform.OS === 'ios' ? 12 : 10,
     zIndex: 900,
   },
   container: {
@@ -193,11 +204,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 14,
     paddingBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 14,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+          elevation: 14,
+        }),
     overflow: 'visible',
   },
   topRow: {
@@ -237,11 +259,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
     position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.22,
-    shadowRadius: 6,
-    elevation: 4,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.22,
+          shadowRadius: 6,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.22,
+          shadowRadius: 6,
+          elevation: 4,
+        }),
     ...(Platform.OS === 'web'
       ? ({
           cursor: 'pointer',

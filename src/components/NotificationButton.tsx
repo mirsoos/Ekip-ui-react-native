@@ -9,7 +9,7 @@ export interface NotificationButtonProps {
   onPress: () => void;
 }
 
-export function NotificationButton({ unreadCount, onPress }: NotificationButtonProps) {
+export function NotificationButtonComponent({ unreadCount, onPress }: NotificationButtonProps) {
   const { colors, isDark } = useTheme();
   const BellIcon = getIcon('Bell');
 
@@ -62,11 +62,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
     position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 4,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25,
+          shadowRadius: 6,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25,
+          shadowRadius: 6,
+          elevation: 4,
+        }),
     ...(Platform.OS === 'web'
       ? ({
           cursor: 'pointer',
@@ -99,3 +110,5 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 });
+
+export const NotificationButton = React.memo(NotificationButtonComponent);

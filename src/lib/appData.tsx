@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
 import {
   demoProfiles, demoGroups, demoMembers, demoRequests,
   demoConversations, demoMessages, demoNotifications,
@@ -46,7 +46,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>(demoNotifications);
   const [friends, setFriends] = useState<Friendship[]>(demoFriends);
 
-  const profiles = [me, ...demoProfiles.slice(1)];
+  const profiles = useMemo(() => [me, ...demoProfiles.slice(1)], [me]);
   const members = demoMembers;
   const badges = demoBadges;
   const missions = demoMissions;
@@ -135,16 +135,56 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setMe((prev) => ({ ...prev, ...updates }));
   }, []);
 
+  const value = useMemo(
+    () => ({
+      me,
+      profiles,
+      groups,
+      members,
+      requests,
+      conversations,
+      messages,
+      notifications,
+      badges,
+      missions,
+      friends,
+      addGroup,
+      addRequest,
+      updateRequest,
+      addMessage,
+      markConversationRead,
+      markNotificationRead,
+      markAllNotificationsRead,
+      addFriend,
+      updateFriend,
+      addNotification,
+      updateMe,
+    }),
+    [
+      me,
+      profiles,
+      groups,
+      requests,
+      conversations,
+      messages,
+      notifications,
+      friends,
+      addGroup,
+      addRequest,
+      updateRequest,
+      addMessage,
+      markConversationRead,
+      markNotificationRead,
+      markAllNotificationsRead,
+      addFriend,
+      updateFriend,
+      addNotification,
+      updateMe,
+    ]
+  );
+
   return (
-    <AppDataContext.Provider
-      value={{
-        me, profiles, groups, members, requests, conversations, messages,
-        notifications, badges, missions, friends,
-        addGroup, addRequest, updateRequest, addMessage, markConversationRead,
-        markNotificationRead, markAllNotificationsRead, addFriend, updateFriend, addNotification,
-        updateMe,
-      }}
-    >
+    <AppDataContext.Provider value={value}>
       {children}
     </AppDataContext.Provider>
   );

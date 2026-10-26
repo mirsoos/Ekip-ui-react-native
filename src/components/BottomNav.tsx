@@ -10,6 +10,7 @@ import {
   PanResponder,
   type LayoutChangeEvent,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getIcon, type IconName } from '../lib/icons';
 import { useAppData } from '../lib/appData';
@@ -34,7 +35,8 @@ const tabs: { key: TabKey; label: string; icon: IconName }[] = [
   { key: 'profile', label: 'Profile', icon: 'User' },
 ];
 
-export function BottomNav({ active, onChange }: BottomNavProps) {
+export function BottomNavComponent({ active, onChange }: BottomNavProps) {
+  const insets = useSafeAreaInsets();
   const { me, conversations, notifications } = useAppData();
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
@@ -76,7 +78,7 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
       toValue: 1,
       bounciness: 4,
       speed: 14,
-      useNativeDriver: false,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, []);
 
@@ -323,7 +325,15 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
   const slotWidth = dockWidth > 0 ? (dockWidth - 12) / 5 : '20%';
 
   return (
-    <View style={styles.outerContainer} pointerEvents="box-none">
+    <View
+      style={[
+        styles.outerContainer,
+        {
+          paddingBottom: Platform.OS === 'web' ? 12 : Math.max(12, insets.bottom + 6),
+        },
+      ]}
+      pointerEvents="box-none"
+    >
       <Animated.View
         onLayout={handleDockLayout}
         {...panResponder.panHandlers}
@@ -437,6 +447,8 @@ export function BottomNav({ active, onChange }: BottomNavProps) {
   );
 }
 
+export const BottomNav = React.memo(BottomNavComponent);
+
 const styles = StyleSheet.create({
   outerContainer: {
     position: 'absolute',
@@ -444,7 +456,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 12,
-    paddingBottom: Platform.OS === 'ios' ? 22 : 12,
     zIndex: 900,
   },
   dockContainer: {
@@ -456,11 +467,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingVertical: 6,
     paddingHorizontal: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 14,
+    direction: 'ltr',
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+        }),
     overflow: 'visible',
     ...(Platform.OS === 'web'
       ? ({
@@ -479,11 +501,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     zIndex: 1,
     pointerEvents: 'none',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 3,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.12,
+          shadowRadius: 8,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.12,
+          shadowRadius: 8,
+        }),
     ...(Platform.OS === 'web'
       ? ({
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.6)',

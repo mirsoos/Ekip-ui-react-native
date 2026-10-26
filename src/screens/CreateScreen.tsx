@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassButton, GlassInput, GlassToggle, GlassBackButton, GlassSegmented } from '../components/Glass';
 import { LiquidLens } from '../components/LiquidLens';
@@ -43,6 +44,7 @@ export const CreateScreen = React.forwardRef<
   }
 >(function CreateScreen({ onBack, onCreated, onStateChange }, ref) {
   const { me, addGroup, addNotification } = useAppData();
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
 
@@ -124,6 +126,8 @@ export const CreateScreen = React.forwardRef<
       max_members: parseInt(maxMembers, 10) || 10,
       city: city.trim(),
       location_name: locationName.trim() || null,
+      latitude: null,
+      longitude: null,
       tags,
       age_min: ageMin ? parseInt(ageMin, 10) : null,
       age_max: ageMax ? parseInt(ageMax, 10) : null,
@@ -159,7 +163,13 @@ export const CreateScreen = React.forwardRef<
     <View style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          Platform.OS !== 'web' && {
+            paddingTop: 80 + insets.top,
+            paddingBottom: 135 + insets.bottom,
+          },
+        ]}
       >
         {step === 0 && (
           <View key={0} className="animate-raise" style={{ gap: 14 }}>

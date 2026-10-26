@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassListItem, GlassToggle, GlassButton, GlassAvatar } from '../components/Glass';
 import { GlassSheet, Toast } from '../components/Overlays';
@@ -34,6 +35,7 @@ export function SettingsScreen({
   onSignOut: () => void;
 }) {
   const { me } = useAppData();
+  const insets = useSafeAreaInsets();
   const { theme, toggle, colors } = useTheme();
   const { language, setLanguage, t, isRTL } = useI18n();
   const [showLanguageSheet, setShowLanguageSheet] = useState(false);
@@ -58,7 +60,13 @@ export function SettingsScreen({
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          Platform.OS !== 'web' && {
+            paddingTop: 76 + insets.top,
+            paddingBottom: 40 + insets.bottom,
+          },
+        ]}
       >
         {/* Profile Card Shortcut */}
         <TouchableOpacity activeOpacity={0.8} onPress={onOpenPersonalInfo}>

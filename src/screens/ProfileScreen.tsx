@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassButton, GlassSegmented, GlassEmpty, GlassBackButton } from '../components/Glass';
@@ -40,6 +41,7 @@ export function ProfileScreen({
   isLoading?: boolean;
 }) {
   const { me, profiles, groups, members, badges, missions, friends, addFriend, updateFriend, addNotification } = useAppData();
+  const insets = useSafeAreaInsets();
   const { theme, toggle, colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
   const [tab, setTab] = useState('activity');
@@ -106,7 +108,12 @@ export function ProfileScreen({
     <View style={styles.container}>
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, isOwnProfile && { paddingBottom: 110 }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          isOwnProfile
+            ? { paddingBottom: Platform.OS === 'web' ? 110 : 90 + insets.bottom }
+            : { paddingBottom: Platform.OS === 'web' ? 24 : 24 + insets.bottom },
+        ]}
         scrollEventThrottle={16}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],

@@ -8,7 +8,7 @@ import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Group } from '../../types/database';
 
-export function NotificationsSheet({
+export function NotificationsSheetComponent({
   open,
   onClose,
   onOpenConversation,
@@ -62,7 +62,7 @@ export function NotificationsSheet({
   return (
     <>
       <GlassSheet open={open} onClose={onClose} title={t('notifications.title')}>
-        <View style={styles.topControl}>
+        <View style={[styles.topControl, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
           <View style={{ flex: 1 }}>
             <GlassSegmented
               options={[
@@ -126,3 +126,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+export const NotificationsSheet = React.memo(NotificationsSheetComponent);

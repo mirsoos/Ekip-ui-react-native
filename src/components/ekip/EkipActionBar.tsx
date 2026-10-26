@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassButton } from '../Glass';
 import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
@@ -8,7 +9,7 @@ import { useAppData } from '../../lib/appData';
 import { useI18n } from '../../lib/i18n';
 import type { Group } from '../../types/database';
 
-export function EkipActionBar({
+export function EkipActionBarComponent({
   group,
   onOpenProfile,
   onOpenChat,
@@ -21,9 +22,10 @@ export function EkipActionBar({
   onOpenJoinSheet?: () => void;
   onCancelRequest?: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   const { me, members, requests, conversations } = useAppData();
   const { colors, isDark } = useTheme();
-  const { t } = useI18n();
+  const { t, isRTL } = useI18n();
   const ClockIcon = getIcon('Clock');
 
   const enterAnim = useRef(new Animated.Value(0)).current;
@@ -34,7 +36,7 @@ export function EkipActionBar({
       toValue: 1,
       bounciness: 4,
       speed: 14,
-      useNativeDriver: false,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, []);
 
@@ -70,7 +72,15 @@ export function EkipActionBar({
   };
 
   return (
-    <View style={styles.outerContainer} pointerEvents="box-none">
+    <View
+      style={[
+        styles.outerContainer,
+        {
+          paddingBottom: Platform.OS === 'web' ? 12 : Math.max(12, insets.bottom + 6),
+        },
+      ]}
+      pointerEvents="box-none"
+    >
       <Animated.View
         style={[
           styles.dockContainer,
@@ -159,6 +169,8 @@ export function EkipActionBar({
   );
 }
 
+export const EkipActionBar = React.memo(EkipActionBarComponent);
+
 const styles = StyleSheet.create({
   outerContainer: {
     position: 'absolute',
@@ -166,7 +178,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 12,
-    paddingBottom: Platform.OS === 'ios' ? 22 : 12,
     zIndex: 900,
   },
   dockContainer: {
@@ -177,11 +188,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 14,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+          elevation: 14,
+        }),
     overflow: 'visible',
   },
   row: {

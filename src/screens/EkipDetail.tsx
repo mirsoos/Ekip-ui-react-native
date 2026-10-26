@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassButton } from '../components/Glass';
 import { GlassSheet, Toast } from '../components/Overlays';
@@ -33,6 +34,7 @@ export function EkipDetail({
   onOpenChat: (conversationId: string) => void;
 }) {
   const { me, members, requests, addRequest, updateRequest, addNotification, conversations } = useAppData();
+  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
 
@@ -120,7 +122,12 @@ export function EkipDetail({
     <View style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          Platform.OS !== 'web' && {
+            paddingBottom: 85 + insets.bottom,
+          },
+        ]}
       >
         <EkipDetailHeader
           coverUrl={group.cover_url ?? ''}

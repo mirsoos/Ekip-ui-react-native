@@ -1,3 +1,5 @@
+// --- START OF FILE LiquidLens.tsx ---
+
 import React, { useMemo, useState, type ReactNode } from 'react';
 import {
   View,
@@ -7,6 +9,8 @@ import {
   type ViewStyle,
   type LayoutChangeEvent,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
+import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'react-native-svg';
 
 export interface LiquidLensProps {
   children?: ReactNode;
@@ -19,6 +23,10 @@ export interface LiquidLensProps {
   pointerEvents?: 'none' | 'box-none' | 'box-only' | 'auto';
 }
 
+// Global memory cache so SDF Normal Maps are NEVER recalculated for the same dimensions!
+// Eliminates CPU lag when switching tabs/screens.
+const normalMapCache = new Map<string, string>();
+
 /**
  * Deterministic Signed Distance Field (SDF) Normal Map generator
  * Creates authentic Apple Liquid Glass inward 360-degree refraction
@@ -26,6 +34,10 @@ export interface LiquidLensProps {
  */
 export function getLiquidLensNormalMap(w: number, h: number, r: number, margin: number): string {
   if (typeof document === 'undefined') return '';
+  const key = `${w}x${h}_r${r}_m${margin}`;
+  const cached = normalMapCache.get(key);
+  if (cached) return cached;
+
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
@@ -92,7 +104,9 @@ export function getLiquidLensNormalMap(w: number, h: number, r: number, margin: 
   }
 
   ctx.putImageData(imgData, 0, 0);
-  return canvas.toDataURL();
+  const uri = canvas.toDataURL();
+  normalMapCache.set(key, uri);
+  return uri;
 }
 
 let lensIdCounter = 0;
@@ -116,8 +130,10 @@ export function LiquidLens({
 
   const handleLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
-    if (width > 0 && height > 0 && (width !== layout.width || height !== layout.height)) {
-      setLayout({ width: Math.round(width), height: Math.round(height) });
+    const rw = Math.round(width);
+    const rh = Math.round(height);
+    if (rw > 0 && rh > 0 && (rw !== layout.width || rh !== layout.height)) {
+      setLayout({ width: rw, height: rh });
     }
   };
 
@@ -136,80 +152,142 @@ export function LiquidLens({
         style,
       ]}
     >
-      {Platform.OS === 'web' && (
-        <svg style={{ display: 'none' }} aria-hidden="true">
-          <filter id={filterId} x="0%" y="0%" width="100%" height="100%">
-            {/* 1. Calm matte frost blur for center */}
-            <feGaussianBlur in="SourceGraphic" stdDeviation={blurDeviation} result="matteBackdrop" />
+      {Platform.OS === 'web' ? (
+        <>
+          <svg style={{ display: 'none' }} aria-hidden="true">
+            <filter id={filterId} x="0%" y="0%" width="100%" height="100%">
+              {/* 1. Calm matte frost blur for center */}
+              <feGaussianBlur in="SourceGraphic" stdDeviation={blurDeviation} result="matteBackdrop" />
 
-            {/* 2. Deterministic 360-degree rounded capsule lens normal map */}
-            {normalMapUri ? (
-              <feImage
-                href={normalMapUri}
-                preserveAspectRatio="none"
-                result="refractionMap"
+              {/* 2. Deterministic 360-degree rounded capsule lens normal map */}
+              {normalMapUri ? (
+                <feImage
+                  href={normalMapUri}
+                  preserveAspectRatio="none"
+                  result="refractionMap"
+                />
+              ) : null}
+
+              {/* 3. Displace matte backdrop smoothly along all inner margins */}
+              <feDisplacementMap
+                in="matteBackdrop"
+                in2="refractionMap"
+                scale={scale}
+                xChannelSelector="R"
+                yChannelSelector="G"
+                result="refracted"
               />
-            ) : null}
+            </filter>
+          </svg>
 
-            {/* 3. Displace matte backdrop smoothly along all inner margins */}
-            <feDisplacementMap
-              in="matteBackdrop"
-              in2="refractionMap"
-              scale={scale}
-              xChannelSelector="R"
-              yChannelSelector="G"
-              result="refracted"
-            />
-          </filter>
-        </svg>
+          {/* 1. Backdrop displacement filter layer */}
+          <View
+            style={[
+              styles.glassFilter,
+              {
+                borderRadius,
+                filter: `url(#${filterId})`,
+              } as any,
+            ]}
+          />
+
+          {/* Dark tint base layer */}
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                borderRadius,
+                backgroundColor: '#0000007d',
+                zIndex: 0,
+              },
+            ]}
+            pointerEvents="none"
+          />
+
+          {/* 2. Glass tint overlay layer */}
+          <View
+            style={[
+              styles.glassOverlay,
+              {
+                borderRadius,
+                backgroundColor: `rgba(255, 255, 255, ${overlayOpacity})`,
+              },
+            ]}
+          />
+
+          {/* 3. Specular rim highlight layer */}
+          <View
+            style={[
+              styles.glassSpecular,
+              { borderRadius },
+            ]}
+          />
+        </>
+      ) : (
+        /* NATIVE iOS & ANDROID: Real Live BlurView + SVG Inset Specular Rim (Exact match to Web) */
+        <>
+          <BlurView
+            intensity={Math.min(60, Math.round(blurDeviation * 18))}
+            tint="dark"
+            experimentalBlurMethod="dimezisBlurView"
+            style={[StyleSheet.absoluteFill, { borderRadius }]}
+          />
+
+          {/* Same Dark tint base layer as Web (#0000007d) */}
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                borderRadius,
+                backgroundColor: '#0000007d',
+              },
+            ]}
+          />
+
+          {/* Same Glass tint overlay layer as Web */}
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                borderRadius,
+                backgroundColor: `rgba(255, 255, 255, ${overlayOpacity})`,
+              },
+            ]}
+          />
+
+          {/* Exact SVG equivalent of Web's `inset 0 1px 1px rgba(255,255,255,0.55), inset 0 -1px 1px rgba(255,255,255,0.1)` */}
+          {layout.width > 0 && layout.height > 0 && (
+            <Svg
+              pointerEvents="none"
+              width={layout.width}
+              height={layout.height}
+              style={StyleSheet.absoluteFill}
+            >
+              <Defs>
+                <SvgLinearGradient id="rimGrad" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0%" stopColor="#ffffff" stopOpacity="0.58" />
+                  <Stop offset="25%" stopColor="#ffffff" stopOpacity="0.12" />
+                  <Stop offset="75%" stopColor="#ffffff" stopOpacity="0.05" />
+                  <Stop offset="100%" stopColor="#ffffff" stopOpacity="0.18" />
+                </SvgLinearGradient>
+              </Defs>
+              <Rect
+                x={0.75}
+                y={0.75}
+                width={Math.max(0, layout.width - 1.5)}
+                height={Math.max(0, layout.height - 1.5)}
+                rx={Math.max(0, borderRadius - 0.75)}
+                ry={Math.max(0, borderRadius - 0.75)}
+                fill="none"
+                stroke="url(#rimGrad)"
+                strokeWidth={1.5}
+              />
+            </Svg>
+          )}
+        </>
       )}
-
-      {/* 1. Backdrop displacement filter layer */}
-      <View
-        style={[
-          styles.glassFilter,
-          {
-            borderRadius,
-            ...(Platform.OS === 'web'
-              ? ({
-                  filter: `url(#${filterId})`,
-                } as any)
-              : {}),
-          },
-        ]}
-      />
-
-      {/* Dark tint base layer */}
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            borderRadius,
-            backgroundColor: '#0000007d',
-            zIndex: 0,
-          },
-        ]}
-        pointerEvents="none"
-      />
-
-      {/* 2. Glass tint overlay layer */}
-      <View
-        style={[
-          styles.glassOverlay,
-          {
-            borderRadius,
-            backgroundColor: `rgba(255, 255, 255, ${overlayOpacity})`,
-          },
-        ]}
-      />
-
-      {/* 3. Specular rim highlight layer */}
-      <View
-        style={[
-          styles.glassSpecular,
-          { borderRadius },
-        ]}
-      />
 
       {/* 4. Child contents (if any) */}
       {children}
@@ -226,12 +304,15 @@ const styles = StyleSheet.create({
       ? ({
           boxShadow: '0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1)',
         } as any)
-      : {
+      : Platform.OS === 'ios'
+      ? {
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 6 },
           shadowOpacity: 0.2,
           shadowRadius: 6,
-          elevation: 4,
+        }
+      : {
+          elevation: 0,
         }),
   },
   glassFilter: {
@@ -262,9 +343,6 @@ const styles = StyleSheet.create({
           boxShadow:
             'inset 0 1px 1px rgba(255, 255, 255, 0.55), inset 0 -1px 1px rgba(255, 255, 255, 0.1)',
         } as any)
-      : {
-          borderWidth: 1,
-          borderColor: 'rgba(255, 255, 255, 0.75)',
-        }),
+      : {}),
   },
 });

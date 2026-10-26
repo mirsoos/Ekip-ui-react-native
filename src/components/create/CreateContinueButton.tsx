@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiquidLens } from '../LiquidLens';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 
-export function CreateContinueButton({
+export function CreateContinueButtonComponent({
   step,
   totalSteps,
   disabled,
@@ -16,13 +17,16 @@ export function CreateContinueButton({
   disabled: boolean;
   onPress: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
   const isFinal = step === totalSteps - 1;
   const IconComp = getIcon(isFinal ? 'Check' : isRTL ? 'ArrowLeft' : 'ArrowRight');
 
+  const bottomOffset = Platform.OS === 'web' ? 74 : 74 + Math.max(0, insets.bottom);
+
   return (
-    <View style={styles.outerContainer} pointerEvents="box-none">
+    <View style={[styles.outerContainer, { bottom: bottomOffset }]} pointerEvents="box-none">
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={onPress}
@@ -45,7 +49,7 @@ export function CreateContinueButton({
           style={StyleSheet.absoluteFill}
         />
 
-        <View style={styles.buttonContent}>
+        <View style={[styles.buttonContent, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
           <Text style={[styles.continueText, { color: colors.textPrimary }]}>
             {isFinal ? t('create.deployOperation') : t('create.continue')}
           </Text>
@@ -61,14 +65,14 @@ export function CreateContinueButton({
   );
 }
 
+export const CreateContinueButton = React.memo(CreateContinueButtonComponent);
+
 const styles = StyleSheet.create({
   outerContainer: {
     position: 'absolute',
-    bottom: 0,
     left: 0,
     right: 0,
     paddingHorizontal: 16,
-    paddingBottom: Platform.OS === 'ios' ? 22 : 12,
     zIndex: 900,
   },
   continueButton: {
@@ -78,11 +82,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 14,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+          elevation: 14,
+        }),
     overflow: 'visible',
   },
   buttonContent: {

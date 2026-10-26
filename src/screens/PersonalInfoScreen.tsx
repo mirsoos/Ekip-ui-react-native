@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassButton, GlassInput, GlassSegmented } from '../components/Glass';
 import { ScreenHeader } from '../components/common/ScreenHeader';
@@ -25,6 +26,7 @@ export function PersonalInfoScreen({
   onBack: () => void;
   onOpenVerification?: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   const { me, updateMe } = useAppData();
   const { colors } = useTheme();
   const { isRTL, t } = useI18n();
@@ -71,7 +73,13 @@ export function PersonalInfoScreen({
     <View style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          Platform.OS !== 'web' && {
+            paddingTop: 76 + insets.top,
+            paddingBottom: 40 + insets.bottom,
+          },
+        ]}
       >
         {/* Avatar Preset Selector */}
         <View style={{ gap: 8 }}>
