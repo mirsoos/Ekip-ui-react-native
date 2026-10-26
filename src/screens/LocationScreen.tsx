@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useAppData } from '../lib/appData';
-import { GlassCard, GlassButton } from '../components/Glass';
+import { GlassCard, GlassButton, LiquidGlassToggle } from '../components/Glass';
 import { GlassSheet, Toast } from '../components/Overlays';
 import { cities } from '../lib/demoData';
 import { getIcon } from '../lib/icons';
@@ -175,11 +175,10 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
                 {isRTL ? 'اعلان هنگام تشکیل اکیپ جدید در محدوده ۲ کیلومتری' : 'Alert when new Ekips form within 2km'}
               </Text>
             </View>
-            <Switch
-              value={backgroundRadar}
-              onValueChange={setBackgroundRadar}
-              trackColor={{ false: 'rgba(255,255,255,0.1)', true: '#ec4899' }}
-              thumbColor="#fff"
+            <LiquidGlassToggle
+              checked={backgroundRadar}
+              onChange={setBackgroundRadar}
+              size="sm"
             />
           </View>
 
@@ -194,11 +193,10 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
                 {isRTL ? 'پین کردن اکیپ‌های محلی در بالای فید اصلی' : 'Pin local squads to the top of your feed'}
               </Text>
             </View>
-            <Switch
-              value={spotlightMyCity}
-              onValueChange={setSpotlightMyCity}
-              trackColor={{ false: 'rgba(255,255,255,0.1)', true: '#ec4899' }}
-              thumbColor="#fff"
+            <LiquidGlassToggle
+              checked={spotlightMyCity}
+              onChange={setSpotlightMyCity}
+              size="sm"
             />
           </View>
         </GlassCard>
@@ -398,6 +396,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 4,
+    gap: 16,
   },
   settingTitle: {
     fontSize: 14,

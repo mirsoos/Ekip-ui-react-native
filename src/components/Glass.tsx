@@ -17,7 +17,8 @@ import { getIcon, type IconName } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { LiquidLens } from './LiquidLens';
-export { LiquidGlassToggle, type LiquidGlassToggleProps } from './common/LiquidGlassToggle';
+import { LiquidGlassToggle, type LiquidGlassToggleProps } from './common/LiquidGlassToggle';
+export { LiquidGlassToggle, type LiquidGlassToggleProps };
 
 // ============================================
 // GLASS CARD
@@ -877,49 +878,25 @@ export function GlassToggle({
   checked,
   onChange,
   label,
+  size = 'sm',
+  disabled,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   label?: string;
+  size?: 'sm' | 'md' | 'lg';
+  disabled?: boolean;
 }) {
   const { colors } = useTheme();
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
       {label && (
-        <Text style={{ fontSize: 15, color: colors.textPrimary, fontWeight: '500' }}>
+        <Text style={{ fontSize: 15, color: colors.textPrimary, fontWeight: '500', flex: 1 }}>
           {label}
         </Text>
       )}
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={() => onChange(!checked)}
-        style={{
-          width: 50,
-          height: 28,
-          borderRadius: 14,
-          backgroundColor: checked ? '#10b981' : colors.glassThinBg,
-          borderColor: colors.glassBorder,
-          borderWidth: 1,
-          justifyContent: 'center',
-          paddingHorizontal: 3,
-        }}
-      >
-        <View
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: 11,
-            backgroundColor: '#ffffff',
-            alignSelf: checked ? 'flex-end' : 'flex-start',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 3,
-            elevation: 2,
-          }}
-        />
-      </TouchableOpacity>
+      <LiquidGlassToggle checked={checked} onChange={onChange} size={size} disabled={disabled} />
     </View>
   );
 }

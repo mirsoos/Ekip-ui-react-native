@@ -91,6 +91,7 @@ export function LiquidGlassToggle({
         {label && <Text style={[styles.labelText, labelStyle]}>{label}</Text>}
 
         <div
+          dir="ltr"
           style={{
             position: 'relative',
             display: 'inline-flex',
@@ -98,6 +99,7 @@ export function LiquidGlassToggle({
             userSelect: 'none',
             WebkitUserSelect: 'none',
             flexShrink: 0,
+            direction: 'ltr',
           }}
         >
           {/* Inject Comfortaa Font & Neumorphic Styles */}
@@ -105,7 +107,12 @@ export function LiquidGlassToggle({
             {`
               @import url("https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&display=swap");
 
+              #${instanceId}-wrap {
+                direction: ltr !important;
+              }
+
               #${instanceId}-wrap .radio-checked {
+                direction: ltr !important;
                 position: relative;
                 font-family: "Comfortaa", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 font-size: ${fontSize}px;
@@ -123,8 +130,10 @@ export function LiquidGlassToggle({
               }
 
               #${instanceId}-wrap .radio-checked_container {
+                direction: ltr !important;
                 position: relative;
                 display: flex;
+                flex-direction: row !important;
                 align-items: center;
                 z-index: 2;
                 width: 100%;
@@ -288,6 +297,7 @@ const styles = StyleSheet.create({
   nativeContainer: {
     position: 'relative',
     overflow: 'hidden',
+    direction: 'ltr',
     shadowColor: '#000000',
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.3,
@@ -304,6 +314,7 @@ const styles = StyleSheet.create({
   },
   nativeLabelRow: {
     flexDirection: 'row',
+    direction: 'ltr',
     alignItems: 'center',
     justifyContent: 'space-between',
   },

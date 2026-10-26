@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useAppData } from '../lib/appData';
-import { GlassCard, GlassButton } from '../components/Glass';
+import { GlassCard, GlassButton, LiquidGlassToggle } from '../components/Glass';
 import { GlassSheet, Toast } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
 import { useI18n } from '../lib/i18n';
@@ -146,14 +146,13 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
                   : 'FIDO2 WebAuthn & biometric cryptographic hardware key'}
               </Text>
             </View>
-            <Switch
-              value={passkeyRegistered}
-              onValueChange={(val) => {
+            <LiquidGlassToggle
+              checked={passkeyRegistered}
+              onChange={(val) => {
                 setPasskeyRegistered(val);
                 showToast(val ? (isRTL ? 'پس‌کی سخت‌افزاری فعال شد' : 'Hardware passkey registered') : (isRTL ? 'پس‌کی غیرفعال شد' : 'Hardware passkey revoked'));
               }}
-              trackColor={{ false: 'rgba(255,255,255,0.1)', true: '#10b981' }}
-              thumbColor="#fff"
+              size="sm"
             />
           </View>
         </GlassCard>
@@ -172,11 +171,10 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
                 {isRTL ? 'درخواست کد یکبار مصرف در هر بار ورود' : 'Require TOTP code or passkey for every login'}
               </Text>
             </View>
-            <Switch
-              value={twoFactorEnabled}
-              onValueChange={setTwoFactorEnabled}
-              trackColor={{ false: 'rgba(255,255,255,0.1)', true: '#ec4899' }}
-              thumbColor="#fff"
+            <LiquidGlassToggle
+              checked={twoFactorEnabled}
+              onChange={setTwoFactorEnabled}
+              size="sm"
             />
           </View>
 
@@ -191,11 +189,10 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
                 {isRTL ? 'درخواست اثر انگشت یا تشخیص چهره هنگام ورود' : 'Prompt fingerprint or face unlock upon launch'}
               </Text>
             </View>
-            <Switch
-              value={biometricEnabled}
-              onValueChange={setBiometricEnabled}
-              trackColor={{ false: 'rgba(255,255,255,0.1)', true: '#ec4899' }}
-              thumbColor="#fff"
+            <LiquidGlassToggle
+              checked={biometricEnabled}
+              onChange={setBiometricEnabled}
+              size="sm"
             />
           </View>
 
@@ -210,11 +207,10 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
                 {isRTL ? 'اعلان آنی در صورت ورود از دستگاه یا منطقه جدید' : 'Instant notification upon login from new sector'}
               </Text>
             </View>
-            <Switch
-              value={loginAlerts}
-              onValueChange={setLoginAlerts}
-              trackColor={{ false: 'rgba(255,255,255,0.1)', true: '#ec4899' }}
-              thumbColor="#fff"
+            <LiquidGlassToggle
+              checked={loginAlerts}
+              onChange={setLoginAlerts}
+              size="sm"
             />
           </View>
         </GlassCard>
@@ -407,6 +403,7 @@ const styles = StyleSheet.create({
   heroHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 16,
   },
   iconBox: {
     width: 44,
@@ -444,6 +441,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 4,
+    gap: 16,
   },
   settingTitle: {
     fontSize: 14,
