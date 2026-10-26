@@ -17,6 +17,7 @@ import { getIcon, type IconName } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { LiquidLens } from './LiquidLens';
+export { LiquidGlassToggle, type LiquidGlassToggleProps } from './common/LiquidGlassToggle';
 
 // ============================================
 // GLASS CARD

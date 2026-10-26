@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassButton, GlassBackButton, GlassAvatar, GlassSegmented } from '../components/Glass';
 import { GlassSheet, Toast } from '../components/Overlays';
+import { LiquidGlassToggle } from '../components/common/LiquidGlassToggle';
 import { getIcon } from '../lib/icons';
 import { useI18n } from '../lib/i18n';
 
@@ -102,14 +103,13 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
                   : 'Browse Ekips without showing your online presence'}
               </Text>
             </View>
-            <Switch
-              value={ghostMode}
-              onValueChange={(val) => {
+            <LiquidGlassToggle
+              checked={ghostMode}
+              onChange={(val) => {
                 setGhostMode(val);
                 showToast(val ? (isRTL ? 'حالت مخفی فعال شد' : 'Incognito activated') : (isRTL ? 'حالت مخفی غیرفعال شد' : 'Incognito deactivated'));
               }}
-              trackColor={{ false: 'rgba(255,255,255,0.1)', true: '#ec4899' }}
-              thumbColor="#fff"
+              size="sm"
             />
           </View>
         </GlassCard>
@@ -120,7 +120,7 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
         </Text>
         <GlassCard style={styles.cardSection}>
           <View style={styles.settingRow}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, marginRight: isRTL ? 0 : 12, marginLeft: isRTL ? 12 : 0 }}>
               <Text style={styles.settingTitle}>
                 {isRTL ? 'پروفایل خصوصی' : 'Private Profile'}
               </Text>
@@ -128,18 +128,17 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
                 {isRTL ? 'فقط دوستان و اعضای اکیپ مشترک اطلاعات شما را ببینند' : 'Only friends and shared Ekip members see full info'}
               </Text>
             </View>
-            <Switch
-              value={privateProfile}
-              onValueChange={setPrivateProfile}
-              trackColor={{ false: 'rgba(255,255,255,0.1)', true: '#ec4899' }}
-              thumbColor="#fff"
+            <LiquidGlassToggle
+              checked={privateProfile}
+              onChange={setPrivateProfile}
+              size="sm"
             />
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.settingRow}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, marginRight: isRTL ? 0 : 12, marginLeft: isRTL ? 12 : 0 }}>
               <Text style={styles.settingTitle}>
                 {isRTL ? 'قابل جستجو در رادار عمومی' : 'Discoverable in Global Search'}
               </Text>
@@ -147,18 +146,17 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
                 {isRTL ? 'به سایر کاربران اجازه یافتن شما با نام کاربری را می‌دهد' : 'Allow operators to locate you by handle'}
               </Text>
             </View>
-            <Switch
-              value={discoverySearch}
-              onValueChange={setDiscoverySearch}
-              trackColor={{ false: 'rgba(255,255,255,0.1)', true: '#ec4899' }}
-              thumbColor="#fff"
+            <LiquidGlassToggle
+              checked={discoverySearch}
+              onChange={setDiscoverySearch}
+              size="sm"
             />
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.settingRow}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, marginRight: isRTL ? 0 : 12, marginLeft: isRTL ? 12 : 0 }}>
               <Text style={styles.settingTitle}>
                 {isRTL ? 'نمایش وضعیت آنلاین بودن' : 'Show Live Online Status'}
               </Text>
@@ -166,18 +164,17 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
                 {isRTL ? 'نمایش تیک سبز رنگ در هنگام حضور در برنامه' : 'Display green telemetry dot when active'}
               </Text>
             </View>
-            <Switch
-              value={showOnlineStatus}
-              onValueChange={setShowOnlineStatus}
-              trackColor={{ false: 'rgba(255,255,255,0.1)', true: '#ec4899' }}
-              thumbColor="#fff"
+            <LiquidGlassToggle
+              checked={showOnlineStatus}
+              onChange={setShowOnlineStatus}
+              size="sm"
             />
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.settingRow}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, marginRight: isRTL ? 0 : 12, marginLeft: isRTL ? 12 : 0 }}>
               <Text style={styles.settingTitle}>
                 {isRTL ? 'نمایش در اعضای اکیپ' : 'Display in Squad Attendees'}
               </Text>
@@ -185,11 +182,10 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
                 {isRTL ? 'نمایش آواتار شما در اکیپ‌هایی که پیوسته‌اید' : 'List your avatar in squads you have joined'}
               </Text>
             </View>
-            <Switch
-              value={showInAttendeeList}
-              onValueChange={setShowInAttendeeList}
-              trackColor={{ false: 'rgba(255,255,255,0.1)', true: '#ec4899' }}
-              thumbColor="#fff"
+            <LiquidGlassToggle
+              checked={showInAttendeeList}
+              onChange={setShowInAttendeeList}
+              size="sm"
             />
           </View>
         </GlassCard>
@@ -200,7 +196,7 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
         </Text>
         <GlassCard style={styles.cardSection}>
           <View style={styles.settingRow}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, marginRight: isRTL ? 0 : 12, marginLeft: isRTL ? 12 : 0 }}>
               <Text style={styles.settingTitle}>
                 {isRTL ? 'موقعیت زنده با دقت بالا' : 'High-Precision GPS'}
               </Text>
@@ -208,18 +204,17 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
                 {isRTL ? 'اشتراک مختصات دقیق (خطای زیر ۵۰ متر) با اکیپ' : 'Share exact coordinates (within 50m) with squads'}
               </Text>
             </View>
-            <Switch
-              value={preciseLocation}
-              onValueChange={setPreciseLocation}
-              trackColor={{ false: 'rgba(255,255,255,0.1)', true: '#ec4899' }}
-              thumbColor="#fff"
+            <LiquidGlassToggle
+              checked={preciseLocation}
+              onChange={setPreciseLocation}
+              size="sm"
             />
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.settingRow}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, marginRight: isRTL ? 0 : 12, marginLeft: isRTL ? 12 : 0 }}>
               <Text style={styles.settingTitle}>
                 {isRTL ? 'نمایش محله / بخش شهری' : 'Show Neighborhood / Sector'}
               </Text>
@@ -227,11 +222,10 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
                 {isRTL ? 'محدوده تقریبی در پروفایل شما نشان داده شود' : 'Approximate zone visible on your profile card'}
               </Text>
             </View>
-            <Switch
-              value={showCityNeighborhood}
-              onValueChange={setShowCityNeighborhood}
-              trackColor={{ false: 'rgba(255,255,255,0.1)', true: '#ec4899' }}
-              thumbColor="#fff"
+            <LiquidGlassToggle
+              checked={showCityNeighborhood}
+              onChange={setShowCityNeighborhood}
+              size="sm"
             />
           </View>
         </GlassCard>
@@ -359,6 +353,7 @@ const styles = StyleSheet.create({
   ghostHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 16,
   },
   iconBox: {
     width: 44,
@@ -395,7 +390,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 4,
+    paddingVertical: 6,
+    gap: 18,
   },
   settingTitle: {
     fontSize: 14,
