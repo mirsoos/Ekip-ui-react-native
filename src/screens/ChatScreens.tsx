@@ -40,7 +40,7 @@ export function ChatListScreenComponent({
         contentContainerStyle={[
           styles.listContent,
           Platform.OS !== 'web' && {
-            paddingTop: 135 + insets.top,
+            paddingTop: 168 + insets.top,
             paddingBottom: 90 + insets.bottom,
           },
         ]}
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingTop: 150,
+    paddingTop: 168,
     paddingBottom: 110,
     gap: 8,
   },

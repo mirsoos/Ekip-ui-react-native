@@ -1,9 +1,11 @@
+// --- START OF FILE App.tsx ---
+
 import React, { useState } from 'react';
 import { View, StyleSheet, Platform, Animated } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme, ThemeContext } from './src/lib/theme';
-import { AppDataProvider } from './src/lib/appData';
+import { AppDataProvider, useAppData } from './src/lib/appData';
 import { BottomNav, type TabKey } from './src/components/BottomNav';
 import { ChatHeader } from './src/components/chat/ChatHeader';
 import { ChatListHeader } from './src/components/chat/ChatListHeader';
@@ -16,7 +18,6 @@ import { ProfileHeader } from './src/components/profile/ProfileHeader';
 import { EkipActionBar } from './src/components/ekip/EkipActionBar';
 import { CreateContinueButton } from './src/components/create/CreateContinueButton';
 import { CreateHeader } from './src/components/create/CreateHeader';
-import { useAppData } from './src/lib/appData';
 import { NotificationsSheet } from './src/components/notifications/NotificationsSheet';
 import type { Group } from './src/types/database';
 
@@ -68,13 +69,31 @@ export type Screen =
   | { name: 'location' }
   | { name: 'chatTheme' };
 
+const FreezeGate = React.memo(
+  function FreezeGate({
+    children,
+  }: {
+    active: boolean;
+    children: React.ReactNode;
+  }) {
+    return <>{children}</>;
+  },
+  (prevProps, nextProps) => {
+    // If inactive, NEVER re-render children even when parent MainContent re-renders (e.g. on Theme Toggle!)
+    if (!nextProps.active && !prevProps.active) return true;
+    return false;
+  }
+);
+
 function DeferredTabPane({
   active,
   visible,
+  zIndexActive = 1,
   children,
 }: {
   active: boolean;
   visible: boolean;
+  zIndexActive?: number;
   children: React.ReactNode;
 }) {
   const themeContext = useTheme();
@@ -85,10 +104,6 @@ function DeferredTabPane({
   }
 
   const themeValue = active ? themeContext : cachedThemeRef.current;
-  const renderedChildrenRef = React.useRef<React.ReactNode>(null);
-  if (active || !renderedChildrenRef.current) {
-    renderedChildrenRef.current = children;
-  }
 
   return (
     <ThemeContext.Provider value={themeValue}>
@@ -97,12 +112,12 @@ function DeferredTabPane({
           StyleSheet.absoluteFill,
           {
             opacity: visible ? 1 : 0,
-            zIndex: visible ? 1 : 0,
+            zIndex: visible ? zIndexActive : 0,
           },
         ]}
         pointerEvents={visible ? 'auto' : 'none'}
       >
-        {renderedChildrenRef.current}
+        <FreezeGate active={active}>{children}</FreezeGate>
       </View>
     </ThemeContext.Provider>
   );
@@ -127,10 +142,6 @@ function DeferredHeaderPane({
   }
 
   const themeValue = active ? themeContext : cachedThemeRef.current;
-  const renderedChildrenRef = React.useRef<React.ReactNode>(null);
-  if (active || !renderedChildrenRef.current) {
-    renderedChildrenRef.current = children;
-  }
 
   const anim = React.useRef(new Animated.Value(0)).current;
 
@@ -166,7 +177,7 @@ function DeferredHeaderPane({
         ]}
         pointerEvents={visible ? pointerEvents : 'none'}
       >
-        {renderedChildrenRef.current}
+        <FreezeGate active={active}>{children}</FreezeGate>
       </Animated.View>
     </ThemeContext.Provider>
   );
@@ -232,6 +243,7 @@ function MainContent() {
     setAuthed(true);
     setOnboarded(false);
   }, []);
+
   const [history, setHistory] = useState<Screen[]>([]);
   const [createState, setCreateState] = useState({ step: 0, canProceed: false });
   const [chatSearch, setChatSearch] = useState('');
@@ -442,11 +454,16 @@ function MainContent() {
     setOnboarded(true);
   }, []);
 
-  const isDiscoverActive = isMainScreen && screen.name === 'discover';
-  const isActivityActive = isMainScreen && screen.name === 'activity';
-  const isCreateActive = isMainScreen && screen.name === 'create';
-  const isChatListActive = isMainScreen && screen.name === 'chatList';
-  const isOwnProfileActive = isMainScreen && screen.name === 'profile' && (screen.userId === 'me' || !screen.userId);
+  const isMainAppVisible = isBootLoading || (authed && onboarded);
+  const isDiscoverActive = isMainAppVisible && isMainScreen && screen.name === 'discover';
+  const isActivityActive = isMainAppVisible && isMainScreen && screen.name === 'activity';
+  const isCreateActive = isMainAppVisible && isMainScreen && screen.name === 'create';
+  const isChatListActive = isMainAppVisible && isMainScreen && screen.name === 'chatList';
+  const isOwnProfileActive =
+    isMainAppVisible &&
+    isMainScreen &&
+    screen.name === 'profile' &&
+    (screen.userId === 'me' || !screen.userId);
 
   const showBottomNav =
     ['discover', 'activity', 'create', 'chatList'].includes(screen.name) ||
@@ -463,44 +480,34 @@ function MainContent() {
       <AuroraBackground />
 
       <View nativeID="phone-container" style={styles.phoneContainer}>
-        {/* Layer 1: Auth Screen (Stage 1) */}
+        {/* Layer 1: Auth Screen (Stage 1 - Frozen when authed!) */}
         {bootStage >= 1 && (
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                opacity: !authed ? 1 : 0,
-                zIndex: !authed ? 20 : 0,
-              },
-            ]}
-            pointerEvents={!authed ? 'auto' : 'none'}
+          <DeferredTabPane
+            active={isBootLoading || !authed}
+            visible={!authed}
+            zIndexActive={20}
           >
             <View style={styles.screenContainer}>
               <ScreenTransition screenKey={`auth-${language}`}>
                 <AuthScreen onComplete={handleAuthSuccess} />
               </ScreenTransition>
             </View>
-          </View>
+          </DeferredTabPane>
         )}
 
-        {/* Layer 2: Onboarding (Stage 1) */}
+        {/* Layer 2: Onboarding (Stage 1 - Frozen when onboarded!) */}
         {bootStage >= 1 && (
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                opacity: authed && !onboarded ? 1 : 0,
-                zIndex: authed && !onboarded ? 20 : 0,
-              },
-            ]}
-            pointerEvents={authed && !onboarded ? 'auto' : 'none'}
+          <DeferredTabPane
+            active={isBootLoading || (authed && !onboarded)}
+            visible={authed && !onboarded}
+            zIndexActive={20}
           >
             <View style={styles.screenContainer}>
               <ScreenTransition screenKey={`onboarding-${language}`}>
                 <Onboarding onComplete={handleOnboardingComplete} />
               </ScreenTransition>
             </View>
-          </View>
+          </DeferredTabPane>
         )}
 
         {/* Layer 3: Main Application (Pre-mounted in RAM via Stages 2-6) */}
@@ -527,7 +534,10 @@ function MainContent() {
                 <ScreenTransition screenKey={`${screen.name}-${tab}-${history.length}-${language}`}>
                   {/* Stage 2: Main Tab: Discover */}
                   {bootStage >= 2 && (
-                    <DeferredTabPane active={isDiscoverActive} visible={isDiscoverActive}>
+                    <DeferredTabPane
+                      active={isBootLoading || isDiscoverActive}
+                      visible={isDiscoverActive}
+                    >
                       <DiscoverScreen
                         ref={discoverRef}
                         search={discoverSearch}
@@ -543,7 +553,10 @@ function MainContent() {
 
                   {/* Stage 3: Main Tab: Activity */}
                   {bootStage >= 3 && (
-                    <DeferredTabPane active={isActivityActive} visible={isActivityActive}>
+                    <DeferredTabPane
+                      active={isBootLoading || isActivityActive}
+                      visible={isActivityActive}
+                    >
                       <ActivityScreen
                         tab={activityTab}
                         onChangeTab={setActivityTab}
@@ -556,7 +569,10 @@ function MainContent() {
 
                   {/* Stage 5: Main Tab: Create */}
                   {bootStage >= 5 && (
-                    <DeferredTabPane active={isCreateActive} visible={isCreateActive}>
+                    <DeferredTabPane
+                      active={isBootLoading || isCreateActive}
+                      visible={isCreateActive}
+                    >
                       <CreateScreen
                         ref={createRef}
                         onStateChange={setCreateState}
@@ -568,7 +584,10 @@ function MainContent() {
 
                   {/* Stage 4: Main Tab: Chat List */}
                   {bootStage >= 4 && (
-                    <DeferredTabPane active={isChatListActive} visible={isChatListActive}>
+                    <DeferredTabPane
+                      active={isBootLoading || isChatListActive}
+                      visible={isChatListActive}
+                    >
                       <ChatListScreen
                         search={chatSearch}
                         onOpenConversation={handleOpenConversation}
@@ -579,7 +598,10 @@ function MainContent() {
 
                   {/* Stage 5: Main Tab: Own Profile */}
                   {bootStage >= 5 && (
-                    <DeferredTabPane active={isOwnProfileActive} visible={isOwnProfileActive}>
+                    <DeferredTabPane
+                      active={isBootLoading || isOwnProfileActive}
+                      visible={isOwnProfileActive}
+                    >
                       <ProfileScreen
                         userId="me"
                         isOwnProfile={true}
@@ -682,7 +704,11 @@ function MainContent() {
           {/* Headers */}
           {/* Stage 2: Discover Header */}
           {bootStage >= 2 && (
-            <DeferredHeaderPane active={isDiscoverActive} visible={isDiscoverActive} pointerEvents="box-none">
+            <DeferredHeaderPane
+              active={isBootLoading || isDiscoverActive}
+              visible={isDiscoverActive}
+              pointerEvents="box-none"
+            >
               <DiscoverHeader
                 user={me}
                 unreadCount={unreadNotificationsCount}
@@ -698,7 +724,11 @@ function MainContent() {
 
           {/* Stage 3: Activity Header */}
           {bootStage >= 3 && (
-            <DeferredHeaderPane active={isActivityActive} visible={isActivityActive} pointerEvents="box-none">
+            <DeferredHeaderPane
+              active={isBootLoading || isActivityActive}
+              visible={isActivityActive}
+              pointerEvents="box-none"
+            >
               <ActivityHeader
                 unreadCount={unreadNotificationsCount}
                 tab={activityTab}
@@ -710,7 +740,11 @@ function MainContent() {
 
           {/* Stage 5: Create Header */}
           {bootStage >= 5 && (
-            <DeferredHeaderPane active={isCreateActive} visible={isCreateActive} pointerEvents="box-none">
+            <DeferredHeaderPane
+              active={isBootLoading || isCreateActive}
+              visible={isCreateActive}
+              pointerEvents="box-none"
+            >
               <CreateHeader
                 step={createState.step}
                 totalSteps={4}
@@ -732,7 +766,11 @@ function MainContent() {
 
           {/* Stage 4: Chat List Header */}
           {bootStage >= 4 && (
-            <DeferredHeaderPane active={isChatListActive} visible={isChatListActive} pointerEvents="box-none">
+            <DeferredHeaderPane
+              active={isBootLoading || isChatListActive}
+              visible={isChatListActive}
+              pointerEvents="box-none"
+            >
               <ChatListHeader
                 unreadTotal={unreadConversationsTotal}
                 notificationsCount={unreadNotificationsCount}
@@ -745,7 +783,11 @@ function MainContent() {
 
           {/* Stage 5: Own Profile Header */}
           {bootStage >= 5 && (
-            <DeferredHeaderPane active={isOwnProfileActive} visible={isOwnProfileActive} pointerEvents="box-none">
+            <DeferredHeaderPane
+              active={isBootLoading || isOwnProfileActive}
+              visible={isOwnProfileActive}
+              pointerEvents="box-none"
+            >
               <ProfileHeader
                 profile={me}
                 isOwnProfile={true}
@@ -814,13 +856,15 @@ function MainContent() {
           {/* Stage 5: BottomNav */}
           {bootStage >= 5 && showBottomNav && <BottomNav active={tab} onChange={switchTab} />}
 
-          {/* Stage 6: Sheets */}
+          {/* Stage 6: Sheets (Frozen when closed so theme switches don't re-render hidden sheets!) */}
           {bootStage >= 6 && (
-            <NotificationsSheet
-              open={isNotificationSheetOpen}
-              onClose={handleCloseNotifications}
-              onOpenConversation={handleOpenConversation}
-            />
+            <FreezeGate active={isBootLoading || isNotificationSheetOpen}>
+              <NotificationsSheet
+                open={isNotificationSheetOpen}
+                onClose={handleCloseNotifications}
+                onOpenConversation={handleOpenConversation}
+              />
+            </FreezeGate>
           )}
         </View>
 

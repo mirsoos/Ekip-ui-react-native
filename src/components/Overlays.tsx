@@ -1,8 +1,9 @@
+// --- START OF FILE Overlays.tsx ---
+
 import React, { type ReactNode, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   TouchableWithoutFeedback,
   StyleSheet,
   ScrollView,
@@ -21,7 +22,7 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const DISMISS_DISTANCE = Math.max(SCREEN_HEIGHT, 900);
 
 // ============================================
-// GLASS SHEET (Bottom Sheet Modal)
+// GLASS SHEET (Bottom Sheet Modal - Pre-cached & 60FPS)
 // ============================================
 export interface GlassSheetProps {
   open: boolean;
@@ -31,7 +32,7 @@ export interface GlassSheetProps {
   fullHeight?: boolean;
 }
 
-export function GlassSheet({
+export const GlassSheet = React.memo(function GlassSheet({
   open,
   onClose,
   children,
@@ -41,19 +42,11 @@ export function GlassSheet({
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
 
-  // Lazy-mount on first open, then keep warm in memory to eliminate re-creation lag
-  const isMounted = useRef(open);
-  if (open && !isMounted.current) {
-    isMounted.current = true;
-  }
-
   const [modalVisible, setModalVisible] = useState(open);
 
-  // Animated values
   const backdropAnim = useRef(new Animated.Value(open ? 1 : 0)).current;
   const slideAnim = useRef(new Animated.Value(open ? 0 : DISMISS_DISTANCE)).current;
 
-  // Hardware back button support on Android
   useEffect(() => {
     if (!open) return;
     const backAction = () => {
@@ -67,12 +60,10 @@ export function GlassSheet({
   useEffect(() => {
     if (open) {
       setModalVisible(true);
-      slideAnim.setValue(DISMISS_DISTANCE);
-      backdropAnim.setValue(0);
       Animated.parallel([
         Animated.timing(backdropAnim, {
           toValue: 1,
-          duration: 240,
+          duration: 220,
           easing: Easing.out(Easing.quad),
           useNativeDriver: true,
         }),
@@ -83,11 +74,11 @@ export function GlassSheet({
           useNativeDriver: true,
         }),
       ]).start();
-    } else if (isMounted.current) {
+    } else {
       Animated.parallel([
         Animated.timing(backdropAnim, {
           toValue: 0,
-          duration: 200,
+          duration: 180,
           easing: Easing.in(Easing.quad),
           useNativeDriver: true,
         }),
@@ -97,26 +88,23 @@ export function GlassSheet({
           easing: Easing.bezier(0.32, 0, 0.67, 0),
           useNativeDriver: true,
         }),
-      ]).start(() => {
-        setModalVisible(false);
+      ]).start(({ finished }) => {
+        if (finished) setModalVisible(false);
       });
     }
   }, [open]);
-
-  // Don't mount until first opened
-  if (!isMounted.current && !open) return null;
 
   return (
     <View
       style={[
         styles.fullscreenOverlay,
         {
-          opacity: modalVisible ? 1 : 0,
+          opacity: open || modalVisible ? 1 : 0,
+          zIndex: open || modalVisible ? 99999 : -1,
         },
       ]}
-      pointerEvents={modalVisible ? 'box-none' : 'none'}
+      pointerEvents={open || modalVisible ? 'box-none' : 'none'}
     >
-      {/* Subtle backdrop with gentle blur and darkness */}
       <TouchableWithoutFeedback onPress={onClose}>
         <Animated.View
           style={[
@@ -136,12 +124,12 @@ export function GlassSheet({
         />
       </TouchableWithoutFeedback>
 
-      {/* Sheet sliding up from bottom with liquid glass container */}
       <Animated.View
+        renderToHardwareTextureAndroid={true}
         style={[
           styles.sheetContainer,
           {
-            backgroundColor: isDark ? 'rgba(18, 24, 38, 0.78)' : 'rgba(255, 255, 255, 0.78)',
+            backgroundColor: isDark ? 'rgba(18, 24, 38, 0.94)' : 'rgba(255, 255, 255, 0.94)',
             borderColor: colors.glassBorderStrong,
             height: fullHeight ? '88%' : undefined,
             maxHeight: '92%',
@@ -155,10 +143,8 @@ export function GlassSheet({
           },
         ]}
       >
-        {/* Top drag handle indicator */}
         <View style={styles.sheetHandleBar} />
 
-        {/* Top Specular Arc Highlight */}
         <View
           pointerEvents="none"
           style={{
@@ -172,7 +158,6 @@ export function GlassSheet({
           }}
         />
 
-        {/* Sheet header */}
         <View
           style={[
             styles.sheetHeader,
@@ -193,17 +178,17 @@ export function GlassSheet({
           <GlassCloseButton onPress={onClose} />
         </View>
 
-        {/* Scrollable content */}
+        {/* Keep children mounted in RAM so opening/closing has ZERO mount/unmount spike! */}
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36, paddingTop: 10 }}
         >
-          {modalVisible ? children : null}
+          {children}
         </ScrollView>
       </Animated.View>
     </View>
   );
-}
+});
 
 // ============================================
 // GLASS DIALOG (Centered Alert Modal)
@@ -222,7 +207,7 @@ export interface GlassDialogProps {
   }[];
 }
 
-export function GlassDialog({
+export const GlassDialog = React.memo(function GlassDialog({
   open,
   onClose,
   title,
@@ -231,18 +216,11 @@ export function GlassDialog({
   actions,
 }: GlassDialogProps) {
   const { colors, isDark } = useTheme();
-
-  const isMounted = useRef(open);
-  if (open && !isMounted.current) {
-    isMounted.current = true;
-  }
-
   const [modalVisible, setModalVisible] = useState(open);
 
   const backdropAnim = useRef(new Animated.Value(open ? 1 : 0)).current;
   const scaleAnim = useRef(new Animated.Value(open ? 1 : 0.85)).current;
 
-  // Hardware back button support on Android
   useEffect(() => {
     if (!open) return;
     const backAction = () => {
@@ -261,36 +239,38 @@ export function GlassDialog({
       Animated.parallel([
         Animated.timing(backdropAnim, {
           toValue: 1,
-          duration: 240,
+          duration: 220,
           easing: Easing.out(Easing.quad),
           useNativeDriver: true,
         }),
         Animated.timing(scaleAnim, {
           toValue: 1,
-          duration: 240,
+          duration: 220,
           easing: Easing.bezier(0.22, 1, 0.36, 1),
           useNativeDriver: true,
         }),
       ]).start();
-    } else if (isMounted.current) {
+    } else {
       Animated.parallel([
         Animated.timing(backdropAnim, {
           toValue: 0,
-          duration: 180,
+          duration: 160,
           easing: Easing.in(Easing.quad),
           useNativeDriver: true,
         }),
         Animated.timing(scaleAnim, {
           toValue: 0.85,
-          duration: 180,
+          duration: 160,
           easing: Easing.bezier(0.32, 0, 0.67, 0),
           useNativeDriver: true,
         }),
-      ]).start(() => setModalVisible(false));
+      ]).start(({ finished }) => {
+        if (finished) setModalVisible(false);
+      });
     }
   }, [open]);
 
-  if (!isMounted.current && !open) return null;
+  if (!open && !modalVisible) return null;
 
   return (
     <View
@@ -316,6 +296,7 @@ export function GlassDialog({
       </TouchableWithoutFeedback>
 
       <Animated.View
+        renderToHardwareTextureAndroid={true}
         style={[
           styles.dialogContainer,
           {
@@ -325,38 +306,38 @@ export function GlassDialog({
           },
         ]}
       >
-          <Text style={[styles.dialogTitle, { color: colors.textPrimary }]}>
-            {title}
+        <Text style={[styles.dialogTitle, { color: colors.textPrimary }]}>
+          {title}
+        </Text>
+        {body && (
+          <Text style={[styles.dialogBody, { color: colors.textSecondary }]}>
+            {body}
           </Text>
-          {body && (
-            <Text style={[styles.dialogBody, { color: colors.textSecondary }]}>
-              {body}
-            </Text>
-          )}
-          {children}
-          {actions && (
-            <View style={{ marginTop: 20, gap: 10 }}>
-              {actions.map((act, idx) => (
-                <GlassButton
-                  key={idx}
-                  variant={act.variant ?? 'secondary'}
-                  fullWidth
-                  onPress={act.onPress ?? act.onClick}
-                >
-                  {act.label}
-                </GlassButton>
-              ))}
-            </View>
-          )}
-        </Animated.View>
-      </View>
+        )}
+        {children}
+        {actions && (
+          <View style={{ marginTop: 20, gap: 10 }}>
+            {actions.map((act, idx) => (
+              <GlassButton
+                key={idx}
+                variant={act.variant ?? 'secondary'}
+                fullWidth
+                onPress={act.onPress ?? act.onClick}
+              >
+                {act.label}
+              </GlassButton>
+            ))}
+          </View>
+        )}
+      </Animated.View>
+    </View>
   );
-}
+});
 
 // ============================================
 // TOAST NOTIFICATION
 // ============================================
-export function Toast({
+export const Toast = React.memo(function Toast({
   message,
   icon = 'CheckCircle2',
   visible,
@@ -401,12 +382,11 @@ export function Toast({
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   fullscreenOverlay: {
     ...StyleSheet.absoluteFill,
-    zIndex: 99999,
     justifyContent: 'flex-end',
   },
   backdropBase: {
@@ -428,15 +408,7 @@ const styles = StyleSheet.create({
           shadowOpacity: 0.45,
           shadowRadius: 36,
         }
-      : Platform.OS === 'android'
-      ? { elevation: 0 }
-      : {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -12 },
-          shadowOpacity: 0.45,
-          shadowRadius: 36,
-          elevation: 24,
-        }),
+      : { elevation: 0 }),
     zIndex: 100000,
   },
   sheetHandleBar: {
@@ -460,29 +432,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     flex: 1,
   },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   dialogOverlay: {
     ...StyleSheet.absoluteFill,
     zIndex: 99999,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    ...(Platform.OS === 'web'
-      ? ({
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-        } as any)
-      : {}),
   },
   dialogContainer: {
     width: '100%',
@@ -497,17 +452,7 @@ const styles = StyleSheet.create({
           shadowOpacity: 0.45,
           shadowRadius: 32,
         }
-      : Platform.OS === 'android'
-      ? { elevation: 0 }
-      : {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 16 },
-          shadowOpacity: 0.45,
-          shadowRadius: 32,
-          elevation: 24,
-          backdropFilter: 'blur(32px) saturate(190%)',
-          WebkitBackdropFilter: 'blur(32px) saturate(190%)',
-        }),
+      : { elevation: 0 }),
   },
   dialogTitle: {
     fontSize: 20,
@@ -542,15 +487,7 @@ const styles = StyleSheet.create({
           shadowOpacity: 0.25,
           shadowRadius: 12,
         }
-      : Platform.OS === 'android'
-      ? { elevation: 0 }
-      : {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.25,
-          shadowRadius: 12,
-          elevation: 6,
-        }),
+      : { elevation: 0 }),
   },
   toastText: {
     fontSize: 13,

@@ -1,4 +1,6 @@
-import React, { useRef, useEffect } from 'react';
+// --- START OF FILE LiquidGlassToggle.tsx ---
+
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -9,7 +11,9 @@ import {
   StyleProp,
   ViewStyle,
   Text,
+  LayoutChangeEvent,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../lib/theme';
 
 export interface LiquidGlassToggleProps {
@@ -39,7 +43,6 @@ export function LiquidGlassToggleComponent({
 }: LiquidGlassToggleProps) {
   const instanceId = useRef(`rc-${Math.random().toString(36).substring(2, 9)}`).current;
 
-  // Determine active theme (prop takes precedence, then context, fallback to dark)
   let isDark = true;
   try {
     const themeContext = useTheme();
@@ -48,13 +51,12 @@ export function LiquidGlassToggleComponent({
     isDark = themeProp ? themeProp === 'dark' : true;
   }
 
-  // Refined compact sizes tailored for list rows and mobile touch
   const fontSize = size === 'lg' ? 24 : size === 'md' ? 14 : 10.5;
   const horizontalPadding = size === 'lg' ? 20 : size === 'md' ? 13 : 9;
   const verticalPadding = size === 'lg' ? 12 : size === 'md' ? 7 : 4.5;
   const borderRadius = size === 'lg' ? 40 : size === 'md' ? 22 : 16;
+  const minWidth = size === 'lg' ? 140 : size === 'md' ? 84 : 64;
 
-  // Colors & shadows per theme
   const bg = isDark ? '#141824' : '#eef3f7';
   const border = isDark ? '1px solid rgba(255, 255, 255, 0.08)' : 'none';
   const boxShadow = isDark
@@ -73,30 +75,28 @@ export function LiquidGlassToggleComponent({
 
   const inactiveTextColor = isDark ? '#64748b' : '#acb2c0';
 
-  // React Native Animated progress for mobile native
+  // Exact measured width on Native so the 50% pill slides pixel-perfectly!
+  const [trackWidth, setTrackWidth] = useState(minWidth);
   const animProgress = useRef(new Animated.Value(checked ? 0 : 1)).current;
+
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     Animated.timing(animProgress, {
       toValue: checked ? 0 : 1,
-      duration: 250,
+      duration: 240,
       easing: Easing.bezier(0.4, 0, 0.2, 1),
-      useNativeDriver: Platform.OS !== 'web',
+      useNativeDriver: true,
     }).start();
   }, [checked]);
 
   const handlePress = React.useCallback(() => {
     if (disabled) return;
-    const next = !checked;
-    Animated.timing(animProgress, {
-      toValue: next ? 0 : 1,
-      duration: 250,
-      easing: Easing.bezier(0.4, 0, 0.2, 1),
-      useNativeDriver: Platform.OS !== 'web',
-    }).start();
-    onChange(next);
-  }, [checked, disabled, onChange, animProgress]);
+    onChange(!checked);
+  }, [checked, disabled, onChange]);
 
-  // Web Implementation: Clean Neumorphic On/Off (No burst icons)
+  // ==========================================================
+  // WEB: 100% Untouched Original Implementation
+  // ==========================================================
   if (Platform.OS === 'web') {
     return (
       <View style={[styles.outerWrapper, style]}>
@@ -114,7 +114,6 @@ export function LiquidGlassToggleComponent({
             direction: 'ltr',
           }}
         >
-          {/* Inject Comfortaa Font & Neumorphic Styles */}
           <style>
             {`
               @import url("https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&display=swap");
@@ -138,7 +137,7 @@ export function LiquidGlassToggleComponent({
                 cursor: ${disabled ? 'not-allowed' : 'pointer'};
                 opacity: ${disabled ? 0.6 : 1};
                 box-sizing: border-box;
-                min-width: ${size === 'lg' ? 140 : size === 'md' ? 84 : 64}px;
+                min-width: ${minWidth}px;
               }
 
               #${instanceId}-wrap .radio-checked_container {
@@ -200,10 +199,7 @@ export function LiquidGlassToggleComponent({
               className="radio-checked"
               onClick={() => !disabled && onChange(!checked)}
             >
-              {/* Sliding Sunken Neumorphic Highlight Pill */}
               <div className="radio-checked_highlight" />
-
-              {/* Labels Container (On / Off) */}
               <div className="radio-checked_container">
                 <div
                   className={`radio-checked_label radio-checked_label--on ${
@@ -227,62 +223,137 @@ export function LiquidGlassToggleComponent({
     );
   }
 
-  // Native iOS / Android Fallback
+  // ==========================================================
+  // ANDROID & iOS: Pixel-Perfect Neumorphic Pill Match
+  // ==========================================================
+  const halfWidth = trackWidth / 2;
   const highlightTranslate = animProgress.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, horizontalPadding * 2 + fontSize * 1.4],
+    outputRange: [0, halfWidth],
   });
+
+  const handleTrackLayout = (e: LayoutChangeEvent) => {
+    const w = e.nativeEvent.layout.width;
+    if (w > 0 && Math.abs(w - trackWidth) > 0.5) {
+      setTrackWidth(w);
+    }
+  };
 
   return (
     <View style={[styles.outerWrapper, style]}>
       {label && <Text style={[styles.labelText, labelStyle]}>{label}</Text>}
 
       <TouchableOpacity
-        activeOpacity={0.88}
+        activeOpacity={0.9}
         disabled={disabled}
+        delayPressIn={0}
         onPress={handlePress}
+        onLayout={handleTrackLayout}
         style={[
           styles.nativeContainer,
           {
+            minWidth,
             backgroundColor: bg,
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-            borderWidth: isDark ? 1 : 0,
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.09)' : '#d0d8e3',
+            borderWidth: 1,
             borderRadius,
-            paddingVertical: verticalPadding,
-            paddingHorizontal: horizontalPadding,
+            opacity: disabled ? 0.6 : 1,
           },
         ]}
       >
+        {/* Sliding 50% Sunken Neumorphic Highlight Pill */}
         <Animated.View
+          pointerEvents="none"
           style={[
             styles.nativeHighlight,
             {
-              backgroundColor: highlightBg,
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#ffffff',
+              width: halfWidth,
               borderRadius,
+              backgroundColor: highlightBg,
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : '#ffffff',
               transform: [{ translateX: highlightTranslate }],
             },
           ]}
-        />
+        >
+          {/* Inner Neumorphic Sunken Depth Gradient (Simulates inset box-shadow on Android!) */}
+          <LinearGradient
+            pointerEvents="none"
+            colors={
+              isDark
+                ? ['rgba(0, 0, 0, 0.45)', 'transparent', 'rgba(255, 255, 255, 0.06)']
+                : ['rgba(208, 216, 227, 0.65)', 'rgba(238, 243, 247, 0.2)', 'rgba(255, 255, 255, 0.9)']
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[StyleSheet.absoluteFill, { borderRadius }]}
+          />
+        </Animated.View>
+
+        {/* Equal 50% / 50% Label Columns */}
         <View style={styles.nativeLabelRow}>
-          <Text
+          <View
             style={[
-              styles.nativeLabel,
-              { fontSize },
-              checked ? styles.nativeOnText : { color: inactiveTextColor },
+              styles.nativeCell,
+              {
+                paddingVertical: verticalPadding + 1,
+                paddingHorizontal: horizontalPadding,
+              },
             ]}
           >
-            {labels.on}
-          </Text>
-          <Text
+            <Text
+              numberOfLines={1}
+              style={[
+                styles.nativeLabel,
+                { fontSize },
+                checked
+                  ? [
+                      styles.nativeOnText,
+                      {
+                        textShadowColor: isDark
+                          ? 'rgba(71, 207, 115, 0.85)'
+                          : 'rgba(71, 207, 115, 0.55)',
+                        textShadowOffset: { width: 0, height: 0 },
+                        textShadowRadius: 8,
+                      },
+                    ]
+                  : { color: inactiveTextColor },
+              ]}
+            >
+              {labels.on}
+            </Text>
+          </View>
+
+          <View
             style={[
-              styles.nativeLabel,
-              { fontSize },
-              !checked ? styles.nativeOffText : { color: inactiveTextColor },
+              styles.nativeCell,
+              {
+                paddingVertical: verticalPadding + 1,
+                paddingHorizontal: horizontalPadding,
+              },
             ]}
           >
-            {labels.off}
-          </Text>
+            <Text
+              numberOfLines={1}
+              style={[
+                styles.nativeLabel,
+                { fontSize },
+                !checked
+                  ? [
+                      styles.nativeOffText,
+                      {
+                        textShadowColor: isDark
+                          ? 'rgba(255, 60, 65, 0.85)'
+                          : 'rgba(255, 60, 65, 0.55)',
+                        textShadowOffset: { width: 0, height: 0 },
+                        textShadowRadius: 8,
+                      },
+                    ]
+                  : { color: inactiveTextColor },
+              ]}
+            >
+              {labels.off}
+            </Text>
+          </View>
         </View>
       </TouchableOpacity>
     </View>
@@ -291,7 +362,6 @@ export function LiquidGlassToggleComponent({
 
 export const LiquidGlassToggle = React.memo(LiquidGlassToggleComponent);
 
-// Aliases
 export { LiquidGlassToggle as NeumorphicRadioToggle };
 export { LiquidGlassToggle as GooeyToggle };
 
@@ -312,40 +382,33 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     direction: 'ltr',
-    ...(Platform.OS === 'ios'
-      ? {
-          shadowColor: '#000000',
-          shadowOffset: { width: 2, height: 2 },
-          shadowOpacity: 0.3,
-          shadowRadius: 4,
-        }
-      : Platform.OS === 'android'
-      ? { elevation: 0 }
-      : {
-          shadowColor: '#000000',
-          shadowOffset: { width: 2, height: 2 },
-          shadowOpacity: 0.3,
-          shadowRadius: 4,
-          elevation: 2,
-        }),
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   nativeHighlight: {
     position: 'absolute',
-    top: 2,
-    bottom: 2,
-    left: 2,
-    width: '48%',
+    top: 0,
+    bottom: 0,
+    left: 0,
     borderWidth: 1,
+    overflow: 'hidden',
   },
   nativeLabelRow: {
     flexDirection: 'row',
     direction: 'ltr',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    width: '100%',
+    zIndex: 2,
+  },
+  nativeCell: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   nativeLabel: {
     fontWeight: '700',
-    paddingHorizontal: 6,
+    letterSpacing: 0.4,
+    textAlign: 'center',
   },
   nativeOnText: {
     color: '#47cf73',

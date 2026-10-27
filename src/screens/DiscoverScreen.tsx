@@ -100,7 +100,7 @@ export const DiscoverScreen = React.memo(
         contentContainerStyle={[
           styles.scrollContent,
           Platform.OS !== 'web' && {
-            paddingTop: 135 + insets.top,
+            paddingTop: 156 + insets.top,
             paddingBottom: 90 + insets.bottom,
           },
         ]}
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 145,
+    paddingTop: 156,
     paddingBottom: 110,
   },
   sectionWrap: {

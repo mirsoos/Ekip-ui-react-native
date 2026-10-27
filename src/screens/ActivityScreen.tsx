@@ -85,7 +85,7 @@ export function ActivityScreenComponent({
         contentContainerStyle={[
           styles.scrollContent,
           Platform.OS !== 'web' && {
-            paddingTop: 125 + insets.top,
+            paddingTop: 148 + insets.top,
             paddingBottom: 90 + insets.bottom,
           },
         ]}
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 135,
+    paddingTop: 148,
     paddingBottom: 110,
   },
   cardContainer: {

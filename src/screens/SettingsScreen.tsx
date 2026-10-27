@@ -65,7 +65,7 @@ export function SettingsScreenComponent({
         contentContainerStyle={[
           styles.scrollContent,
           Platform.OS !== 'web' && {
-            paddingTop: 76 + insets.top,
+            paddingTop: 90 + insets.top,
             paddingBottom: 40 + insets.bottom,
           },
         ]}
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 84,
+    paddingTop: 96,
     paddingBottom: 40,
   },
   profileCard: {

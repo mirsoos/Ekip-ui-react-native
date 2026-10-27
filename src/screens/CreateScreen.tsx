@@ -167,7 +167,7 @@ export const CreateScreen = React.memo(
         contentContainerStyle={[
           styles.scrollContent,
           Platform.OS !== 'web' && {
-            paddingTop: 80 + insets.top,
+            paddingTop: 98 + insets.top,
             paddingBottom: 135 + insets.bottom,
           },
         ]}
