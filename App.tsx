@@ -132,20 +132,42 @@ function DeferredHeaderPane({
     renderedChildrenRef.current = children;
   }
 
+  const anim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (visible) {
+      anim.setValue(0);
+      Animated.spring(anim, {
+        toValue: 1,
+        bounciness: 4,
+        speed: 14,
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    } else {
+      anim.setValue(0);
+    }
+  }, [visible, anim]);
+
+  const translateY = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-85, 0],
+  });
+
   return (
     <ThemeContext.Provider value={themeValue}>
-      <View
+      <Animated.View
         style={[
           StyleSheet.absoluteFill,
           {
-            opacity: visible ? 1 : 0,
+            opacity: anim,
             zIndex: visible ? 10 : 0,
+            transform: [{ translateY }],
           },
         ]}
         pointerEvents={visible ? pointerEvents : 'none'}
       >
         {renderedChildrenRef.current}
-      </View>
+      </Animated.View>
     </ThemeContext.Provider>
   );
 }
@@ -376,7 +398,9 @@ function MainContent() {
 
   const mainTabs: TabKey[] = ['discover', 'activity', 'create', 'chat', 'profile'];
   const currentMainIndex = mainTabs.indexOf(tab);
+  const isAppReady = authed && onboarded;
   const isMainScreen =
+    isAppReady &&
     history.length === 0 &&
     (screen.name === 'discover' ||
       screen.name === 'activity' ||
@@ -693,13 +717,17 @@ function MainContent() {
                 onBack={handleCreatePrev}
                 onOpenAI={handleCreateOpenAI}
               />
-              <CreateContinueButton
-                step={createState.step}
-                totalSteps={4}
-                disabled={!createState.canProceed}
-                onPress={handleCreateNext}
-              />
             </DeferredHeaderPane>
+          )}
+
+          {/* Stage 5: Create Continue Button (Bottom Action) */}
+          {bootStage >= 5 && isCreateActive && (
+            <CreateContinueButton
+              step={createState.step}
+              totalSteps={4}
+              disabled={!createState.canProceed}
+              onPress={handleCreateNext}
+            />
           )}
 
           {/* Stage 4: Chat List Header */}
