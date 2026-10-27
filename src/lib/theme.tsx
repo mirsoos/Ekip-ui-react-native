@@ -159,7 +159,7 @@ export const lightColors: ThemeColors = {
   cardShadow: 'rgba(15, 23, 42, 0.12)',
 };
 
-interface ThemeContextValue {
+export interface ThemeContextValue {
   theme: Theme;
   isDark: boolean;
   colors: ThemeColors;
@@ -169,7 +169,7 @@ interface ThemeContextValue {
   setChatTheme: (ct: ChatThemeId) => void;
 }
 
-const ThemeContext = createContext<ThemeContextValue | null>(null);
+export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemColorScheme = useColorScheme();
@@ -177,11 +177,27 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [chatTheme, setChatThemeState] = useState<ChatThemeId>('default');
 
   const toggle = useCallback(() => {
-    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    requestAnimationFrame(() => {
+      if (typeof React.startTransition === 'function') {
+        React.startTransition(() => {
+          setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
+        });
+      } else {
+        setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
+      }
+    });
   }, []);
 
   const setTheme = useCallback((t: Theme) => {
-    setThemeState(t);
+    requestAnimationFrame(() => {
+      if (typeof React.startTransition === 'function') {
+        React.startTransition(() => {
+          setThemeState(t);
+        });
+      } else {
+        setThemeState(t);
+      }
+    });
   }, []);
 
   const setChatTheme = useCallback((ct: ChatThemeId) => {

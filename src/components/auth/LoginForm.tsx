@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { GlassInput, GlassBackButton, GlassSegmented } from '../Glass';
-import { LiquidLens } from '../LiquidLens';
+import { FrostedGlass } from '../FrostedGlass';
 import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
@@ -115,8 +115,8 @@ export function LoginForm({
             },
           ]}
         >
-          {/* 360° Liquid Glass Lens */}
-          <LiquidLens
+          {/* 360° Frosted Glass */}
+          <FrostedGlass
             borderRadius={36}
             marginWidth={16}
             scale={36}
@@ -149,8 +149,8 @@ export function LoginForm({
             },
           ]}
         >
-          {/* 360° Liquid Glass Lens */}
-          <LiquidLens
+          {/* 360° Frosted Glass */}
+          <FrostedGlass
             borderRadius={20}
             marginWidth={12}
             scale={24}
@@ -174,8 +174,8 @@ export function LoginForm({
             },
           ]}
         >
-          {/* 360° Liquid Glass Lens */}
-          <LiquidLens
+          {/* 360° Frosted Glass */}
+          <FrostedGlass
             borderRadius={20}
             marginWidth={12}
             scale={24}

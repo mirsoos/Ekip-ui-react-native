@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
-import { LiquidLens } from '../LiquidLens';
+import { FrostedGlass } from '../FrostedGlass';
 import { getIcon } from '../../lib/icons';
 import { SocialAuthRow } from './SocialAuthRow';
 import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
@@ -28,9 +28,9 @@ export function WelcomeViewComponent({
       {/* Brand logo */}
       <View style={styles.brandSection}>
         <Image
-          source={require('../../../assets/ekip-logo-icon.jpg')}
+          source={require('../../../assets/Ekip-Logo-256.png')}
           style={styles.logoOrb}
-          resizeMode="cover"
+          resizeMode="contain"
         />
 
         <Text style={[styles.title, { color: colors.textPrimary }]}>
@@ -53,8 +53,8 @@ export function WelcomeViewComponent({
             },
           ]}
         >
-          {/* 360° Liquid Glass Lens */}
-          <LiquidLens
+          {/* 360° Frosted Glass */}
+          <FrostedGlass
             borderRadius={36}
             marginWidth={16}
             scale={36}
@@ -89,8 +89,8 @@ export function WelcomeViewComponent({
             },
           ]}
         >
-          {/* 360° Liquid Glass Lens */}
-          <LiquidLens
+          {/* 360° Frosted Glass */}
+          <FrostedGlass
             borderRadius={36}
             marginWidth={16}
             scale={36}
@@ -145,16 +145,9 @@ const styles = StyleSheet.create({
   logoOrb: {
     width: 90,
     height: 90,
-    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
-    shadowColor: '#f472b6',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 8,
-    overflow: 'hidden',
   },
   title: {
     fontSize: 32,

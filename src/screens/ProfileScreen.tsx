@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassButton, GlassSegmented, GlassEmpty, GlassBackButton } from '../components/Glass';
-import { LiquidLens } from '../components/LiquidLens';
+import { FrostedGlass } from '../components/FrostedGlass';
 import { GlassSheet, Toast } from '../components/Overlays';
 import { StatBox } from '../components/common/StatBox';
 import { ProfileHeaderCard } from '../components/profile/ProfileHeaderCard';
@@ -17,9 +17,10 @@ import { ProfileScreenSkeleton } from '../components/skeleton';
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { useDeferredMount } from '../lib/useDeferredMount';
 import type { Group } from '../types/database';
 
-export function ProfileScreen({
+export function ProfileScreenComponent({
   userId,
   isOwnProfile,
   onBack,
@@ -47,6 +48,7 @@ export function ProfileScreen({
   const [tab, setTab] = useState('activity');
   const [showActions, setShowActions] = useState(false);
   const [toast, setToast] = useState('');
+  const isDeferredReady = useDeferredMount(32);
   const internalScrollY = useRef(new Animated.Value(0)).current;
   const scrollY = externalScrollY ?? internalScrollY;
 
@@ -117,7 +119,7 @@ export function ProfileScreen({
         scrollEventThrottle={16}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
+          { useNativeDriver: Platform.OS !== 'web' }
         )}
       >
         {/* Banner */}
@@ -182,7 +184,7 @@ export function ProfileScreen({
                   subtitle={isRTL ? 'در اکیپ‌ها و دورهمی‌های مختلف شرکت کنید تا آمار فعالیت شما ثبت شود.' : 'Join Ekips and hangouts to build your activity stats.'}
                 />
               ) : (
-                myGroups.map((g) => (
+                (isDeferredReady ? myGroups : myGroups.slice(0, 2)).map((g) => (
                   <EkipCard
                     key={g.id}
                     group={g}
@@ -234,6 +236,8 @@ export function ProfileScreen({
     </View>
   );
 }
+
+export const ProfileScreen = React.memo(ProfileScreenComponent);
 
 const styles = StyleSheet.create({
   container: {

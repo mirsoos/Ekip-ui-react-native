@@ -12,37 +12,39 @@ import { EkipCardSkeleton, CommunityMembersRowSkeleton } from '../components/ske
 import { cities } from '../lib/demoData';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { useDeferredMount } from '../lib/useDeferredMount';
 import type { Group } from '../types/database';
 
 export interface DiscoverScreenHandle {
   openFilters: () => void;
 }
 
-export const DiscoverScreen = React.forwardRef<
-  DiscoverScreenHandle,
-  {
-    search?: string;
-    onChangeSearch?: (val: string) => void;
-    onOpenGroup: (group: Group) => void;
-    onOpenProfile: (userId: string) => void;
-    onOpenOwnProfile: () => void;
-    onOpenAI: () => void;
-    onOpenNotifications: () => void;
-    isLoading?: boolean;
-  }
->(function DiscoverScreen(
-  {
-    search = '',
-    onChangeSearch,
-    onOpenGroup,
-    onOpenProfile,
-    onOpenOwnProfile,
-    onOpenAI,
-    onOpenNotifications,
-    isLoading = false,
-  },
-  ref
-) {
+export const DiscoverScreen = React.memo(
+  React.forwardRef<
+    DiscoverScreenHandle,
+    {
+      search?: string;
+      onChangeSearch?: (val: string) => void;
+      onOpenGroup: (group: Group) => void;
+      onOpenProfile: (userId: string) => void;
+      onOpenOwnProfile: () => void;
+      onOpenAI: () => void;
+      onOpenNotifications: () => void;
+      isLoading?: boolean;
+    }
+  >(function DiscoverScreen(
+    {
+      search = '',
+      onChangeSearch,
+      onOpenGroup,
+      onOpenProfile,
+      onOpenOwnProfile,
+      onOpenAI,
+      onOpenNotifications,
+      isLoading = false,
+    },
+    ref
+  ) {
   const { groups, me, profiles, notifications } = useAppData();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -75,8 +77,10 @@ export const DiscoverScreen = React.forwardRef<
     return result;
   }, [groups, search, categoryFilter, cityFilter, premiumOnly]);
 
+  const isDeferredReady = useDeferredMount(32);
   const featured = filtered[0];
   const remaining = filtered.slice(1);
+  const visibleRemaining = isDeferredReady ? remaining : remaining.slice(0, 2);
   const otherProfiles = profiles.filter((p) => p.id !== 'me').slice(0, 6);
 
   const hasActiveFilters = categoryFilter !== 'all' || cityFilter !== 'all' || premiumOnly;
@@ -189,7 +193,7 @@ export const DiscoverScreen = React.forwardRef<
               }
             />
           ) : (
-            remaining.map((g) => (
+            visibleRemaining.map((g) => (
               <EkipCard
                 key={g.id}
                 group={g}
@@ -214,7 +218,7 @@ export const DiscoverScreen = React.forwardRef<
       />
     </View>
   );
-});
+}));
 
 const styles = StyleSheet.create({
   container: {

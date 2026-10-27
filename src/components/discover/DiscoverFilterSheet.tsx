@@ -18,7 +18,7 @@ export interface DiscoverFilterSheetProps {
   onReset: () => void;
 }
 
-export function DiscoverFilterSheet({
+export function DiscoverFilterSheetComponent({
   open,
   onClose,
   categoryFilter,
@@ -102,6 +102,8 @@ export function DiscoverFilterSheet({
     </GlassSheet>
   );
 }
+
+export const DiscoverFilterSheet = React.memo(DiscoverFilterSheetComponent);
 
 const styles = StyleSheet.create({
   sectionLabel: {

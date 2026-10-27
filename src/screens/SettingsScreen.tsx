@@ -11,7 +11,7 @@ import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n, LANGUAGES } from '../lib/i18n';
 
-export function SettingsScreen({
+export function SettingsScreenComponent({
   onBack,
   onOpenPlans,
   onOpenPersonalInfo,
@@ -21,6 +21,7 @@ export function SettingsScreen({
   onOpenNotifications,
   onOpenLocation,
   onOpenChatTheme,
+  onOpenOnboarding,
   onSignOut,
 }: {
   onBack: () => void;
@@ -32,6 +33,7 @@ export function SettingsScreen({
   onOpenNotifications?: () => void;
   onOpenLocation?: () => void;
   onOpenChatTheme?: () => void;
+  onOpenOnboarding?: () => void;
   onSignOut: () => void;
 }) {
   const { me } = useAppData();
@@ -230,6 +232,20 @@ export function SettingsScreen({
                 onPress={onOpenNotifications}
                 showChevron
               />
+
+              {onOpenOnboarding && (
+                <>
+                  <SettingsDivider />
+                  <GlassListItem
+                    icon="Compass"
+                    iconBg="rgba(244, 114, 182, 0.2)"
+                    title={isRTL ? 'تور و راهنمای برنامه' : 'App Tour & Onboarding'}
+                    subtitle={isRTL ? 'مشاهده اسلایدهای راهنمای اکیپ' : 'View the 4 introductory slides'}
+                    onPress={onOpenOnboarding}
+                    showChevron
+                  />
+                </>
+              )}
             </GlassCard>
           </SettingsSection>
         </View>
@@ -332,6 +348,8 @@ export function SettingsScreen({
     </View>
   );
 }
+
+export const SettingsScreen = React.memo(SettingsScreenComponent);
 
 const styles = StyleSheet.create({
   container: {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { GlassBackButton } from '../Glass';
-import { LiquidLens } from '../LiquidLens';
+import { FrostedGlass } from '../FrostedGlass';
 import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
@@ -86,8 +86,8 @@ export function TwoFactorView({
             },
           ]}
         >
-          {/* 360° Liquid Glass Lens */}
-          <LiquidLens
+          {/* 360° Frosted Glass */}
+          <FrostedGlass
             borderRadius={36}
             marginWidth={16}
             scale={36}

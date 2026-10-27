@@ -1,3 +1,5 @@
+// --- START OF FILE NotificationsSheet.tsx ---
+
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useAppData } from '../../lib/appData';
@@ -32,6 +34,7 @@ export function NotificationsSheetComponent({
     setTimeout(() => setToastMessage(''), 2400);
   };
 
+  // FIXED: No `if (!open) return [];`! Content stays intact until sheet finishes sliding down!
   const filtered = useMemo(() => {
     return notifications.filter((n) => {
       if (filter === 'unread') return !n.is_read;
@@ -114,7 +117,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 6,
+    marginBottom: 10,
   },
   markBtn: {
     paddingHorizontal: 8,
@@ -124,6 +127,13 @@ const styles = StyleSheet.create({
     color: '#f472b6',
     fontSize: 12,
     fontWeight: '700',
+  },
+  scrollArea: {
+    maxHeight: 380,
+  },
+  scrollContent: {
+    gap: 8,
+    paddingBottom: 16,
   },
 });
 

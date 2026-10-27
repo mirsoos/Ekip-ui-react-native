@@ -2,7 +2,7 @@ import React, { useRef, useEffect, type ReactNode } from 'react';
 import { View, Text, StyleSheet, Platform, Animated, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassBackButton } from '../Glass';
-import { LiquidLens } from '../LiquidLens';
+import { FrostedGlass } from '../FrostedGlass';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 
@@ -71,6 +71,7 @@ export function FloatingGlassHeaderComponent({
         style={[
           styles.container,
           {
+            backgroundColor: isDark ? 'rgba(11, 14, 23, 0.88)' : 'rgba(255, 255, 255, 0.88)',
             flexDirection: isRTL ? 'row-reverse' : 'row',
             borderColor: colors.glassBorderStrong,
             transform: [{ translateY: enterTranslateY }],
@@ -78,8 +79,8 @@ export function FloatingGlassHeaderComponent({
           pillStyle,
         ]}
       >
-        {/* 360° Liquid Glass Lens */}
-        <LiquidLens
+        {/* 360° Frosted Glass */}
+        <FrostedGlass
           borderRadius={36}
           marginWidth={16}
           scale={36}

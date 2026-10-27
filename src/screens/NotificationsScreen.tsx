@@ -7,7 +7,7 @@ import { NotificationFilterTabs } from '../components/notifications/Notification
 import { NotificationItem } from '../components/notifications/NotificationItem';
 import { GlassEmpty } from '../components/Glass';
 
-export function NotificationsScreen({
+export function NotificationsScreenComponent({
   onBack,
   onOpenConversation,
 }: {
@@ -68,6 +68,8 @@ export function NotificationsScreen({
     </View>
   );
 }
+
+export const NotificationsScreen = React.memo(NotificationsScreenComponent);
 
 const styles = StyleSheet.create({
   container: {

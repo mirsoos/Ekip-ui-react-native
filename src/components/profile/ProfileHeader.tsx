@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Animated, Ea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassBackButton } from '../Glass';
-import { LiquidLens } from '../LiquidLens';
+import { FrostedGlass } from '../FrostedGlass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
@@ -68,7 +68,7 @@ export function ProfileHeaderComponent({
             toValue: 1,
             bounciness: 4,
             speed: 14,
-            useNativeDriver: false,
+            useNativeDriver: Platform.OS !== 'web',
           }).start();
         } else {
           capsuleAnim.stopAnimation();
@@ -76,7 +76,7 @@ export function ProfileHeaderComponent({
             toValue: 0,
             duration: 200,
             easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-            useNativeDriver: false,
+            useNativeDriver: Platform.OS !== 'web',
           }).start(({ finished }) => {
             if (finished) {
               setIsMounted(false);
@@ -149,6 +149,7 @@ export function ProfileHeaderComponent({
           style={[
             styles.container,
             {
+              backgroundColor: isDark ? 'rgba(11, 14, 23, 0.88)' : 'rgba(255, 255, 255, 0.88)',
               flexDirection: isRTL ? 'row-reverse' : 'row',
               borderColor: colors.glassBorderStrong,
               transform: [{ translateY: capsuleTranslateY }],
@@ -156,7 +157,7 @@ export function ProfileHeaderComponent({
           ]}
           pointerEvents={isDocked ? 'auto' : 'none'}
         >
-          <LiquidLens
+          <FrostedGlass
             borderRadius={36}
             marginWidth={16}
             scale={36}
@@ -192,7 +193,7 @@ export function ProfileHeaderComponent({
                 { borderColor: colors.glassBorderStrong },
               ]}
             >
-              <LiquidLens
+              <FrostedGlass
                 borderRadius={19}
                 marginWidth={8}
                 scale={20}
@@ -218,7 +219,7 @@ export function ProfileHeaderComponent({
                   { borderColor: colors.glassBorderStrong },
                 ]}
               >
-                <LiquidLens
+                <FrostedGlass
                   borderRadius={19}
                   marginWidth={8}
                   scale={20}
@@ -262,7 +263,7 @@ export function ProfileHeaderComponent({
               { borderColor: colors.glassBorderStrong },
             ]}
           >
-            <LiquidLens
+            <FrostedGlass
               borderRadius={19}
               marginWidth={8}
               scale={20}
@@ -288,7 +289,7 @@ export function ProfileHeaderComponent({
                 { borderColor: colors.glassBorderStrong },
               ]}
             >
-              <LiquidLens
+              <FrostedGlass
                 borderRadius={19}
                 marginWidth={8}
                 scale={20}

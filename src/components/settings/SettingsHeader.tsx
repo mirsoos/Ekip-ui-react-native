@@ -2,7 +2,7 @@ import React from 'react';
 import { FloatingGlassHeader } from '../common/FloatingGlassHeader';
 import { useI18n } from '../../lib/i18n';
 
-export function SettingsHeader({
+export const SettingsHeader = React.memo(function SettingsHeader({
   onBack,
   title,
 }: {
@@ -18,4 +18,4 @@ export function SettingsHeader({
       title={displayTitle}
     />
   );
-}
+});

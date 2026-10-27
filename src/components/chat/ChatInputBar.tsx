@@ -1,23 +1,44 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { LiquidLens } from '../LiquidLens';
+import { FrostedGlass } from '../FrostedGlass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 
 export function ChatInputBarComponent({
-  value,
-  onChange,
+  value: controlledValue,
+  onChange: controlledOnChange,
   onSend,
+  onSendMessage,
   placeholder = 'Type a message...',
 }: {
-  value: string;
-  onChange: (val: string) => void;
-  onSend: () => void;
+  value?: string;
+  onChange?: (val: string) => void;
+  onSend?: () => void;
+  onSendMessage?: (text: string) => void;
   placeholder?: string;
 }) {
+  const [internalText, setInternalText] = useState('');
+  const isControlled = controlledValue !== undefined;
+  const currentText = isControlled ? controlledValue : internalText;
+
+  const handleChange = (text: string) => {
+    if (!isControlled) setInternalText(text);
+    controlledOnChange?.(text);
+  };
+
+  const handleSend = () => {
+    if (!currentText.trim()) return;
+    if (onSendMessage) {
+      onSendMessage(currentText.trim());
+      if (!isControlled) setInternalText('');
+    } else if (onSend) {
+      onSend();
+    }
+  };
+
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
@@ -60,8 +81,8 @@ export function ChatInputBarComponent({
           },
         ]}
       >
-        {/* 360° Liquid Glass Lens */}
-        <LiquidLens
+        {/* 360° Frosted Glass */}
+        <FrostedGlass
           borderRadius={36}
           marginWidth={16}
           scale={36}
@@ -80,8 +101,8 @@ export function ChatInputBarComponent({
           ]}
         >
           <TextInput
-            value={value}
-            onChangeText={onChange}
+            value={currentText}
+            onChangeText={handleChange}
             placeholder={placeholder}
             placeholderTextColor={colors.textTertiary}
             style={[
@@ -91,16 +112,16 @@ export function ChatInputBarComponent({
                 textAlign: isRTL ? 'right' : 'left',
               },
             ]}
-            onSubmitEditing={onSend}
+            onSubmitEditing={handleSend}
             returnKeyType="send"
           />
         </View>
 
         <TouchableOpacity
           activeOpacity={0.85}
-          onPress={onSend}
-          disabled={!value.trim()}
-          style={[styles.sendBtn, { opacity: value.trim() ? 1 : 0.4 }]}
+          onPress={handleSend}
+          disabled={!currentText.trim()}
+          style={[styles.sendBtn, { opacity: currentText.trim() ? 1 : 0.4 }]}
         >
           <LinearGradient
             colors={['#f472b6', '#3b82f6']}

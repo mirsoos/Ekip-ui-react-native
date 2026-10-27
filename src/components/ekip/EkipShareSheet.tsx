@@ -12,7 +12,7 @@ const shareOptions: { label: string; icon: IconName }[] = [
   { label: 'More', icon: 'Share' },
 ];
 
-export function EkipShareSheet({
+export function EkipShareSheetComponent({
   open,
   groupId,
   onClose,
@@ -66,6 +66,8 @@ export function EkipShareSheet({
     </GlassSheet>
   );
 }
+
+export const EkipShareSheet = React.memo(EkipShareSheetComponent);
 
 const styles = StyleSheet.create({
   grid: {

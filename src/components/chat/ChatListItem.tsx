@@ -5,7 +5,7 @@ import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Conversation } from '../../types/database';
 
-export function ChatListItem({
+export function ChatListItemComponent({
   conversation,
   onPress,
 }: {
@@ -109,3 +109,5 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 });
+
+export const ChatListItem = React.memo(ChatListItemComponent);

@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getIcon, type IconName } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
-import { LiquidLens } from './LiquidLens';
+import { FrostedGlass } from './FrostedGlass';
 import { LiquidGlassToggle, type LiquidGlassToggleProps } from './common/LiquidGlassToggle';
 export { LiquidGlassToggle, type LiquidGlassToggleProps };
 
@@ -74,8 +74,6 @@ export function GlassCardComponent({
           shadowOpacity: glow ? 0.35 : 0.18,
           shadowRadius: glow ? 16 : 8,
           elevation: glow ? 8 : 4,
-          backdropFilter: `blur(${variant === 'thick' ? 24 : variant === 'thin' ? 12 : 16}px) saturate(180%)`,
-          WebkitBackdropFilter: `blur(${variant === 'thick' ? 24 : variant === 'thin' ? 12 : 16}px) saturate(180%)`,
           transform: 'translateZ(0)',
         }),
   };
@@ -538,7 +536,7 @@ export function GlassBackButtonComponent({
         style,
       ]}
     >
-      <LiquidLens
+      <FrostedGlass
         borderRadius={19}
         marginWidth={8}
         scale={20}
@@ -587,7 +585,7 @@ export function GlassCloseButtonComponent({
         style,
       ]}
     >
-      <LiquidLens
+      <FrostedGlass
         borderRadius={radius}
         marginWidth={Math.max(6, Math.round(size * 0.22))}
         scale={Math.max(14, Math.round(size * 0.55))}
@@ -690,8 +688,6 @@ export function GlassSegmentedComponent({
             overflow: 'hidden',
             pointerEvents: 'none',
             zIndex: 1,
-            backdropFilter: 'blur(16px) saturate(190%)',
-            WebkitBackdropFilter: 'blur(16px) saturate(190%)',
           } as any}
         >
           {/* Top specular highlight sheen */}
@@ -1325,4 +1321,5 @@ export const GlassListItem = React.memo(GlassListItemComponent);
 export const GlassSectionHeader = React.memo(GlassSectionHeaderComponent);
 export const GlassEmpty = React.memo(GlassEmptyComponent);
 
-export { LiquidLens, type LiquidLensProps } from './LiquidLens';
+export { FrostedGlass, type FrostedGlassProps } from './FrostedGlass';
+export { FrostedGlass as LiquidLens, type FrostedGlassProps as LiquidLensProps } from './FrostedGlass';

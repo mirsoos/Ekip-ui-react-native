@@ -1,4 +1,4 @@
-import React, { type ReactNode, useEffect, useState } from 'react';
+import React, { type ReactNode, useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { getIcon, type IconName } from '../lib/icons';
 import { GlassButton, GlassCloseButton } from './Glass';
@@ -32,13 +32,15 @@ export function GlassSheet({
 }: GlassSheetProps) {
   const { isDark } = useTheme();
   const { isRTL } = useI18n();
+  const isMounted = useRef(false);
   const [isRendered, setIsRendered] = useState(open);
 
   useEffect(() => {
     if (open) {
+      isMounted.current = true;
       setIsRendered(true);
-    } else {
-      const closeTimer = window.setTimeout(() => setIsRendered(false), 550);
+    } else if (isMounted.current) {
+      const closeTimer = window.setTimeout(() => setIsRendered(false), 360);
       return () => window.clearTimeout(closeTimer);
     }
   }, [open]);
@@ -71,7 +73,6 @@ export function GlassSheet({
     >
       {/* 1. Backdrop: subtle blur and subtle darkness to prevent content clash */}
       <div
-        key={`backdrop-${open}`}
         className={`ekip-sheet-backdrop ${open ? 'animate-fade' : 'animate-fade-out'}`}
         style={{
           position: 'absolute',
@@ -85,7 +86,6 @@ export function GlassSheet({
 
       {/* 2. Sheet sliding up from bottom with authentic liquid glass container */}
       <div
-        key={`sheet-${open}`}
         onClick={(e) => e.stopPropagation()}
         className={`ekip-sheet-container ${
           open ? 'animate-sheet-up' : 'animate-sheet-down'

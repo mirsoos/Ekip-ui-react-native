@@ -6,7 +6,7 @@ import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 
-export function AIAssistantBanner({
+export const AIAssistantBanner = React.memo(function AIAssistantBanner({
   onPress,
   style,
 }: {
@@ -43,7 +43,7 @@ export function AIAssistantBanner({
       </GlassCard>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

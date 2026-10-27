@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassButton } from '../Glass';
-import { LiquidLens } from '../LiquidLens';
+import { FrostedGlass } from '../FrostedGlass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useAppData } from '../../lib/appData';
@@ -90,8 +90,8 @@ export function EkipActionBarComponent({
           },
         ]}
       >
-        {/* 360° Liquid Glass Lens */}
-        <LiquidLens
+        {/* 360° Frosted Glass */}
+        <FrostedGlass
           borderRadius={36}
           marginWidth={16}
           scale={36}

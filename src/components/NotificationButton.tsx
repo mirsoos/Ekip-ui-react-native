@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
-import { LiquidLens } from './LiquidLens';
+import { FrostedGlass } from './FrostedGlass';
 
 export interface NotificationButtonProps {
   unreadCount: number;
@@ -25,7 +25,7 @@ export function NotificationButtonComponent({ unreadCount, onPress }: Notificati
           },
         ]}
       >
-        <LiquidLens
+        <FrostedGlass
           borderRadius={19}
           marginWidth={8}
           scale={20}

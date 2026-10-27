@@ -21,30 +21,11 @@ function MissionProgressBar({
   index: number;
 }) {
   const { isRTL } = useI18n();
-  const animVal = useRef(new Animated.Value(0)).current;
   const pct = Math.min(100, Math.max(0, (progress / (target || 1)) * 100));
-
-  useEffect(() => {
-    animVal.setValue(0);
-    const anim = Animated.timing(animVal, {
-      toValue: pct,
-      duration: 850,
-      delay: index * 80 + 100,
-      easing: Easing.bezier(0.16, 1, 0.3, 1),
-      useNativeDriver: false,
-    });
-    anim.start();
-    return () => anim.stop();
-  }, [pct, index]);
 
   const gradColors: [string, string] = isComplete
     ? ['#22c55e', '#10b981']
     : ['#f472b6', '#3b82f6'];
-
-  const width = animVal.interpolate({
-    inputRange: [0, 100],
-    outputRange: ['0%', '100%'],
-  });
 
   return (
     <View
@@ -57,14 +38,14 @@ function MissionProgressBar({
         },
       ]}
     >
-      <Animated.View style={[styles.progressBar, { width }]}>
+      <View style={[styles.progressBar, { width: `${pct}%` }]}>
         <LinearGradient
           colors={gradColors}
           start={{ x: isRTL ? 1 : 0, y: 0 }}
           end={{ x: isRTL ? 0 : 1, y: 0 }}
           style={StyleSheet.absoluteFill}
         />
-      </Animated.View>
+      </View>
     </View>
   );
 }

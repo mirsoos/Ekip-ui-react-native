@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Platform, Animated } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { ThemeProvider, useTheme } from './src/lib/theme';
+import { ThemeProvider, useTheme, ThemeContext } from './src/lib/theme';
 import { AppDataProvider } from './src/lib/appData';
 import { BottomNav, type TabKey } from './src/components/BottomNav';
 import { ChatHeader } from './src/components/chat/ChatHeader';
@@ -39,6 +39,7 @@ import { PrivacyScreen } from './src/screens/PrivacyScreen';
 import { SecurityScreen } from './src/screens/SecurityScreen';
 import { LocationScreen } from './src/screens/LocationScreen';
 import { ChatThemeScreen } from './src/screens/ChatThemeScreen';
+import { Loading } from './src/screens/Loading';
 
 import { AuroraBackground } from './src/components/AuroraBackground';
 import { SwipeNavigationContainer } from './src/components/common/SwipeNavigationContainer';
@@ -67,6 +68,88 @@ export type Screen =
   | { name: 'location' }
   | { name: 'chatTheme' };
 
+function DeferredTabPane({
+  active,
+  visible,
+  children,
+}: {
+  active: boolean;
+  visible: boolean;
+  children: React.ReactNode;
+}) {
+  const themeContext = useTheme();
+  const cachedThemeRef = React.useRef(themeContext);
+
+  if (active) {
+    cachedThemeRef.current = themeContext;
+  }
+
+  const themeValue = active ? themeContext : cachedThemeRef.current;
+  const renderedChildrenRef = React.useRef<React.ReactNode>(null);
+  if (active || !renderedChildrenRef.current) {
+    renderedChildrenRef.current = children;
+  }
+
+  return (
+    <ThemeContext.Provider value={themeValue}>
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            opacity: visible ? 1 : 0,
+            zIndex: visible ? 1 : 0,
+          },
+        ]}
+        pointerEvents={visible ? 'auto' : 'none'}
+      >
+        {renderedChildrenRef.current}
+      </View>
+    </ThemeContext.Provider>
+  );
+}
+
+function DeferredHeaderPane({
+  active,
+  visible,
+  pointerEvents = 'box-none',
+  children,
+}: {
+  active: boolean;
+  visible: boolean;
+  pointerEvents?: 'box-none' | 'none' | 'auto';
+  children: React.ReactNode;
+}) {
+  const themeContext = useTheme();
+  const cachedThemeRef = React.useRef(themeContext);
+
+  if (active) {
+    cachedThemeRef.current = themeContext;
+  }
+
+  const themeValue = active ? themeContext : cachedThemeRef.current;
+  const renderedChildrenRef = React.useRef<React.ReactNode>(null);
+  if (active || !renderedChildrenRef.current) {
+    renderedChildrenRef.current = children;
+  }
+
+  return (
+    <ThemeContext.Provider value={themeValue}>
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            opacity: visible ? 1 : 0,
+            zIndex: visible ? 10 : 0,
+          },
+        ]}
+        pointerEvents={visible ? pointerEvents : 'none'}
+      >
+        {renderedChildrenRef.current}
+      </View>
+    </ThemeContext.Provider>
+  );
+}
+
 function MainContent() {
   const { isDark } = useTheme();
   const { t, language } = useI18n();
@@ -76,13 +159,62 @@ function MainContent() {
   const [onboarded, setOnboarded] = useState(false);
   const [tab, setTab] = useState<TabKey>('discover');
   const [screen, setScreen] = useState<Screen>({ name: 'discover' });
+
+  // Single-Tree Boot Preload Sequence (Stages 0 -> 6 behind initial loading overlay)
+  const [bootStage, setBootStage] = useState(0);
+  const [isBootLoading, setIsBootLoading] = useState(true);
+  const bootOverlayOpacity = React.useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    let isCancelled = false;
+    let timerId: ReturnType<typeof setTimeout>;
+
+    const advanceStage = (stage: number) => {
+      if (isCancelled) return;
+      setBootStage(stage);
+
+      if (stage < 6) {
+        timerId = setTimeout(() => {
+          requestAnimationFrame(() => {
+            advanceStage(stage + 1);
+          });
+        }, 90);
+      } else {
+        // Stage 6 complete: allow commit, then smoothly fade out initial boot overlay
+        timerId = setTimeout(() => {
+          if (isCancelled) return;
+          Animated.timing(bootOverlayOpacity, {
+            toValue: 0,
+            duration: 280,
+            useNativeDriver: Platform.OS !== 'web',
+          }).start(() => {
+            if (!isCancelled) {
+              setIsBootLoading(false);
+            }
+          });
+        }, 120);
+      }
+    };
+
+    requestAnimationFrame(() => {
+      advanceStage(1);
+    });
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timerId);
+    };
+  }, [bootOverlayOpacity]);
+
+  const handleAuthSuccess = React.useCallback(() => {
+    setAuthed(true);
+    setOnboarded(false);
+  }, []);
   const [history, setHistory] = useState<Screen[]>([]);
   const [createState, setCreateState] = useState({ step: 0, canProceed: false });
   const [chatSearch, setChatSearch] = useState('');
   const [discoverSearch, setDiscoverSearch] = useState('');
   const [activityTab, setActivityTab] = useState('created');
-  const [chatInputText, setChatInputText] = useState('');
-  const [aiInputText, setAiInputText] = useState('');
   const createRef = React.useRef<CreateScreenHandle>(null);
   const discoverRef = React.useRef<DiscoverScreenHandle>(null);
   const aiRef = React.useRef<AIAssistantHandle>(null);
@@ -90,10 +222,23 @@ function MainContent() {
 
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
 
+  const unreadNotificationsCount = React.useMemo(
+    () => notifications.filter((n) => !n.is_read).length,
+    [notifications]
+  );
+
+  const unreadConversationsTotal = React.useMemo(
+    () => conversations.reduce((s, c) => s + c.unread_count, 0),
+    [conversations]
+  );
+
+  const screenRef = React.useRef(screen);
+  screenRef.current = screen;
+
   const push = React.useCallback((s: Screen) => {
-    setHistory((prev) => [...prev, screen]);
+    setHistory((prev) => [...prev, screenRef.current]);
     setScreen(s);
-  }, [screen]);
+  }, []);
 
   const pop = React.useCallback(() => {
     setHistory((prev) => {
@@ -118,41 +263,116 @@ function MainContent() {
     }
   }, [profileScrollY]);
 
-  if (!authed) {
-    return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#04060c' : '#ebf0fa' }]}>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        <AuroraBackground />
-        <View nativeID="phone-container" style={styles.phoneContainer}>
-          <View style={styles.screenContainer}>
-            <ScreenTransition screenKey={`auth-${language}`}>
-              <AuthScreen onComplete={() => setAuthed(true)} />
-            </ScreenTransition>
-          </View>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const handleOpenGroup = React.useCallback((g: Group) => {
+    push({ name: 'group', group: g });
+  }, [push]);
 
-  if (!onboarded) {
-    return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? '#04060c' : '#ebf0fa' }]}>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        <AuroraBackground />
-        <View nativeID="phone-container" style={styles.phoneContainer}>
-          <View style={styles.screenContainer}>
-            <ScreenTransition screenKey={`onboarding-${language}`}>
-              <Onboarding onComplete={() => setOnboarded(true)} />
-            </ScreenTransition>
-          </View>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const handleOpenProfile = React.useCallback((uid: string) => {
+    if (uid === 'me') {
+      setTab('profile');
+      setHistory([]);
+      setScreen({ name: 'profile', userId: 'me' });
+    } else {
+      push({ name: 'profile', userId: uid });
+    }
+  }, [push]);
 
-  const showBottomNav =
-    ['discover', 'activity', 'create', 'chatList'].includes(screen.name) ||
-    (screen.name === 'profile' && screen.userId === 'me');
+  const handleOpenOwnProfile = React.useCallback(() => {
+    setTab('profile');
+    setHistory([]);
+    setScreen({ name: 'profile', userId: 'me' });
+  }, []);
+
+  const handleOpenAI = React.useCallback(() => {
+    push({ name: 'ai' });
+  }, [push]);
+
+  const handleOpenNotifications = React.useCallback(() => {
+    setIsNotificationSheetOpen(true);
+  }, []);
+
+  const handleCloseNotifications = React.useCallback(() => {
+    setIsNotificationSheetOpen(false);
+  }, []);
+
+  const handleOpenConversation = React.useCallback((cid: string) => {
+    push({ name: 'conversation', conversationId: cid });
+  }, [push]);
+
+  const handleOpenSettings = React.useCallback(() => {
+    push({ name: 'settings' });
+  }, [push]);
+
+  const handleOpenPlans = React.useCallback(() => {
+    push({ name: 'plans' });
+  }, [push]);
+
+  const handleOpenPersonalInfo = React.useCallback(() => {
+    push({ name: 'personalInfo' });
+  }, [push]);
+
+  const handleOpenVerification = React.useCallback(() => {
+    push({ name: 'verification' });
+  }, [push]);
+
+  const handleOpenPrivacy = React.useCallback(() => {
+    push({ name: 'privacy' });
+  }, [push]);
+
+  const handleOpenSecurity = React.useCallback(() => {
+    push({ name: 'security' });
+  }, [push]);
+
+  const handleOpenLocation = React.useCallback(() => {
+    push({ name: 'location' });
+  }, [push]);
+
+  const handleOpenChatTheme = React.useCallback(() => {
+    push({ name: 'chatTheme' });
+  }, [push]);
+
+  const handleOpenNotificationsScreen = React.useCallback(() => {
+    push({ name: 'notifications' });
+  }, [push]);
+
+  const handleSignOut = React.useCallback(() => {
+    setAuthed(false);
+    setOnboarded(false);
+    setTab('discover');
+    setScreen({ name: 'discover' });
+    setHistory([]);
+  }, []);
+
+  const handleOpenFilters = React.useCallback(() => {
+    discoverRef.current?.openFilters();
+  }, []);
+
+  const handleBackToActivity = React.useCallback(() => {
+    setTab('activity');
+    setHistory([]);
+    setScreen({ name: 'activity' });
+  }, []);
+
+  const handleBackFromCreate = React.useCallback(() => {
+    setHistory((prev) => {
+      if (prev.length > 0) {
+        const next = [...prev];
+        const last = next.pop()!;
+        setScreen(last);
+        return next;
+      } else {
+        setTab('discover');
+        setScreen({ name: 'discover' });
+        return [];
+      }
+    });
+  }, []);
+
+  const handleGroupCreated = React.useCallback((g: Group) => {
+    setHistory([]);
+    setScreen({ name: 'group', group: g });
+    setTab('activity');
+  }, []);
 
   const mainTabs: TabKey[] = ['discover', 'activity', 'create', 'chat', 'profile'];
   const currentMainIndex = mainTabs.indexOf(tab);
@@ -163,6 +383,50 @@ function MainContent() {
       screen.name === 'create' ||
       screen.name === 'chatList' ||
       (screen.name === 'profile' && screen.userId === 'me'));
+
+  const handleSwipeNextTab = React.useCallback(() => {
+    if (currentMainIndex < mainTabs.length - 1) {
+      switchTab(mainTabs[currentMainIndex + 1]);
+    }
+  }, [currentMainIndex, switchTab]);
+
+  const handleSwipePrevTab = React.useCallback(() => {
+    if (currentMainIndex > 0) {
+      switchTab(mainTabs[currentMainIndex - 1]);
+    }
+  }, [currentMainIndex, switchTab]);
+
+  const handleGoHome = React.useCallback(() => {
+    setTab('discover');
+    setHistory([]);
+    setScreen({ name: 'discover' });
+  }, []);
+
+  const handleCreatePrev = React.useCallback(() => {
+    createRef.current?.handlePrev();
+  }, []);
+
+  const handleCreateOpenAI = React.useCallback(() => {
+    createRef.current?.openAI();
+  }, []);
+
+  const handleCreateNext = React.useCallback(() => {
+    createRef.current?.handleNext();
+  }, []);
+
+  const handleOnboardingComplete = React.useCallback(() => {
+    setOnboarded(true);
+  }, []);
+
+  const isDiscoverActive = isMainScreen && screen.name === 'discover';
+  const isActivityActive = isMainScreen && screen.name === 'activity';
+  const isCreateActive = isMainScreen && screen.name === 'create';
+  const isChatListActive = isMainScreen && screen.name === 'chatList';
+  const isOwnProfileActive = isMainScreen && screen.name === 'profile' && (screen.userId === 'me' || !screen.userId);
+
+  const showBottomNav =
+    ['discover', 'activity', 'create', 'chatList'].includes(screen.name) ||
+    (screen.name === 'profile' && screen.userId === 'me');
 
   return (
     <SafeAreaView
@@ -175,309 +439,378 @@ function MainContent() {
       <AuroraBackground />
 
       <View nativeID="phone-container" style={styles.phoneContainer}>
-        <View style={styles.screenContainer}>
-          <SwipeNavigationContainer
-          canGoBack={history.length > 0}
-          onGoBack={pop}
-          canSwipeLeftTab={isMainScreen && currentMainIndex < mainTabs.length - 1}
-          canSwipeRightTab={isMainScreen && currentMainIndex > 0}
-          onSwipeNextTab={() => {
-            if (currentMainIndex < mainTabs.length - 1) {
-              switchTab(mainTabs[currentMainIndex + 1]);
-            }
-          }}
-          onSwipePrevTab={() => {
-            if (currentMainIndex > 0) {
-              switchTab(mainTabs[currentMainIndex - 1]);
-            }
-          }}
-        >
-          <ErrorBoundary
-            onGoHome={() => {
-              setTab('discover');
-              setHistory([]);
-              setScreen({ name: 'discover' });
-            }}
+        {/* Layer 1: Auth Screen (Stage 1) */}
+        {bootStage >= 1 && (
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                opacity: !authed ? 1 : 0,
+                zIndex: !authed ? 20 : 0,
+              },
+            ]}
+            pointerEvents={!authed ? 'auto' : 'none'}
           >
-            <ScreenTransition screenKey={`${screen.name}-${tab}-${history.length}-${language}`}>
-            {screen.name === 'discover' && (
-              <DiscoverScreen
-                ref={discoverRef}
+            <View style={styles.screenContainer}>
+              <ScreenTransition screenKey={`auth-${language}`}>
+                <AuthScreen onComplete={handleAuthSuccess} />
+              </ScreenTransition>
+            </View>
+          </View>
+        )}
+
+        {/* Layer 2: Onboarding (Stage 1) */}
+        {bootStage >= 1 && (
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                opacity: authed && !onboarded ? 1 : 0,
+                zIndex: authed && !onboarded ? 20 : 0,
+              },
+            ]}
+            pointerEvents={authed && !onboarded ? 'auto' : 'none'}
+          >
+            <View style={styles.screenContainer}>
+              <ScreenTransition screenKey={`onboarding-${language}`}>
+                <Onboarding onComplete={handleOnboardingComplete} />
+              </ScreenTransition>
+            </View>
+          </View>
+        )}
+
+        {/* Layer 3: Main Application (Pre-mounted in RAM via Stages 2-6) */}
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              opacity: authed && onboarded ? 1 : 0,
+              zIndex: authed && onboarded ? 10 : 0,
+            },
+          ]}
+          pointerEvents={authed && onboarded ? 'auto' : 'none'}
+        >
+          <View style={styles.screenContainer}>
+            <SwipeNavigationContainer
+              canGoBack={history.length > 0}
+              onGoBack={pop}
+              canSwipeLeftTab={isMainScreen && currentMainIndex < mainTabs.length - 1}
+              canSwipeRightTab={isMainScreen && currentMainIndex > 0}
+              onSwipeNextTab={handleSwipeNextTab}
+              onSwipePrevTab={handleSwipePrevTab}
+            >
+              <ErrorBoundary onGoHome={handleGoHome}>
+                <ScreenTransition screenKey={`${screen.name}-${tab}-${history.length}-${language}`}>
+                  {/* Stage 2: Main Tab: Discover */}
+                  {bootStage >= 2 && (
+                    <DeferredTabPane active={isDiscoverActive} visible={isDiscoverActive}>
+                      <DiscoverScreen
+                        ref={discoverRef}
+                        search={discoverSearch}
+                        onChangeSearch={setDiscoverSearch}
+                        onOpenGroup={handleOpenGroup}
+                        onOpenProfile={handleOpenProfile}
+                        onOpenOwnProfile={handleOpenOwnProfile}
+                        onOpenAI={handleOpenAI}
+                        onOpenNotifications={handleOpenNotifications}
+                      />
+                    </DeferredTabPane>
+                  )}
+
+                  {/* Stage 3: Main Tab: Activity */}
+                  {bootStage >= 3 && (
+                    <DeferredTabPane active={isActivityActive} visible={isActivityActive}>
+                      <ActivityScreen
+                        tab={activityTab}
+                        onChangeTab={setActivityTab}
+                        onOpenGroup={handleOpenGroup}
+                        onOpenProfile={handleOpenProfile}
+                        onOpenNotifications={handleOpenNotifications}
+                      />
+                    </DeferredTabPane>
+                  )}
+
+                  {/* Stage 5: Main Tab: Create */}
+                  {bootStage >= 5 && (
+                    <DeferredTabPane active={isCreateActive} visible={isCreateActive}>
+                      <CreateScreen
+                        ref={createRef}
+                        onStateChange={setCreateState}
+                        onBack={handleBackFromCreate}
+                        onCreated={handleGroupCreated}
+                      />
+                    </DeferredTabPane>
+                  )}
+
+                  {/* Stage 4: Main Tab: Chat List */}
+                  {bootStage >= 4 && (
+                    <DeferredTabPane active={isChatListActive} visible={isChatListActive}>
+                      <ChatListScreen
+                        search={chatSearch}
+                        onOpenConversation={handleOpenConversation}
+                        onOpenNotifications={handleOpenNotifications}
+                      />
+                    </DeferredTabPane>
+                  )}
+
+                  {/* Stage 5: Main Tab: Own Profile */}
+                  {bootStage >= 5 && (
+                    <DeferredTabPane active={isOwnProfileActive} visible={isOwnProfileActive}>
+                      <ProfileScreen
+                        userId="me"
+                        isOwnProfile={true}
+                        onBack={pop}
+                        onOpenGroup={handleOpenGroup}
+                        onOpenSettings={handleOpenSettings}
+                        onOpenPersonalInfo={handleOpenPersonalInfo}
+                        onOpenVerification={handleOpenVerification}
+                        scrollY={profileScrollY}
+                      />
+                    </DeferredTabPane>
+                  )}
+
+                  {/* Stack Screens (Only mounted when active) */}
+                  {screen.name === 'profile' && screen.userId !== 'me' && (
+                    <ProfileScreen
+                      key={screen.userId}
+                      userId={screen.userId}
+                      isOwnProfile={false}
+                      onBack={pop}
+                      onOpenGroup={handleOpenGroup}
+                      onOpenSettings={handleOpenSettings}
+                      onOpenPersonalInfo={handleOpenPersonalInfo}
+                      onOpenVerification={handleOpenVerification}
+                      scrollY={profileScrollY}
+                    />
+                  )}
+
+                  {screen.name === 'group' && (
+                    <EkipDetail
+                      group={screen.group}
+                      onBack={handleBackToActivity}
+                      onOpenProfile={handleOpenProfile}
+                      onOpenChat={handleOpenConversation}
+                    />
+                  )}
+
+                  {screen.name === 'conversation' && (
+                    <ConversationScreen conversationId={screen.conversationId} onBack={pop} />
+                  )}
+
+                  {screen.name === 'notifications' && (
+                    <NotificationsScreen
+                      onBack={pop}
+                      onOpenConversation={handleOpenConversation}
+                    />
+                  )}
+
+                  {screen.name === 'ai' && <AIAssistant ref={aiRef} onBack={pop} />}
+
+                  {screen.name === 'settings' && (
+                    <SettingsScreen
+                      onBack={pop}
+                      onOpenPlans={handleOpenPlans}
+                      onOpenPersonalInfo={handleOpenPersonalInfo}
+                      onOpenVerification={handleOpenVerification}
+                      onOpenPrivacy={handleOpenPrivacy}
+                      onOpenSecurity={handleOpenSecurity}
+                      onOpenNotifications={handleOpenNotificationsScreen}
+                      onOpenLocation={handleOpenLocation}
+                      onOpenChatTheme={handleOpenChatTheme}
+                      onOpenOnboarding={() => push({ name: 'onboarding' })}
+                      onSignOut={handleSignOut}
+                    />
+                  )}
+
+                  {screen.name === 'plans' && <PlansScreen onBack={pop} />}
+
+                  {screen.name === 'personalInfo' && (
+                    <PersonalInfoScreen
+                      onBack={pop}
+                      onOpenVerification={handleOpenVerification}
+                    />
+                  )}
+
+                  {screen.name === 'verification' && <VerificationScreen onBack={pop} />}
+
+                  {screen.name === 'privacy' && <PrivacyScreen onBack={pop} />}
+
+                  {screen.name === 'security' && <SecurityScreen onBack={pop} />}
+
+                  {screen.name === 'location' && <LocationScreen onBack={pop} />}
+
+                  {screen.name === 'chatTheme' && <ChatThemeScreen onBack={pop} />}
+
+                  {screen.name === 'onboarding' && (
+                    <Onboarding
+                      onComplete={() => {
+                        setTab('discover');
+                        setHistory([]);
+                        setScreen({ name: 'discover' });
+                      }}
+                    />
+                  )}
+                </ScreenTransition>
+              </ErrorBoundary>
+            </SwipeNavigationContainer>
+          </View>
+
+          {/* Headers */}
+          {/* Stage 2: Discover Header */}
+          {bootStage >= 2 && (
+            <DeferredHeaderPane active={isDiscoverActive} visible={isDiscoverActive} pointerEvents="box-none">
+              <DiscoverHeader
+                user={me}
+                unreadCount={unreadNotificationsCount}
                 search={discoverSearch}
                 onChangeSearch={setDiscoverSearch}
-                onOpenGroup={(g) => push({ name: 'group', group: g })}
-                onOpenProfile={(uid) => push({ name: 'profile', userId: uid })}
-                onOpenOwnProfile={() => {
-                  setTab('profile');
-                  setHistory([]);
-                  setScreen({ name: 'profile', userId: 'me' });
-                }}
-                onOpenAI={() => push({ name: 'ai' })}
-                onOpenNotifications={() => setIsNotificationSheetOpen(true)}
+                hasActiveFilters={false}
+                onOpenFilters={handleOpenFilters}
+                onOpenNotifications={handleOpenNotifications}
+                onOpenOwnProfile={handleOpenOwnProfile}
               />
-            )}
+            </DeferredHeaderPane>
+          )}
 
-            {screen.name === 'group' && (
-              <EkipDetail
-                group={screen.group}
-                onBack={() => {
-                  setTab('activity');
-                  setHistory([]);
-                  setScreen({ name: 'activity' });
-                }}
-                onOpenProfile={(uid) => {
-                  if (uid === 'me') setTab('profile');
-                  push({ name: 'profile', userId: uid });
-                }}
-                onOpenChat={(cid) => {
-                  setTab('chat');
-                  push({ name: 'conversation', conversationId: cid });
-                }}
-              />
-            )}
-
-            {screen.name === 'create' && (
-              <CreateScreen
-                ref={createRef}
-                onStateChange={setCreateState}
-                onBack={() => {
-                  if (history.length > 0) pop();
-                  else {
-                    setTab('discover');
-                    setHistory([]);
-                    setScreen({ name: 'discover' });
-                  }
-                }}
-                onCreated={(g) => {
-                  setHistory([]);
-                  setScreen({ name: 'group', group: g });
-                  setTab('activity');
-                }}
-              />
-            )}
-
-            {screen.name === 'profile' && (
-              <ProfileScreen
-                userId={screen.userId}
-                isOwnProfile={screen.userId === 'me'}
-                onBack={pop}
-                onOpenGroup={(g) => push({ name: 'group', group: g })}
-                onOpenSettings={() => push({ name: 'settings' })}
-                onOpenPersonalInfo={() => push({ name: 'personalInfo' })}
-                onOpenVerification={() => push({ name: 'verification' })}
-                scrollY={profileScrollY}
-              />
-            )}
-
-            {screen.name === 'activity' && (
-              <ActivityScreen
+          {/* Stage 3: Activity Header */}
+          {bootStage >= 3 && (
+            <DeferredHeaderPane active={isActivityActive} visible={isActivityActive} pointerEvents="box-none">
+              <ActivityHeader
+                unreadCount={unreadNotificationsCount}
                 tab={activityTab}
                 onChangeTab={setActivityTab}
-                onOpenGroup={(g) => push({ name: 'group', group: g })}
-                onOpenProfile={(uid) => push({ name: 'profile', userId: uid })}
-                onOpenNotifications={() => setIsNotificationSheetOpen(true)}
+                onOpenNotifications={handleOpenNotifications}
               />
-            )}
+            </DeferredHeaderPane>
+          )}
 
-            {screen.name === 'chatList' && (
-              <ChatListScreen
+          {/* Stage 5: Create Header */}
+          {bootStage >= 5 && (
+            <DeferredHeaderPane active={isCreateActive} visible={isCreateActive} pointerEvents="box-none">
+              <CreateHeader
+                step={createState.step}
+                totalSteps={4}
+                onBack={handleCreatePrev}
+                onOpenAI={handleCreateOpenAI}
+              />
+              <CreateContinueButton
+                step={createState.step}
+                totalSteps={4}
+                disabled={!createState.canProceed}
+                onPress={handleCreateNext}
+              />
+            </DeferredHeaderPane>
+          )}
+
+          {/* Stage 4: Chat List Header */}
+          {bootStage >= 4 && (
+            <DeferredHeaderPane active={isChatListActive} visible={isChatListActive} pointerEvents="box-none">
+              <ChatListHeader
+                unreadTotal={unreadConversationsTotal}
+                notificationsCount={unreadNotificationsCount}
                 search={chatSearch}
-                onOpenConversation={(id) => push({ name: 'conversation', conversationId: id })}
-                onOpenNotifications={() => setIsNotificationSheetOpen(true)}
+                onChangeSearch={setChatSearch}
+                onOpenNotifications={handleOpenNotifications}
               />
-            )}
+            </DeferredHeaderPane>
+          )}
 
-            {screen.name === 'conversation' && (
-              <ConversationScreen conversationId={screen.conversationId} onBack={pop} />
-            )}
-
-            {screen.name === 'notifications' && (
-              <NotificationsScreen
+          {/* Stage 5: Own Profile Header */}
+          {bootStage >= 5 && (
+            <DeferredHeaderPane active={isOwnProfileActive} visible={isOwnProfileActive} pointerEvents="box-none">
+              <ProfileHeader
+                profile={me}
+                isOwnProfile={true}
                 onBack={pop}
-                onOpenConversation={(id) => push({ name: 'conversation', conversationId: id })}
+                onOpenSettings={handleOpenSettings}
+                scrollY={profileScrollY}
               />
-            )}
+            </DeferredHeaderPane>
+          )}
 
-            {screen.name === 'ai' && <AIAssistant ref={aiRef} onBack={pop} />}
+          {screen.name === 'conversation' && (() => {
+            const conv = conversations.find((c) => c.id === screen.conversationId);
+            return conv ? (
+              <>
+                <ChatHeader conversation={conv} onBack={pop} />
+                <ChatInputBar
+                  onSendMessage={(text) => addMessage(screen.conversationId, text)}
+                  placeholder={t('chat.transmitDispatch')}
+                />
+              </>
+            ) : null;
+          })()}
 
-            {screen.name === 'settings' && (
-              <SettingsScreen
-                onBack={pop}
-                onOpenPlans={() => push({ name: 'plans' })}
-                onOpenPersonalInfo={() => push({ name: 'personalInfo' })}
-                onOpenVerification={() => push({ name: 'verification' })}
-                onOpenPrivacy={() => push({ name: 'privacy' })}
-                onOpenSecurity={() => push({ name: 'security' })}
-                onOpenNotifications={() => push({ name: 'notifications' })}
-                onOpenLocation={() => push({ name: 'location' })}
-                onOpenChatTheme={() => push({ name: 'chatTheme' })}
-                onSignOut={() => {
-                  setAuthed(false);
-                  setOnboarded(false);
-                  setTab('discover');
-                  setScreen({ name: 'discover' });
-                }}
-              />
-            )}
-
-            {screen.name === 'plans' && <PlansScreen onBack={pop} />}
-
-            {screen.name === 'personalInfo' && (
-              <PersonalInfoScreen
-                onBack={pop}
-                onOpenVerification={() => push({ name: 'verification' })}
-              />
-            )}
-
-            {screen.name === 'verification' && <VerificationScreen onBack={pop} />}
-
-            {screen.name === 'privacy' && <PrivacyScreen onBack={pop} />}
-
-            {screen.name === 'security' && <SecurityScreen onBack={pop} />}
-
-            {screen.name === 'location' && <LocationScreen onBack={pop} />}
-
-            {screen.name === 'chatTheme' && <ChatThemeScreen onBack={pop} />}
-          </ScreenTransition>
-          </ErrorBoundary>
-        </SwipeNavigationContainer>
-        </View>
-
-        {screen.name === 'discover' && (
-          <DiscoverHeader
-            user={me}
-            unreadCount={notifications.filter((n) => !n.is_read).length}
-            search={discoverSearch}
-            onChangeSearch={setDiscoverSearch}
-            hasActiveFilters={false}
-            onOpenFilters={() => discoverRef.current?.openFilters()}
-            onOpenNotifications={() => setIsNotificationSheetOpen(true)}
-            onOpenOwnProfile={() => {
-              setTab('profile');
-              setHistory([]);
-              setScreen({ name: 'profile', userId: 'me' });
-            }}
-          />
-        )}
-
-        {screen.name === 'activity' && (
-          <ActivityHeader
-            unreadCount={notifications.filter((n) => !n.is_read).length}
-            tab={activityTab}
-            onChangeTab={setActivityTab}
-            onOpenNotifications={() => setIsNotificationSheetOpen(true)}
-          />
-        )}
-
-        {screen.name === 'conversation' && (() => {
-          const conv = conversations.find((c) => c.id === screen.conversationId);
-          return conv ? (
+          {screen.name === 'ai' && (
             <>
-              <ChatHeader conversation={conv} onBack={pop} />
+              <AIHeader onBack={pop} />
               <ChatInputBar
-                value={chatInputText}
-                onChange={setChatInputText}
-                onSend={() => {
-                  if (!chatInputText.trim()) return;
-                  addMessage(screen.conversationId, chatInputText.trim());
-                  setChatInputText('');
-                }}
-                placeholder={t('chat.transmitDispatch')}
+                onSendMessage={(text) => aiRef.current?.sendMessage(text)}
+                placeholder={t('chat.queryCommandAI')}
               />
             </>
-          ) : null;
-        })()}
+          )}
 
-        {screen.name === 'ai' && (
-          <>
-            <AIHeader onBack={pop} />
-            <ChatInputBar
-              value={aiInputText}
-              onChange={setAiInputText}
-              onSend={() => {
-                if (!aiInputText.trim()) return;
-                aiRef.current?.sendMessage(aiInputText.trim());
-                setAiInputText('');
-              }}
-              placeholder={t('chat.queryCommandAI')}
+          {screen.name === 'profile' && screen.userId !== 'me' && (() => {
+            const profile = profiles.find((p) => p.id === screen.userId) ?? me;
+            return (
+              <ProfileHeader
+                key={screen.userId}
+                profile={profile}
+                isOwnProfile={false}
+                onBack={pop}
+                onOpenSettings={handleOpenSettings}
+                scrollY={profileScrollY}
+              />
+            );
+          })()}
+
+          {screen.name === 'settings' && <SettingsHeader onBack={pop} title={t('settings.headerSettings')} />}
+          {screen.name === 'plans' && <SettingsHeader onBack={pop} title={t('settings.headerPlans')} />}
+          {screen.name === 'personalInfo' && <SettingsHeader onBack={pop} title={t('settings.headerPersonalInfo')} />}
+          {screen.name === 'verification' && <SettingsHeader onBack={pop} title={t('settings.headerVerification')} />}
+          {screen.name === 'privacy' && <SettingsHeader onBack={pop} title={t('settings.headerPrivacy')} />}
+          {screen.name === 'security' && <SettingsHeader onBack={pop} title={t('settings.headerSecurity')} />}
+          {screen.name === 'location' && <SettingsHeader onBack={pop} title={t('settings.headerLocation')} />}
+          {screen.name === 'chatTheme' && <SettingsHeader onBack={pop} title={t('settings.headerChatTheme')} />}
+          {screen.name === 'notifications' && <SettingsHeader onBack={pop} title={t('settings.headerNotifications')} />}
+
+          {screen.name === 'group' && (
+            <EkipActionBar
+              group={screen.group}
+              onOpenProfile={handleOpenProfile}
+              onOpenChat={handleOpenConversation}
             />
-          </>
-        )}
+          )}
 
-        {screen.name === 'profile' && (() => {
-          const profile = profiles.find((p) => p.id === screen.userId) ?? me;
-          const isOwn = screen.userId === 'me' || !screen.userId;
-          return (
-            <ProfileHeader
-              key={screen.userId ?? 'me'}
-              profile={profile}
-              isOwnProfile={isOwn}
-              onBack={pop}
-              onOpenSettings={() => push({ name: 'settings' })}
-              scrollY={profileScrollY}
+          {/* Stage 5: BottomNav */}
+          {bootStage >= 5 && showBottomNav && <BottomNav active={tab} onChange={switchTab} />}
+
+          {/* Stage 6: Sheets */}
+          {bootStage >= 6 && (
+            <NotificationsSheet
+              open={isNotificationSheetOpen}
+              onClose={handleCloseNotifications}
+              onOpenConversation={handleOpenConversation}
             />
-          );
-        })()}
+          )}
+        </View>
 
-        {screen.name === 'settings' && <SettingsHeader onBack={pop} title={t('settings.headerSettings')} />}
-        {screen.name === 'plans' && <SettingsHeader onBack={pop} title={t('settings.headerPlans')} />}
-        {screen.name === 'personalInfo' && <SettingsHeader onBack={pop} title={t('settings.headerPersonalInfo')} />}
-        {screen.name === 'verification' && <SettingsHeader onBack={pop} title={t('settings.headerVerification')} />}
-        {screen.name === 'privacy' && <SettingsHeader onBack={pop} title={t('settings.headerPrivacy')} />}
-        {screen.name === 'security' && <SettingsHeader onBack={pop} title={t('settings.headerSecurity')} />}
-        {screen.name === 'location' && <SettingsHeader onBack={pop} title={t('settings.headerLocation')} />}
-        {screen.name === 'chatTheme' && <SettingsHeader onBack={pop} title={t('settings.headerChatTheme')} />}
-        {screen.name === 'notifications' && <SettingsHeader onBack={pop} title={t('settings.headerNotifications')} />}
-
-        {screen.name === 'group' && (
-          <EkipActionBar
-            group={screen.group}
-            onOpenProfile={(uid) => {
-              if (uid === 'me') setTab('profile');
-              push({ name: 'profile', userId: uid });
-            }}
-            onOpenChat={(cid) => {
-              setTab('chat');
-              push({ name: 'conversation', conversationId: cid });
-            }}
-          />
+        {/* Layer 4: Initial Boot Loading Overlay (Stage 0 -> 6) */}
+        {isBootLoading && (
+          <Animated.View
+            pointerEvents="auto"
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                opacity: bootOverlayOpacity,
+                zIndex: 99999,
+              },
+            ]}
+          >
+            <Loading minDuration={999999} />
+          </Animated.View>
         )}
-
-        {screen.name === 'create' && (
-          <CreateHeader
-            step={createState.step}
-            totalSteps={4}
-            onBack={() => createRef.current?.handlePrev()}
-            onOpenAI={() => createRef.current?.openAI()}
-          />
-        )}
-
-        {screen.name === 'create' && (
-          <CreateContinueButton
-            step={createState.step}
-            totalSteps={4}
-            disabled={!createState.canProceed}
-            onPress={() => createRef.current?.handleNext()}
-          />
-        )}
-
-        {screen.name === 'chatList' && (
-          <ChatListHeader
-            unreadTotal={conversations.reduce((s, c) => s + c.unread_count, 0)}
-            notificationsCount={notifications.filter((n) => !n.is_read).length}
-            search={chatSearch}
-            onChangeSearch={setChatSearch}
-            onOpenNotifications={() => setIsNotificationSheetOpen(true)}
-          />
-        )}
-
-        {showBottomNav && <BottomNav active={tab} onChange={switchTab} />}
-
-        <NotificationsSheet
-          open={isNotificationSheetOpen}
-          onClose={() => setIsNotificationSheetOpen(false)}
-          onOpenConversation={(id) => push({ name: 'conversation', conversationId: id })}
-        />
       </View>
     </SafeAreaView>
   );
@@ -516,5 +849,11 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     width: '100%',
+  },
+  tabContainer: {
+    ...StyleSheet.absoluteFill,
+  },
+  headerOverlayWrapper: {
+    ...StyleSheet.absoluteFill,
   },
 });

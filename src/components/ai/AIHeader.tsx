@@ -6,7 +6,7 @@ import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 
-export function AIHeader({
+export const AIHeader = React.memo(function AIHeader({
   onBack,
   onOpenMenu,
 }: {
@@ -47,7 +47,7 @@ export function AIHeader({
       }
     />
   );
-}
+});
 
 const styles = StyleSheet.create({
   aiAvatar: {

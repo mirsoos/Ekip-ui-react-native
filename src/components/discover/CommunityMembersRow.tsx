@@ -6,7 +6,7 @@ import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Profile } from '../../types/database';
 
-export function CommunityMembersRow({
+export const CommunityMembersRow = React.memo(function CommunityMembersRow({
   profiles,
   onOpenProfile,
 }: {
@@ -56,7 +56,7 @@ export function CommunityMembersRow({
       </ScrollView>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

@@ -6,7 +6,7 @@ import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Group } from '../../types/database';
 
-export function EkipJoinModal({
+export function EkipJoinModalComponent({
   open,
   group,
   eligible,
@@ -61,6 +61,8 @@ export function EkipJoinModal({
     </GlassSheet>
   );
 }
+
+export const EkipJoinModal = React.memo(EkipJoinModalComponent);
 
 const styles = StyleSheet.create({
   desc: {

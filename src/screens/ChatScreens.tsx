@@ -11,8 +11,9 @@ import { ChatInputBar } from '../components/chat/ChatInputBar';
 import { ChatListItemSkeleton } from '../components/skeleton';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { useDeferredMount } from '../lib/useDeferredMount';
 
-export function ChatListScreen({
+export function ChatListScreenComponent({
   onOpenConversation,
   onOpenNotifications,
   search = '',
@@ -26,6 +27,7 @@ export function ChatListScreen({
   const insets = useSafeAreaInsets();
   const { conversations } = useAppData();
   const { t } = useI18n();
+  const isDeferredReady = useDeferredMount(32);
 
   const filtered = conversations.filter((c) =>
     c.title.toLowerCase().includes(search.toLowerCase())
@@ -57,7 +59,7 @@ export function ChatListScreen({
             subtitle={t('chat.noCommsLogsSub')}
           />
         ) : (
-          filtered.map((c) => (
+          (isDeferredReady ? filtered : filtered.slice(0, 4)).map((c) => (
             <ChatListItem
               key={c.id}
               conversation={c}
@@ -70,7 +72,9 @@ export function ChatListScreen({
   );
 }
 
-export function ConversationScreen({
+export const ChatListScreen = React.memo(ChatListScreenComponent);
+
+export function ConversationScreenComponent({
   conversationId,
   onBack,
 }: {
@@ -126,6 +130,8 @@ export function ConversationScreen({
     </KeyboardAvoidingView>
   );
 }
+
+export const ConversationScreen = React.memo(ConversationScreenComponent);
 
 const styles = StyleSheet.create({
   container: {

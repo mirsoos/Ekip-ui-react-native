@@ -10,9 +10,10 @@ import { RequestsModal } from '../components/activity/RequestsModal';
 import { getIcon, type IconName } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { useDeferredMount } from '../lib/useDeferredMount';
 import type { Group } from '../types/database';
 
-export function ActivityScreen({
+export function ActivityScreenComponent({
   tab = 'created',
   onChangeTab,
   onOpenGroup,
@@ -36,6 +37,7 @@ export function ActivityScreen({
   const [showRequests, setShowRequests] = useState(false);
   const [requestsGroupId, setRequestsGroupId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
+  const isDeferredReady = useDeferredMount(32);
 
   const createdGroups = groups.filter((g) => g.owner_id === 'me');
   const myRequests = requests.filter((r) => r.user_id === 'me');
@@ -98,7 +100,7 @@ export function ActivityScreen({
                 subtitle={t('activity.noCreatedSub')}
               />
             ) : (
-              createdGroups.map((g) => {
+              (isDeferredReady ? createdGroups : createdGroups.slice(0, 2)).map((g) => {
                 const pendingReqs = requests.filter(
                   (r) => r.group_id === g.id && r.status === 'pending'
                 );
@@ -219,7 +221,7 @@ export function ActivityScreen({
                 subtitle={t('activity.noJoinedSub')}
               />
             ) : (
-              joinedGroups.map((g) => (
+              (isDeferredReady ? joinedGroups : joinedGroups.slice(0, 3)).map((g) => (
                 <TouchableOpacity
                   key={g.id}
                   activeOpacity={0.82}
@@ -343,6 +345,8 @@ export function ActivityScreen({
     </View>
   );
 }
+
+export const ActivityScreen = React.memo(ActivityScreenComponent);
 
 const styles = StyleSheet.create({
   container: {

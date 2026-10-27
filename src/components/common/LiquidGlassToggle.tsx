@@ -78,11 +78,23 @@ export function LiquidGlassToggleComponent({
   useEffect(() => {
     Animated.timing(animProgress, {
       toValue: checked ? 0 : 1,
-      duration: 380,
+      duration: 250,
       easing: Easing.bezier(0.4, 0, 0.2, 1),
       useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, [checked]);
+
+  const handlePress = React.useCallback(() => {
+    if (disabled) return;
+    const next = !checked;
+    Animated.timing(animProgress, {
+      toValue: next ? 0 : 1,
+      duration: 250,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
+      useNativeDriver: Platform.OS !== 'web',
+    }).start();
+    onChange(next);
+  }, [checked, disabled, onChange, animProgress]);
 
   // Web Implementation: Clean Neumorphic On/Off (No burst icons)
   if (Platform.OS === 'web') {
@@ -228,7 +240,7 @@ export function LiquidGlassToggleComponent({
       <TouchableOpacity
         activeOpacity={0.88}
         disabled={disabled}
-        onPress={() => !disabled && onChange(!checked)}
+        onPress={handlePress}
         style={[
           styles.nativeContainer,
           {

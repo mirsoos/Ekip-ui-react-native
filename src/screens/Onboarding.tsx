@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { LiquidLens } from '../components/LiquidLens';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FrostedGlass } from '../components/FrostedGlass';
 import { OnboardingSlide, type SlideData } from '../components/onboarding/OnboardingSlide';
 import { LanguageSwitcherPill } from '../components/common/LanguageSwitcherPill';
 import { getIcon } from '../lib/icons';
-import { useTheme } from '../lib/theme';
-import { useI18n } from '../lib/i18n';
+import { useTheme } from '../../src/lib/theme';
+import { useI18n } from '../../src/lib/i18n';
 
 export function Onboarding({ onComplete }: { onComplete: () => void }) {
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
   const [step, setStep] = useState(0);
@@ -47,7 +49,14 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
   return (
     <View style={styles.container}>
       {/* Top Header with Language Switcher & Skip button */}
-      <View style={styles.topHeader}>
+      <View
+        style={[
+          styles.topHeader,
+          {
+            top: Platform.OS === 'web' ? 24 : Math.max(20, insets.top + 8),
+          },
+        ]}
+      >
         <LanguageSwitcherPill />
         <TouchableOpacity
           activeOpacity={0.7}
@@ -86,11 +95,12 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
             styles.nextButton,
             {
               borderColor: colors.glassBorderStrong,
+              backgroundColor: isDark ? 'rgba(11, 14, 23, 0.88)' : 'rgba(255, 255, 255, 0.88)',
             },
           ]}
         >
-          {/* 360° Liquid Glass Lens */}
-          <LiquidLens
+          {/* 360° Frosted Glass */}
+          <FrostedGlass
             borderRadius={36}
             marginWidth={16}
             scale={36}
@@ -175,11 +185,16 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     borderWidth: 1,
     overflow: 'visible',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 14,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.35,
+          shadowRadius: 28,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {}),
     justifyContent: 'center',
     alignItems: 'center',
   },

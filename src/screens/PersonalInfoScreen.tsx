@@ -19,7 +19,7 @@ const AVATAR_PRESETS = [
   'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=256&h=256&fit=crop',
 ];
 
-export function PersonalInfoScreen({
+export function PersonalInfoScreenComponent({
   onBack,
   onOpenVerification,
 }: {
@@ -233,6 +233,8 @@ export function PersonalInfoScreen({
     </View>
   );
 }
+
+export const PersonalInfoScreen = React.memo(PersonalInfoScreenComponent);
 
 const styles = StyleSheet.create({
   container: {

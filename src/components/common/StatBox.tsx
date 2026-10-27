@@ -12,7 +12,7 @@ export interface StatBoxProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function StatBox({
+export const StatBox = React.memo(function StatBox({
   icon,
   value,
   label,
@@ -65,7 +65,7 @@ export function StatBox({
   }
 
   return <View style={{ flex: 1 }}>{content}</View>;
-}
+});
 
 const styles = StyleSheet.create({
   box: {

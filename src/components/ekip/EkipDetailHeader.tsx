@@ -3,7 +3,7 @@ import { View, Image, TouchableOpacity, StyleSheet, Platform } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassBackButton } from '../Glass';
-import { LiquidLens } from '../LiquidLens';
+import { FrostedGlass } from '../FrostedGlass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
@@ -73,7 +73,7 @@ export function EkipDetailHeader({
             { borderColor: colors.glassBorderStrong },
           ]}
         >
-          <LiquidLens
+          <FrostedGlass
             borderRadius={19}
             marginWidth={8}
             scale={20}
@@ -95,7 +95,7 @@ export function EkipDetailHeader({
               { borderColor: colors.glassBorderStrong },
             ]}
           >
-            <LiquidLens
+            <FrostedGlass
               borderRadius={19}
               marginWidth={8}
               scale={20}

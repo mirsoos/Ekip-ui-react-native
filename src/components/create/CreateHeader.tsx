@@ -5,7 +5,7 @@ import { FloatingGlassHeader } from '../common/FloatingGlassHeader';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 
-export function CreateHeader({
+export const CreateHeader = React.memo(function CreateHeader({
   step,
   totalSteps,
   onBack,
@@ -38,7 +38,7 @@ export function CreateHeader({
       <StepProgressBar currentStep={step} totalSteps={totalSteps} />
     </FloatingGlassHeader>
   );
-}
+});
 
 const styles = StyleSheet.create({
   aiBtn: {

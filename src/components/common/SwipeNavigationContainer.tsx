@@ -121,7 +121,6 @@ export const SwipeNavigationContainer = React.memo(function SwipeNavigationConta
   return (
     <Animated.View
       {...panResponder.panHandlers}
-      renderToHardwareTextureAndroid={true}
       style={[
         styles.container,
         style,

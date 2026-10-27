@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, type ReactNode } from 'react';
-import { View, Platform, Animated, type StyleProp, type ViewStyle } from 'react-native';
+import { View, Platform, Animated, Easing, type StyleProp, type ViewStyle } from 'react-native';
 
 interface ScreenTransitionProps {
   children: ReactNode;
@@ -13,26 +13,36 @@ export const ScreenTransition = React.memo(function ScreenTransition({
   style,
 }: ScreenTransitionProps) {
   const anim = useRef(new Animated.Value(0)).current;
+  const webDivRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    anim.setValue(0);
-    Animated.timing(anim, {
-      toValue: 1,
-      duration: 160,
-      useNativeDriver: Platform.OS !== 'web',
-    }).start();
-  }, [screenKey]);
+    if (Platform.OS === 'web') {
+      if (webDivRef.current) {
+        webDivRef.current.classList.remove('screen-enter-items');
+        void webDivRef.current.offsetWidth; // Force CSS reflow to replay animation without unmounting children
+        webDivRef.current.classList.add('screen-enter-items');
+      }
+    } else {
+      anim.setValue(0);
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 220,
+        easing: Easing.bezier(0.22, 1, 0.36, 1),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [screenKey, anim]);
 
   const translateY = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [14, 0],
+    outputRange: [16, 0],
   });
 
   if (Platform.OS === 'web') {
     return (
       <View style={[{ flex: 1, width: '100%', height: '100%' }, style]}>
         <div
-          key={screenKey}
+          ref={webDivRef}
           className="screen-enter-items"
           style={{
             height: '100%',
@@ -50,8 +60,6 @@ export const ScreenTransition = React.memo(function ScreenTransition({
 
   return (
     <Animated.View
-      key={screenKey}
-      renderToHardwareTextureAndroid={true}
       style={[
         {
           flex: 1,

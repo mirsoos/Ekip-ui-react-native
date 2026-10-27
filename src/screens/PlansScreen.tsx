@@ -10,7 +10,7 @@ interface PlansScreenProps {
   onBack: () => void;
 }
 
-export function PlansScreen({ onBack }: PlansScreenProps) {
+export function PlansScreenComponent({ onBack }: PlansScreenProps) {
   const insets = useSafeAreaInsets();
   const { isRTL } = useI18n();
   const Crown = getIcon('Crown');
@@ -224,6 +224,8 @@ export function PlansScreen({ onBack }: PlansScreenProps) {
     </ScrollView>
   );
 }
+
+export const PlansScreen = React.memo(PlansScreenComponent);
 
 const styles = StyleSheet.create({
   container: {

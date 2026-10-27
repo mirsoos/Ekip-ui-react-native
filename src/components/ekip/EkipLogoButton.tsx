@@ -115,13 +115,13 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
             toValue: 0.85,
             duration: 120,
             easing: Easing.bezier(0.4, 0, 0.2, 1),
-            useNativeDriver: false,
+            useNativeDriver: Platform.OS !== 'web',
           }),
           Animated.timing(pieceSeparationAnim, {
             toValue: -1,
             duration: 120,
             easing: Easing.in(Easing.quad),
-            useNativeDriver: false,
+            useNativeDriver: Platform.OS !== 'web',
           }),
         ]),
 
@@ -131,13 +131,13 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
             toValue: 1.18,
             duration: 180,
             easing: Easing.out(Easing.cubic),
-            useNativeDriver: false,
+            useNativeDriver: Platform.OS !== 'web',
           }),
           Animated.timing(pieceSeparationAnim, {
             toValue: 1.3,
             duration: 180,
             easing: Easing.out(Easing.back(1.8)),
-            useNativeDriver: false,
+            useNativeDriver: Platform.OS !== 'web',
           }),
         ]),
 
@@ -147,13 +147,13 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
             toValue: 1.0,
             tension: 120,
             friction: 6.5,
-            useNativeDriver: false,
+            useNativeDriver: Platform.OS !== 'web',
           }),
           Animated.spring(pieceSeparationAnim, {
             toValue: 0,
             tension: 130,
             friction: 7,
-            useNativeDriver: false,
+            useNativeDriver: Platform.OS !== 'web',
           }),
         ]),
       ]).start(() => {
@@ -176,7 +176,7 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
             toValue: 1,
             duration: PULSE_DURATION,
             easing: Easing.out(Easing.quad),
-            useNativeDriver: false,
+            useNativeDriver: Platform.OS !== 'web',
           }).start(({ finished }) => {
             if (finished && isRunningRef.current) {
               executeCycle();
@@ -204,7 +204,7 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
         toValue: 0,
         duration: 280,
         easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
+        useNativeDriver: Platform.OS !== 'web',
       }).start(() => {
         timeoutsRef.current.forEach((t) => clearTimeout(t));
         timeoutsRef.current = [];
@@ -227,13 +227,13 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
           toValue: 0,
           tension: 130,
           friction: 11,
-          useNativeDriver: false,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.spring(floatAnim, {
           toValue: 0,
           tension: 130,
           friction: 11,
-          useNativeDriver: false,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.sequence([
           // Subtle cushioned latch as the tab disengages
@@ -241,14 +241,14 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
             toValue: 0.96,
             duration: 90,
             easing: Easing.bezier(0.25, 1, 0.5, 1),
-            useNativeDriver: false,
+            useNativeDriver: Platform.OS !== 'web',
           }),
           // Gentle spring settlement to normal size 1.0
           Animated.spring(logoScaleAnim, {
             toValue: 1.0,
             tension: 140,
             friction: 9,
-            useNativeDriver: false,
+            useNativeDriver: Platform.OS !== 'web',
           }),
         ]),
       ]).start();
@@ -270,13 +270,13 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
           toValue: 1,
           duration: 1350,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: false,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(floatAnim, {
           toValue: 0,
           duration: 1350,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: false,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ])
     );
@@ -289,7 +289,7 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
       toValue: 0.88,
       tension: 220,
       friction: 10,
-      useNativeDriver: false,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   };
 
@@ -298,7 +298,7 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
       toValue: 1,
       tension: 140,
       friction: 7,
-      useNativeDriver: false,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   };
 

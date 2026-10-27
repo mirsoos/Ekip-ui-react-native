@@ -17,7 +17,7 @@ import { useAppData } from '../lib/appData';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 
-import { LiquidLens } from './LiquidLens';
+import { FrostedGlass } from './FrostedGlass';
 import { EkipLogoButton } from './ekip/EkipLogoButton';
 
 export type TabKey = 'discover' | 'activity' | 'create' | 'chat' | 'profile';
@@ -87,16 +87,6 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
     outputRange: [95, 0],
   });
 
-  // Keep currentLensX tracked
-  useEffect(() => {
-    const id = lensX.addListener(({ value }) => {
-      currentLensX.current = value;
-    });
-    return () => {
-      lensX.removeListener(id);
-    };
-  }, [lensX]);
-
   // Handle dock width layout
   const handleDockLayout = (e: LayoutChangeEvent) => {
     const w = e.nativeEvent.layout.width;
@@ -122,6 +112,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
     prevActiveTab.current = active;
 
     const targetX = 6 + activeIndex * slotW;
+    currentLensX.current = targetX;
 
     // Rotate Create plus icon smoothly: 0deg when normal, 45deg when create
     Animated.spring(createRotate, {
@@ -138,13 +129,13 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
           toValue: targetX,
           tension: 80,
           friction: 8.5,
-          useNativeDriver: false,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.spring(lensScale, {
           toValue: 0,
           tension: 100,
           friction: 8,
-          useNativeDriver: false,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ]).start();
     } else if (prev === 'create') {
@@ -155,13 +146,13 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
           toValue: 1,
           tension: 110,
           friction: 7,
-          useNativeDriver: false,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.spring(lensX, {
           toValue: targetX,
           tension: 80,
           friction: 8.5,
-          useNativeDriver: false,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ]).start();
     } else {
@@ -171,7 +162,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         toValue: targetX,
         tension: 80,
         friction: 8.5,
-        useNativeDriver: false,
+        useNativeDriver: Platform.OS !== 'web',
       }).start();
     }
   }, [active, activeIndex, dockWidth]);
@@ -207,7 +198,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         if (active === 'create') {
           dragStartRef.current = 6 + 2 * slotW;
           lensX.setValue(dragStartRef.current);
-          Animated.spring(lensScale, { toValue: 1, tension: 120, friction: 7, useNativeDriver: false }).start();
+          Animated.spring(lensScale, { toValue: 1, tension: 120, friction: 7, useNativeDriver: Platform.OS !== 'web' }).start();
         } else {
           dragStartRef.current = currentLensX.current;
         }
@@ -236,15 +227,15 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
 
         if (chosenTab === 'create') {
           Animated.parallel([
-            Animated.spring(lensX, { toValue: 6 + 2 * slotW, tension: 80, friction: 8.5, useNativeDriver: false }),
-            Animated.spring(lensScale, { toValue: 0, tension: 100, friction: 8, useNativeDriver: false }),
+            Animated.spring(lensX, { toValue: 6 + 2 * slotW, tension: 80, friction: 8.5, useNativeDriver: Platform.OS !== 'web' }),
+            Animated.spring(lensScale, { toValue: 0, tension: 100, friction: 8, useNativeDriver: Platform.OS !== 'web' }),
           ]).start();
         } else {
           Animated.spring(lensX, {
             toValue: 6 + droppedIndex * slotW,
             tension: 80,
             friction: 8.5,
-            useNativeDriver: false,
+            useNativeDriver: Platform.OS !== 'web',
           }).start();
         }
       },
@@ -253,7 +244,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         if (dockWidth > 0) {
           const slotW = (dockWidth - 12) / 5;
           const targetX = 6 + activeIndex * slotW;
-          Animated.spring(lensX, { toValue: targetX, tension: 80, friction: 8.5, useNativeDriver: false }).start();
+          Animated.spring(lensX, { toValue: targetX, tension: 80, friction: 8.5, useNativeDriver: Platform.OS !== 'web' }).start();
         }
       },
     })
@@ -278,7 +269,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         isDragging.current = true;
         if (active === 'create') {
           lensX.setValue(6 + 2 * slotW);
-          Animated.spring(lensScale, { toValue: 1, tension: 120, friction: 7, useNativeDriver: false }).start();
+          Animated.spring(lensScale, { toValue: 1, tension: 120, friction: 7, useNativeDriver: Platform.OS !== 'web' }).start();
         }
       }
       if (hasMoved) {
@@ -304,15 +295,15 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
 
         if (chosenTab === 'create') {
           Animated.parallel([
-            Animated.spring(lensX, { toValue: 6 + 2 * slotW, tension: 80, friction: 8.5, useNativeDriver: false }),
-            Animated.spring(lensScale, { toValue: 0, tension: 100, friction: 8, useNativeDriver: false }),
+            Animated.spring(lensX, { toValue: 6 + 2 * slotW, tension: 80, friction: 8.5, useNativeDriver: Platform.OS !== 'web' }),
+            Animated.spring(lensScale, { toValue: 0, tension: 100, friction: 8, useNativeDriver: Platform.OS !== 'web' }),
           ]).start();
         } else {
           Animated.spring(lensX, {
             toValue: 6 + droppedIndex * slotW,
             tension: 80,
             friction: 8.5,
-            useNativeDriver: false,
+            useNativeDriver: Platform.OS !== 'web',
           }).start();
         }
       }
@@ -341,13 +332,14 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         style={[
           styles.dockContainer,
           {
+            backgroundColor: isDark ? 'rgba(11, 14, 23, 0.88)' : 'rgba(255, 255, 255, 0.88)',
             borderColor: colors.glassBorderStrong,
             transform: [{ translateY: enterTranslateY }],
           },
         ]}
       >
-        {/* 360° Liquid Glass Lens for the entire navbar dock */}
-        <LiquidLens
+        {/* 360° Frosted Glass for the entire navbar dock */}
+        <FrostedGlass
           borderRadius={36}
           marginWidth={16}
           scale={36}

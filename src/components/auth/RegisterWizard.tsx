@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassInput, GlassBackButton, GlassSegmented } from '../Glass';
 import { StepProgressBar } from '../common/StepProgressBar';
-import { LiquidLens } from '../LiquidLens';
+import { FrostedGlass } from '../FrostedGlass';
 import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
@@ -67,7 +67,7 @@ export function RegisterWizardComponent({
         pointerEvents="box-none"
       >
         <View style={[styles.headerContainer, { flexDirection: isRTL ? 'row-reverse' : 'row', borderColor: colors.glassBorderStrong }]}>
-          <LiquidLens
+          <FrostedGlass
             borderRadius={36}
             marginWidth={16}
             scale={36}
@@ -240,7 +240,7 @@ export function RegisterWizardComponent({
             },
           ]}
         >
-          <LiquidLens
+          <FrostedGlass
             borderRadius={36}
             marginWidth={16}
             scale={36}

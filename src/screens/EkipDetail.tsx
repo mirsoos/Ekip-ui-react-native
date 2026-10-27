@@ -22,7 +22,7 @@ const categoryIcons: Record<string, IconName> = {
   work: 'Briefcase',
 };
 
-export function EkipDetail({
+export function EkipDetailComponent({
   group,
   onBack,
   onOpenProfile,
@@ -125,7 +125,7 @@ export function EkipDetail({
         contentContainerStyle={[
           styles.scrollContent,
           Platform.OS !== 'web' && {
-            paddingBottom: 85 + insets.bottom,
+            paddingBottom: 110 + insets.bottom,
           },
         ]}
       >
@@ -249,6 +249,8 @@ export function EkipDetail({
     </View>
   );
 }
+
+export const EkipDetail = React.memo(EkipDetailComponent);
 
 const styles = StyleSheet.create({
   container: {

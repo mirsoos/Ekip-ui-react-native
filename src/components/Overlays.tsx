@@ -8,12 +8,17 @@ import {
   ScrollView,
   Animated,
   Platform,
-  Modal,
+  BackHandler,
+  Dimensions,
+  Easing,
 } from 'react-native';
 import { getIcon, type IconName } from '../lib/icons';
 import { GlassButton, GlassCloseButton } from './Glass';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const DISMISS_DISTANCE = Math.max(SCREEN_HEIGHT, 900);
 
 // ============================================
 // GLASS SHEET (Bottom Sheet Modal)
@@ -35,140 +40,168 @@ export function GlassSheet({
 }: GlassSheetProps) {
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
-  const CloseIcon = getIcon('X');
 
-  const [visible, setVisible] = useState(open);
+  // Lazy-mount on first open, then keep warm in memory to eliminate re-creation lag
+  const isMounted = useRef(open);
+  if (open && !isMounted.current) {
+    isMounted.current = true;
+  }
+
+  const [modalVisible, setModalVisible] = useState(open);
 
   // Animated values
-  const backdropAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(600)).current;
+  const backdropAnim = useRef(new Animated.Value(open ? 1 : 0)).current;
+  const slideAnim = useRef(new Animated.Value(open ? 0 : DISMISS_DISTANCE)).current;
+
+  // Hardware back button support on Android
+  useEffect(() => {
+    if (!open) return;
+    const backAction = () => {
+      onClose();
+      return true;
+    };
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => backHandler.remove();
+  }, [open, onClose]);
 
   useEffect(() => {
     if (open) {
-      setVisible(true);
+      setModalVisible(true);
+      slideAnim.setValue(DISMISS_DISTANCE);
+      backdropAnim.setValue(0);
       Animated.parallel([
         Animated.timing(backdropAnim, {
           toValue: 1,
-          duration: 340,
-          useNativeDriver: Platform.OS !== 'web',
+          duration: 240,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
         }),
-        Animated.spring(slideAnim, {
+        Animated.timing(slideAnim, {
           toValue: 0,
-          tension: 65,
-          friction: 11,
-          useNativeDriver: Platform.OS !== 'web',
+          duration: 240,
+          easing: Easing.bezier(0.22, 1, 0.36, 1),
+          useNativeDriver: true,
         }),
       ]).start();
-    } else {
+    } else if (isMounted.current) {
       Animated.parallel([
         Animated.timing(backdropAnim, {
           toValue: 0,
-          duration: 260,
-          useNativeDriver: Platform.OS !== 'web',
+          duration: 200,
+          easing: Easing.in(Easing.quad),
+          useNativeDriver: true,
         }),
         Animated.timing(slideAnim, {
-          toValue: 600,
-          duration: 260,
-          useNativeDriver: Platform.OS !== 'web',
+          toValue: DISMISS_DISTANCE,
+          duration: 200,
+          easing: Easing.bezier(0.32, 0, 0.67, 0),
+          useNativeDriver: true,
         }),
       ]).start(() => {
-        setVisible(false);
+        setModalVisible(false);
       });
     }
   }, [open]);
 
-  if (!visible) return null;
+  // Don't mount until first opened
+  if (!isMounted.current && !open) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <View style={styles.fullscreenOverlay} pointerEvents="box-none">
-        {/* Subtle backdrop with gentle blur and darkness */}
-        <TouchableWithoutFeedback onPress={onClose}>
-          <Animated.View
-            style={[
-              StyleSheet.absoluteFill,
-              styles.backdropBase,
-              {
-                backgroundColor: isDark ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.22)',
-                opacity: backdropAnim,
-                ...(Platform.OS === 'web'
-                  ? ({
-                      backdropFilter: 'blur(2px)',
-                      WebkitBackdropFilter: 'blur(2px)',
-                    } as any)
-                  : {}),
-              },
-            ]}
-          />
-        </TouchableWithoutFeedback>
-
-        {/* Sheet sliding up from bottom with liquid glass container */}
+    <View
+      style={[
+        styles.fullscreenOverlay,
+        {
+          opacity: modalVisible ? 1 : 0,
+        },
+      ]}
+      pointerEvents={modalVisible ? 'box-none' : 'none'}
+    >
+      {/* Subtle backdrop with gentle blur and darkness */}
+      <TouchableWithoutFeedback onPress={onClose}>
         <Animated.View
           style={[
-            styles.sheetContainer,
+            StyleSheet.absoluteFill,
+            styles.backdropBase,
             {
-              backgroundColor: isDark ? 'rgba(18, 24, 38, 0.78)' : 'rgba(255, 255, 255, 0.78)',
-              borderColor: colors.glassBorderStrong,
-              height: fullHeight ? '88%' : undefined,
-              maxHeight: '92%',
-              transform: [{ translateY: slideAnim }],
+              backgroundColor: isDark ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.22)',
+              opacity: backdropAnim,
               ...(Platform.OS === 'web'
                 ? ({
-                    backdropFilter: 'blur(32px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+                    backdropFilter: 'blur(2px)',
+                    WebkitBackdropFilter: 'blur(2px)',
                   } as any)
                 : {}),
             },
           ]}
+        />
+      </TouchableWithoutFeedback>
+
+      {/* Sheet sliding up from bottom with liquid glass container */}
+      <Animated.View
+        style={[
+          styles.sheetContainer,
+          {
+            backgroundColor: isDark ? 'rgba(18, 24, 38, 0.78)' : 'rgba(255, 255, 255, 0.78)',
+            borderColor: colors.glassBorderStrong,
+            height: fullHeight ? '88%' : undefined,
+            maxHeight: '92%',
+            transform: [{ translateY: slideAnim }],
+            ...(Platform.OS === 'web'
+              ? ({
+                  backdropFilter: 'blur(32px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+                } as any)
+              : {}),
+          },
+        ]}
+      >
+        {/* Top drag handle indicator */}
+        <View style={styles.sheetHandleBar} />
+
+        {/* Top Specular Arc Highlight */}
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: '12%',
+            right: '12%',
+            height: 1.5,
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.95)',
+            borderRadius: 9999,
+          }}
+        />
+
+        {/* Sheet header */}
+        <View
+          style={[
+            styles.sheetHeader,
+            { flexDirection: isRTL ? 'row-reverse' : 'row' },
+          ]}
         >
-          {/* Top drag handle indicator */}
-          <View style={styles.sheetHandleBar} />
-
-          {/* Top Specular Arc Highlight */}
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: '12%',
-              right: '12%',
-              height: 1.5,
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.95)',
-              borderRadius: 9999,
-            }}
-          />
-
-          {/* Sheet header */}
-          <View
+          <Text
             style={[
-              styles.sheetHeader,
-              { flexDirection: isRTL ? 'row-reverse' : 'row' },
+              styles.sheetTitle,
+              {
+                color: colors.textPrimary,
+                textAlign: isRTL ? 'right' : 'left',
+              },
             ]}
           >
-            <Text
-              style={[
-                styles.sheetTitle,
-                {
-                  color: colors.textPrimary,
-                  textAlign: isRTL ? 'right' : 'left',
-                },
-              ]}
-            >
-              {title ?? ''}
-            </Text>
-            <GlassCloseButton onPress={onClose} />
-          </View>
+            {title ?? ''}
+          </Text>
+          <GlassCloseButton onPress={onClose} />
+        </View>
 
-          {/* Scrollable content */}
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36, paddingTop: 10 }}
-          >
-            {children}
-          </ScrollView>
-        </Animated.View>
-      </View>
-    </Modal>
+        {/* Scrollable content */}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36, paddingTop: 10 }}
+        >
+          {modalVisible ? children : null}
+        </ScrollView>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -198,71 +231,100 @@ export function GlassDialog({
   actions,
 }: GlassDialogProps) {
   const { colors, isDark } = useTheme();
-  const [visible, setVisible] = useState(open);
 
-  const backdropAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.85)).current;
+  const isMounted = useRef(open);
+  if (open && !isMounted.current) {
+    isMounted.current = true;
+  }
+
+  const [modalVisible, setModalVisible] = useState(open);
+
+  const backdropAnim = useRef(new Animated.Value(open ? 1 : 0)).current;
+  const scaleAnim = useRef(new Animated.Value(open ? 1 : 0.85)).current;
+
+  // Hardware back button support on Android
+  useEffect(() => {
+    if (!open) return;
+    const backAction = () => {
+      onClose();
+      return true;
+    };
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => backHandler.remove();
+  }, [open, onClose]);
 
   useEffect(() => {
     if (open) {
-      setVisible(true);
+      setModalVisible(true);
+      scaleAnim.setValue(0.85);
+      backdropAnim.setValue(0);
       Animated.parallel([
         Animated.timing(backdropAnim, {
           toValue: 1,
-          duration: 300,
-          useNativeDriver: Platform.OS !== 'web',
+          duration: 240,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
         }),
-        Animated.spring(scaleAnim, {
+        Animated.timing(scaleAnim, {
           toValue: 1,
-          tension: 70,
-          friction: 10,
-          useNativeDriver: Platform.OS !== 'web',
+          duration: 240,
+          easing: Easing.bezier(0.22, 1, 0.36, 1),
+          useNativeDriver: true,
         }),
       ]).start();
-    } else {
+    } else if (isMounted.current) {
       Animated.parallel([
         Animated.timing(backdropAnim, {
           toValue: 0,
-          duration: 220,
-          useNativeDriver: Platform.OS !== 'web',
+          duration: 180,
+          easing: Easing.in(Easing.quad),
+          useNativeDriver: true,
         }),
         Animated.timing(scaleAnim, {
           toValue: 0.85,
-          duration: 220,
-          useNativeDriver: Platform.OS !== 'web',
+          duration: 180,
+          easing: Easing.bezier(0.32, 0, 0.67, 0),
+          useNativeDriver: true,
         }),
-      ]).start(() => setVisible(false));
+      ]).start(() => setModalVisible(false));
     }
   }, [open]);
 
-  if (!visible) return null;
+  if (!isMounted.current && !open) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <View style={styles.dialogOverlay}>
-        <TouchableWithoutFeedback onPress={onClose}>
-          <Animated.View
-            style={[
-              StyleSheet.absoluteFill,
-              styles.backdropBase,
-              {
-                backgroundColor: isDark ? 'rgba(0, 0, 0, 0.72)' : 'rgba(0, 0, 0, 0.45)',
-                opacity: backdropAnim,
-              },
-            ]}
-          />
-        </TouchableWithoutFeedback>
-
+    <View
+      style={[
+        styles.dialogOverlay,
+        {
+          opacity: modalVisible ? 1 : 0,
+        },
+      ]}
+      pointerEvents={modalVisible ? 'box-none' : 'none'}
+    >
+      <TouchableWithoutFeedback onPress={onClose}>
         <Animated.View
           style={[
-            styles.dialogContainer,
+            StyleSheet.absoluteFill,
+            styles.backdropBase,
             {
-              backgroundColor: colors.glassThickBg,
-              borderColor: colors.glassBorderStrong,
-              transform: [{ scale: scaleAnim }],
+              backgroundColor: isDark ? 'rgba(0, 0, 0, 0.72)' : 'rgba(0, 0, 0, 0.45)',
+              opacity: backdropAnim,
             },
           ]}
-        >
+        />
+      </TouchableWithoutFeedback>
+
+      <Animated.View
+        style={[
+          styles.dialogContainer,
+          {
+            backgroundColor: colors.glassThickBg,
+            borderColor: colors.glassBorderStrong,
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
+      >
           <Text style={[styles.dialogTitle, { color: colors.textPrimary }]}>
             {title}
           </Text>
@@ -288,7 +350,6 @@ export function GlassDialog({
           )}
         </Animated.View>
       </View>
-    </Modal>
   );
 }
 

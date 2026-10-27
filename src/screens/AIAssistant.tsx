@@ -109,10 +109,11 @@ function getAIResponse(input: string, isRTL: boolean): { body: string; chips?: s
   return aiResponsesEn.default;
 }
 
-export const AIAssistant = React.forwardRef<
-  AIAssistantHandle,
-  { onBack: () => void }
->(function AIAssistant({ onBack }, ref) {
+export const AIAssistant = React.memo(
+  React.forwardRef<
+    AIAssistantHandle,
+    { onBack: () => void }
+  >(function AIAssistant({ onBack }, ref) {
   const insets = useSafeAreaInsets();
   const { isRTL } = useI18n();
   const suggestions = isRTL ? suggestionsFa : suggestionsEn;
@@ -183,7 +184,7 @@ export const AIAssistant = React.forwardRef<
       </ScrollView>
     </KeyboardAvoidingView>
   );
-});
+}));
 
 const styles = StyleSheet.create({
   container: {

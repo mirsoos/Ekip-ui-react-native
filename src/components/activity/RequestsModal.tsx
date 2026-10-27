@@ -7,7 +7,7 @@ import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { GroupRequest } from '../../types/database';
 
-export function RequestsModal({
+export function RequestsModalComponent({
   open,
   onClose,
   requests,
@@ -117,6 +117,8 @@ export function RequestsModal({
     </GlassSheet>
   );
 }
+
+export const RequestsModal = React.memo(RequestsModalComponent);
 
 const styles = StyleSheet.create({
   card: {

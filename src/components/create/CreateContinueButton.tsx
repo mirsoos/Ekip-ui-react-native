@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LiquidLens } from '../LiquidLens';
+import { FrostedGlass } from '../FrostedGlass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
@@ -34,13 +34,14 @@ export function CreateContinueButtonComponent({
         style={[
           styles.continueButton,
           {
+            backgroundColor: isDark ? 'rgba(11, 14, 23, 0.88)' : 'rgba(255, 255, 255, 0.88)',
             borderColor: colors.glassBorderStrong,
             opacity: disabled ? 0.45 : 1,
           },
         ]}
       >
-        {/* 360° Liquid Glass Lens */}
-        <LiquidLens
+        {/* 360° Frosted Glass */}
+        <FrostedGlass
           borderRadius={36}
           marginWidth={16}
           scale={36}

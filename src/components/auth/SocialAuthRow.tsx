@@ -2,7 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
-import { LiquidLens } from '../LiquidLens';
+import { FrostedGlass } from '../FrostedGlass';
 
 export function SocialAuthRow({
   onSelect,
@@ -32,8 +32,8 @@ export function SocialAuthRow({
               },
             ]}
           >
-            {/* 360° Liquid Glass Lens */}
-            <LiquidLens
+            {/* 360° Frosted Glass */}
+            <FrostedGlass
               borderRadius={20}
               marginWidth={10}
               scale={22}

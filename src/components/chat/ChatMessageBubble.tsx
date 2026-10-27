@@ -6,7 +6,7 @@ import { useTheme, CHAT_THEMES } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Message } from '../../types/database';
 
-export function ChatMessageBubble({
+export function ChatMessageBubbleComponent({
   message,
   isMe,
   showAvatar = false,
@@ -121,3 +121,5 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 });
+
+export const ChatMessageBubble = React.memo(ChatMessageBubbleComponent);

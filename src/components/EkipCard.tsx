@@ -13,7 +13,7 @@ const categoryIcons: Record<string, IconName> = {
   work: 'Briefcase',
 };
 
-export function EkipCard({
+export function EkipCardComponent({
   group,
   onPress,
   variant = 'default',
@@ -369,3 +369,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
 });
+
+export const EkipCard = React.memo(EkipCardComponent);

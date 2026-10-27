@@ -7,7 +7,7 @@ import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Profile } from '../../types/database';
 
-export function ProfileHeaderCard({
+export const ProfileHeaderCard = React.memo(function ProfileHeaderCard({
   profile,
   isOwnProfile,
   isFriend,
@@ -125,7 +125,7 @@ export function ProfileHeaderCard({
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

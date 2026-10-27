@@ -7,7 +7,7 @@ import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Conversation } from '../../types/database';
 
-export function ChatHeader({
+export const ChatHeader = React.memo(function ChatHeader({
   conversation,
   onBack,
   onOpenMenu,
@@ -48,7 +48,7 @@ export function ChatHeader({
       }
     />
   );
-}
+});
 
 const styles = StyleSheet.create({
   moreBtn: {

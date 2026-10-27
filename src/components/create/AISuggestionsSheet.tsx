@@ -30,7 +30,7 @@ const suggestions: Suggestion[] = [
   },
 ];
 
-export function AISuggestionsSheet({
+export function AISuggestionsSheetComponent({
   open,
   onClose,
   onApplyTitle,
@@ -81,6 +81,8 @@ export function AISuggestionsSheet({
     </GlassSheet>
   );
 }
+
+export const AISuggestionsSheet = React.memo(AISuggestionsSheetComponent);
 
 const styles = StyleSheet.create({
   card: {

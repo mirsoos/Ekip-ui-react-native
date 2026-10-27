@@ -7,7 +7,7 @@ import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Profile } from '../../types/database';
 
-export function ProfileXpCard({ profile }: { profile: Profile }) {
+export const ProfileXpCard = React.memo(function ProfileXpCard({ profile }: { profile: Profile }) {
   const { colors } = useTheme();
   const { isRTL } = useI18n();
   const Shield = getIcon('Shield');
@@ -55,7 +55,7 @@ export function ProfileXpCard({ profile }: { profile: Profile }) {
       </View>
     </GlassCard>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

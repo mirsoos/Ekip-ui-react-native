@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassButton, GlassInput, GlassToggle, GlassBackButton, GlassSegmented } from '../components/Glass';
-import { LiquidLens } from '../components/LiquidLens';
+import { FrostedGlass } from '../components/FrostedGlass';
 import { StepProgressBar } from '../components/common/StepProgressBar';
 import { CoverPicker } from '../components/create/CoverPicker';
 import { CategoryTypeSelector } from '../components/create/CategoryTypeSelector';
@@ -35,14 +35,15 @@ export interface CreateScreenHandle {
   totalSteps: number;
 }
 
-export const CreateScreen = React.forwardRef<
-  CreateScreenHandle,
-  {
-    onBack: () => void;
-    onCreated: (group: Group) => void;
-    onStateChange?: (state: { step: number; canProceed: boolean }) => void;
-  }
->(function CreateScreen({ onBack, onCreated, onStateChange }, ref) {
+export const CreateScreen = React.memo(
+  React.forwardRef<
+    CreateScreenHandle,
+    {
+      onBack: () => void;
+      onCreated: (group: Group) => void;
+      onStateChange?: (state: { step: number; canProceed: boolean }) => void;
+    }
+  >(function CreateScreen({ onBack, onCreated, onStateChange }, ref) {
   const { me, addGroup, addNotification } = useAppData();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -379,7 +380,7 @@ export const CreateScreen = React.forwardRef<
       />
     </View>
   );
-});
+}));
 
 const styles = StyleSheet.create({
   container: {
