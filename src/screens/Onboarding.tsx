@@ -95,7 +95,6 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
             styles.nextButton,
             {
               borderColor: colors.glassBorderStrong,
-              backgroundColor: isDark ? 'rgba(11, 14, 23, 0.88)' : 'rgba(255, 255, 255, 0.88)',
             },
           ]}
         >

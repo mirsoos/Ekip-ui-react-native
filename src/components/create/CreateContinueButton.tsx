@@ -34,7 +34,6 @@ export function CreateContinueButtonComponent({
         style={[
           styles.continueButton,
           {
-            backgroundColor: isDark ? 'rgba(11, 14, 23, 0.88)' : 'rgba(255, 255, 255, 0.88)',
             borderColor: colors.glassBorderStrong,
             opacity: disabled ? 0.45 : 1,
           },

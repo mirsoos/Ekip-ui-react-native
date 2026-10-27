@@ -40,10 +40,6 @@ export const FrostedGlass = React.memo(function FrostedGlass({
   }
   const isLight = !isDarkMode;
 
-  const bgTint = isLight
-    ? (themeColors?.glassBg || 'rgba(255, 255, 255, 0.78)')
-    : '#0000007d';
-
   const borderColor = isLight
     ? (themeColors?.glassBorderStrong || 'rgba(255, 255, 255, 0.85)')
     : (themeColors?.glassBorder || 'rgba(255, 255, 255, 0.28)');
@@ -56,10 +52,9 @@ export const FrostedGlass = React.memo(function FrostedGlass({
           styles.container,
           {
             borderRadius,
-            backgroundColor: bgTint,
             borderColor,
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
             boxShadow:
               'inset 0 1px 1px rgba(255, 255, 255, 0.55), inset 0 -1px 1px rgba(255, 255, 255, 0.1), 0 6px 6px rgba(0, 0, 0, 0.2)',
           } as any,
@@ -86,7 +81,7 @@ export const FrostedGlass = React.memo(function FrostedGlass({
     <BlurView
       pointerEvents={pointerEvents}
       intensity={50}
-      tint={isLight ? 'light' : 'dark'}
+      tint="light"
       experimentalBlurMethod="dimezisBlurView"
       style={[
         styles.container,
@@ -97,17 +92,6 @@ export const FrostedGlass = React.memo(function FrostedGlass({
         style,
       ]}
     >
-      {/* Matte base tint so background content does not bleed through */}
-      <View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            borderRadius,
-            backgroundColor: bgTint,
-          },
-        ]}
-      />
       {/* Top sheen overlay */}
       <View
         pointerEvents="none"

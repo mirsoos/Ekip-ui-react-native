@@ -71,7 +71,6 @@ export function FloatingGlassHeaderComponent({
         style={[
           styles.container,
           {
-            backgroundColor: isDark ? 'rgba(11, 14, 23, 0.88)' : 'rgba(255, 255, 255, 0.88)',
             flexDirection: isRTL ? 'row-reverse' : 'row',
             borderColor: colors.glassBorderStrong,
             transform: [{ translateY: enterTranslateY }],

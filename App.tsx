@@ -170,9 +170,12 @@ function DeferredHeaderPane({
         style={[
           StyleSheet.absoluteFill,
           {
-            opacity: anim,
+            opacity: Platform.OS === 'web' ? 1 : anim,
             zIndex: visible ? 10 : 0,
-            transform: [{ translateY }],
+            display: Platform.OS === 'web' ? (visible ? 'flex' : 'none') : undefined,
+            ...(Platform.OS === 'web'
+              ? { top: translateY, bottom: Animated.multiply(translateY, -1) }
+              : { transform: [{ translateY }] }),
           },
         ]}
         pointerEvents={visible ? pointerEvents : 'none'}

@@ -53,7 +53,6 @@ export function ActivityHeaderComponent({
         style={[
           styles.container,
           {
-            backgroundColor: isDark ? 'rgba(11, 14, 23, 0.88)' : 'rgba(255, 255, 255, 0.88)',
             borderColor: colors.glassBorderStrong,
             transform: [{ translateY: enterTranslateY }],
           },
