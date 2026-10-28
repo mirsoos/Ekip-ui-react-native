@@ -100,7 +100,8 @@ function DeferredTabPane({
   children: React.ReactNode;
 }) {
   const rootTheme = useTheme();
-  const effectiveTheme = theme ?? rootTheme;
+  // Visible tab always receives rootTheme directly in Frame 0 for zero-latency, synchronous updates
+  const effectiveTheme = visible ? rootTheme : (theme ?? rootTheme);
 
   return (
     <ThemeContext.Provider value={effectiveTheme}>
@@ -134,7 +135,8 @@ function DeferredHeaderPane({
   children: React.ReactNode;
 }) {
   const rootTheme = useTheme();
-  const effectiveTheme = theme ?? rootTheme;
+  // Visible header always receives rootTheme directly in Frame 0 for zero-latency, synchronous updates
+  const effectiveTheme = visible ? rootTheme : (theme ?? rootTheme);
 
   const anim = React.useRef(new Animated.Value(visible ? 1 : 0)).current;
 
@@ -183,35 +185,7 @@ const AppChrome = React.memo(function AppChrome({
 }: {
   children: React.ReactNode;
 }) {
-  const { isDark } = useTheme();
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const isMountedRef = React.useRef(false);
-  const [curtainColor, setCurtainColor] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (!isMountedRef.current) {
-      isMountedRef.current = true;
-      return;
-    }
-
-    // Previous canvas color to dissolve from
-    const oldColor = isDark ? '#ebf0fa' : '#04060c';
-    setCurtainColor(oldColor);
-
-    if (Platform.OS !== 'web') {
-      fadeAnim.setValue(1);
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 320,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1.0),
-        useNativeDriver: true,
-      }).start(() => {
-        setCurtainColor(null);
-      });
-    } else {
-      setCurtainColor(null);
-    }
-  }, [isDark, fadeAnim]);
+  const { isDark, curtain, curtainOpacity } = useTheme();
 
   return (
     <SafeAreaView
@@ -221,15 +195,17 @@ const AppChrome = React.memo(function AppChrome({
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <AuroraBackground />
       {children}
-      {Platform.OS !== 'web' && curtainColor && (
+      {Platform.OS !== 'web' && curtain && curtain.active && (
         <Animated.View
           pointerEvents="none"
+          renderToHardwareTextureAndroid={true}
           style={[
             StyleSheet.absoluteFill,
             {
-              backgroundColor: curtainColor,
-              opacity: fadeAnim,
-              zIndex: 99998,
+              backgroundColor: curtain.color,
+              opacity: curtainOpacity,
+              zIndex: 999999,
+              elevation: 999999,
             },
           ]}
         />
@@ -278,8 +254,8 @@ function MainContent() {
     IRANSans: require('./assets/fonts/IRANSans.ttf'),
   });
 
-  const [authed, setAuthed] = useState(false);
-  const [onboarded, setOnboarded] = useState(false);
+  const [authed, setAuthed] = useState(true);
+  const [onboarded, setOnboarded] = useState(true);
   const [tab, setTab] = useState<TabKey>('discover');
   const [screen, setScreen] = useState<Screen>({ name: 'discover' });
 
@@ -573,13 +549,7 @@ function MainContent() {
     // If on a stack screen (Settings, conversation, etc.), pause ALL main tab syncing!
     if (!isMainScreen) return;
 
-    // 1. Immediately update active tab's theme
-    setTabThemes((prev) => {
-      if (prev[tab] === rootTheme) return prev;
-      return { ...prev, [tab]: rootTheme };
-    });
-
-    // 2. Sequentially sync inactive tabs during idle time
+    // Inactive background tabs are synced sequentially during idle frames
     let isCancelled = false;
     const inactiveTabs = mainTabs.filter(
       (t) => t !== tab && tabThemesRef.current[t] !== rootTheme
@@ -596,7 +566,7 @@ function MainContent() {
         setTabThemes((prev) => ({ ...prev, [nextTab]: rootTheme }));
         setTimeout(() => {
           if (!isCancelled) syncNextTab();
-        }, 120);
+        }, 160);
       };
 
       if (typeof (globalThis as any).requestIdleCallback !== 'undefined') {
@@ -610,7 +580,7 @@ function MainContent() {
 
     const initialTimer = setTimeout(() => {
       syncNextTab();
-    }, 180);
+    }, 240);
 
     return () => {
       isCancelled = true;

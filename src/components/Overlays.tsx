@@ -12,6 +12,7 @@ import {
   BackHandler,
   Dimensions,
   Easing,
+  Modal,
 } from 'react-native';
 import { getIcon, type IconName } from '../lib/icons';
 import { GlassButton, GlassCloseButton } from './Glass';
@@ -97,98 +98,105 @@ export const GlassSheet = React.memo(function GlassSheet({
   if (!open && !modalVisible) return null;
 
   return (
-    <View
-      style={[
-        styles.fullscreenOverlay,
-        {
-          opacity: open || modalVisible ? 1 : 0,
-          zIndex: open || modalVisible ? 99999 : -1,
-        },
-      ]}
-      pointerEvents={open || modalVisible ? 'box-none' : 'none'}
+    <Modal
+      transparent={true}
+      visible={open || modalVisible}
+      animationType="none"
+      onRequestClose={onClose}
+      statusBarTranslucent={true}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
+      <View
+        style={[
+          styles.fullscreenOverlay,
+          {
+            zIndex: 999999,
+          },
+        ]}
+        pointerEvents="box-none"
+      >
+        <TouchableWithoutFeedback onPress={onClose}>
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              styles.backdropBase,
+              {
+                backgroundColor: isDark ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.22)',
+                opacity: backdropAnim,
+                ...(Platform.OS === 'web'
+                  ? ({
+                      backdropFilter: 'blur(2px)',
+                      WebkitBackdropFilter: 'blur(2px)',
+                    } as any)
+                  : {}),
+              },
+            ]}
+          />
+        </TouchableWithoutFeedback>
+
         <Animated.View
+          renderToHardwareTextureAndroid={true}
           style={[
-            StyleSheet.absoluteFill,
-            styles.backdropBase,
+            styles.sheetContainer,
             {
-              backgroundColor: isDark ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.22)',
-              opacity: backdropAnim,
+              backgroundColor: isDark ? 'rgba(18, 24, 38, 0.94)' : 'rgba(255, 255, 255, 0.94)',
+              borderColor: colors.glassBorderStrong,
+              height: fullHeight ? '88%' : undefined,
+              maxHeight: '92%',
+              transform: [{ translateY: slideAnim }],
               ...(Platform.OS === 'web'
                 ? ({
-                    backdropFilter: 'blur(2px)',
-                    WebkitBackdropFilter: 'blur(2px)',
+                    backdropFilter: 'blur(32px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(32px) saturate(180%)',
                   } as any)
                 : {}),
             },
           ]}
-        />
-      </TouchableWithoutFeedback>
-
-      <Animated.View
-        renderToHardwareTextureAndroid={true}
-        style={[
-          styles.sheetContainer,
-          {
-            backgroundColor: isDark ? 'rgba(18, 24, 38, 0.94)' : 'rgba(255, 255, 255, 0.94)',
-            borderColor: colors.glassBorderStrong,
-            height: fullHeight ? '88%' : undefined,
-            maxHeight: '92%',
-            transform: [{ translateY: slideAnim }],
-            ...(Platform.OS === 'web'
-              ? ({
-                  backdropFilter: 'blur(32px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(32px) saturate(180%)',
-                } as any)
-              : {}),
-          },
-        ]}
-      >
-        <View style={styles.sheetHandleBar} />
-
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: '12%',
-            right: '12%',
-            height: 1.5,
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.95)',
-            borderRadius: 9999,
-          }}
-        />
-
-        <View
-          style={[
-            styles.sheetHeader,
-            { flexDirection: isRTL ? 'row-reverse' : 'row' },
-          ]}
         >
-          <Text
+          <View style={styles.sheetHandleBar} />
+
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: '12%',
+              right: '12%',
+              height: 1.5,
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.95)',
+              borderRadius: 9999,
+            }}
+          />
+
+          <View
             style={[
-              styles.sheetTitle,
-              {
-                color: colors.textPrimary,
-                textAlign: isRTL ? 'right' : 'left',
-              },
+              styles.sheetHeader,
+              { flexDirection: isRTL ? 'row-reverse' : 'row' },
             ]}
           >
-            {title ?? ''}
-          </Text>
-          <GlassCloseButton onPress={onClose} />
-        </View>
+            <Text
+              style={[
+                styles.sheetTitle,
+                {
+                  color: colors.textPrimary,
+                  textAlign: isRTL ? 'right' : 'left',
+                },
+              ]}
+            >
+              {title ?? ''}
+            </Text>
+            <GlassCloseButton onPress={onClose} />
+          </View>
 
-        {/* Keep children mounted in RAM so opening/closing has ZERO mount/unmount spike! */}
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36, paddingTop: 10 }}
-        >
-          {children}
-        </ScrollView>
-      </Animated.View>
-    </View>
+          {/* Keep children mounted in RAM so opening/closing has ZERO mount/unmount spike! */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36, paddingTop: 10 }}
+          >
+            {children}
+          </ScrollView>
+        </Animated.View>
+      </View>
+    </Modal>
   );
 });
 
@@ -275,64 +283,72 @@ export const GlassDialog = React.memo(function GlassDialog({
   if (!open && !modalVisible) return null;
 
   return (
-    <View
-      style={[
-        styles.dialogOverlay,
-        {
-          opacity: modalVisible ? 1 : 0,
-        },
-      ]}
-      pointerEvents={modalVisible ? 'box-none' : 'none'}
+    <Modal
+      transparent={true}
+      visible={open || modalVisible}
+      animationType="none"
+      onRequestClose={onClose}
+      statusBarTranslucent={true}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            styles.backdropBase,
-            {
-              backgroundColor: isDark ? 'rgba(0, 0, 0, 0.72)' : 'rgba(0, 0, 0, 0.45)',
-              opacity: backdropAnim,
-            },
-          ]}
-        />
-      </TouchableWithoutFeedback>
-
-      <Animated.View
-        renderToHardwareTextureAndroid={true}
+      <View
         style={[
-          styles.dialogContainer,
+          styles.dialogOverlay,
           {
-            backgroundColor: colors.glassThickBg,
-            borderColor: colors.glassBorderStrong,
-            transform: [{ scale: scaleAnim }],
+            zIndex: 999999,
           },
         ]}
+        pointerEvents="box-none"
       >
-        <Text style={[styles.dialogTitle, { color: colors.textPrimary }]}>
-          {title}
-        </Text>
-        {body && (
-          <Text style={[styles.dialogBody, { color: colors.textSecondary }]}>
-            {body}
+        <TouchableWithoutFeedback onPress={onClose}>
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              styles.backdropBase,
+              {
+                backgroundColor: isDark ? 'rgba(0, 0, 0, 0.72)' : 'rgba(0, 0, 0, 0.45)',
+                opacity: backdropAnim,
+              },
+            ]}
+          />
+        </TouchableWithoutFeedback>
+
+        <Animated.View
+          renderToHardwareTextureAndroid={true}
+          style={[
+            styles.dialogContainer,
+            {
+              backgroundColor: colors.glassThickBg,
+              borderColor: colors.glassBorderStrong,
+              transform: [{ scale: scaleAnim }],
+            },
+          ]}
+        >
+          <Text style={[styles.dialogTitle, { color: colors.textPrimary }]}>
+            {title}
           </Text>
-        )}
-        {children}
-        {actions && (
-          <View style={{ marginTop: 20, gap: 10 }}>
-            {actions.map((act, idx) => (
-              <GlassButton
-                key={idx}
-                variant={act.variant ?? 'secondary'}
-                fullWidth
-                onPress={act.onPress ?? act.onClick}
-              >
-                {act.label}
-              </GlassButton>
-            ))}
-          </View>
-        )}
-      </Animated.View>
-    </View>
+          {body && (
+            <Text style={[styles.dialogBody, { color: colors.textSecondary }]}>
+              {body}
+            </Text>
+          )}
+          {children}
+          {actions && (
+            <View style={{ marginTop: 20, gap: 10 }}>
+              {actions.map((act, idx) => (
+                <GlassButton
+                  key={idx}
+                  variant={act.variant ?? 'secondary'}
+                  fullWidth
+                  onPress={act.onPress ?? act.onClick}
+                >
+                  {act.label}
+                </GlassButton>
+              ))}
+            </View>
+          )}
+        </Animated.View>
+      </View>
+    </Modal>
   );
 });
 
@@ -410,7 +426,7 @@ const styles = StyleSheet.create({
           shadowOpacity: 0.45,
           shadowRadius: 36,
         }
-      : { elevation: 0 }),
+      : { elevation: 32 }),
     zIndex: 100000,
   },
   sheetHandleBar: {
@@ -454,7 +470,8 @@ const styles = StyleSheet.create({
           shadowOpacity: 0.45,
           shadowRadius: 32,
         }
-      : { elevation: 0 }),
+      : { elevation: 32 }),
+    zIndex: 100000,
   },
   dialogTitle: {
     fontSize: 20,
