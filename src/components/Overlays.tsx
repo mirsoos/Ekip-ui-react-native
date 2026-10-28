@@ -94,6 +94,8 @@ export const GlassSheet = React.memo(function GlassSheet({
     }
   }, [open]);
 
+  if (!open && !modalVisible) return null;
+
   return (
     <View
       style={[

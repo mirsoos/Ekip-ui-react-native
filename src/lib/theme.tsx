@@ -177,27 +177,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [chatTheme, setChatThemeState] = useState<ChatThemeId>('default');
 
   const toggle = useCallback(() => {
-    requestAnimationFrame(() => {
-      if (typeof React.startTransition === 'function') {
-        React.startTransition(() => {
-          setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
-        });
-      } else {
-        setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
-      }
-    });
+    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
   }, []);
 
   const setTheme = useCallback((t: Theme) => {
-    requestAnimationFrame(() => {
-      if (typeof React.startTransition === 'function') {
-        React.startTransition(() => {
-          setThemeState(t);
-        });
-      } else {
-        setThemeState(t);
-      }
-    });
+    setThemeState(t);
   }, []);
 
   const setChatTheme = useCallback((ct: ChatThemeId) => {

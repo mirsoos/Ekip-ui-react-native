@@ -1,10 +1,9 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, FlatList, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { EkipCard } from '../components/EkipCard';
 import { GlassEmpty, GlassButton, GlassSegmented } from '../components/Glass';
-import { DiscoverHeader } from '../components/discover/DiscoverHeader';
 import { AIAssistantBanner } from '../components/discover/AIAssistantBanner';
 import { CommunityMembersRow } from '../components/discover/CommunityMembersRow';
 import { DiscoverFilterSheet } from '../components/discover/DiscoverFilterSheet';
@@ -12,7 +11,6 @@ import { EkipCardSkeleton, CommunityMembersRowSkeleton } from '../components/ske
 import { cities } from '../lib/demoData';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
-import { useDeferredMount } from '../lib/useDeferredMount';
 import type { Group } from '../types/database';
 
 export interface DiscoverScreenHandle {
@@ -38,14 +36,12 @@ export const DiscoverScreen = React.memo(
       onChangeSearch,
       onOpenGroup,
       onOpenProfile,
-      onOpenOwnProfile,
       onOpenAI,
-      onOpenNotifications,
       isLoading = false,
     },
     ref
   ) {
-  const { groups, me, profiles, notifications } = useAppData();
+  const { groups, profiles } = useAppData();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
@@ -77,76 +73,77 @@ export const DiscoverScreen = React.memo(
     return result;
   }, [groups, search, categoryFilter, cityFilter, premiumOnly]);
 
-  const isDeferredReady = useDeferredMount(32);
   const featured = filtered[0];
-  const remaining = filtered.slice(1);
-  const visibleRemaining = isDeferredReady ? remaining : remaining.slice(0, 2);
-  const otherProfiles = profiles.filter((p) => p.id !== 'me').slice(0, 6);
+  const remaining = useMemo(() => filtered.slice(1), [filtered]);
+  const otherProfiles = useMemo(
+    () => profiles.filter((p) => p.id !== 'me').slice(0, 6),
+    [profiles]
+  );
 
   const hasActiveFilters = categoryFilter !== 'all' || cityFilter !== 'all' || premiumOnly;
 
-  const handleResetFilters = () => {
+  const handleResetFilters = React.useCallback(() => {
     setCategoryFilter('all');
     setCityFilter('all');
     setPremiumOnly(false);
     onChangeSearch?.('');
     setShowFilters(false);
-  };
+  }, [onChangeSearch]);
 
-  return (
-    <View style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          Platform.OS !== 'web' && {
-            paddingTop: 156 + insets.top,
-            paddingBottom: 90 + insets.bottom,
-          },
-        ]}
-      >
-        {/* AI Assistant Banner */}
+  const handleCategoryChange = React.useCallback((value: string) => {
+    if (value === 'all' || value === 'work' || value === 'entertainment') {
+      setCategoryFilter(value);
+    }
+  }, []);
+
+  const renderGroup = React.useCallback(
+    ({ item }: { item: Group }) => (
+      <EkipCard group={item} onPress={() => onOpenGroup(item)} />
+    ),
+    [onOpenGroup]
+  );
+
+  const listHeader = useMemo(
+    () => (
+      <View>
         <AIAssistantBanner onPress={onOpenAI} />
 
-        {/* Featured Squad */}
         {isLoading ? (
-          <View style={styles.sectionWrap}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                {t('ekip.featured')}
-              </Text>
+            <View style={styles.sectionWrap}>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                  {t('ekip.featured')}
+                </Text>
+              </View>
+              <EkipCardSkeleton variant="featured" />
             </View>
-            <EkipCardSkeleton variant="featured" />
-          </View>
-        ) : featured ? (
-          <View style={styles.sectionWrap}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                {t('ekip.featured')}
-              </Text>
-              <Text style={[styles.sectionBadge, { color: '#f472b6' }]}>
-                {t('ekip.priority')}
-              </Text>
+          ) : featured ? (
+            <View style={styles.sectionWrap}>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                  {t('ekip.featured')}
+                </Text>
+                <Text style={[styles.sectionBadge, { color: '#f472b6' }]}>
+                  {t('ekip.priority')}
+                </Text>
+              </View>
+              <EkipCard
+                group={featured}
+                variant="featured"
+                onPress={() => onOpenGroup(featured)}
+              />
             </View>
-            <EkipCard
-              group={featured}
-              variant="featured"
-              onPress={() => onOpenGroup(featured)}
+          ) : null}
+
+        {isLoading ? (
+            <CommunityMembersRowSkeleton />
+          ) : (
+            <CommunityMembersRow
+              profiles={otherProfiles}
+              onOpenProfile={onOpenProfile}
             />
-          </View>
-        ) : null}
+          )}
 
-        {/* Active Operatives Row */}
-        {isLoading ? (
-          <CommunityMembersRowSkeleton />
-        ) : (
-          <CommunityMembersRow
-            profiles={otherProfiles}
-            onOpenProfile={onOpenProfile}
-          />
-        )}
-
-        {/* Category Filter Pills */}
         <View style={styles.categoryWrap}>
           <GlassSegmented
             options={[
@@ -155,12 +152,11 @@ export const DiscoverScreen = React.memo(
               { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' },
             ]}
             value={categoryFilter}
-            onChange={(v) => setCategoryFilter(v as any)}
+            onChange={handleCategoryChange}
           />
         </View>
 
-        {/* Operational Feed */}
-        <View key={categoryFilter} className="animate-raise" style={styles.sectionWrap}>
+        <View style={styles.sectionWrap}>
           <Text
             style={[
               styles.sectionTitle,
@@ -173,36 +169,79 @@ export const DiscoverScreen = React.memo(
           >
             {t('discover.allSquads')} {isLoading ? '' : `(${filtered.length})`}
           </Text>
-
-          {isLoading ? (
-            <>
-              <EkipCardSkeleton />
-              <EkipCardSkeleton />
-            </>
-          ) : filtered.length === 0 ? (
-            <GlassEmpty
-              icon="Search"
-              title={t('discover.emptyTitle')}
-              subtitle={t('discover.emptyDesc')}
-              action={
-                hasActiveFilters ? (
-                  <GlassButton variant="secondary" onPress={handleResetFilters}>
-                    {t('discover.filterReset')}
-                  </GlassButton>
-                ) : undefined
-              }
-            />
-          ) : (
-            visibleRemaining.map((g) => (
-              <EkipCard
-                key={g.id}
-                group={g}
-                onPress={() => onOpenGroup(g)}
-              />
-            ))
-          )}
         </View>
-      </ScrollView>
+      </View>
+    ),
+    [
+      categoryFilter,
+      colors.textPrimary,
+      featured,
+      filtered.length,
+      handleCategoryChange,
+      isLoading,
+      isRTL,
+      onOpenAI,
+      onOpenGroup,
+      onOpenProfile,
+      otherProfiles,
+      t,
+    ]
+  );
+
+  const listEmptyComponent = useMemo(() => {
+    if (isLoading) {
+      return (
+        <View style={styles.sectionWrap}>
+          <EkipCardSkeleton />
+          <EkipCardSkeleton />
+        </View>
+      );
+    }
+
+    if (filtered.length === 0) {
+      return (
+        <View style={styles.sectionWrap}>
+          <GlassEmpty
+            icon="Search"
+            title={t('discover.emptyTitle')}
+            subtitle={t('discover.emptyDesc')}
+            action={
+              hasActiveFilters ? (
+                <GlassButton variant="secondary" onPress={handleResetFilters}>
+                  {t('discover.filterReset')}
+                </GlassButton>
+              ) : undefined
+            }
+          />
+        </View>
+      );
+    }
+
+    return undefined;
+  }, [filtered.length, handleResetFilters, hasActiveFilters, isLoading, t]);
+
+  return (
+    <View style={styles.container}>
+      <FlatList<Group>
+        data={isLoading ? [] : remaining}
+        renderItem={renderGroup}
+        keyExtractor={(group) => group.id}
+        initialNumToRender={2}
+        maxToRenderPerBatch={2}
+        updateCellsBatchingPeriod={50}
+        windowSize={3}
+        removeClippedSubviews={Platform.OS === 'android'}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scrollContent,
+          Platform.OS !== 'web' && {
+            paddingTop: 156 + insets.top,
+            paddingBottom: 90 + insets.bottom,
+          },
+        ]}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmptyComponent}
+      />
 
       <DiscoverFilterSheet
         open={showFilters}

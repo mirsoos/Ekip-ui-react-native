@@ -1,10 +1,11 @@
 // --- START OF FILE App.tsx ---
 
 import React, { useState } from 'react';
-import { View, StyleSheet, Platform, Animated } from 'react-native';
+import { View, StyleSheet, Platform, Animated, Easing } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { ThemeProvider, useTheme, ThemeContext } from './src/lib/theme';
+import { ThemeProvider, useTheme, ThemeContext, type ThemeContextValue } from './src/lib/theme';
 import { AppDataProvider, useAppData } from './src/lib/appData';
 import { BottomNav, type TabKey } from './src/components/BottomNav';
 import { ChatHeader } from './src/components/chat/ChatHeader';
@@ -89,24 +90,20 @@ function DeferredTabPane({
   active,
   visible,
   zIndexActive = 1,
+  theme,
   children,
 }: {
   active: boolean;
   visible: boolean;
   zIndexActive?: number;
+  theme?: ThemeContextValue;
   children: React.ReactNode;
 }) {
-  const themeContext = useTheme();
-  const cachedThemeRef = React.useRef(themeContext);
-
-  if (active) {
-    cachedThemeRef.current = themeContext;
-  }
-
-  const themeValue = active ? themeContext : cachedThemeRef.current;
+  const rootTheme = useTheme();
+  const effectiveTheme = theme ?? rootTheme;
 
   return (
-    <ThemeContext.Provider value={themeValue}>
+    <ThemeContext.Provider value={effectiveTheme}>
       <View
         style={[
           StyleSheet.absoluteFill,
@@ -127,31 +124,27 @@ function DeferredHeaderPane({
   active,
   visible,
   pointerEvents = 'box-none',
+  theme,
   children,
 }: {
   active: boolean;
   visible: boolean;
   pointerEvents?: 'box-none' | 'none' | 'auto';
+  theme?: ThemeContextValue;
   children: React.ReactNode;
 }) {
-  const themeContext = useTheme();
-  const cachedThemeRef = React.useRef(themeContext);
+  const rootTheme = useTheme();
+  const effectiveTheme = theme ?? rootTheme;
 
-  if (active) {
-    cachedThemeRef.current = themeContext;
-  }
-
-  const themeValue = active ? themeContext : cachedThemeRef.current;
-
-  const anim = React.useRef(new Animated.Value(0)).current;
+  const anim = React.useRef(new Animated.Value(visible ? 1 : 0)).current;
 
   React.useEffect(() => {
     if (visible) {
       anim.setValue(0);
-      Animated.spring(anim, {
+      Animated.timing(anim, {
         toValue: 1,
-        bounciness: 4,
-        speed: 14,
+        duration: 220,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
         useNativeDriver: Platform.OS !== 'web',
       }).start();
     } else {
@@ -161,21 +154,20 @@ function DeferredHeaderPane({
 
   const translateY = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-85, 0],
+    outputRange: [-10, 0],
   });
 
   return (
-    <ThemeContext.Provider value={themeValue}>
+    <ThemeContext.Provider value={effectiveTheme}>
       <Animated.View
+        renderToHardwareTextureAndroid={true}
         style={[
           StyleSheet.absoluteFill,
           {
-            opacity: Platform.OS === 'web' ? 1 : anim,
+            opacity: Platform.OS === 'web' ? (visible ? 1 : 0) : anim,
             zIndex: visible ? 10 : 0,
             display: Platform.OS === 'web' ? (visible ? 'flex' : 'none') : undefined,
-            ...(Platform.OS === 'web'
-              ? { top: translateY, bottom: Animated.multiply(translateY, -1) }
-              : { transform: [{ translateY }] }),
+            ...(Platform.OS === 'web' ? {} : { transform: [{ translateY }] }),
           },
         ]}
         pointerEvents={visible ? pointerEvents : 'none'}
@@ -186,10 +178,105 @@ function DeferredHeaderPane({
   );
 }
 
-function MainContent() {
+const AppChrome = React.memo(function AppChrome({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { isDark } = useTheme();
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const isMountedRef = React.useRef(false);
+  const [curtainColor, setCurtainColor] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      return;
+    }
+
+    // Previous canvas color to dissolve from
+    const oldColor = isDark ? '#ebf0fa' : '#04060c';
+    setCurtainColor(oldColor);
+
+    if (Platform.OS !== 'web') {
+      fadeAnim.setValue(1);
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 320,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1.0),
+        useNativeDriver: true,
+      }).start(() => {
+        setCurtainColor(null);
+      });
+    } else {
+      setCurtainColor(null);
+    }
+  }, [isDark, fadeAnim]);
+
+  return (
+    <SafeAreaView
+      edges={Platform.OS === 'web' ? undefined : ['left', 'right']}
+      style={[styles.safeArea, { backgroundColor: isDark ? '#04060c' : '#ebf0fa' }]}
+    >
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <AuroraBackground />
+      {children}
+      {Platform.OS !== 'web' && curtainColor && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: curtainColor,
+              opacity: fadeAnim,
+              zIndex: 99998,
+            },
+          ]}
+        />
+      )}
+    </SafeAreaView>
+  );
+});
+
+interface NotificationsSheetController {
+  open: () => void;
+}
+
+const NotificationsSheetHost = React.memo(
+  React.forwardRef<
+    NotificationsSheetController,
+    {
+      bootLoading: boolean;
+      onOpenConversation: (conversationId: string) => void;
+    }
+  >(function NotificationsSheetHost({ bootLoading, onOpenConversation }, ref) {
+    const [open, setOpen] = useState(false);
+    const openSheet = React.useCallback(() => setOpen(true), []);
+    const closeSheet = React.useCallback(() => setOpen(false), []);
+
+    React.useImperativeHandle(ref, () => ({ open: openSheet }), [openSheet]);
+
+    return (
+      <FreezeGate active={bootLoading || open}>
+        <NotificationsSheet
+          open={open}
+          onClose={closeSheet}
+          onOpenConversation={onOpenConversation}
+        />
+      </FreezeGate>
+    );
+  })
+);
+
+function MainContent() {
   const { t, language } = useI18n();
   const { me, profiles, conversations, notifications, addMessage } = useAppData();
+
+  const [fontsLoaded] = useFonts({
+    IranianSans: require('./assets/fonts/IranianSans.ttf'),
+    'Iranian Sans': require('./assets/fonts/IranianSans.ttf'),
+    IRANSans: require('./assets/fonts/IRANSans.ttf'),
+  });
 
   const [authed, setAuthed] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
@@ -202,6 +289,7 @@ function MainContent() {
   const bootOverlayOpacity = React.useRef(new Animated.Value(1)).current;
 
   React.useEffect(() => {
+    if (Platform.OS !== 'web' && !fontsLoaded) return;
     let isCancelled = false;
     let timerId: ReturnType<typeof setTimeout>;
 
@@ -240,7 +328,7 @@ function MainContent() {
       isCancelled = true;
       clearTimeout(timerId);
     };
-  }, [bootOverlayOpacity]);
+  }, [bootOverlayOpacity, fontsLoaded]);
 
   const handleAuthSuccess = React.useCallback(() => {
     setAuthed(true);
@@ -257,7 +345,7 @@ function MainContent() {
   const aiRef = React.useRef<AIAssistantHandle>(null);
   const profileScrollY = React.useRef(new Animated.Value(0)).current;
 
-  const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
+  const notificationsSheetRef = React.useRef<NotificationsSheetController>(null);
 
   const unreadNotificationsCount = React.useMemo(
     () => notifications.filter((n) => !n.is_read).length,
@@ -325,11 +413,7 @@ function MainContent() {
   }, [push]);
 
   const handleOpenNotifications = React.useCallback(() => {
-    setIsNotificationSheetOpen(true);
-  }, []);
-
-  const handleCloseNotifications = React.useCallback(() => {
-    setIsNotificationSheetOpen(false);
+    notificationsSheetRef.current?.open();
   }, []);
 
   const handleOpenConversation = React.useCallback((cid: string) => {
@@ -472,16 +556,70 @@ function MainContent() {
     ['discover', 'activity', 'create', 'chatList'].includes(screen.name) ||
     (screen.name === 'profile' && screen.userId === 'me');
 
+  const rootTheme = useTheme();
+
+  const [tabThemes, setTabThemes] = React.useState<Record<TabKey, ThemeContextValue>>({
+    discover: rootTheme,
+    activity: rootTheme,
+    create: rootTheme,
+    chat: rootTheme,
+    profile: rootTheme,
+  });
+
+  const tabThemesRef = React.useRef(tabThemes);
+  tabThemesRef.current = tabThemes;
+
+  React.useEffect(() => {
+    // If on a stack screen (Settings, conversation, etc.), pause ALL main tab syncing!
+    if (!isMainScreen) return;
+
+    // 1. Immediately update active tab's theme
+    setTabThemes((prev) => {
+      if (prev[tab] === rootTheme) return prev;
+      return { ...prev, [tab]: rootTheme };
+    });
+
+    // 2. Sequentially sync inactive tabs during idle time
+    let isCancelled = false;
+    const inactiveTabs = mainTabs.filter(
+      (t) => t !== tab && tabThemesRef.current[t] !== rootTheme
+    );
+    if (inactiveTabs.length === 0) return;
+
+    let currentIndex = 0;
+    const syncNextTab = () => {
+      if (isCancelled || currentIndex >= inactiveTabs.length) return;
+      const nextTab = inactiveTabs[currentIndex++];
+
+      const runSync = () => {
+        if (isCancelled) return;
+        setTabThemes((prev) => ({ ...prev, [nextTab]: rootTheme }));
+        setTimeout(() => {
+          if (!isCancelled) syncNextTab();
+        }, 120);
+      };
+
+      if (typeof (globalThis as any).requestIdleCallback !== 'undefined') {
+        (globalThis as any).requestIdleCallback(runSync);
+      } else {
+        requestAnimationFrame(() => {
+          setTimeout(runSync, 40);
+        });
+      }
+    };
+
+    const initialTimer = setTimeout(() => {
+      syncNextTab();
+    }, 180);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(initialTimer);
+    };
+  }, [rootTheme, tab, isMainScreen]);
+
   return (
-    <SafeAreaView
-      edges={Platform.OS === 'web' ? undefined : ['left', 'right']}
-      style={[styles.safeArea, { backgroundColor: isDark ? '#04060c' : '#ebf0fa' }]}
-    >
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-
-      {/* Dynamic Aurora Ambient Lighting */}
-      <AuroraBackground />
-
+    <AppChrome>
       <View nativeID="phone-container" style={styles.phoneContainer}>
         {/* Layer 1: Auth Screen (Stage 1 - Frozen when authed!) */}
         {bootStage >= 1 && (
@@ -534,12 +672,13 @@ function MainContent() {
               onSwipePrevTab={handleSwipePrevTab}
             >
               <ErrorBoundary onGoHome={handleGoHome}>
-                <ScreenTransition screenKey={`${screen.name}-${tab}-${history.length}-${language}`}>
+                <ScreenTransition screenKey={`${isMainScreen ? 'main-tabs' : screen.name}-${history.length}-${language}`}>
                   {/* Stage 2: Main Tab: Discover */}
                   {bootStage >= 2 && (
                     <DeferredTabPane
                       active={isBootLoading || isDiscoverActive}
                       visible={isDiscoverActive}
+                      theme={tabThemes.discover}
                     >
                       <DiscoverScreen
                         ref={discoverRef}
@@ -559,6 +698,7 @@ function MainContent() {
                     <DeferredTabPane
                       active={isBootLoading || isActivityActive}
                       visible={isActivityActive}
+                      theme={tabThemes.activity}
                     >
                       <ActivityScreen
                         tab={activityTab}
@@ -575,6 +715,7 @@ function MainContent() {
                     <DeferredTabPane
                       active={isBootLoading || isCreateActive}
                       visible={isCreateActive}
+                      theme={tabThemes.create}
                     >
                       <CreateScreen
                         ref={createRef}
@@ -590,6 +731,7 @@ function MainContent() {
                     <DeferredTabPane
                       active={isBootLoading || isChatListActive}
                       visible={isChatListActive}
+                      theme={tabThemes.chat}
                     >
                       <ChatListScreen
                         search={chatSearch}
@@ -604,6 +746,7 @@ function MainContent() {
                     <DeferredTabPane
                       active={isBootLoading || isOwnProfileActive}
                       visible={isOwnProfileActive}
+                      theme={tabThemes.profile}
                     >
                       <ProfileScreen
                         userId="me"
@@ -710,6 +853,7 @@ function MainContent() {
             <DeferredHeaderPane
               active={isBootLoading || isDiscoverActive}
               visible={isDiscoverActive}
+              theme={tabThemes.discover}
               pointerEvents="box-none"
             >
               <DiscoverHeader
@@ -730,6 +874,7 @@ function MainContent() {
             <DeferredHeaderPane
               active={isBootLoading || isActivityActive}
               visible={isActivityActive}
+              theme={tabThemes.activity}
               pointerEvents="box-none"
             >
               <ActivityHeader
@@ -746,6 +891,7 @@ function MainContent() {
             <DeferredHeaderPane
               active={isBootLoading || isCreateActive}
               visible={isCreateActive}
+              theme={tabThemes.create}
               pointerEvents="box-none"
             >
               <CreateHeader
@@ -772,6 +918,7 @@ function MainContent() {
             <DeferredHeaderPane
               active={isBootLoading || isChatListActive}
               visible={isChatListActive}
+              theme={tabThemes.chat}
               pointerEvents="box-none"
             >
               <ChatListHeader
@@ -789,6 +936,7 @@ function MainContent() {
             <DeferredHeaderPane
               active={isBootLoading || isOwnProfileActive}
               visible={isOwnProfileActive}
+              theme={tabThemes.profile}
               pointerEvents="box-none"
             >
               <ProfileHeader
@@ -857,17 +1005,17 @@ function MainContent() {
           )}
 
           {/* Stage 5: BottomNav */}
-          {bootStage >= 5 && showBottomNav && <BottomNav active={tab} onChange={switchTab} />}
+          {bootStage >= 5 && showBottomNav && (
+            <BottomNav active={tab} onChange={switchTab} />
+          )}
 
           {/* Stage 6: Sheets (Frozen when closed so theme switches don't re-render hidden sheets!) */}
           {bootStage >= 6 && (
-            <FreezeGate active={isBootLoading || isNotificationSheetOpen}>
-              <NotificationsSheet
-                open={isNotificationSheetOpen}
-                onClose={handleCloseNotifications}
-                onOpenConversation={handleOpenConversation}
-              />
-            </FreezeGate>
+            <NotificationsSheetHost
+              ref={notificationsSheetRef}
+              bootLoading={isBootLoading}
+              onOpenConversation={handleOpenConversation}
+            />
           )}
         </View>
 
@@ -887,7 +1035,7 @@ function MainContent() {
           </Animated.View>
         )}
       </View>
-    </SafeAreaView>
+    </AppChrome>
   );
 }
 

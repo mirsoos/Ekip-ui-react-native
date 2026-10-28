@@ -8,6 +8,7 @@ import {
   Image,
   Animated,
   PanResponder,
+  Easing,
   type LayoutChangeEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,6 +35,9 @@ const tabs: { key: TabKey; label: string; icon: IconName }[] = [
   { key: 'chat', label: 'Chats', icon: 'MessageCircle' },
   { key: 'profile', label: 'Profile', icon: 'User' },
 ];
+
+const NAV_ANIM_DURATION = 260;
+const NAV_EASING = Easing.bezier(0.25, 0.1, 0.25, 1.0);
 
 export function BottomNavComponent({ active, onChange }: BottomNavProps) {
   const insets = useSafeAreaInsets();
@@ -67,6 +71,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
 
   const isDragging = useRef(false);
   const currentLensX = useRef(0);
+  const lastLensXRef = useRef(0);
   const prevActiveTab = useRef(active);
 
   // Entrance animation (spring physics from bottom up)
@@ -74,10 +79,10 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
 
   useEffect(() => {
     enterAnim.setValue(0);
-    Animated.spring(enterAnim, {
+    Animated.timing(enterAnim, {
       toValue: 1,
-      bounciness: 4,
-      speed: 14,
+      duration: 220,
+      easing: NAV_EASING,
       useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, []);
@@ -115,26 +120,26 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
     currentLensX.current = targetX;
 
     // Rotate Create plus icon smoothly: 0deg when normal, 45deg when create
-    Animated.spring(createRotate, {
+    Animated.timing(createRotate, {
       toValue: active === 'create' ? 1 : 0,
-      tension: 70,
-      friction: 8,
+      duration: NAV_ANIM_DURATION,
+      easing: NAV_EASING,
       useNativeDriver: Platform.OS !== 'web',
     }).start();
 
     if (active === 'create') {
       // Transitioning INTO Create: slide to slot 2 and shrink to 0 inside Create button
       Animated.parallel([
-        Animated.spring(lensX, {
+        Animated.timing(lensX, {
           toValue: targetX,
-          tension: 80,
-          friction: 8.5,
+          duration: NAV_ANIM_DURATION,
+          easing: NAV_EASING,
           useNativeDriver: Platform.OS !== 'web',
         }),
-        Animated.spring(lensScale, {
+        Animated.timing(lensScale, {
           toValue: 0,
-          tension: 100,
-          friction: 8,
+          duration: NAV_ANIM_DURATION,
+          easing: NAV_EASING,
           useNativeDriver: Platform.OS !== 'web',
         }),
       ]).start();
@@ -142,26 +147,26 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
       // Transitioning OUT OF Create: start at slot 2, pop from 0 to 1, and slide to targetX
       lensX.setValue(6 + 2 * slotW);
       Animated.parallel([
-        Animated.spring(lensScale, {
+        Animated.timing(lensScale, {
           toValue: 1,
-          tension: 110,
-          friction: 7,
+          duration: NAV_ANIM_DURATION,
+          easing: NAV_EASING,
           useNativeDriver: Platform.OS !== 'web',
         }),
-        Animated.spring(lensX, {
+        Animated.timing(lensX, {
           toValue: targetX,
-          tension: 80,
-          friction: 8.5,
+          duration: NAV_ANIM_DURATION,
+          easing: NAV_EASING,
           useNativeDriver: Platform.OS !== 'web',
         }),
       ]).start();
     } else {
       // Standard tab transition (e.g. Discover -> Activity)
       lensScale.setValue(1);
-      Animated.spring(lensX, {
+      Animated.timing(lensX, {
         toValue: targetX,
-        tension: 80,
-        friction: 8.5,
+        duration: NAV_ANIM_DURATION,
+        easing: NAV_EASING,
         useNativeDriver: Platform.OS !== 'web',
       }).start();
     }
@@ -198,7 +203,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         if (active === 'create') {
           dragStartRef.current = 6 + 2 * slotW;
           lensX.setValue(dragStartRef.current);
-          Animated.spring(lensScale, { toValue: 1, tension: 120, friction: 7, useNativeDriver: Platform.OS !== 'web' }).start();
+          Animated.timing(lensScale, { toValue: 1, duration: NAV_ANIM_DURATION, easing: NAV_EASING, useNativeDriver: Platform.OS !== 'web' }).start();
         } else {
           dragStartRef.current = currentLensX.current;
         }
@@ -209,7 +214,10 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         const minX = 6;
         const maxX = 6 + 4 * slotW;
         const nextX = Math.max(minX, Math.min(maxX, dragStartRef.current + gs.dx));
-        lensX.setValue(nextX);
+        if (Math.abs(nextX - lastLensXRef.current) >= 1) {
+          lastLensXRef.current = nextX;
+          lensX.setValue(nextX);
+        }
       },
       onPanResponderRelease: (_, gs) => {
         isDragging.current = false;
@@ -227,14 +235,14 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
 
         if (chosenTab === 'create') {
           Animated.parallel([
-            Animated.spring(lensX, { toValue: 6 + 2 * slotW, tension: 80, friction: 8.5, useNativeDriver: Platform.OS !== 'web' }),
-            Animated.spring(lensScale, { toValue: 0, tension: 100, friction: 8, useNativeDriver: Platform.OS !== 'web' }),
+            Animated.timing(lensX, { toValue: 6 + 2 * slotW, duration: NAV_ANIM_DURATION, easing: NAV_EASING, useNativeDriver: Platform.OS !== 'web' }),
+            Animated.timing(lensScale, { toValue: 0, duration: NAV_ANIM_DURATION, easing: NAV_EASING, useNativeDriver: Platform.OS !== 'web' }),
           ]).start();
         } else {
-          Animated.spring(lensX, {
+          Animated.timing(lensX, {
             toValue: 6 + droppedIndex * slotW,
-            tension: 80,
-            friction: 8.5,
+            duration: NAV_ANIM_DURATION,
+            easing: NAV_EASING,
             useNativeDriver: Platform.OS !== 'web',
           }).start();
         }
@@ -244,7 +252,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         if (dockWidth > 0) {
           const slotW = (dockWidth - 12) / 5;
           const targetX = 6 + activeIndex * slotW;
-          Animated.spring(lensX, { toValue: targetX, tension: 80, friction: 8.5, useNativeDriver: Platform.OS !== 'web' }).start();
+          Animated.timing(lensX, { toValue: targetX, duration: NAV_ANIM_DURATION, easing: NAV_EASING, useNativeDriver: Platform.OS !== 'web' }).start();
         }
       },
     })
@@ -269,12 +277,15 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         isDragging.current = true;
         if (active === 'create') {
           lensX.setValue(6 + 2 * slotW);
-          Animated.spring(lensScale, { toValue: 1, tension: 120, friction: 7, useNativeDriver: Platform.OS !== 'web' }).start();
+          Animated.timing(lensScale, { toValue: 1, duration: NAV_ANIM_DURATION, easing: NAV_EASING, useNativeDriver: Platform.OS !== 'web' }).start();
         }
       }
       if (hasMoved) {
         const nextX = Math.max(minX, Math.min(maxX, initialDragX + dx));
-        lensX.setValue(nextX);
+        if (Math.abs(nextX - lastLensXRef.current) >= 1) {
+          lastLensXRef.current = nextX;
+          lensX.setValue(nextX);
+        }
       }
     };
 
@@ -295,14 +306,14 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
 
         if (chosenTab === 'create') {
           Animated.parallel([
-            Animated.spring(lensX, { toValue: 6 + 2 * slotW, tension: 80, friction: 8.5, useNativeDriver: Platform.OS !== 'web' }),
-            Animated.spring(lensScale, { toValue: 0, tension: 100, friction: 8, useNativeDriver: Platform.OS !== 'web' }),
+            Animated.timing(lensX, { toValue: 6 + 2 * slotW, duration: NAV_ANIM_DURATION, easing: NAV_EASING, useNativeDriver: Platform.OS !== 'web' }),
+            Animated.timing(lensScale, { toValue: 0, duration: NAV_ANIM_DURATION, easing: NAV_EASING, useNativeDriver: Platform.OS !== 'web' }),
           ]).start();
         } else {
-          Animated.spring(lensX, {
+          Animated.timing(lensX, {
             toValue: 6 + droppedIndex * slotW,
-            tension: 80,
-            friction: 8.5,
+            duration: NAV_ANIM_DURATION,
+            easing: NAV_EASING,
             useNativeDriver: Platform.OS !== 'web',
           }).start();
         }
@@ -350,6 +361,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         {/* Active Tab Sliding Pill Indicator */}
         {dockWidth > 0 && (
           <Animated.View
+            renderToHardwareTextureAndroid={true}
             style={[
               styles.activeIndicator,
               {

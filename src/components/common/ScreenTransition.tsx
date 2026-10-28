@@ -26,8 +26,8 @@ export const ScreenTransition = React.memo(function ScreenTransition({
       anim.setValue(0);
       Animated.timing(anim, {
         toValue: 1,
-        duration: 220,
-        easing: Easing.bezier(0.22, 1, 0.36, 1),
+        duration: 260,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
         useNativeDriver: true,
       }).start();
     }
@@ -60,6 +60,7 @@ export const ScreenTransition = React.memo(function ScreenTransition({
 
   return (
     <Animated.View
+      renderToHardwareTextureAndroid={true}
       style={[
         {
           flex: 1,

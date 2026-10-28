@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import type { LucideIcon } from 'lucide-react-native';
 import { type Group } from '../types/database';
 import { GlassCard, GlassAvatar, GlassBadgeIcon } from './Glass';
 import { getIcon, type IconName } from '../lib/icons';
@@ -13,6 +14,142 @@ const categoryIcons: Record<string, IconName> = {
   work: 'Briefcase',
 };
 
+const EkipCardBody = React.memo(function EkipCardBody({
+  group,
+  isRTL,
+}: {
+  group: Group;
+  isRTL: boolean;
+}) {
+  const { colors } = useTheme();
+  const EyeIcon = getIcon('Eye');
+  const UsersIcon = getIcon('Users');
+
+  return (
+    <View style={styles.cardBody}>
+      <Text
+        style={[
+          styles.cardTitle,
+          { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+        ]}
+      >
+        {group.title}
+      </Text>
+      <Text
+        numberOfLines={2}
+        style={[
+          styles.cardDesc,
+          { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' },
+        ]}
+      >
+        {group.description}
+      </Text>
+
+      {group.tags && group.tags.length > 0 && (
+        <View style={styles.tagsContainer}>
+          {group.tags.slice(0, 4).map((tag) => (
+            <View
+              key={tag}
+              style={[
+                styles.tagItem,
+                { backgroundColor: colors.glassThinBg, borderColor: colors.glassBorder },
+              ]}
+            >
+              <Text style={[styles.tagItemText, { color: colors.textTertiary }]}>
+                {tag}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      <View style={[styles.cardFooter, { borderTopColor: colors.divider }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <GlassAvatar
+            src={group.owner?.avatar_url}
+            name={`${group.owner?.first_name} ${group.owner?.last_name}`}
+            size={28}
+            ring={false}
+          />
+          <View style={{ marginLeft: 8 }}>
+            <Text style={[styles.ownerName, { color: colors.textPrimary }]}>
+              {group.owner ? `${group.owner.first_name} ${group.owner.last_name}` : ''}
+            </Text>
+            <Text style={[styles.ownerJob, { color: colors.textTertiary }]}>
+              {group.owner?.job}
+            </Text>
+          </View>
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <EyeIcon size={13} color={colors.textTertiary} strokeWidth={2} style={{ marginRight: 3 }} />
+            <Text style={[styles.metaText, { color: colors.textTertiary }]}>
+              {group.views}
+            </Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <UsersIcon size={13} color={colors.textTertiary} strokeWidth={2} style={{ marginRight: 3 }} />
+            <Text style={[styles.metaText, { color: colors.textTertiary }]}>
+              {group.member_count}
+              {group.max_members ? `/${group.max_members}` : ''}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+});
+
+const EkipCardCompact = React.memo(function EkipCardCompact({
+  group,
+  onPress,
+  categoryIcon: CategoryIcon,
+  typeLabel,
+  dateStr,
+}: {
+  group: Group;
+  onPress?: () => void;
+  categoryIcon: LucideIcon;
+  typeLabel: string;
+  dateStr: string;
+}) {
+  const { colors } = useTheme();
+
+  return (
+    <GlassCard variant="thin" onPress={onPress} style={styles.compactCard}>
+      <View style={styles.compactRow}>
+        {group.cover_url ? (
+          <Image source={{ uri: group.cover_url }} style={styles.compactImage} />
+        ) : (
+          <View style={[styles.compactImage, { backgroundColor: colors.glassThinBg }]} />
+        )}
+
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+            <CategoryIcon size={12} color="#f472b6" strokeWidth={2.4} style={{ marginRight: 4 }} />
+            <Text style={[styles.compactType, { color: colors.textTertiary }]}>
+              {typeLabel}
+            </Text>
+          </View>
+
+          <Text style={[styles.compactTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+            {group.title}
+          </Text>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+            <Text style={[styles.compactSub, { color: colors.textTertiary }]}>{dateStr}</Text>
+            <Text style={[styles.compactSub, { color: colors.textTertiary, marginHorizontal: 4 }]}>·</Text>
+            <Text style={[styles.compactSub, { color: colors.textTertiary }]}>
+              {group.member_count}/{group.max_members ?? '∞'}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </GlassCard>
+  );
+});
+
 export function EkipCardComponent({
   group,
   onPress,
@@ -23,7 +160,6 @@ export function EkipCardComponent({
   variant?: 'default' | 'compact' | 'featured';
 }) {
   const { requests } = useAppData();
-  const { colors } = useTheme();
   const { isRTL, t } = useI18n();
 
   const myRequest = requests.find((r) => r.group_id === group.id && r.user_id === 'me');
@@ -46,42 +182,17 @@ export function EkipCardComponent({
 
   const CatIcon = getIcon(categoryIcons[group.category] ?? 'PartyPopper');
   const CalendarIcon = getIcon('Calendar');
-  const EyeIcon = getIcon('Eye');
-  const UsersIcon = getIcon('Users');
   const CrownIcon = getIcon('Crown');
 
   if (variant === 'compact') {
     return (
-      <GlassCard variant="thin" onPress={onPress} style={styles.compactCard}>
-        <View style={styles.compactRow}>
-          {group.cover_url ? (
-            <Image source={{ uri: group.cover_url }} style={styles.compactImage} />
-          ) : (
-            <View style={[styles.compactImage, { backgroundColor: colors.glassThinBg }]} />
-          )}
-
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-              <CatIcon size={12} color="#f472b6" strokeWidth={2.4} style={{ marginRight: 4 }} />
-              <Text style={[styles.compactType, { color: colors.textTertiary }]}>
-                {typeLabels[group.group_type] ?? group.group_type}
-              </Text>
-            </View>
-
-            <Text style={[styles.compactTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-              {group.title}
-            </Text>
-
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-              <Text style={[styles.compactSub, { color: colors.textTertiary }]}>{dateStr}</Text>
-              <Text style={[styles.compactSub, { color: colors.textTertiary, marginHorizontal: 4 }]}>·</Text>
-              <Text style={[styles.compactSub, { color: colors.textTertiary }]}>
-                {group.member_count}/{group.max_members ?? '∞'}
-              </Text>
-            </View>
-          </View>
-        </View>
-      </GlassCard>
+      <EkipCardCompact
+        group={group}
+        onPress={onPress}
+        categoryIcon={CatIcon}
+        typeLabel={typeLabels[group.group_type] ?? group.group_type}
+        dateStr={dateStr}
+      />
     );
   }
 
@@ -143,81 +254,7 @@ export function EkipCardComponent({
         </View>
       </View>
 
-      {/* Body */}
-      <View style={styles.cardBody}>
-        <Text
-          style={[
-            styles.cardTitle,
-            { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
-          ]}
-        >
-          {group.title}
-        </Text>
-        <Text
-          numberOfLines={2}
-          style={[
-            styles.cardDesc,
-            { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' },
-          ]}
-        >
-          {group.description}
-        </Text>
-
-        {/* Tags */}
-        {group.tags && group.tags.length > 0 && (
-          <View style={styles.tagsContainer}>
-            {group.tags.slice(0, 4).map((tag) => (
-              <View
-                key={tag}
-                style={[
-                  styles.tagItem,
-                  { backgroundColor: colors.glassThinBg, borderColor: colors.glassBorder },
-                ]}
-              >
-                <Text style={[styles.tagItemText, { color: colors.textTertiary }]}>
-                  {tag}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Footer */}
-        <View style={[styles.cardFooter, { borderTopColor: colors.divider }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <GlassAvatar
-              src={group.owner?.avatar_url}
-              name={`${group.owner?.first_name} ${group.owner?.last_name}`}
-              size={28}
-              ring={false}
-            />
-            <View style={{ marginLeft: 8 }}>
-              <Text style={[styles.ownerName, { color: colors.textPrimary }]}>
-                {group.owner ? `${group.owner.first_name} ${group.owner.last_name}` : ''}
-              </Text>
-              <Text style={[styles.ownerJob, { color: colors.textTertiary }]}>
-                {group.owner?.job}
-              </Text>
-            </View>
-          </View>
-
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <EyeIcon size={13} color={colors.textTertiary} strokeWidth={2} style={{ marginRight: 3 }} />
-              <Text style={[styles.metaText, { color: colors.textTertiary }]}>
-                {group.views}
-              </Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <UsersIcon size={13} color={colors.textTertiary} strokeWidth={2} style={{ marginRight: 3 }} />
-              <Text style={[styles.metaText, { color: colors.textTertiary }]}>
-                {group.member_count}
-                {group.max_members ? `/${group.max_members}` : ''}
-              </Text>
-            </View>
-          </View>
-        </View>
-      </View>
+      <EkipCardBody group={group} isRTL={isRTL} />
     </GlassCard>
   );
 }

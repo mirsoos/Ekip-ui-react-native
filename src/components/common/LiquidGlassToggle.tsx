@@ -34,6 +34,8 @@ export function LiquidGlassToggleComponent({
   checked,
   onChange,
   size = 'sm',
+  width: widthProp,
+  height: heightProp,
   disabled = false,
   style,
   label,
@@ -75,24 +77,31 @@ export function LiquidGlassToggleComponent({
 
   const inactiveTextColor = isDark ? '#64748b' : '#acb2c0';
 
-  // Exact measured width on Native so the 50% pill slides pixel-perfectly!
-  const [trackWidth, setTrackWidth] = useState(minWidth);
   const animProgress = useRef(new Animated.Value(checked ? 0 : 1)).current;
 
   useEffect(() => {
     if (Platform.OS === 'web') return;
     Animated.timing(animProgress, {
       toValue: checked ? 0 : 1,
-      duration: 240,
-      easing: Easing.bezier(0.4, 0, 0.2, 1),
+      duration: 220,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1.0),
       useNativeDriver: true,
     }).start();
-  }, [checked]);
+  }, [checked, animProgress]);
 
   const handlePress = React.useCallback(() => {
     if (disabled) return;
-    onChange(!checked);
-  }, [checked, disabled, onChange]);
+    const nextChecked = !checked;
+    if (Platform.OS !== 'web') {
+      Animated.timing(animProgress, {
+        toValue: nextChecked ? 0 : 1,
+        duration: 220,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1.0),
+        useNativeDriver: true,
+      }).start();
+    }
+    onChange(nextChecked);
+  }, [checked, disabled, onChange, animProgress]);
 
   // ==========================================================
   // WEB: 100% Untouched Original Implementation
@@ -226,49 +235,57 @@ export function LiquidGlassToggleComponent({
   // ==========================================================
   // ANDROID & iOS: Pixel-Perfect Neumorphic Pill Match
   // ==========================================================
-  const halfWidth = trackWidth / 2;
+  const nativeDims = {
+    sm: { width: 62, height: 28, radius: 14, font: 10.5 },
+    md: { width: 78, height: 32, radius: 16, font: 11.5 },
+    lg: { width: 106, height: 40, radius: 20, font: 13.5 },
+  }[size] || { width: 78, height: 32, radius: 16, font: 11.5 };
+
+  const finalWidth = widthProp ?? nativeDims.width;
+  const finalHeight = heightProp ?? nativeDims.height;
+  const finalRadius = nativeDims.radius;
+  const finalFont = nativeDims.font;
+
+  const pillWidth = Math.round((finalWidth - 4) / 2);
+  const pillHeight = finalHeight - 4;
+
   const highlightTranslate = animProgress.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, halfWidth],
+    outputRange: [0, pillWidth],
   });
-
-  const handleTrackLayout = (e: LayoutChangeEvent) => {
-    const w = e.nativeEvent.layout.width;
-    if (w > 0 && Math.abs(w - trackWidth) > 0.5) {
-      setTrackWidth(w);
-    }
-  };
 
   return (
     <View style={[styles.outerWrapper, style]}>
       {label && <Text style={[styles.labelText, labelStyle]}>{label}</Text>}
 
       <TouchableOpacity
-        activeOpacity={0.9}
+        activeOpacity={0.88}
         disabled={disabled}
         delayPressIn={0}
         onPress={handlePress}
-        onLayout={handleTrackLayout}
         style={[
           styles.nativeContainer,
           {
-            minWidth,
+            width: finalWidth,
+            height: finalHeight,
             backgroundColor: bg,
             borderColor: isDark ? 'rgba(255, 255, 255, 0.09)' : '#d0d8e3',
             borderWidth: 1,
-            borderRadius,
+            borderRadius: finalRadius,
             opacity: disabled ? 0.6 : 1,
           },
         ]}
       >
         {/* Sliding 50% Sunken Neumorphic Highlight Pill */}
         <Animated.View
+          renderToHardwareTextureAndroid={true}
           pointerEvents="none"
           style={[
             styles.nativeHighlight,
             {
-              width: halfWidth,
-              borderRadius,
+              width: pillWidth,
+              height: pillHeight,
+              borderRadius: finalRadius - 2,
               backgroundColor: highlightBg,
               borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : '#ffffff',
               transform: [{ translateX: highlightTranslate }],
@@ -285,70 +302,30 @@ export function LiquidGlassToggleComponent({
             }
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={[StyleSheet.absoluteFill, { borderRadius }]}
+            style={[StyleSheet.absoluteFill, { borderRadius: finalRadius - 2 }]}
           />
         </Animated.View>
 
         {/* Equal 50% / 50% Label Columns */}
-        <View style={styles.nativeLabelRow}>
-          <View
-            style={[
-              styles.nativeCell,
-              {
-                paddingVertical: verticalPadding + 1,
-                paddingHorizontal: horizontalPadding,
-              },
-            ]}
-          >
+        <View style={[styles.nativeLabelRow, { width: finalWidth - 4, height: pillHeight }]}>
+          <View style={[styles.nativeCell, { width: pillWidth }]}>
             <Text
               numberOfLines={1}
               style={[
                 styles.nativeLabel,
-                { fontSize },
-                checked
-                  ? [
-                      styles.nativeOnText,
-                      {
-                        textShadowColor: isDark
-                          ? 'rgba(71, 207, 115, 0.85)'
-                          : 'rgba(71, 207, 115, 0.55)',
-                        textShadowOffset: { width: 0, height: 0 },
-                        textShadowRadius: 8,
-                      },
-                    ]
-                  : { color: inactiveTextColor },
+                { fontSize: finalFont, color: checked ? '#47cf73' : inactiveTextColor },
               ]}
             >
               {labels.on}
             </Text>
           </View>
 
-          <View
-            style={[
-              styles.nativeCell,
-              {
-                paddingVertical: verticalPadding + 1,
-                paddingHorizontal: horizontalPadding,
-              },
-            ]}
-          >
+          <View style={[styles.nativeCell, { width: pillWidth }]}>
             <Text
               numberOfLines={1}
               style={[
                 styles.nativeLabel,
-                { fontSize },
-                !checked
-                  ? [
-                      styles.nativeOffText,
-                      {
-                        textShadowColor: isDark
-                          ? 'rgba(255, 60, 65, 0.85)'
-                          : 'rgba(255, 60, 65, 0.55)',
-                        textShadowOffset: { width: 0, height: 0 },
-                        textShadowRadius: 8,
-                      },
-                    ]
-                  : { color: inactiveTextColor },
+                { fontSize: finalFont, color: !checked ? '#ff3c41' : inactiveTextColor },
               ]}
             >
               {labels.off}
@@ -381,39 +358,29 @@ const styles = StyleSheet.create({
   nativeContainer: {
     position: 'relative',
     overflow: 'hidden',
-    direction: 'ltr',
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 2,
   },
   nativeHighlight: {
     position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
+    top: 2,
+    left: 2,
     borderWidth: 1,
     overflow: 'hidden',
   },
   nativeLabelRow: {
     flexDirection: 'row',
-    direction: 'ltr',
     alignItems: 'center',
-    width: '100%',
     zIndex: 2,
   },
   nativeCell: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   nativeLabel: {
     fontWeight: '700',
-    letterSpacing: 0.4,
+    letterSpacing: 0.3,
     textAlign: 'center',
-  },
-  nativeOnText: {
-    color: '#47cf73',
-  },
-  nativeOffText: {
-    color: '#ff3c41',
   },
 });

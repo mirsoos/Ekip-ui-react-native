@@ -16,10 +16,12 @@ import { useTheme } from '../../lib/theme';
  * Shared breathing animation hook
  * Creates an organic, deep, sinusoidal pulse (0.35 -> 0.85) without layout shifts or harsh flashes.
  */
-export function useBreathingValue(duration = 1400) {
+export function useBreathingValue(duration = 1400, enabled = true) {
   const pulse = useRef(new Animated.Value(0.35)).current;
 
   useEffect(() => {
+    if (!enabled) return;
+
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, {
@@ -27,19 +29,21 @@ export function useBreathingValue(duration = 1400) {
           duration,
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: Platform.OS !== 'web',
+          isInteraction: false,
         }),
         Animated.timing(pulse, {
           toValue: 0.35,
           duration,
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: Platform.OS !== 'web',
+          isInteraction: false,
         }),
       ])
     );
     animation.start();
 
     return () => animation.stop();
-  }, [pulse, duration]);
+  }, [pulse, duration, enabled]);
 
   return pulse;
 }
@@ -63,7 +67,7 @@ export function GlassSkeleton({
   pulseValue,
 }: GlassSkeletonProps) {
   const { isDark, colors } = useTheme();
-  const internalPulse = useBreathingValue();
+  const internalPulse = useBreathingValue(1400, pulseValue === undefined);
   const opacity = pulseValue ?? internalPulse;
 
   const bg = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.07)';

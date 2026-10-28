@@ -31,6 +31,7 @@ export const SwipeNavigationContainer = React.memo(function SwipeNavigationConta
 }: SwipeNavigationContainerProps) {
   const panX = useRef(new Animated.Value(0)).current;
   const isSwiping = useRef(false);
+  const lastDampenedRef = useRef(0);
 
   // Keep a ref of latest props so PanResponder always has fresh state without recreation
   const propsRef = useRef({
@@ -70,16 +71,22 @@ export const SwipeNavigationContainer = React.memo(function SwipeNavigationConta
       },
       onPanResponderGrant: () => {
         isSwiping.current = true;
+        lastDampenedRef.current = 0;
       },
       onPanResponderMove: (_, gestureState) => {
         const { dx } = gestureState;
         // Damped rubber-band resistance
         const dampened = dx * 0.45;
-        panX.setValue(dampened);
+        // Throttle sub-pixel jitter to prevent JS bridge message saturation
+        if (Math.abs(dampened - lastDampenedRef.current) >= 1) {
+          lastDampenedRef.current = dampened;
+          panX.setValue(dampened);
+        }
       },
       onPanResponderRelease: (_, gestureState) => {
         const { dx, vx } = gestureState;
         isSwiping.current = false;
+        lastDampenedRef.current = 0;
         const currentProps = propsRef.current;
 
         const threshold = 50;
@@ -110,6 +117,7 @@ export const SwipeNavigationContainer = React.memo(function SwipeNavigationConta
       },
       onPanResponderTerminate: () => {
         isSwiping.current = false;
+        lastDampenedRef.current = 0;
         Animated.spring(panX, {
           toValue: 0,
           useNativeDriver: Platform.OS !== 'web',

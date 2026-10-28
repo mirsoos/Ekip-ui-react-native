@@ -177,6 +177,7 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
             duration: PULSE_DURATION,
             easing: Easing.out(Easing.quad),
             useNativeDriver: Platform.OS !== 'web',
+            isInteraction: false,
           }).start(({ finished }) => {
             if (finished && isRunningRef.current) {
               executeCycle();
@@ -271,12 +272,14 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
           duration: 1350,
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: Platform.OS !== 'web',
+          isInteraction: false,
         }),
         Animated.timing(floatAnim, {
           toValue: 0,
           duration: 1350,
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: Platform.OS !== 'web',
+          isInteraction: false,
         }),
       ])
     );

@@ -20,6 +20,17 @@
     },
     "web": {
       "favicon": "./assets/ekip-logo-favicon.jpg"
-    }
+    },
+    "plugins": [
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/IranianSans.ttf",
+            "./assets/fonts/IRANSans.ttf"
+          ]
+        }
+      ]
+    ]
   }
 }

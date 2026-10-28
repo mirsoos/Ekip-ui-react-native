@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,6 +19,28 @@ import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { useDeferredMount } from '../lib/useDeferredMount';
 import type { Group } from '../types/database';
+
+const ProfileBanner = React.memo(function ProfileBanner({
+  bannerUrl,
+}: {
+  bannerUrl?: string | null;
+}) {
+  const { colors } = useTheme();
+
+  return (
+    <View style={styles.bannerWrap}>
+      {bannerUrl ? (
+        <Image source={{ uri: bannerUrl }} style={styles.bannerImg} />
+      ) : (
+        <View style={[styles.bannerImg, { backgroundColor: colors.glassThinBg }]} />
+      )}
+      <LinearGradient
+        colors={['rgba(0,0,0,0.3)', 'transparent', 'rgba(0,0,0,0.6)']}
+        style={styles.bannerGradient}
+      />
+    </View>
+  );
+});
 
 export function ProfileScreenComponent({
   userId,
@@ -43,7 +65,6 @@ export function ProfileScreenComponent({
 }) {
   const { me, profiles, groups, members, badges, missions, friends, addFriend, updateFriend, addNotification } = useAppData();
   const insets = useSafeAreaInsets();
-  const { theme, toggle, colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
   const [tab, setTab] = useState('activity');
   const [showActions, setShowActions] = useState(false);
@@ -52,33 +73,47 @@ export function ProfileScreenComponent({
   const internalScrollY = useRef(new Animated.Value(0)).current;
   const scrollY = externalScrollY ?? internalScrollY;
 
-  const profile = profiles.find((p) => p.id === userId) ?? me;
+  const profile = useMemo(() => profiles.find((p) => p.id === userId) ?? me, [profiles, userId, me]);
   const isMe = profile.id === 'me';
 
-  const myGroups = groups.filter((g) => {
-    if (isMe) {
-      return (
-        g.owner_id === 'me' ||
-        members.some((m) => m.group_id === g.id && m.user_id === 'me' && m.status === 'active')
-      );
-    }
-    return g.owner_id === profile.id;
-  });
-
-  const myBadges = badges.filter((b) => b.user_id === profile.id || (isMe && b.user_id === 'me'));
-  const myMissions = missions.filter((m) => m.user_id === profile.id || isMe);
-  const myFriends = friends.filter(
-    (f) => (f.user_id === profile.id || f.friend_id === profile.id) && f.status === 'accepted'
+  const myGroups = useMemo(
+    () =>
+      groups.filter((g) => {
+        if (isMe) {
+          return (
+            g.owner_id === 'me' ||
+            members.some((m) => m.group_id === g.id && m.user_id === 'me' && m.status === 'active')
+          );
+        }
+        return g.owner_id === profile.id;
+      }),
+    [groups, members, isMe, profile.id]
   );
-  const existingFriend = friends.find(
-    (f) => f.friend_id === profile.id || (f.user_id === profile.id && f.friend_id === 'me')
+  const myBadges = useMemo(
+    () => badges.filter((b) => b.user_id === profile.id || (isMe && b.user_id === 'me')),
+    [badges, profile.id, isMe]
+  );
+  const myMissions = useMemo(
+    () => missions.filter((m) => m.user_id === profile.id || isMe),
+    [missions, profile.id, isMe]
+  );
+  const myFriends = useMemo(
+    () =>
+      friends.filter(
+        (f) => (f.user_id === profile.id || f.friend_id === profile.id) && f.status === 'accepted'
+      ),
+    [friends, profile.id]
+  );
+  const existingFriend = useMemo(
+    () => friends.find((f) => f.friend_id === profile.id || (f.user_id === profile.id && f.friend_id === 'me')),
+    [friends, profile.id]
   );
 
   const Sun = getIcon('Sun');
   const Moon = getIcon('Moon');
   const SettingsIcon = getIcon('Settings');
 
-  const handleAddFriend = () => {
+  const handleAddFriend = useCallback(() => {
     if (existingFriend) {
       updateFriend(existingFriend.id, 'accepted');
       setToast(isRTL ? 'درخواست دوستی تایید شد' : 'Friend request accepted');
@@ -96,7 +131,8 @@ export function ProfileScreenComponent({
     });
     setShowActions(false);
     setTimeout(() => setToast(''), 2500);
-  };
+  }, [existingFriend, updateFriend, isRTL, addFriend, profile.id, addNotification]);
+  const handleOpenActions = useCallback(() => setShowActions(true), []);
 
   if (isLoading) {
     return (
@@ -123,17 +159,7 @@ export function ProfileScreenComponent({
         )}
       >
         {/* Banner */}
-        <View style={styles.bannerWrap}>
-          {profile.banner_url ? (
-            <Image source={{ uri: profile.banner_url }} style={styles.bannerImg} />
-          ) : (
-            <View style={[styles.bannerImg, { backgroundColor: colors.glassThinBg }]} />
-          )}
-          <LinearGradient
-            colors={['rgba(0,0,0,0.3)', 'transparent', 'rgba(0,0,0,0.6)']}
-            style={styles.bannerGradient}
-          />
-        </View>
+        <ProfileBanner bannerUrl={profile.banner_url} />
 
         {/* Profile Card Info */}
         <ProfileHeaderCard
@@ -141,7 +167,7 @@ export function ProfileScreenComponent({
           isOwnProfile={isOwnProfile}
           isFriend={Boolean(existingFriend && existingFriend.status === 'accepted')}
           onAddFriend={handleAddFriend}
-          onOpenActions={() => setShowActions(true)}
+          onOpenActions={handleOpenActions}
           onOpenVerification={onOpenVerification}
           hideAvatar
         />

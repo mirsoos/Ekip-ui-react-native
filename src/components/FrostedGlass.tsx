@@ -81,8 +81,8 @@ export const FrostedGlass = React.memo(function FrostedGlass({
     <BlurView
       pointerEvents={pointerEvents}
       intensity={50}
-      tint="light"
-      experimentalBlurMethod="dimezisBlurView"
+      tint={isDarkMode ? 'dark' : 'light'}
+      blurMethod={Platform.OS === 'android' ? 'none' : undefined}
       style={[
         styles.container,
         {
