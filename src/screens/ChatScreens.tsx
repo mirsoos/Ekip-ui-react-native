@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { View, Text, FlatList, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassInput, GlassEmpty } from '../components/Glass';
@@ -11,7 +11,7 @@ import { ChatInputBar } from '../components/chat/ChatInputBar';
 import { ChatListItemSkeleton } from '../components/skeleton';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
-import { useDeferredMount } from '../lib/useDeferredMount';
+import type { Conversation } from '../types/database';
 
 export function ChatListScreenComponent({
   onOpenConversation,
@@ -27,15 +27,35 @@ export function ChatListScreenComponent({
   const insets = useSafeAreaInsets();
   const { conversations } = useAppData();
   const { t } = useI18n();
-  const isDeferredReady = useDeferredMount(32);
 
-  const filtered = conversations.filter((c) =>
-    c.title.toLowerCase().includes(search.toLowerCase())
+  const filtered = useMemo(() => {
+    const query = search.toLowerCase();
+    return conversations.filter((conversation) =>
+      conversation.title.toLowerCase().includes(query)
+    );
+  }, [conversations, search]);
+  const onSelectConversation = useCallback(
+    (conversationId: string) => onOpenConversation(conversationId),
+    [onOpenConversation]
+  );
+  const keyExtractor = useCallback((conversation: Conversation) => conversation.id, []);
+  const renderItem = useCallback(
+    ({ item }: { item: Conversation }) => (
+      <ChatListItem
+        conversation={item}
+        conversationId={item.id}
+        onSelectConversation={onSelectConversation}
+      />
+    ),
+    [onSelectConversation]
   );
 
   return (
     <View style={styles.container}>
-      <ScrollView
+      <FlatList
+        data={isLoading ? [] : filtered}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.listContent,
@@ -44,8 +64,11 @@ export function ChatListScreenComponent({
             paddingBottom: 90 + insets.bottom,
           },
         ]}
-      >
-        {isLoading ? (
+        initialNumToRender={8}
+        maxToRenderPerBatch={6}
+        updateCellsBatchingPeriod={50}
+        windowSize={5}
+        ListEmptyComponent={isLoading ? (
           <>
             <ChatListItemSkeleton />
             <ChatListItemSkeleton />
@@ -58,16 +81,8 @@ export function ChatListScreenComponent({
             title={t('chat.noCommsLogs')}
             subtitle={t('chat.noCommsLogsSub')}
           />
-        ) : (
-          (isDeferredReady ? filtered : filtered.slice(0, 4)).map((c) => (
-            <ChatListItem
-              key={c.id}
-              conversation={c}
-              onPress={() => onOpenConversation(c.id)}
-            />
-          ))
-        )}
-      </ScrollView>
+        ) : undefined}
+      />
     </View>
   );
 }

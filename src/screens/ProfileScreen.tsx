@@ -14,25 +14,46 @@ import { ProfileMissionsList } from '../components/profile/ProfileMissionsList';
 import { FriendsList } from '../components/profile/FriendsList';
 import { EkipCard } from '../components/EkipCard';
 import { ProfileScreenSkeleton } from '../components/skeleton';
-import { getIcon } from '../lib/icons';
-import { useTheme } from '../lib/theme';
+import { darkColors, lightColors, useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { useDeferredMount } from '../lib/useDeferredMount';
 import type { Group } from '../types/database';
+
+const PROFILE_BANNER_FALLBACK_STYLE = {
+  light: { backgroundColor: lightColors.glassThinBg },
+  dark: { backgroundColor: darkColors.glassThinBg },
+};
+const noopOpenProfile = (_id: string) => {};
+
+const ProfileGroupCard = React.memo(function ProfileGroupCard({
+  group,
+  onOpenGroup,
+}: {
+  group: Group;
+  onOpenGroup: (group: Group) => void;
+}) {
+  const onPress = useCallback(() => onOpenGroup(group), [group, onOpenGroup]);
+  return <EkipCard group={group} onPress={onPress} />;
+});
 
 const ProfileBanner = React.memo(function ProfileBanner({
   bannerUrl,
 }: {
   bannerUrl?: string | null;
 }) {
-  const { colors } = useTheme();
+  const { isDark } = useTheme();
 
   return (
     <View style={styles.bannerWrap}>
       {bannerUrl ? (
         <Image source={{ uri: bannerUrl }} style={styles.bannerImg} />
       ) : (
-        <View style={[styles.bannerImg, { backgroundColor: colors.glassThinBg }]} />
+        <View
+          style={[
+            styles.bannerImg,
+            PROFILE_BANNER_FALLBACK_STYLE[isDark ? 'dark' : 'light'],
+          ]}
+        />
       )}
       <LinearGradient
         colors={['rgba(0,0,0,0.3)', 'transparent', 'rgba(0,0,0,0.6)']}
@@ -77,16 +98,17 @@ export function ProfileScreenComponent({
   const isMe = profile.id === 'me';
 
   const myGroups = useMemo(
-    () =>
-      groups.filter((g) => {
-        if (isMe) {
-          return (
-            g.owner_id === 'me' ||
-            members.some((m) => m.group_id === g.id && m.user_id === 'me' && m.status === 'active')
-          );
-        }
-        return g.owner_id === profile.id;
-      }),
+    () => {
+      if (!isMe) return groups.filter((group) => group.owner_id === profile.id);
+      const joinedGroupIds = new Set(
+        members
+          .filter((member) => member.user_id === 'me' && member.status === 'active')
+          .map((member) => member.group_id)
+      );
+      return groups.filter(
+        (group) => group.owner_id === 'me' || joinedGroupIds.has(group.id)
+      );
+    },
     [groups, members, isMe, profile.id]
   );
   const myBadges = useMemo(
@@ -108,10 +130,40 @@ export function ProfileScreenComponent({
     () => friends.find((f) => f.friend_id === profile.id || (f.user_id === profile.id && f.friend_id === 'me')),
     [friends, profile.id]
   );
-
-  const Sun = getIcon('Sun');
-  const Moon = getIcon('Moon');
-  const SettingsIcon = getIcon('Settings');
+  const profileTabs = useMemo(
+    () => [
+      { label: t('profile.tabOps'), value: 'activity', icon: 'Layers' as const },
+      { label: t('profile.tabMedals'), value: 'badges', icon: 'Award' as const },
+      { label: t('profile.tabDirectives'), value: 'missions', icon: 'Target' as const },
+      { label: t('profile.tabContacts'), value: 'friends', icon: 'Users' as const },
+    ],
+    [t]
+  );
+  const scrollContentStyle = useMemo(
+    () => [
+      styles.scrollContent,
+      {
+        paddingBottom: isOwnProfile
+          ? Platform.OS === 'web' ? 110 : 90 + insets.bottom
+          : Platform.OS === 'web' ? 24 : 24 + insets.bottom,
+      },
+    ],
+    [insets.bottom, isOwnProfile]
+  );
+  const onScroll = useMemo(
+    () =>
+      Animated.event(
+        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+        { useNativeDriver: Platform.OS !== 'web' }
+      ),
+    [scrollY]
+  );
+  const closeActions = useCallback(() => setShowActions(false), []);
+  const onReportIncident = useCallback(() => {
+    setShowActions(false);
+    setToast(isRTL ? 'گزارش تخلف ثبت گردید' : 'Report transmitted to Command');
+    setTimeout(() => setToast(''), 2500);
+  }, [isRTL]);
 
   const handleAddFriend = useCallback(() => {
     if (existingFriend) {
@@ -146,17 +198,9 @@ export function ProfileScreenComponent({
     <View style={styles.container}>
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          isOwnProfile
-            ? { paddingBottom: Platform.OS === 'web' ? 110 : 90 + insets.bottom }
-            : { paddingBottom: Platform.OS === 'web' ? 24 : 24 + insets.bottom },
-        ]}
+        contentContainerStyle={scrollContentStyle}
         scrollEventThrottle={16}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: Platform.OS !== 'web' }
-        )}
+        onScroll={onScroll}
       >
         {/* Banner */}
         <ProfileBanner bannerUrl={profile.banner_url} />
@@ -188,12 +232,7 @@ export function ProfileScreenComponent({
         {/* Tab switcher */}
         <View style={{ paddingHorizontal: 16, marginTop: 8 }}>
           <GlassSegmented
-            options={[
-              { label: t('profile.tabOps'), value: 'activity', icon: 'Layers' },
-              { label: t('profile.tabMedals'), value: 'badges', icon: 'Award' },
-              { label: t('profile.tabDirectives'), value: 'missions', icon: 'Target' },
-              { label: t('profile.tabContacts'), value: 'friends', icon: 'Users' },
-            ]}
+            options={profileTabs}
             value={tab}
             onChange={setTab}
           />
@@ -210,11 +249,11 @@ export function ProfileScreenComponent({
                   subtitle={isRTL ? 'در اکیپ‌ها و دورهمی‌های مختلف شرکت کنید تا آمار فعالیت شما ثبت شود.' : 'Join Ekips and hangouts to build your activity stats.'}
                 />
               ) : (
-                (isDeferredReady ? myGroups : myGroups.slice(0, 2)).map((g) => (
-                  <EkipCard
-                    key={g.id}
-                    group={g}
-                    onPress={() => onOpenGroup(g)}
+                (isDeferredReady ? myGroups : myGroups.slice(0, 2)).map((group) => (
+                  <ProfileGroupCard
+                    key={group.id}
+                    group={group}
+                    onOpenGroup={onOpenGroup}
                   />
                 ))
               )}
@@ -228,7 +267,7 @@ export function ProfileScreenComponent({
           {tab === 'friends' && (
             <FriendsList
               friends={myFriends}
-              onOpenProfile={(id) => {}}
+              onOpenProfile={noopOpenProfile}
             />
           )}
         </View>
@@ -237,7 +276,7 @@ export function ProfileScreenComponent({
       {/* Action sheet for other users */}
       <GlassSheet
         open={showActions}
-        onClose={() => setShowActions(false)}
+        onClose={closeActions}
         title={isRTL ? 'گزینه‌های کاربر' : 'Operative Options'}
       >
         <View style={{ gap: 10, paddingVertical: 8 }}>
@@ -247,11 +286,7 @@ export function ProfileScreenComponent({
           <GlassButton
             fullWidth
             variant="danger"
-            onPress={() => {
-              setShowActions(false);
-              setToast(isRTL ? 'گزارش تخلف ثبت گردید' : 'Report transmitted to Command');
-              setTimeout(() => setToast(''), 2500);
-            }}
+            onPress={onReportIncident}
           >
             {isRTL ? 'ثبت گزارش تخلف تاکتیکی' : 'File Tactical Incident Report'}
           </GlassButton>

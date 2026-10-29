@@ -7,7 +7,55 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { useTheme, type ThemeColors } from '../lib/theme';
+import {
+  ThemeContext,
+  darkColors,
+  lightColors,
+  type ThemeColors,
+} from '../lib/theme';
+
+interface FrostedThemeStyles {
+  borderColor: string;
+  webContainer: ViewStyle;
+  nativeContainer: ViewStyle;
+  overlay: ViewStyle;
+  webOverlay: ViewStyle;
+}
+
+const frostedStyleCache = new Map<string, FrostedThemeStyles>();
+
+function getFrostedStyles(
+  isDark: boolean,
+  colors: ThemeColors,
+  borderRadius: number,
+  overlayOpacity: number
+): FrostedThemeStyles {
+  const borderColor = isDark ? colors.glassBorder : colors.glassBorderStrong;
+  const key = `${isDark}:${borderRadius}:${overlayOpacity}:${borderColor}`;
+  const cached = frostedStyleCache.get(key);
+  if (cached) return cached;
+
+  const overlay = {
+    borderRadius,
+    backgroundColor: `rgba(255, 255, 255, ${overlayOpacity})`,
+  };
+  const result: FrostedThemeStyles = {
+    borderColor,
+    webContainer: {
+      borderRadius,
+      borderColor,
+      backdropFilter: 'blur(4px)',
+      WebkitBackdropFilter: 'blur(4px)',
+      boxShadow:
+        'inset 0 1px 1px rgba(255, 255, 255, 0.55), inset 0 -1px 1px rgba(255, 255, 255, 0.1), 0 6px 6px rgba(0, 0, 0, 0.2)',
+    } as ViewStyle,
+    nativeContainer: { borderRadius, borderColor },
+    overlay,
+    webOverlay: { ...overlay },
+  };
+  frostedStyleCache.set(key, result);
+  return result;
+}
 
 export interface FrostedGlassProps {
   children?: ReactNode;
@@ -29,47 +77,28 @@ export const FrostedGlass = React.memo(function FrostedGlass({
   tint,
   pointerEvents = 'none',
 }: FrostedGlassProps) {
-  let isDarkMode = true;
-  let themeColors: ThemeColors | null = null;
-  try {
-    const themeContext = useTheme();
-    isDarkMode = tint !== undefined ? tint === 'dark' : themeContext.isDark;
-    themeColors = themeContext.colors;
-  } catch {
-    isDarkMode = tint !== undefined ? tint === 'dark' : true;
-  }
-  const isLight = !isDarkMode;
-
-  const borderColor = isLight
-    ? (themeColors?.glassBorderStrong || 'rgba(255, 255, 255, 0.85)')
-    : (themeColors?.glassBorder || 'rgba(255, 255, 255, 0.28)');
+  const themeContext = React.useContext(ThemeContext);
+  const isDarkMode = tint !== undefined ? tint === 'dark' : themeContext?.isDark ?? true;
+  const themeColors =
+    themeContext?.colors.isDark === isDarkMode
+      ? themeContext.colors
+      : isDarkMode ? darkColors : lightColors;
+  const themedStyles = getFrostedStyles(
+    isDarkMode,
+    themeColors,
+    borderRadius,
+    overlayOpacity
+  );
 
   if (Platform.OS === 'web') {
     return (
       <View
         pointerEvents={pointerEvents}
-        style={[
-          styles.container,
-          {
-            borderRadius,
-            borderColor,
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)',
-            boxShadow:
-              'inset 0 1px 1px rgba(255, 255, 255, 0.55), inset 0 -1px 1px rgba(255, 255, 255, 0.1), 0 6px 6px rgba(0, 0, 0, 0.2)',
-          } as any,
-          style,
-        ]}
+        style={[styles.container, themedStyles.webContainer, style]}
       >
         <View
           pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              borderRadius,
-              backgroundColor: `rgba(255, 255, 255, ${overlayOpacity})`,
-            },
-          ]}
+          style={[StyleSheet.absoluteFill, themedStyles.webOverlay]}
         />
         {children}
       </View>
@@ -83,25 +112,12 @@ export const FrostedGlass = React.memo(function FrostedGlass({
       intensity={50}
       tint={isDarkMode ? 'dark' : 'light'}
       blurMethod={Platform.OS === 'android' ? 'none' : undefined}
-      style={[
-        styles.container,
-        {
-          borderRadius,
-          borderColor,
-        },
-        style,
-      ]}
+      style={[styles.container, themedStyles.nativeContainer, style]}
     >
       {/* Top sheen overlay */}
       <View
         pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            borderRadius,
-            backgroundColor: `rgba(255, 255, 255, ${overlayOpacity})`,
-          },
-        ]}
+        style={[StyleSheet.absoluteFill, themedStyles.overlay]}
       />
       {children}
     </BlurView>

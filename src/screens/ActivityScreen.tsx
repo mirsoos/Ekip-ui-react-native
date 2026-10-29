@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,7 +11,10 @@ import { getIcon, type IconName } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { useDeferredMount } from '../lib/useDeferredMount';
-import type { Group } from '../types/database';
+import type { Group, GroupMember, GroupRequest } from '../types/database';
+
+const EMPTY_GROUP_REQUESTS: GroupRequest[] = [];
+const EMPTY_GROUP_MEMBERS: GroupMember[] = [];
 
 export function ActivityScreenComponent({
   tab = 'created',
@@ -39,17 +42,51 @@ export function ActivityScreenComponent({
   const [toast, setToast] = useState('');
   const isDeferredReady = useDeferredMount(32);
 
-  const createdGroups = groups.filter((g) => g.owner_id === 'me');
-  const myRequests = requests.filter((r) => r.user_id === 'me');
-  const joinedGroups = groups.filter(
-    (g) =>
-      g.owner_id !== 'me' &&
-      members.some((m) => m.group_id === g.id && m.user_id === 'me' && m.status === 'active')
-  );
+  const {
+    groupsById,
+    createdGroups,
+    joinedGroups,
+    myRequests,
+    activeMembersByGroup,
+    pendingRequestsByGroup,
+  } = useMemo(() => {
+    const groupsById = new Map(groups.map((group) => [group.id, group]));
+    const activeMembersByGroup = new Map<string, GroupMember[]>();
+    const joinedGroupIds = new Set<string>();
+
+    for (const member of members) {
+      if (member.status !== 'active') continue;
+      const groupMembers = activeMembersByGroup.get(member.group_id);
+      if (groupMembers) groupMembers.push(member);
+      else activeMembersByGroup.set(member.group_id, [member]);
+      if (member.user_id === 'me') joinedGroupIds.add(member.group_id);
+    }
+
+    const pendingRequestsByGroup = new Map<string, GroupRequest[]>();
+    const myRequests: GroupRequest[] = [];
+    for (const request of requests) {
+      if (request.user_id === 'me') myRequests.push(request);
+      if (request.status !== 'pending') continue;
+      const groupRequests = pendingRequestsByGroup.get(request.group_id);
+      if (groupRequests) groupRequests.push(request);
+      else pendingRequestsByGroup.set(request.group_id, [request]);
+    }
+
+    return {
+      groupsById,
+      createdGroups: groups.filter((group) => group.owner_id === 'me'),
+      joinedGroups: groups.filter(
+        (group) => group.owner_id !== 'me' && joinedGroupIds.has(group.id)
+      ),
+      myRequests,
+      activeMembersByGroup,
+      pendingRequestsByGroup,
+    };
+  }, [groups, members, requests]);
 
   const ChevronRight = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
 
-  const handleAccept = (reqId: string, profileName: string, groupTitle: string) => {
+  const handleAccept = useCallback((reqId: string, profileName: string, groupTitle: string) => {
     updateRequest(reqId, 'accepted');
     addNotification({
       type: 'group_request',
@@ -61,22 +98,22 @@ export function ActivityScreenComponent({
     });
     setToast(isRTL ? 'درخواست پذیرفته شد' : 'Request accepted');
     setTimeout(() => setToast(''), 2500);
-  };
+  }, [addNotification, isRTL, updateRequest]);
 
-  const handleReject = (reqId: string) => {
+  const handleReject = useCallback((reqId: string) => {
     updateRequest(reqId, 'rejected');
     setToast(isRTL ? 'درخواست رد شد' : 'Request rejected');
     setTimeout(() => setToast(''), 2500);
-  };
+  }, [isRTL, updateRequest]);
 
-  const openRequests = (groupId: string) => {
+  const openRequests = useCallback((groupId: string) => {
     setRequestsGroupId(groupId);
     setShowRequests(true);
-  };
+  }, []);
 
-  const activeGroupRequests = requests.filter(
-    (r) => r.group_id === requestsGroupId && r.status === 'pending'
-  );
+  const activeGroupRequests = requestsGroupId
+    ? pendingRequestsByGroup.get(requestsGroupId) ?? EMPTY_GROUP_REQUESTS
+    : EMPTY_GROUP_REQUESTS;
 
   return (
     <View style={styles.container}>
@@ -101,12 +138,8 @@ export function ActivityScreenComponent({
               />
             ) : (
               (isDeferredReady ? createdGroups : createdGroups.slice(0, 2)).map((g) => {
-                const pendingReqs = requests.filter(
-                  (r) => r.group_id === g.id && r.status === 'pending'
-                );
-                const groupMembers = members.filter(
-                  (m) => m.group_id === g.id && m.status === 'active'
-                );
+                const pendingReqs = pendingRequestsByGroup.get(g.id) ?? EMPTY_GROUP_REQUESTS;
+                const groupMembers = activeMembersByGroup.get(g.id) ?? EMPTY_GROUP_MEMBERS;
 
                 return (
                   <GlassCard key={g.id} style={styles.cardContainer}>
@@ -274,7 +307,7 @@ export function ActivityScreenComponent({
               />
             ) : (
               myRequests.map((r) => {
-                const g = groups.find((gr) => gr.id === r.group_id);
+                const g = groupsById.get(r.group_id);
                 if (!g) return null;
 
                 const statusConfig: Record<

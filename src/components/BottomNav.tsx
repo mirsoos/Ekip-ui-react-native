@@ -39,6 +39,82 @@ const tabs: { key: TabKey; label: string; icon: IconName }[] = [
 const NAV_ANIM_DURATION = 260;
 const NAV_EASING = Easing.bezier(0.25, 0.1, 0.25, 1.0);
 
+interface BottomNavTabItemProps {
+  tabKey: TabKey;
+  icon: IconName;
+  label: string;
+  active: boolean;
+  badgeCount: number;
+  avatarUrl?: string | null;
+  accentColor: string;
+  activeTextColor: string;
+  onPress: () => void;
+}
+
+const BottomNavTabItem = React.memo(function BottomNavTabItem({
+  tabKey,
+  icon,
+  label,
+  active,
+  badgeCount,
+  avatarUrl,
+  accentColor,
+  activeTextColor,
+  onPress,
+}: BottomNavTabItemProps) {
+  if (tabKey === 'create') {
+    return (
+      <View style={styles.createSlot}>
+        <EkipLogoButton active={active} onPress={onPress} size={44} />
+      </View>
+    );
+  }
+
+  const IconComp = getIcon(icon);
+  return (
+    <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.tabItem}>
+      <View style={[styles.iconContainer, { transform: [{ translateY: active ? -2 : 0 }] }]}>
+        {tabKey === 'profile' && avatarUrl ? (
+          <View
+            style={[
+              styles.avatarBorder,
+              { borderColor: active ? accentColor : 'transparent' },
+            ]}
+          >
+            <Image source={{ uri: avatarUrl }} style={styles.avatarImg as any} />
+          </View>
+        ) : (
+          <IconComp
+            size={22}
+            color={active ? accentColor : '#ffffff'}
+            strokeWidth={active ? 2.4 : 1.9}
+          />
+        )}
+
+        {badgeCount > 0 && (
+          <View style={styles.tabBadge}>
+            <Text style={styles.tabBadgeText}>
+              {badgeCount > 9 ? '9+' : badgeCount}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      <Text
+        style={[
+          styles.tabLabel,
+          {
+            color: active ? activeTextColor : '#ffffff',
+            fontWeight: active ? '700' : '500',
+          },
+        ]}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+});
+
 export function BottomNavComponent({ active, onChange }: BottomNavProps) {
   const insets = useSafeAreaInsets();
   const { me, conversations, notifications } = useAppData();
@@ -178,7 +254,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
     outputRange: ['0deg', '45deg'],
   });
 
-  const handleSelectTab = (key: TabKey) => {
+  const handleSelectTab = React.useCallback((key: TabKey) => {
     if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
       try {
         navigator.vibrate(8);
@@ -187,7 +263,11 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
       }
     }
     onChange(key);
-  };
+  }, [onChange]);
+  const tabPressHandlers = useMemo(
+    () => new Map(tabs.map((tab) => [tab.key, () => handleSelectTab(tab.key)])),
+    [handleSelectTab]
+  );
 
   // 2. Unified PanResponder for Drag & Drop (Touch on Mobile)
   const dragStartRef = useRef(0);
@@ -379,72 +459,20 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         )}
 
         {/* Tab Buttons */}
-        {tabs.map((tab) => {
-          const isActive = tab.key === active;
-          const isCreate = tab.key === 'create';
-          const badgeCount = badges[tab.key] ?? 0;
-          const IconComp = getIcon(tab.icon);
-
-          if (isCreate) {
-            return (
-              <View key={tab.key} style={styles.createSlot}>
-                <EkipLogoButton
-                  active={isActive}
-                  onPress={() => handleSelectTab('create')}
-                  size={44}
-                />
-              </View>
-            );
-          }
-
-          return (
-            <TouchableOpacity
-              key={tab.key}
-              activeOpacity={0.7}
-              onPress={() => handleSelectTab(tab.key)}
-              style={styles.tabItem}
-            >
-              <View style={[styles.iconContainer, { transform: [{ translateY: isActive ? -2 : 0 }] }]}>
-                {tab.key === 'profile' && me?.avatar_url ? (
-                  <View
-                    style={[
-                      styles.avatarBorder,
-                      { borderColor: isActive ? colors.accentPink : 'transparent' },
-                    ]}
-                  >
-                    <Image source={{ uri: me.avatar_url }} style={styles.avatarImg as any} />
-                  </View>
-                ) : (
-                  <IconComp
-                    size={22}
-                    color={isActive ? colors.accentPink : '#ffffff'}
-                    strokeWidth={isActive ? 2.4 : 1.9}
-                  />
-                )}
-
-                {badgeCount > 0 && (
-                  <View style={styles.tabBadge}>
-                    <Text style={styles.tabBadgeText}>
-                      {badgeCount > 9 ? '9+' : badgeCount}
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              <Text
-                style={[
-                  styles.tabLabel,
-                  {
-                    color: isActive ? colors.textPrimary : '#ffffff',
-                    fontWeight: isActive ? '700' : '500',
-                  },
-                ]}
-              >
-                {tabLabels[tab.key] || tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+        {tabs.map((tab) => (
+          <BottomNavTabItem
+            key={tab.key}
+            tabKey={tab.key}
+            icon={tab.icon}
+            label={tabLabels[tab.key] || tab.label}
+            active={tab.key === active}
+            badgeCount={badges[tab.key] ?? 0}
+            avatarUrl={tab.key === 'profile' ? me?.avatar_url : undefined}
+            accentColor={colors.accentPink}
+            activeTextColor={colors.textPrimary}
+            onPress={tabPressHandlers.get(tab.key)!}
+          />
+        ))}
       </Animated.View>
     </View>
   );

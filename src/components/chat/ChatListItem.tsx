@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { GlassCard, GlassAvatar } from '../Glass';
 import { useTheme } from '../../lib/theme';
@@ -7,16 +7,22 @@ import type { Conversation } from '../../types/database';
 
 export function ChatListItemComponent({
   conversation,
-  onPress,
+  conversationId,
+  onSelectConversation,
 }: {
   conversation: Conversation;
-  onPress: () => void;
+  conversationId: string;
+  onSelectConversation: (conversationId: string) => void;
 }) {
   const { colors } = useTheme();
   const { isRTL } = useI18n();
+  const handlePress = useCallback(
+    () => onSelectConversation(conversationId),
+    [conversationId, onSelectConversation]
+  );
 
   return (
-    <TouchableOpacity activeOpacity={0.75} onPress={onPress} style={{ marginBottom: 8 }}>
+    <TouchableOpacity activeOpacity={0.75} onPress={handlePress} style={{ marginBottom: 8 }}>
       <GlassCard
         variant={conversation.unread_count > 0 ? 'default' : 'thin'}
         style={styles.card}

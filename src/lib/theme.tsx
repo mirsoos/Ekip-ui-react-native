@@ -167,11 +167,15 @@ export interface ThemeContextValue {
   setTheme: (t: Theme) => void;
   chatTheme: ChatThemeId;
   setChatTheme: (ct: ChatThemeId) => void;
+}
+
+export interface CurtainContextValue {
   curtain: { active: boolean; color: string } | null;
   curtainOpacity: Animated.Value;
 }
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
+export const CurtainContext = createContext<CurtainContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemColorScheme = useColorScheme();
@@ -232,19 +236,31 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const colors = useMemo(() => (isDark ? darkColors : lightColors), [isDark]);
 
   const value = useMemo(
-    () => ({ theme, isDark, colors, toggle, setTheme, chatTheme, setChatTheme, curtain, curtainOpacity }),
-    [theme, isDark, colors, toggle, setTheme, chatTheme, setChatTheme, curtain, curtainOpacity]
+    () => ({ theme, isDark, colors, toggle, setTheme, chatTheme, setChatTheme }),
+    [theme, isDark, colors, toggle, setTheme, chatTheme, setChatTheme]
+  );
+  const curtainValue = useMemo(
+    () => ({ curtain, curtainOpacity }),
+    [curtain, curtainOpacity]
   );
 
   return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
+    <CurtainContext.Provider value={curtainValue}>
+      <ThemeContext.Provider value={value}>
+        {children}
+      </ThemeContext.Provider>
+    </CurtainContext.Provider>
   );
 }
 
 export function useTheme() {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
+  return ctx;
+}
+
+export function useCurtain() {
+  const ctx = useContext(CurtainContext);
+  if (!ctx) throw new Error('useCurtain must be used within ThemeProvider');
   return ctx;
 }

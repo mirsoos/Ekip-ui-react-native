@@ -5,9 +5,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GlassBackButton } from '../Glass';
 import { FrostedGlass } from '../FrostedGlass';
 import { getIcon } from '../../lib/icons';
-import { useTheme } from '../../lib/theme';
+import { darkColors, lightColors, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Profile } from '../../types/database';
+
+const Sun = getIcon('Sun');
+const Moon = getIcon('Moon');
+const SettingsIcon = getIcon('Settings');
+
+const actionButtonStyles = {
+  light: { borderColor: lightColors.glassBorderStrong },
+  dark: { borderColor: darkColors.glassBorderStrong },
+};
 
 export function ProfileHeaderComponent({
   profile,
@@ -25,9 +34,10 @@ export function ProfileHeaderComponent({
   const insets = useSafeAreaInsets();
   const { theme, toggle, colors, isDark } = useTheme();
   const { isRTL } = useI18n();
-  const Sun = getIcon('Sun');
-  const Moon = getIcon('Moon');
-  const SettingsIcon = getIcon('Settings');
+  const actionButtonStyle = React.useMemo(
+    () => [styles.actionBtn, actionButtonStyles[theme]],
+    [theme]
+  );
 
   const SCROLL_DISTANCE = 65;
   const isIOS = Platform.OS === 'ios';
@@ -91,69 +101,113 @@ export function ProfileHeaderComponent({
   }, [scrollY, capsuleAnim]);
 
   // Entrance & Exit animations for header capsule and unscrolled bar
-  const capsuleTranslateY = capsuleAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-85, 0],
-  });
-
-  const unscrolledTranslateY = capsuleAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, -70],
-  });
+  const capsuleTranslateY = React.useMemo(
+    () => capsuleAnim.interpolate({ inputRange: [0, 1], outputRange: [-85, 0] }),
+    [capsuleAnim]
+  );
+  const unscrolledTranslateY = React.useMemo(
+    () => capsuleAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -70] }),
+    [capsuleAnim]
+  );
 
   // GPU-Accelerated Transforms for the Avatar
-  const translateY = scrollY.interpolate({
-    inputRange: [-100, 0, SCROLL_DISTANCE],
-    outputRange: [100, 0, targetTranslateY],
-    extrapolateRight: 'clamp',
-  });
-
-  const translateX = scrollY.interpolate({
-    inputRange: [0, SCROLL_DISTANCE],
-    outputRange: [0, targetTranslateX],
-    extrapolate: 'clamp',
-  });
-
-  const scale = scrollY.interpolate({
-    inputRange: [0, SCROLL_DISTANCE],
-    outputRange: [1, 38 / 88],
-    extrapolate: 'clamp',
-  });
+  const translateY = React.useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [-100, 0, SCROLL_DISTANCE],
+        outputRange: [100, 0, targetTranslateY],
+        extrapolateRight: 'clamp',
+      }),
+    [scrollY, targetTranslateY]
+  );
+  const translateX = React.useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [0, SCROLL_DISTANCE],
+        outputRange: [0, targetTranslateX],
+        extrapolate: 'clamp',
+      }),
+    [scrollY, targetTranslateX]
+  );
+  const scale = React.useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [0, SCROLL_DISTANCE],
+        outputRange: [1, 38 / 88],
+        extrapolate: 'clamp',
+      }),
+    [scrollY]
+  );
 
   // Avatar page entrance animations
-  const avatarEnterOpacity = avatarEnterAnim.interpolate({
-    inputRange: [0, 0.4, 1],
-    outputRange: [0, 0.8, 1],
-  });
+  const avatarEnterOpacity = React.useMemo(
+    () => avatarEnterAnim.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 0.8, 1] }),
+    [avatarEnterAnim]
+  );
+  const avatarEnterScale = React.useMemo(
+    () => avatarEnterAnim.interpolate({ inputRange: [0, 1], outputRange: [0.65, 1] }),
+    [avatarEnterAnim]
+  );
+  const avatarEnterTranslateY = React.useMemo(
+    () => avatarEnterAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }),
+    [avatarEnterAnim]
+  );
 
-  const avatarEnterScale = avatarEnterAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.65, 1],
-  });
-
-  const avatarEnterTranslateY = avatarEnterAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [20, 0],
-  });
-
-  const combinedTranslateY = Animated.add(translateY, avatarEnterTranslateY);
-  const combinedScale = Animated.multiply(scale, avatarEnterScale);
+  const combinedTranslateY = React.useMemo(
+    () => Animated.add(translateY, avatarEnterTranslateY),
+    [avatarEnterTranslateY, translateY]
+  );
+  const combinedScale = React.useMemo(
+    () => Animated.multiply(scale, avatarEnterScale),
+    [avatarEnterScale, scale]
+  );
 
   const topPad = Platform.OS === 'web' ? 10 : Math.max(10, insets.top + 6);
+  const capsuleStyle = React.useMemo(
+    () => [
+      styles.container,
+      {
+        flexDirection: isRTL ? 'row-reverse' as const : 'row' as const,
+        borderColor: colors.glassBorderStrong,
+        transform: [{ translateY: capsuleTranslateY }],
+      },
+    ],
+    [capsuleTranslateY, colors.glassBorderStrong, isRTL]
+  );
+  const avatarStyle = React.useMemo(
+    () => [
+      styles.avatarContainer,
+      {
+        [isRTL ? 'right' : 'left']: 16,
+        borderColor: colors.glassBorderStrong,
+        opacity: avatarEnterOpacity,
+        transform: [
+          { translateY: combinedTranslateY },
+          { translateX },
+          { scale: combinedScale },
+        ],
+      },
+    ],
+    [
+      avatarEnterOpacity,
+      colors.glassBorderStrong,
+      combinedScale,
+      combinedTranslateY,
+      isRTL,
+      translateX,
+    ]
+  );
+  const outerStyle = React.useMemo(
+    () => [styles.outerContainer, { paddingTop: topPad }],
+    [topPad]
+  );
 
   return (
-    <View style={[styles.outerContainer, { paddingTop: topPad }]} pointerEvents="box-none">
+    <View style={outerStyle} pointerEvents="box-none">
       {/* Docked Authentic Liquid Glass Header Capsule with Slide Enter/Exit */}
       {isMounted && (
         <Animated.View
-          style={[
-            styles.container,
-            {
-              flexDirection: isRTL ? 'row-reverse' : 'row',
-              borderColor: colors.glassBorderStrong,
-              transform: [{ translateY: capsuleTranslateY }],
-            },
-          ]}
+          style={capsuleStyle}
           pointerEvents={isDocked ? 'auto' : 'none'}
         >
           <FrostedGlass
@@ -187,10 +241,7 @@ export function ProfileHeaderComponent({
             <TouchableOpacity
               activeOpacity={0.75}
               onPress={toggle}
-              style={[
-                styles.actionBtn,
-                { borderColor: colors.glassBorderStrong },
-              ]}
+              style={actionButtonStyle}
             >
               <FrostedGlass
                 borderRadius={19}
@@ -213,10 +264,7 @@ export function ProfileHeaderComponent({
               <TouchableOpacity
                 activeOpacity={0.75}
                 onPress={onOpenSettings}
-                style={[
-                  styles.actionBtn,
-                  { borderColor: colors.glassBorderStrong },
-                ]}
+                style={actionButtonStyle}
               >
                 <FrostedGlass
                   borderRadius={19}
@@ -247,20 +295,19 @@ export function ProfileHeaderComponent({
         ]}
         pointerEvents={isDocked ? 'none' : 'box-none'}
       >
-        {!isOwnProfile && onBack ? (
-          <GlassBackButton onPress={onBack} style={{ zIndex: 30 }} />
-        ) : (
-          <View />
-        )}
+        {!isDocked && (
+          <>
+            {!isOwnProfile && onBack ? (
+              <GlassBackButton onPress={onBack} style={{ zIndex: 30 }} />
+            ) : (
+              <View />
+            )}
 
-        <View style={styles.rightActions}>
+            <View style={styles.rightActions}>
           <TouchableOpacity
             activeOpacity={0.75}
             onPress={toggle}
-            style={[
-              styles.actionBtn,
-              { borderColor: colors.glassBorderStrong },
-            ]}
+            style={actionButtonStyle}
           >
             <FrostedGlass
               borderRadius={19}
@@ -283,10 +330,7 @@ export function ProfileHeaderComponent({
             <TouchableOpacity
               activeOpacity={0.75}
               onPress={onOpenSettings}
-              style={[
-                styles.actionBtn,
-                { borderColor: colors.glassBorderStrong },
-              ]}
+              style={actionButtonStyle}
             >
               <FrostedGlass
                 borderRadius={19}
@@ -301,24 +345,14 @@ export function ProfileHeaderComponent({
               </View>
             </TouchableOpacity>
           )}
-        </View>
+            </View>
+          </>
+        )}
       </Animated.View>
 
       {/* GPU-Accelerated Shrinking Avatar */}
       <Animated.View
-        style={[
-          styles.avatarContainer,
-          {
-            [isRTL ? 'right' : 'left']: 16,
-            opacity: avatarEnterOpacity,
-            transform: [
-              { translateY: combinedTranslateY },
-              { translateX },
-              { scale: combinedScale },
-            ],
-            borderColor: colors.glassBorderStrong,
-          },
-        ]}
+        style={avatarStyle}
         pointerEvents="none"
       >
         {profile.avatar_url ? (

@@ -5,7 +5,7 @@ import { View, StyleSheet, Platform, Animated, Easing } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { ThemeProvider, useTheme, ThemeContext, type ThemeContextValue } from './src/lib/theme';
+import { ThemeProvider, useTheme, useCurtain, ThemeContext, type ThemeContextValue } from './src/lib/theme';
 import { AppDataProvider, useAppData } from './src/lib/appData';
 import { BottomNav, type TabKey } from './src/components/BottomNav';
 import { ChatHeader } from './src/components/chat/ChatHeader';
@@ -70,6 +70,25 @@ export type Screen =
   | { name: 'location' }
   | { name: 'chatTheme' };
 
+function areChildrenEqual(
+  previous: React.ReactNode,
+  next: React.ReactNode
+): boolean {
+  if (Object.is(previous, next)) return true;
+  if (!React.isValidElement(previous) || !React.isValidElement(next)) return false;
+  if (previous.type !== next.type || previous.key !== next.key) return false;
+
+  const previousProps = previous.props as Record<string, unknown>;
+  const nextProps = next.props as Record<string, unknown>;
+  const previousKeys = Object.keys(previousProps);
+  const nextKeys = Object.keys(nextProps);
+
+  return (
+    previousKeys.length === nextKeys.length &&
+    previousKeys.every((key) => Object.is(previousProps[key], nextProps[key]))
+  );
+}
+
 const FreezeGate = React.memo(
   function FreezeGate({
     children,
@@ -80,9 +99,8 @@ const FreezeGate = React.memo(
     return <>{children}</>;
   },
   (prevProps, nextProps) => {
-    // If inactive, NEVER re-render children even when parent MainContent re-renders (e.g. on Theme Toggle!)
-    if (!nextProps.active && !prevProps.active) return true;
-    return false;
+    if (!nextProps.active) return true;
+    return areChildrenEqual(prevProps.children, nextProps.children);
   }
 );
 
@@ -100,8 +118,17 @@ function DeferredTabPane({
   children: React.ReactNode;
 }) {
   const rootTheme = useTheme();
-  // Visible tab always receives rootTheme directly in Frame 0 for zero-latency, synchronous updates
-  const effectiveTheme = visible ? rootTheme : (theme ?? rootTheme);
+  const lastVisibleTheme = React.useRef(theme ?? rootTheme);
+  const lastVisibleChildren = React.useRef(children);
+
+  React.useLayoutEffect(() => {
+    if (visible) {
+      lastVisibleTheme.current = rootTheme;
+      lastVisibleChildren.current = children;
+    }
+  }, [children, rootTheme, visible]);
+  const effectiveTheme = visible ? rootTheme : lastVisibleTheme.current;
+  const effectiveChildren = visible ? children : lastVisibleChildren.current;
 
   return (
     <ThemeContext.Provider value={effectiveTheme}>
@@ -115,7 +142,7 @@ function DeferredTabPane({
         ]}
         pointerEvents={visible ? 'auto' : 'none'}
       >
-        <FreezeGate active={active}>{children}</FreezeGate>
+        <FreezeGate active={active}>{effectiveChildren}</FreezeGate>
       </View>
     </ThemeContext.Provider>
   );
@@ -135,8 +162,17 @@ function DeferredHeaderPane({
   children: React.ReactNode;
 }) {
   const rootTheme = useTheme();
-  // Visible header always receives rootTheme directly in Frame 0 for zero-latency, synchronous updates
-  const effectiveTheme = visible ? rootTheme : (theme ?? rootTheme);
+  const lastVisibleTheme = React.useRef(theme ?? rootTheme);
+  const lastVisibleChildren = React.useRef(children);
+
+  React.useLayoutEffect(() => {
+    if (visible) {
+      lastVisibleTheme.current = rootTheme;
+      lastVisibleChildren.current = children;
+    }
+  }, [children, rootTheme, visible]);
+  const effectiveTheme = visible ? rootTheme : lastVisibleTheme.current;
+  const effectiveChildren = visible ? children : lastVisibleChildren.current;
 
   const anim = React.useRef(new Animated.Value(visible ? 1 : 0)).current;
 
@@ -174,7 +210,7 @@ function DeferredHeaderPane({
         ]}
         pointerEvents={visible ? pointerEvents : 'none'}
       >
-        <FreezeGate active={active}>{children}</FreezeGate>
+        <FreezeGate active={active}>{effectiveChildren}</FreezeGate>
       </Animated.View>
     </ThemeContext.Provider>
   );
@@ -185,7 +221,8 @@ const AppChrome = React.memo(function AppChrome({
 }: {
   children: React.ReactNode;
 }) {
-  const { isDark, curtain, curtainOpacity } = useTheme();
+  const { isDark } = useTheme();
+  const { curtain, curtainOpacity } = useCurtain();
 
   return (
     <SafeAreaView
@@ -312,6 +349,8 @@ function MainContent() {
   }, []);
 
   const [history, setHistory] = useState<Screen[]>([]);
+  const historyRef = React.useRef(history);
+  historyRef.current = history;
   const [createState, setCreateState] = useState({ step: 0, canProceed: false });
   const [chatSearch, setChatSearch] = useState('');
   const [discoverSearch, setDiscoverSearch] = useState('');
@@ -336,24 +375,39 @@ function MainContent() {
   const screenRef = React.useRef(screen);
   screenRef.current = screen;
 
+  const clearHistory = React.useCallback(() => {
+    if (historyRef.current.length === 0) return;
+    historyRef.current = [];
+    setHistory(historyRef.current);
+  }, []);
+
   const push = React.useCallback((s: Screen) => {
-    setHistory((prev) => [...prev, screenRef.current]);
+    const nextHistory = [...historyRef.current, screenRef.current];
+    historyRef.current = nextHistory;
+    setHistory(nextHistory);
     setScreen(s);
   }, []);
 
   const pop = React.useCallback(() => {
-    setHistory((prev) => {
-      if (prev.length === 0) return prev;
-      const next = [...prev];
-      const last = next.pop()!;
-      setScreen(last);
-      return next;
-    });
+    const currentHistory = historyRef.current;
+    if (currentHistory.length === 0) return;
+    const nextHistory = currentHistory.slice(0, -1);
+    historyRef.current = nextHistory;
+    setHistory(nextHistory);
+    setScreen(currentHistory[currentHistory.length - 1]);
   }, []);
 
   const switchTab = React.useCallback((t: TabKey) => {
+    const currentScreen = screenRef.current;
+    const targetScreenName = t === 'chat' ? 'chatList' : t;
+    const alreadyOnTarget =
+      currentScreen.name === targetScreenName &&
+      (t !== 'profile' ||
+        (currentScreen.name === 'profile' && currentScreen.userId === 'me'));
+    if (historyRef.current.length === 0 && alreadyOnTarget) return;
+
     setTab(t);
-    setHistory([]);
+    clearHistory();
     if (t === 'discover') setScreen({ name: 'discover' });
     else if (t === 'activity') setScreen({ name: 'activity' });
     else if (t === 'create') setScreen({ name: 'create' });
@@ -362,7 +416,7 @@ function MainContent() {
       profileScrollY.setValue(0);
       setScreen({ name: 'profile', userId: 'me' });
     }
-  }, [profileScrollY]);
+  }, [clearHistory, profileScrollY]);
 
   const handleOpenGroup = React.useCallback((g: Group) => {
     push({ name: 'group', group: g });
@@ -371,18 +425,18 @@ function MainContent() {
   const handleOpenProfile = React.useCallback((uid: string) => {
     if (uid === 'me') {
       setTab('profile');
-      setHistory([]);
+      clearHistory();
       setScreen({ name: 'profile', userId: 'me' });
     } else {
       push({ name: 'profile', userId: uid });
     }
-  }, [push]);
+  }, [clearHistory, push]);
 
   const handleOpenOwnProfile = React.useCallback(() => {
     setTab('profile');
-    setHistory([]);
+    clearHistory();
     setScreen({ name: 'profile', userId: 'me' });
-  }, []);
+  }, [clearHistory]);
 
   const handleOpenAI = React.useCallback(() => {
     push({ name: 'ai' });
@@ -437,8 +491,8 @@ function MainContent() {
     setOnboarded(false);
     setTab('discover');
     setScreen({ name: 'discover' });
-    setHistory([]);
-  }, []);
+    clearHistory();
+  }, [clearHistory]);
 
   const handleOpenFilters = React.useCallback(() => {
     discoverRef.current?.openFilters();
@@ -446,30 +500,30 @@ function MainContent() {
 
   const handleBackToActivity = React.useCallback(() => {
     setTab('activity');
-    setHistory([]);
+    clearHistory();
     setScreen({ name: 'activity' });
-  }, []);
+  }, [clearHistory]);
 
   const handleBackFromCreate = React.useCallback(() => {
-    setHistory((prev) => {
-      if (prev.length > 0) {
-        const next = [...prev];
-        const last = next.pop()!;
-        setScreen(last);
-        return next;
-      } else {
-        setTab('discover');
-        setScreen({ name: 'discover' });
-        return [];
-      }
-    });
-  }, []);
+    const currentHistory = historyRef.current;
+    if (currentHistory.length > 0) {
+      const nextHistory = currentHistory.slice(0, -1);
+      historyRef.current = nextHistory;
+      setHistory(nextHistory);
+      setScreen(currentHistory[currentHistory.length - 1]);
+      return;
+    }
+
+    setTab('discover');
+    setScreen({ name: 'discover' });
+    clearHistory();
+  }, [clearHistory]);
 
   const handleGroupCreated = React.useCallback((g: Group) => {
-    setHistory([]);
+    clearHistory();
     setScreen({ name: 'group', group: g });
     setTab('activity');
-  }, []);
+  }, [clearHistory]);
 
   const mainTabs: TabKey[] = ['discover', 'activity', 'create', 'chat', 'profile'];
   const currentMainIndex = mainTabs.indexOf(tab);
@@ -497,9 +551,9 @@ function MainContent() {
 
   const handleGoHome = React.useCallback(() => {
     setTab('discover');
-    setHistory([]);
+    clearHistory();
     setScreen({ name: 'discover' });
-  }, []);
+  }, [clearHistory]);
 
   const handleCreatePrev = React.useCallback(() => {
     createRef.current?.handlePrev();
@@ -533,60 +587,163 @@ function MainContent() {
     (screen.name === 'profile' && screen.userId === 'me');
 
   const rootTheme = useTheme();
+  const [frozenBootTheme] = React.useState(rootTheme);
 
-  const [tabThemes, setTabThemes] = React.useState<Record<TabKey, ThemeContextValue>>({
-    discover: rootTheme,
-    activity: rootTheme,
-    create: rootTheme,
-    chat: rootTheme,
-    profile: rootTheme,
-  });
-
-  const tabThemesRef = React.useRef(tabThemes);
-  tabThemesRef.current = tabThemes;
-
-  React.useEffect(() => {
-    // If on a stack screen (Settings, conversation, etc.), pause ALL main tab syncing!
-    if (!isMainScreen) return;
-
-    // Inactive background tabs are synced sequentially during idle frames
-    let isCancelled = false;
-    const inactiveTabs = mainTabs.filter(
-      (t) => t !== tab && tabThemesRef.current[t] !== rootTheme
-    );
-    if (inactiveTabs.length === 0) return;
-
-    let currentIndex = 0;
-    const syncNextTab = () => {
-      if (isCancelled || currentIndex >= inactiveTabs.length) return;
-      const nextTab = inactiveTabs[currentIndex++];
-
-      const runSync = () => {
-        if (isCancelled) return;
-        setTabThemes((prev) => ({ ...prev, [nextTab]: rootTheme }));
-        setTimeout(() => {
-          if (!isCancelled) syncNextTab();
-        }, 160);
-      };
-
-      if (typeof (globalThis as any).requestIdleCallback !== 'undefined') {
-        (globalThis as any).requestIdleCallback(runSync);
-      } else {
-        requestAnimationFrame(() => {
-          setTimeout(runSync, 40);
-        });
-      }
-    };
-
-    const initialTimer = setTimeout(() => {
-      syncNextTab();
-    }, 240);
-
-    return () => {
-      isCancelled = true;
-      clearTimeout(initialTimer);
-    };
-  }, [rootTheme, tab, isMainScreen]);
+  const discoverTabContent = React.useMemo(
+    () => (
+      <DiscoverScreen
+        ref={discoverRef}
+        search={discoverSearch}
+        onChangeSearch={setDiscoverSearch}
+        onOpenGroup={handleOpenGroup}
+        onOpenProfile={handleOpenProfile}
+        onOpenOwnProfile={handleOpenOwnProfile}
+        onOpenAI={handleOpenAI}
+        onOpenNotifications={handleOpenNotifications}
+      />
+    ),
+    [
+      discoverSearch,
+      handleOpenAI,
+      handleOpenGroup,
+      handleOpenNotifications,
+      handleOpenOwnProfile,
+      handleOpenProfile,
+    ]
+  );
+  const activityTabContent = React.useMemo(
+    () => (
+      <ActivityScreen
+        tab={activityTab}
+        onChangeTab={setActivityTab}
+        onOpenGroup={handleOpenGroup}
+        onOpenProfile={handleOpenProfile}
+        onOpenNotifications={handleOpenNotifications}
+      />
+    ),
+    [
+      activityTab,
+      handleOpenGroup,
+      handleOpenNotifications,
+      handleOpenProfile,
+    ]
+  );
+  const createTabContent = React.useMemo(
+    () => (
+      <CreateScreen
+        ref={createRef}
+        onStateChange={setCreateState}
+        onBack={handleBackFromCreate}
+        onCreated={handleGroupCreated}
+      />
+    ),
+    [handleBackFromCreate, handleGroupCreated]
+  );
+  const chatTabContent = React.useMemo(
+    () => (
+      <ChatListScreen
+        search={chatSearch}
+        onOpenConversation={handleOpenConversation}
+        onOpenNotifications={handleOpenNotifications}
+      />
+    ),
+    [chatSearch, handleOpenConversation, handleOpenNotifications]
+  );
+  const profileTabContent = React.useMemo(
+    () => (
+      <ProfileScreen
+        userId="me"
+        isOwnProfile={true}
+        onBack={pop}
+        onOpenGroup={handleOpenGroup}
+        onOpenSettings={handleOpenSettings}
+        onOpenPersonalInfo={handleOpenPersonalInfo}
+        onOpenVerification={handleOpenVerification}
+        scrollY={profileScrollY}
+      />
+    ),
+    [
+      handleOpenGroup,
+      handleOpenPersonalInfo,
+      handleOpenSettings,
+      handleOpenVerification,
+      pop,
+      profileScrollY,
+    ]
+  );
+  const discoverHeaderContent = React.useMemo(
+    () => (
+      <DiscoverHeader
+        user={me}
+        unreadCount={unreadNotificationsCount}
+        search={discoverSearch}
+        onChangeSearch={setDiscoverSearch}
+        hasActiveFilters={false}
+        onOpenFilters={handleOpenFilters}
+        onOpenNotifications={handleOpenNotifications}
+        onOpenOwnProfile={handleOpenOwnProfile}
+      />
+    ),
+    [
+      discoverSearch,
+      handleOpenFilters,
+      handleOpenNotifications,
+      handleOpenOwnProfile,
+      me,
+      unreadNotificationsCount,
+    ]
+  );
+  const activityHeaderContent = React.useMemo(
+    () => (
+      <ActivityHeader
+        unreadCount={unreadNotificationsCount}
+        tab={activityTab}
+        onChangeTab={setActivityTab}
+        onOpenNotifications={handleOpenNotifications}
+      />
+    ),
+    [activityTab, handleOpenNotifications, unreadNotificationsCount]
+  );
+  const createHeaderContent = React.useMemo(
+    () => (
+      <CreateHeader
+        step={createState.step}
+        totalSteps={4}
+        onBack={handleCreatePrev}
+        onOpenAI={handleCreateOpenAI}
+      />
+    ),
+    [createState.step, handleCreateOpenAI, handleCreatePrev]
+  );
+  const chatHeaderContent = React.useMemo(
+    () => (
+      <ChatListHeader
+        unreadTotal={unreadConversationsTotal}
+        notificationsCount={unreadNotificationsCount}
+        search={chatSearch}
+        onChangeSearch={setChatSearch}
+        onOpenNotifications={handleOpenNotifications}
+      />
+    ),
+    [
+      chatSearch,
+      handleOpenNotifications,
+      unreadConversationsTotal,
+      unreadNotificationsCount,
+    ]
+  );
+  const profileHeaderContent = React.useMemo(
+    () => (
+      <ProfileHeader
+        profile={me}
+        isOwnProfile={true}
+        onBack={pop}
+        onOpenSettings={handleOpenSettings}
+        scrollY={profileScrollY}
+      />
+    ),
+    [handleOpenSettings, me, pop, profileScrollY]
+  );
 
   return (
     <AppChrome>
@@ -597,6 +754,7 @@ function MainContent() {
             active={isBootLoading || !authed}
             visible={!authed}
             zIndexActive={20}
+            theme={frozenBootTheme}
           >
             <View style={styles.screenContainer}>
               <ScreenTransition screenKey={`auth-${language}`}>
@@ -612,6 +770,7 @@ function MainContent() {
             active={isBootLoading || (authed && !onboarded)}
             visible={authed && !onboarded}
             zIndexActive={20}
+            theme={frozenBootTheme}
           >
             <View style={styles.screenContainer}>
               <ScreenTransition screenKey={`onboarding-${language}`}>
@@ -648,18 +807,8 @@ function MainContent() {
                     <DeferredTabPane
                       active={isBootLoading || isDiscoverActive}
                       visible={isDiscoverActive}
-                      theme={tabThemes.discover}
                     >
-                      <DiscoverScreen
-                        ref={discoverRef}
-                        search={discoverSearch}
-                        onChangeSearch={setDiscoverSearch}
-                        onOpenGroup={handleOpenGroup}
-                        onOpenProfile={handleOpenProfile}
-                        onOpenOwnProfile={handleOpenOwnProfile}
-                        onOpenAI={handleOpenAI}
-                        onOpenNotifications={handleOpenNotifications}
-                      />
+                      {discoverTabContent}
                     </DeferredTabPane>
                   )}
 
@@ -668,15 +817,8 @@ function MainContent() {
                     <DeferredTabPane
                       active={isBootLoading || isActivityActive}
                       visible={isActivityActive}
-                      theme={tabThemes.activity}
                     >
-                      <ActivityScreen
-                        tab={activityTab}
-                        onChangeTab={setActivityTab}
-                        onOpenGroup={handleOpenGroup}
-                        onOpenProfile={handleOpenProfile}
-                        onOpenNotifications={handleOpenNotifications}
-                      />
+                      {activityTabContent}
                     </DeferredTabPane>
                   )}
 
@@ -685,14 +827,8 @@ function MainContent() {
                     <DeferredTabPane
                       active={isBootLoading || isCreateActive}
                       visible={isCreateActive}
-                      theme={tabThemes.create}
                     >
-                      <CreateScreen
-                        ref={createRef}
-                        onStateChange={setCreateState}
-                        onBack={handleBackFromCreate}
-                        onCreated={handleGroupCreated}
-                      />
+                      {createTabContent}
                     </DeferredTabPane>
                   )}
 
@@ -701,13 +837,8 @@ function MainContent() {
                     <DeferredTabPane
                       active={isBootLoading || isChatListActive}
                       visible={isChatListActive}
-                      theme={tabThemes.chat}
                     >
-                      <ChatListScreen
-                        search={chatSearch}
-                        onOpenConversation={handleOpenConversation}
-                        onOpenNotifications={handleOpenNotifications}
-                      />
+                      {chatTabContent}
                     </DeferredTabPane>
                   )}
 
@@ -716,18 +847,8 @@ function MainContent() {
                     <DeferredTabPane
                       active={isBootLoading || isOwnProfileActive}
                       visible={isOwnProfileActive}
-                      theme={tabThemes.profile}
                     >
-                      <ProfileScreen
-                        userId="me"
-                        isOwnProfile={true}
-                        onBack={pop}
-                        onOpenGroup={handleOpenGroup}
-                        onOpenSettings={handleOpenSettings}
-                        onOpenPersonalInfo={handleOpenPersonalInfo}
-                        onOpenVerification={handleOpenVerification}
-                        scrollY={profileScrollY}
-                      />
+                      {profileTabContent}
                     </DeferredTabPane>
                   )}
 
@@ -807,7 +928,7 @@ function MainContent() {
                     <Onboarding
                       onComplete={() => {
                         setTab('discover');
-                        setHistory([]);
+                        clearHistory();
                         setScreen({ name: 'discover' });
                       }}
                     />
@@ -823,19 +944,9 @@ function MainContent() {
             <DeferredHeaderPane
               active={isBootLoading || isDiscoverActive}
               visible={isDiscoverActive}
-              theme={tabThemes.discover}
               pointerEvents="box-none"
             >
-              <DiscoverHeader
-                user={me}
-                unreadCount={unreadNotificationsCount}
-                search={discoverSearch}
-                onChangeSearch={setDiscoverSearch}
-                hasActiveFilters={false}
-                onOpenFilters={handleOpenFilters}
-                onOpenNotifications={handleOpenNotifications}
-                onOpenOwnProfile={handleOpenOwnProfile}
-              />
+              {discoverHeaderContent}
             </DeferredHeaderPane>
           )}
 
@@ -844,15 +955,9 @@ function MainContent() {
             <DeferredHeaderPane
               active={isBootLoading || isActivityActive}
               visible={isActivityActive}
-              theme={tabThemes.activity}
               pointerEvents="box-none"
             >
-              <ActivityHeader
-                unreadCount={unreadNotificationsCount}
-                tab={activityTab}
-                onChangeTab={setActivityTab}
-                onOpenNotifications={handleOpenNotifications}
-              />
+              {activityHeaderContent}
             </DeferredHeaderPane>
           )}
 
@@ -861,15 +966,9 @@ function MainContent() {
             <DeferredHeaderPane
               active={isBootLoading || isCreateActive}
               visible={isCreateActive}
-              theme={tabThemes.create}
               pointerEvents="box-none"
             >
-              <CreateHeader
-                step={createState.step}
-                totalSteps={4}
-                onBack={handleCreatePrev}
-                onOpenAI={handleCreateOpenAI}
-              />
+              {createHeaderContent}
             </DeferredHeaderPane>
           )}
 
@@ -888,16 +987,9 @@ function MainContent() {
             <DeferredHeaderPane
               active={isBootLoading || isChatListActive}
               visible={isChatListActive}
-              theme={tabThemes.chat}
               pointerEvents="box-none"
             >
-              <ChatListHeader
-                unreadTotal={unreadConversationsTotal}
-                notificationsCount={unreadNotificationsCount}
-                search={chatSearch}
-                onChangeSearch={setChatSearch}
-                onOpenNotifications={handleOpenNotifications}
-              />
+              {chatHeaderContent}
             </DeferredHeaderPane>
           )}
 
@@ -906,16 +998,9 @@ function MainContent() {
             <DeferredHeaderPane
               active={isBootLoading || isOwnProfileActive}
               visible={isOwnProfileActive}
-              theme={tabThemes.profile}
               pointerEvents="box-none"
             >
-              <ProfileHeader
-                profile={me}
-                isOwnProfile={true}
-                onBack={pop}
-                onOpenSettings={handleOpenSettings}
-                scrollY={profileScrollY}
-              />
+              {profileHeaderContent}
             </DeferredHeaderPane>
           )}
 

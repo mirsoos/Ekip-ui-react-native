@@ -3,8 +3,23 @@ import { View, StyleSheet, Platform } from 'react-native';
 import Svg, { Defs, RadialGradient, Stop, Rect } from 'react-native-svg';
 import { useTheme } from '../lib/theme';
 
+const DARK_GRADIENT_OPACITIES = {
+  cyan: [0.28, 0.1, 0],
+  pink: [0.24, 0.08, 0],
+  indigo: [0.22, 0.06, 0],
+} as const;
+const LIGHT_GRADIENT_OPACITIES = {
+  cyan: [0.4, 0.16, 0],
+  pink: [0.35, 0.14, 0],
+  indigo: [0.32, 0.12, 0],
+} as const;
+
 export const AuroraBackground = React.memo(function AuroraBackground() {
   const { isDark } = useTheme();
+  const gradientOpacities = React.useMemo(
+    () => (isDark ? DARK_GRADIENT_OPACITIES : LIGHT_GRADIENT_OPACITIES),
+    [isDark]
+  );
 
   if (Platform.OS === 'web') {
     return (
@@ -38,12 +53,12 @@ export const AuroraBackground = React.memo(function AuroraBackground() {
             <Stop
               offset="0%"
               stopColor="#38bdf8"
-              stopOpacity={isDark ? 0.28 : 0.40}
+              stopOpacity={gradientOpacities.cyan[0]}
             />
             <Stop
               offset="50%"
               stopColor="#38bdf8"
-              stopOpacity={isDark ? 0.10 : 0.16}
+              stopOpacity={gradientOpacities.cyan[1]}
             />
             <Stop offset="100%" stopColor="#38bdf8" stopOpacity={0} />
           </RadialGradient>
@@ -53,12 +68,12 @@ export const AuroraBackground = React.memo(function AuroraBackground() {
             <Stop
               offset="0%"
               stopColor="#f472b6"
-              stopOpacity={isDark ? 0.24 : 0.35}
+              stopOpacity={gradientOpacities.pink[0]}
             />
             <Stop
               offset="55%"
               stopColor="#f472b6"
-              stopOpacity={isDark ? 0.08 : 0.14}
+              stopOpacity={gradientOpacities.pink[1]}
             />
             <Stop offset="100%" stopColor="#f472b6" stopOpacity={0} />
           </RadialGradient>
@@ -68,12 +83,12 @@ export const AuroraBackground = React.memo(function AuroraBackground() {
             <Stop
               offset="0%"
               stopColor="#6366f1"
-              stopOpacity={isDark ? 0.22 : 0.32}
+              stopOpacity={gradientOpacities.indigo[0]}
             />
             <Stop
               offset="60%"
               stopColor="#6366f1"
-              stopOpacity={isDark ? 0.06 : 0.12}
+              stopOpacity={gradientOpacities.indigo[1]}
             />
             <Stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
           </RadialGradient>
@@ -86,5 +101,3 @@ export const AuroraBackground = React.memo(function AuroraBackground() {
     </View>
   );
 });
-
-const styles = StyleSheet.create({});
