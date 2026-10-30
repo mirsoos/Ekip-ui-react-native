@@ -83,11 +83,11 @@ export const CreateScreen = React.memo(
     return true;
   };
 
-  const toggleTag = (tag: string) => {
+  const toggleTag = React.useCallback((tag: string) => {
     setTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
-  };
+  }, []);
 
   const handleNext = () => {
     if (step < totalSteps - 1) {

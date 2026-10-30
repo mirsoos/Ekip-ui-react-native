@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassEmpty, GlassBadgeIcon, GlassButton } from '../components/Glass';
 import { Toast } from '../components/Overlays';
@@ -10,7 +9,6 @@ import { RequestsModal } from '../components/activity/RequestsModal';
 import { getIcon, type IconName } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
-import { useDeferredMount } from '../lib/useDeferredMount';
 import type { Group, GroupMember, GroupRequest } from '../types/database';
 
 const EMPTY_GROUP_REQUESTS: GroupRequest[] = [];
@@ -40,7 +38,6 @@ export function ActivityScreenComponent({
   const [showRequests, setShowRequests] = useState(false);
   const [requestsGroupId, setRequestsGroupId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
-  const isDeferredReady = useDeferredMount(32);
 
   const {
     groupsById,
@@ -114,10 +111,179 @@ export function ActivityScreenComponent({
   const activeGroupRequests = requestsGroupId
     ? pendingRequestsByGroup.get(requestsGroupId) ?? EMPTY_GROUP_REQUESTS
     : EMPTY_GROUP_REQUESTS;
+  const listData = useMemo(
+    () => activeTab === 'created'
+      ? createdGroups
+      : activeTab === 'joined'
+      ? joinedGroups
+      : myRequests.filter((request) => groupsById.has(request.group_id)),
+    [activeTab, createdGroups, groupsById, joinedGroups, myRequests]
+  );
+  const renderItem = useCallback(({ item }: { item: Group | GroupRequest }) => {
+    if (activeTab === 'created' && !('group_id' in item)) {
+      const group = item;
+      const pendingReqs = pendingRequestsByGroup.get(group.id) ?? EMPTY_GROUP_REQUESTS;
+      const groupMembers = activeMembersByGroup.get(group.id) ?? EMPTY_GROUP_MEMBERS;
+
+      return (
+        <GlassCard style={styles.cardContainer}>
+          <TouchableOpacity
+            activeOpacity={0.88}
+            onPress={() => onOpenGroup(group)}
+            style={styles.bannerWrapper}
+          >
+            {group.cover_url ? (
+              <Image source={{ uri: group.cover_url }} style={styles.bannerImage} resizeMode="cover" />
+            ) : (
+              <View style={[styles.bannerImage, { backgroundColor: colors.glassThinBg }]} />
+            )}
+            <View style={styles.bannerContent}>
+              <View style={{ flex: 1, marginRight: 10 }}>
+                <Text style={styles.bannerTitle} numberOfLines={1}>{group.title}</Text>
+                <Text style={styles.bannerDate}>
+                  {new Date(group.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </Text>
+              </View>
+              <GlassBadgeIcon icon="Crown" label={t('activity.owner')} color="amber" />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.cardBody}>
+            <View style={styles.statsGrid}>
+              <StatBox icon="Users" value={groupMembers.length} label={t('common.members')} />
+              <StatBox
+                icon="UserPlus"
+                value={pendingReqs.length}
+                label={t('activity.requests')}
+                highlight={pendingReqs.length > 0}
+                onPress={() => openRequests(group.id)}
+              />
+              <StatBox icon="Eye" value={group.views} label={t('activity.views')} />
+              <StatBox icon="TrendingUp" value={group.member_count} label={t('activity.joined')} />
+            </View>
+            <View style={styles.actionsRow}>
+              <View style={{ flex: 1 }}>
+                <GlassButton
+                  size="sm"
+                  variant="secondary"
+                  icon="Edit"
+                  onPress={() => onOpenGroup(group)}
+                  fullWidth
+                >
+                  {t('common.edit')}
+                </GlassButton>
+              </View>
+              {pendingReqs.length > 0 && (
+                <View style={{ flex: 1 }}>
+                  <GlassButton
+                    size="sm"
+                    icon="UserPlus"
+                    onPress={() => openRequests(group.id)}
+                    fullWidth
+                  >
+                    {t('activity.requestsPending', { count: pendingReqs.length })}
+                  </GlassButton>
+                </View>
+              )}
+            </View>
+          </View>
+        </GlassCard>
+      );
+    }
+
+    if (activeTab === 'joined' && !('group_id' in item)) {
+      const group = item;
+      return (
+        <TouchableOpacity activeOpacity={0.82} onPress={() => onOpenGroup(group)}>
+          <GlassCard variant="thin" style={styles.joinedCard}>
+            {group.cover_url ? (
+              <Image source={{ uri: group.cover_url }} style={styles.thumbImage} resizeMode="cover" />
+            ) : (
+              <View style={[styles.thumbImage, { backgroundColor: colors.glassThinBg }]} />
+            )}
+            <View style={styles.joinedInfo}>
+              <Text style={[styles.groupTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                {group.title}
+              </Text>
+              <Text style={[styles.groupMeta, { color: colors.textTertiary }]}>
+                {group.city} · {new Date(group.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </Text>
+              <GlassBadgeIcon icon="CheckCircle2" label={t('activity.joinedBadge')} color="green" />
+            </View>
+            <ChevronRight size={18} color={colors.textTertiary} />
+          </GlassCard>
+        </TouchableOpacity>
+      );
+    }
+
+    if (activeTab === 'requested' && 'group_id' in item) {
+      const group = groupsById.get(item.group_id);
+      if (!group) return null;
+      const statusConfig: Record<string, { icon: IconName; color: 'blue' | 'green' | 'pink'; label: string }> = {
+        pending: { icon: 'Clock', color: 'blue', label: t('activity.pendingBadge') },
+        accepted: { icon: 'CheckCircle2', color: 'green', label: t('activity.acceptedBadge') },
+        rejected: { icon: 'XCircle', color: 'pink', label: t('activity.rejectedBadge') },
+      };
+      const status = statusConfig[item.status] ?? statusConfig.pending;
+      return (
+        <TouchableOpacity activeOpacity={0.82} onPress={() => onOpenGroup(group)}>
+          <GlassCard variant="thin" style={styles.joinedCard}>
+            {group.cover_url ? (
+              <Image source={{ uri: group.cover_url }} style={styles.thumbImage} resizeMode="cover" />
+            ) : (
+              <View style={[styles.thumbImage, { backgroundColor: colors.glassThinBg }]} />
+            )}
+            <View style={styles.joinedInfo}>
+              <Text style={[styles.groupTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                {group.title}
+              </Text>
+              <Text style={[styles.groupMeta, { color: colors.textTertiary }]}>
+                {new Date(group.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </Text>
+              <GlassBadgeIcon icon={status.icon} label={status.label} color={status.color} />
+            </View>
+            <ChevronRight size={18} color={colors.textTertiary} />
+          </GlassCard>
+        </TouchableOpacity>
+      );
+    }
+    return null;
+  }, [
+    activeMembersByGroup,
+    activeTab,
+    colors,
+    ChevronRight,
+    groupsById,
+    isRTL,
+    onOpenGroup,
+    openRequests,
+    pendingRequestsByGroup,
+    t,
+  ]);
+  const emptyList = activeTab === 'created'
+    ? <GlassEmpty icon="Crown" title={t('activity.noCreated')} subtitle={t('activity.noCreatedSub')} />
+    : activeTab === 'joined'
+    ? <GlassEmpty icon="Users" title={t('activity.noJoined')} subtitle={t('activity.noJoinedSub')} />
+    : <GlassEmpty icon="Clock" title={t('activity.noRequests')} subtitle={t('activity.noRequestsSub')} />;
 
   return (
     <View style={styles.container}>
-      <ScrollView
+      <FlatList<Group | GroupRequest>
+        data={listData}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        initialNumToRender={4}
+        maxToRenderPerBatch={4}
+        windowSize={3}
+        removeClippedSubviews={Platform.OS === 'android'}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
@@ -126,242 +292,9 @@ export function ActivityScreenComponent({
             paddingBottom: 90 + insets.bottom,
           },
         ]}
-      >
-        {/* Created Tab */}
-        {activeTab === 'created' && (
-          <View key="created" className="animate-raise" style={{ gap: 16 }}>
-            {createdGroups.length === 0 ? (
-              <GlassEmpty
-                icon="Crown"
-                title={t('activity.noCreated')}
-                subtitle={t('activity.noCreatedSub')}
-              />
-            ) : (
-              (isDeferredReady ? createdGroups : createdGroups.slice(0, 2)).map((g) => {
-                const pendingReqs = pendingRequestsByGroup.get(g.id) ?? EMPTY_GROUP_REQUESTS;
-                const groupMembers = activeMembersByGroup.get(g.id) ?? EMPTY_GROUP_MEMBERS;
-
-                return (
-                  <GlassCard key={g.id} style={styles.cardContainer}>
-                    {/* Cover image banner with gradient & title overlay */}
-                    <TouchableOpacity
-                      activeOpacity={0.88}
-                      onPress={() => onOpenGroup(g)}
-                      style={styles.bannerWrapper}
-                    >
-                      {g.cover_url ? (
-                        <Image
-                          source={{ uri: g.cover_url }}
-                          style={styles.bannerImage}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View style={[styles.bannerImage, { backgroundColor: colors.glassThinBg }]} />
-                      )}
-                      <LinearGradient
-                        colors={['transparent', 'rgba(0, 0, 0, 0.72)']}
-                        style={styles.bannerGradient}
-                      />
-                      <View style={styles.bannerContent}>
-                        <View style={{ flex: 1, marginRight: 10 }}>
-                          <Text style={styles.bannerTitle} numberOfLines={1}>
-                            {g.title}
-                          </Text>
-                          <Text style={styles.bannerDate}>
-                            {new Date(g.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </Text>
-                        </View>
-                        <GlassBadgeIcon icon="Crown" label={t('activity.owner')} color="amber" />
-                      </View>
-                    </TouchableOpacity>
-
-                    {/* Stats & Management Actions Body */}
-                    <View style={styles.cardBody}>
-                      {/* Metric Stat Boxes: Members, Requests, Views, Joined */}
-                      <View style={styles.statsGrid}>
-                        <StatBox
-                          icon="Users"
-                          value={groupMembers.length}
-                          label={t('common.members')}
-                          style={{ marginHorizontal: 2 }}
-                        />
-                        <StatBox
-                          icon="UserPlus"
-                          value={pendingReqs.length}
-                          label={t('activity.requests')}
-                          highlight={pendingReqs.length > 0}
-                          onPress={() => openRequests(g.id)}
-                          style={{ marginHorizontal: 2 }}
-                        />
-                        <StatBox
-                          icon="Eye"
-                          value={g.views}
-                          label={t('activity.views')}
-                          style={{ marginHorizontal: 2 }}
-                        />
-                        <StatBox
-                          icon="TrendingUp"
-                          value={g.member_count}
-                          label={t('activity.joined')}
-                          style={{ marginHorizontal: 2 }}
-                        />
-                      </View>
-
-                      {/* Action buttons */}
-                      <View style={styles.actionsRow}>
-                        <View style={{ flex: 1 }}>
-                          <GlassButton
-                            size="sm"
-                            variant="secondary"
-                            icon="Edit"
-                            onPress={() => onOpenGroup(g)}
-                            fullWidth
-                          >
-                            {t('common.edit')}
-                          </GlassButton>
-                        </View>
-                        {pendingReqs.length > 0 && (
-                          <View style={{ flex: 1 }}>
-                            <GlassButton
-                              size="sm"
-                              icon="UserPlus"
-                              onPress={() => openRequests(g.id)}
-                              fullWidth
-                            >
-                              {t('activity.requestsPending', { count: pendingReqs.length })}
-                            </GlassButton>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  </GlassCard>
-                );
-              })
-            )}
-          </View>
-        )}
-
-        {/* Joined Tab */}
-        {activeTab === 'joined' && (
-          <View key="joined" className="animate-raise" style={{ gap: 12 }}>
-            {joinedGroups.length === 0 ? (
-              <GlassEmpty
-                icon="Users"
-                title={t('activity.noJoined')}
-                subtitle={t('activity.noJoinedSub')}
-              />
-            ) : (
-              (isDeferredReady ? joinedGroups : joinedGroups.slice(0, 3)).map((g) => (
-                <TouchableOpacity
-                  key={g.id}
-                  activeOpacity={0.82}
-                  onPress={() => onOpenGroup(g)}
-                >
-                  <GlassCard variant="thin" style={styles.joinedCard}>
-                    {g.cover_url ? (
-                      <Image
-                        source={{ uri: g.cover_url }}
-                        style={styles.thumbImage}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View style={[styles.thumbImage, { backgroundColor: colors.glassThinBg }]} />
-                    )}
-                    <View style={styles.joinedInfo}>
-                      <Text
-                        style={[styles.groupTitle, { color: colors.textPrimary }]}
-                        numberOfLines={1}
-                      >
-                        {g.title}
-                      </Text>
-                      <Text style={[styles.groupMeta, { color: colors.textTertiary }]}>
-                        {new Date(g.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                        })}{' '}
-                        · {g.city}
-                      </Text>
-                      <View style={{ marginTop: 4, flexDirection: 'row', alignItems: 'center' }}>
-                        <GlassBadgeIcon icon="CheckCircle2" label={t('activity.joinedBadge')} color="green" />
-                      </View>
-                    </View>
-                    <ChevronRight size={18} color={colors.textTertiary} style={{ alignSelf: 'center' }} />
-                  </GlassCard>
-                </TouchableOpacity>
-              ))
-            )}
-          </View>
-        )}
-
-        {/* Requested Tab */}
-        {activeTab === 'requested' && (
-          <View key="requested" className="animate-raise" style={{ gap: 12 }}>
-            {myRequests.length === 0 ? (
-              <GlassEmpty
-                icon="Clock"
-                title={t('activity.noRequests')}
-                subtitle={t('activity.noRequestsSub')}
-              />
-            ) : (
-              myRequests.map((r) => {
-                const g = groupsById.get(r.group_id);
-                if (!g) return null;
-
-                const statusConfig: Record<
-                  string,
-                  { icon: IconName; color: 'blue' | 'green' | 'pink'; label: string }
-                > = {
-                  pending: { icon: 'Clock', color: 'blue', label: t('activity.pendingBadge') },
-                  accepted: { icon: 'CheckCircle2', color: 'green', label: t('activity.acceptedBadge') },
-                  rejected: { icon: 'XCircle', color: 'pink', label: t('activity.rejectedBadge') },
-                };
-                const sc = statusConfig[r.status] ?? statusConfig.pending;
-
-                return (
-                  <TouchableOpacity
-                    key={r.id}
-                    activeOpacity={0.82}
-                    onPress={() => onOpenGroup(g)}
-                  >
-                    <GlassCard variant="thin" style={styles.joinedCard}>
-                      {g.cover_url ? (
-                        <Image
-                          source={{ uri: g.cover_url }}
-                          style={styles.thumbImage}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View style={[styles.thumbImage, { backgroundColor: colors.glassThinBg }]} />
-                      )}
-                      <View style={styles.joinedInfo}>
-                        <Text
-                          style={[styles.groupTitle, { color: colors.textPrimary }]}
-                          numberOfLines={1}
-                        >
-                          {g.title}
-                        </Text>
-                        <Text style={[styles.groupMeta, { color: colors.textTertiary }]}>
-                          {new Date(g.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </Text>
-                        <View style={{ marginTop: 4, flexDirection: 'row', alignItems: 'center' }}>
-                          <GlassBadgeIcon icon={sc.icon} label={sc.label} color={sc.color} />
-                        </View>
-                      </View>
-                      <ChevronRight size={18} color={colors.textTertiary} style={{ alignSelf: 'center' }} />
-                    </GlassCard>
-                  </TouchableOpacity>
-                );
-              })
-            )}
-          </View>
-        )}
-      </ScrollView>
+        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        ListEmptyComponent={emptyList}
+      />
 
       {/* Requests Modal Sheet */}
       <RequestsModal
@@ -420,9 +353,6 @@ const styles = StyleSheet.create({
   bannerImage: {
     width: '100%',
     height: '100%',
-  },
-  bannerGradient: {
-    ...(StyleSheet.absoluteFill as object),
   },
   bannerContent: {
     position: 'absolute',

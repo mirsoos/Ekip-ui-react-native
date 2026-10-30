@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import Svg, { Defs, RadialGradient, Stop, Rect } from 'react-native-svg';
-import { useTheme } from '../lib/theme';
 
 const DARK_GRADIENT_OPACITIES = {
   cyan: [0.28, 0.1, 0],
@@ -14,8 +13,11 @@ const LIGHT_GRADIENT_OPACITIES = {
   indigo: [0.32, 0.12, 0],
 } as const;
 
-export const AuroraBackground = React.memo(function AuroraBackground() {
-  const { isDark } = useTheme();
+export const AuroraBackground = React.memo(function AuroraBackground({
+  isDark,
+}: {
+  isDark: boolean;
+}) {
   const gradientOpacities = React.useMemo(
     () => (isDark ? DARK_GRADIENT_OPACITIES : LIGHT_GRADIENT_OPACITIES),
     [isDark]

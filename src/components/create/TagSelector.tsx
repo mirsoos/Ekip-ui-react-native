@@ -3,6 +3,24 @@ import { View, Text, StyleSheet } from 'react-native';
 import { GlassChip } from '../Glass';
 import { useTheme } from '../../lib/theme';
 
+const TagSelectorChip = React.memo(function TagSelectorChip({
+  tag,
+  selected,
+  onToggleTag,
+}: {
+  tag: string;
+  selected: boolean;
+  onToggleTag: (tag: string) => void;
+}) {
+  const handlePress = React.useCallback(() => onToggleTag(tag), [onToggleTag, tag]);
+
+  return (
+    <GlassChip active={selected} onPress={handlePress}>
+      {tag}
+    </GlassChip>
+  );
+});
+
 export function TagSelector({
   availableTags,
   selectedTags,
@@ -29,13 +47,12 @@ export function TagSelector({
         {availableTags.map((tag) => {
           const isSelected = selectedTags.includes(tag);
           return (
-            <GlassChip
+            <TagSelectorChip
               key={tag}
-              active={isSelected}
-              onPress={() => onToggleTag(tag)}
-            >
-              {tag}
-            </GlassChip>
+              tag={tag}
+              selected={isSelected}
+              onToggleTag={onToggleTag}
+            />
           );
         })}
       </View>

@@ -1,11 +1,14 @@
 // --- START OF FILE App.tsx ---
 
 import React, { useState } from 'react';
-import { View, StyleSheet, Platform, Animated, Easing } from 'react-native';
+import { View, StyleSheet, Platform, Animated } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { ThemeProvider, useTheme, useCurtain, ThemeContext, type ThemeContextValue } from './src/lib/theme';
+import {
+  ThemeProvider,
+  useTheme,
+} from './src/lib/theme';
 import { AppDataProvider, useAppData } from './src/lib/appData';
 import { BottomNav, type TabKey } from './src/components/BottomNav';
 import { ChatHeader } from './src/components/chat/ChatHeader';
@@ -45,7 +48,6 @@ import { Loading } from './src/screens/Loading';
 
 import { AuroraBackground } from './src/components/AuroraBackground';
 import { SwipeNavigationContainer } from './src/components/common/SwipeNavigationContainer';
-import { ScreenTransition } from './src/components/common/ScreenTransition';
 import { ErrorBoundary } from './src/components/common/ErrorBoundary';
 import { I18nProvider, useI18n } from './src/lib/i18n';
 
@@ -70,159 +72,12 @@ export type Screen =
   | { name: 'location' }
   | { name: 'chatTheme' };
 
-function areChildrenEqual(
-  previous: React.ReactNode,
-  next: React.ReactNode
-): boolean {
-  if (Object.is(previous, next)) return true;
-  if (!React.isValidElement(previous) || !React.isValidElement(next)) return false;
-  if (previous.type !== next.type || previous.key !== next.key) return false;
-
-  const previousProps = previous.props as Record<string, unknown>;
-  const nextProps = next.props as Record<string, unknown>;
-  const previousKeys = Object.keys(previousProps);
-  const nextKeys = Object.keys(nextProps);
-
-  return (
-    previousKeys.length === nextKeys.length &&
-    previousKeys.every((key) => Object.is(previousProps[key], nextProps[key]))
-  );
-}
-
-const FreezeGate = React.memo(
-  function FreezeGate({
-    children,
-  }: {
-    active: boolean;
-    children: React.ReactNode;
-  }) {
-    return <>{children}</>;
-  },
-  (prevProps, nextProps) => {
-    if (!nextProps.active) return true;
-    return areChildrenEqual(prevProps.children, nextProps.children);
-  }
-);
-
-function DeferredTabPane({
-  active,
-  visible,
-  zIndexActive = 1,
-  theme,
-  children,
-}: {
-  active: boolean;
-  visible: boolean;
-  zIndexActive?: number;
-  theme?: ThemeContextValue;
-  children: React.ReactNode;
-}) {
-  const rootTheme = useTheme();
-  const lastVisibleTheme = React.useRef(theme ?? rootTheme);
-  const lastVisibleChildren = React.useRef(children);
-
-  React.useLayoutEffect(() => {
-    if (visible) {
-      lastVisibleTheme.current = rootTheme;
-      lastVisibleChildren.current = children;
-    }
-  }, [children, rootTheme, visible]);
-  const effectiveTheme = visible ? rootTheme : lastVisibleTheme.current;
-  const effectiveChildren = visible ? children : lastVisibleChildren.current;
-
-  return (
-    <ThemeContext.Provider value={effectiveTheme}>
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            opacity: visible ? 1 : 0,
-            zIndex: visible ? zIndexActive : 0,
-          },
-        ]}
-        pointerEvents={visible ? 'auto' : 'none'}
-      >
-        <FreezeGate active={active}>{effectiveChildren}</FreezeGate>
-      </View>
-    </ThemeContext.Provider>
-  );
-}
-
-function DeferredHeaderPane({
-  active,
-  visible,
-  pointerEvents = 'box-none',
-  theme,
-  children,
-}: {
-  active: boolean;
-  visible: boolean;
-  pointerEvents?: 'box-none' | 'none' | 'auto';
-  theme?: ThemeContextValue;
-  children: React.ReactNode;
-}) {
-  const rootTheme = useTheme();
-  const lastVisibleTheme = React.useRef(theme ?? rootTheme);
-  const lastVisibleChildren = React.useRef(children);
-
-  React.useLayoutEffect(() => {
-    if (visible) {
-      lastVisibleTheme.current = rootTheme;
-      lastVisibleChildren.current = children;
-    }
-  }, [children, rootTheme, visible]);
-  const effectiveTheme = visible ? rootTheme : lastVisibleTheme.current;
-  const effectiveChildren = visible ? children : lastVisibleChildren.current;
-
-  const anim = React.useRef(new Animated.Value(visible ? 1 : 0)).current;
-
-  React.useEffect(() => {
-    if (visible) {
-      anim.setValue(0);
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 220,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-        useNativeDriver: Platform.OS !== 'web',
-      }).start();
-    } else {
-      anim.setValue(0);
-    }
-  }, [visible, anim]);
-
-  const translateY = anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-10, 0],
-  });
-
-  return (
-    <ThemeContext.Provider value={effectiveTheme}>
-      <Animated.View
-        renderToHardwareTextureAndroid={true}
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            opacity: Platform.OS === 'web' ? (visible ? 1 : 0) : anim,
-            zIndex: visible ? 10 : 0,
-            display: Platform.OS === 'web' ? (visible ? 'flex' : 'none') : undefined,
-            ...(Platform.OS === 'web' ? {} : { transform: [{ translateY }] }),
-          },
-        ]}
-        pointerEvents={visible ? pointerEvents : 'none'}
-      >
-        <FreezeGate active={active}>{effectiveChildren}</FreezeGate>
-      </Animated.View>
-    </ThemeContext.Provider>
-  );
-}
-
 const AppChrome = React.memo(function AppChrome({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const { isDark } = useTheme();
-  const { curtain, curtainOpacity } = useCurtain();
 
   return (
     <SafeAreaView
@@ -230,23 +85,8 @@ const AppChrome = React.memo(function AppChrome({
       style={[styles.safeArea, { backgroundColor: isDark ? '#04060c' : '#ebf0fa' }]}
     >
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      <AuroraBackground />
+      <AuroraBackground isDark={isDark} />
       {children}
-      {Platform.OS !== 'web' && curtain && curtain.active && (
-        <Animated.View
-          pointerEvents="none"
-          renderToHardwareTextureAndroid={true}
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              backgroundColor: curtain.color,
-              opacity: curtainOpacity,
-              zIndex: 999999,
-              elevation: 999999,
-            },
-          ]}
-        />
-      )}
     </SafeAreaView>
   );
 });
@@ -259,10 +99,9 @@ const NotificationsSheetHost = React.memo(
   React.forwardRef<
     NotificationsSheetController,
     {
-      bootLoading: boolean;
       onOpenConversation: (conversationId: string) => void;
     }
-  >(function NotificationsSheetHost({ bootLoading, onOpenConversation }, ref) {
+  >(function NotificationsSheetHost({ onOpenConversation }, ref) {
     const [open, setOpen] = useState(false);
     const openSheet = React.useCallback(() => setOpen(true), []);
     const closeSheet = React.useCallback(() => setOpen(false), []);
@@ -270,19 +109,17 @@ const NotificationsSheetHost = React.memo(
     React.useImperativeHandle(ref, () => ({ open: openSheet }), [openSheet]);
 
     return (
-      <FreezeGate active={bootLoading || open}>
-        <NotificationsSheet
-          open={open}
-          onClose={closeSheet}
-          onOpenConversation={onOpenConversation}
-        />
-      </FreezeGate>
+      <NotificationsSheet
+        open={open}
+        onClose={closeSheet}
+        onOpenConversation={onOpenConversation}
+      />
     );
   })
 );
 
 function MainContent() {
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const { me, profiles, conversations, notifications, addMessage } = useAppData();
 
   const [fontsLoaded] = useFonts({
@@ -295,54 +132,6 @@ function MainContent() {
   const [onboarded, setOnboarded] = useState(true);
   const [tab, setTab] = useState<TabKey>('discover');
   const [screen, setScreen] = useState<Screen>({ name: 'discover' });
-
-  // Single-Tree Boot Preload Sequence (Stages 0 -> 6 behind initial loading overlay)
-  const [bootStage, setBootStage] = useState(0);
-  const [isBootLoading, setIsBootLoading] = useState(true);
-  const bootOverlayOpacity = React.useRef(new Animated.Value(1)).current;
-
-  React.useEffect(() => {
-    if (Platform.OS !== 'web' && !fontsLoaded) return;
-    let isCancelled = false;
-    let timerId: ReturnType<typeof setTimeout>;
-
-    const advanceStage = (stage: number) => {
-      if (isCancelled) return;
-      setBootStage(stage);
-
-      if (stage < 6) {
-        timerId = setTimeout(() => {
-          requestAnimationFrame(() => {
-            advanceStage(stage + 1);
-          });
-        }, 90);
-      } else {
-        // Stage 6 complete: allow commit, then smoothly fade out initial boot overlay
-        timerId = setTimeout(() => {
-          if (isCancelled) return;
-          Animated.timing(bootOverlayOpacity, {
-            toValue: 0,
-            duration: 280,
-            useNativeDriver: Platform.OS !== 'web',
-          }).start(() => {
-            if (!isCancelled) {
-              setIsBootLoading(false);
-            }
-          });
-        }, 120);
-      }
-    };
-
-    requestAnimationFrame(() => {
-      advanceStage(1);
-    });
-
-    return () => {
-      isCancelled = true;
-      clearTimeout(timerId);
-    };
-  }, [bootOverlayOpacity, fontsLoaded]);
-
   const handleAuthSuccess = React.useCallback(() => {
     setAuthed(true);
     setOnboarded(false);
@@ -571,13 +360,12 @@ function MainContent() {
     setOnboarded(true);
   }, []);
 
-  const isMainAppVisible = isBootLoading || (authed && onboarded);
-  const isDiscoverActive = isMainAppVisible && isMainScreen && screen.name === 'discover';
-  const isActivityActive = isMainAppVisible && isMainScreen && screen.name === 'activity';
-  const isCreateActive = isMainAppVisible && isMainScreen && screen.name === 'create';
-  const isChatListActive = isMainAppVisible && isMainScreen && screen.name === 'chatList';
+  const isDiscoverActive = isAppReady && isMainScreen && screen.name === 'discover';
+  const isActivityActive = isAppReady && isMainScreen && screen.name === 'activity';
+  const isCreateActive = isAppReady && isMainScreen && screen.name === 'create';
+  const isChatListActive = isAppReady && isMainScreen && screen.name === 'chatList';
   const isOwnProfileActive =
-    isMainAppVisible &&
+    isAppReady &&
     isMainScreen &&
     screen.name === 'profile' &&
     (screen.userId === 'me' || !screen.userId);
@@ -586,211 +374,32 @@ function MainContent() {
     ['discover', 'activity', 'create', 'chatList'].includes(screen.name) ||
     (screen.name === 'profile' && screen.userId === 'me');
 
-  const rootTheme = useTheme();
-  const [frozenBootTheme] = React.useState(rootTheme);
-
-  const discoverTabContent = React.useMemo(
-    () => (
-      <DiscoverScreen
-        ref={discoverRef}
-        search={discoverSearch}
-        onChangeSearch={setDiscoverSearch}
-        onOpenGroup={handleOpenGroup}
-        onOpenProfile={handleOpenProfile}
-        onOpenOwnProfile={handleOpenOwnProfile}
-        onOpenAI={handleOpenAI}
-        onOpenNotifications={handleOpenNotifications}
-      />
-    ),
-    [
-      discoverSearch,
-      handleOpenAI,
-      handleOpenGroup,
-      handleOpenNotifications,
-      handleOpenOwnProfile,
-      handleOpenProfile,
-    ]
-  );
-  const activityTabContent = React.useMemo(
-    () => (
-      <ActivityScreen
-        tab={activityTab}
-        onChangeTab={setActivityTab}
-        onOpenGroup={handleOpenGroup}
-        onOpenProfile={handleOpenProfile}
-        onOpenNotifications={handleOpenNotifications}
-      />
-    ),
-    [
-      activityTab,
-      handleOpenGroup,
-      handleOpenNotifications,
-      handleOpenProfile,
-    ]
-  );
-  const createTabContent = React.useMemo(
-    () => (
-      <CreateScreen
-        ref={createRef}
-        onStateChange={setCreateState}
-        onBack={handleBackFromCreate}
-        onCreated={handleGroupCreated}
-      />
-    ),
-    [handleBackFromCreate, handleGroupCreated]
-  );
-  const chatTabContent = React.useMemo(
-    () => (
-      <ChatListScreen
-        search={chatSearch}
-        onOpenConversation={handleOpenConversation}
-        onOpenNotifications={handleOpenNotifications}
-      />
-    ),
-    [chatSearch, handleOpenConversation, handleOpenNotifications]
-  );
-  const profileTabContent = React.useMemo(
-    () => (
-      <ProfileScreen
-        userId="me"
-        isOwnProfile={true}
-        onBack={pop}
-        onOpenGroup={handleOpenGroup}
-        onOpenSettings={handleOpenSettings}
-        onOpenPersonalInfo={handleOpenPersonalInfo}
-        onOpenVerification={handleOpenVerification}
-        scrollY={profileScrollY}
-      />
-    ),
-    [
-      handleOpenGroup,
-      handleOpenPersonalInfo,
-      handleOpenSettings,
-      handleOpenVerification,
-      pop,
-      profileScrollY,
-    ]
-  );
-  const discoverHeaderContent = React.useMemo(
-    () => (
-      <DiscoverHeader
-        user={me}
-        unreadCount={unreadNotificationsCount}
-        search={discoverSearch}
-        onChangeSearch={setDiscoverSearch}
-        hasActiveFilters={false}
-        onOpenFilters={handleOpenFilters}
-        onOpenNotifications={handleOpenNotifications}
-        onOpenOwnProfile={handleOpenOwnProfile}
-      />
-    ),
-    [
-      discoverSearch,
-      handleOpenFilters,
-      handleOpenNotifications,
-      handleOpenOwnProfile,
-      me,
-      unreadNotificationsCount,
-    ]
-  );
-  const activityHeaderContent = React.useMemo(
-    () => (
-      <ActivityHeader
-        unreadCount={unreadNotificationsCount}
-        tab={activityTab}
-        onChangeTab={setActivityTab}
-        onOpenNotifications={handleOpenNotifications}
-      />
-    ),
-    [activityTab, handleOpenNotifications, unreadNotificationsCount]
-  );
-  const createHeaderContent = React.useMemo(
-    () => (
-      <CreateHeader
-        step={createState.step}
-        totalSteps={4}
-        onBack={handleCreatePrev}
-        onOpenAI={handleCreateOpenAI}
-      />
-    ),
-    [createState.step, handleCreateOpenAI, handleCreatePrev]
-  );
-  const chatHeaderContent = React.useMemo(
-    () => (
-      <ChatListHeader
-        unreadTotal={unreadConversationsTotal}
-        notificationsCount={unreadNotificationsCount}
-        search={chatSearch}
-        onChangeSearch={setChatSearch}
-        onOpenNotifications={handleOpenNotifications}
-      />
-    ),
-    [
-      chatSearch,
-      handleOpenNotifications,
-      unreadConversationsTotal,
-      unreadNotificationsCount,
-    ]
-  );
-  const profileHeaderContent = React.useMemo(
-    () => (
-      <ProfileHeader
-        profile={me}
-        isOwnProfile={true}
-        onBack={pop}
-        onOpenSettings={handleOpenSettings}
-        scrollY={profileScrollY}
-      />
-    ),
-    [handleOpenSettings, me, pop, profileScrollY]
-  );
+  if (!fontsLoaded && Platform.OS !== 'web') {
+    return (
+      <AppChrome>
+        <Loading minDuration={0} />
+      </AppChrome>
+    );
+  }
 
   return (
     <AppChrome>
       <View nativeID="phone-container" style={styles.phoneContainer}>
-        {/* Layer 1: Auth Screen (Stage 1 - Frozen when authed!) */}
-        {bootStage >= 1 && (
-          <DeferredTabPane
-            active={isBootLoading || !authed}
-            visible={!authed}
-            zIndexActive={20}
-            theme={frozenBootTheme}
-          >
-            <View style={styles.screenContainer}>
-              <ScreenTransition screenKey={`auth-${language}`}>
-                <AuthScreen onComplete={handleAuthSuccess} />
-              </ScreenTransition>
-            </View>
-          </DeferredTabPane>
-        )}
-
-        {/* Layer 2: Onboarding (Stage 1 - Frozen when onboarded!) */}
-        {bootStage >= 1 && (
-          <DeferredTabPane
-            active={isBootLoading || (authed && !onboarded)}
-            visible={authed && !onboarded}
-            zIndexActive={20}
-            theme={frozenBootTheme}
-          >
-            <View style={styles.screenContainer}>
-              <ScreenTransition screenKey={`onboarding-${language}`}>
-                <Onboarding onComplete={handleOnboardingComplete} />
-              </ScreenTransition>
-            </View>
-          </DeferredTabPane>
-        )}
-
-        {/* Layer 3: Main Application (Pre-mounted in RAM via Stages 2-6) */}
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              opacity: authed && onboarded ? 1 : 0,
-              zIndex: authed && onboarded ? 10 : 0,
-            },
-          ]}
-          pointerEvents={authed && onboarded ? 'auto' : 'none'}
-        >
+        {!authed ? (
+          <View style={styles.screenContainer}>
+            <AuthScreen onComplete={handleAuthSuccess} />
+          </View>
+        ) : !onboarded || screen.name === 'onboarding' ? (
+          <View style={styles.screenContainer}>
+            <Onboarding
+              onComplete={() => {
+                setTab('discover');
+                clearHistory();
+                setScreen({ name: 'discover' });
+              }}
+            />
+          </View>
+        ) : (
           <View style={styles.screenContainer}>
             <SwipeNavigationContainer
               canGoBack={history.length > 0}
@@ -801,293 +410,235 @@ function MainContent() {
               onSwipePrevTab={handleSwipePrevTab}
             >
               <ErrorBoundary onGoHome={handleGoHome}>
-                <ScreenTransition screenKey={`${isMainScreen ? 'main-tabs' : screen.name}-${history.length}-${language}`}>
-                  {/* Stage 2: Main Tab: Discover */}
-                  {bootStage >= 2 && (
-                    <DeferredTabPane
-                      active={isBootLoading || isDiscoverActive}
-                      visible={isDiscoverActive}
-                    >
-                      {discoverTabContent}
-                    </DeferredTabPane>
-                  )}
-
-                  {/* Stage 3: Main Tab: Activity */}
-                  {bootStage >= 3 && (
-                    <DeferredTabPane
-                      active={isBootLoading || isActivityActive}
-                      visible={isActivityActive}
-                    >
-                      {activityTabContent}
-                    </DeferredTabPane>
-                  )}
-
-                  {/* Stage 5: Main Tab: Create */}
-                  {bootStage >= 5 && (
-                    <DeferredTabPane
-                      active={isBootLoading || isCreateActive}
-                      visible={isCreateActive}
-                    >
-                      {createTabContent}
-                    </DeferredTabPane>
-                  )}
-
-                  {/* Stage 4: Main Tab: Chat List */}
-                  {bootStage >= 4 && (
-                    <DeferredTabPane
-                      active={isBootLoading || isChatListActive}
-                      visible={isChatListActive}
-                    >
-                      {chatTabContent}
-                    </DeferredTabPane>
-                  )}
-
-                  {/* Stage 5: Main Tab: Own Profile */}
-                  {bootStage >= 5 && (
-                    <DeferredTabPane
-                      active={isBootLoading || isOwnProfileActive}
-                      visible={isOwnProfileActive}
-                    >
-                      {profileTabContent}
-                    </DeferredTabPane>
-                  )}
-
-                  {/* Stack Screens (Only mounted when active) */}
-                  {screen.name === 'profile' && screen.userId !== 'me' && (
-                    <ProfileScreen
-                      key={screen.userId}
-                      userId={screen.userId}
-                      isOwnProfile={false}
-                      onBack={pop}
-                      onOpenGroup={handleOpenGroup}
-                      onOpenSettings={handleOpenSettings}
-                      onOpenPersonalInfo={handleOpenPersonalInfo}
-                      onOpenVerification={handleOpenVerification}
-                      scrollY={profileScrollY}
-                    />
-                  )}
-
-                  {screen.name === 'group' && (
-                    <EkipDetail
-                      group={screen.group}
-                      onBack={handleBackToActivity}
-                      onOpenProfile={handleOpenProfile}
-                      onOpenChat={handleOpenConversation}
-                    />
-                  )}
-
-                  {screen.name === 'conversation' && (
-                    <ConversationScreen conversationId={screen.conversationId} onBack={pop} />
-                  )}
-
-                  {screen.name === 'notifications' && (
-                    <NotificationsScreen
-                      onBack={pop}
-                      onOpenConversation={handleOpenConversation}
-                    />
-                  )}
-
-                  {screen.name === 'ai' && <AIAssistant ref={aiRef} onBack={pop} />}
-
-                  {screen.name === 'settings' && (
-                    <SettingsScreen
-                      onBack={pop}
-                      onOpenPlans={handleOpenPlans}
-                      onOpenPersonalInfo={handleOpenPersonalInfo}
-                      onOpenVerification={handleOpenVerification}
-                      onOpenPrivacy={handleOpenPrivacy}
-                      onOpenSecurity={handleOpenSecurity}
-                      onOpenNotifications={handleOpenNotificationsScreen}
-                      onOpenLocation={handleOpenLocation}
-                      onOpenChatTheme={handleOpenChatTheme}
-                      onOpenOnboarding={() => push({ name: 'onboarding' })}
-                      onSignOut={handleSignOut}
-                    />
-                  )}
-
-                  {screen.name === 'plans' && <PlansScreen onBack={pop} />}
-
-                  {screen.name === 'personalInfo' && (
-                    <PersonalInfoScreen
-                      onBack={pop}
-                      onOpenVerification={handleOpenVerification}
-                    />
-                  )}
-
-                  {screen.name === 'verification' && <VerificationScreen onBack={pop} />}
-
-                  {screen.name === 'privacy' && <PrivacyScreen onBack={pop} />}
-
-                  {screen.name === 'security' && <SecurityScreen onBack={pop} />}
-
-                  {screen.name === 'location' && <LocationScreen onBack={pop} />}
-
-                  {screen.name === 'chatTheme' && <ChatThemeScreen onBack={pop} />}
-
-                  {screen.name === 'onboarding' && (
-                    <Onboarding
-                      onComplete={() => {
-                        setTab('discover');
-                        clearHistory();
-                        setScreen({ name: 'discover' });
-                      }}
-                    />
-                  )}
-                </ScreenTransition>
+                {isDiscoverActive && (
+                  <DiscoverScreen
+                    ref={discoverRef}
+                    search={discoverSearch}
+                    onChangeSearch={setDiscoverSearch}
+                    onOpenGroup={handleOpenGroup}
+                    onOpenProfile={handleOpenProfile}
+                    onOpenOwnProfile={handleOpenOwnProfile}
+                    onOpenAI={handleOpenAI}
+                    onOpenNotifications={handleOpenNotifications}
+                  />
+                )}
+                {isActivityActive && (
+                  <ActivityScreen
+                    tab={activityTab}
+                    onChangeTab={setActivityTab}
+                    onOpenGroup={handleOpenGroup}
+                    onOpenProfile={handleOpenProfile}
+                    onOpenNotifications={handleOpenNotifications}
+                  />
+                )}
+                {isCreateActive && (
+                  <CreateScreen
+                    ref={createRef}
+                    onStateChange={setCreateState}
+                    onBack={handleBackFromCreate}
+                    onCreated={handleGroupCreated}
+                  />
+                )}
+                {isChatListActive && (
+                  <ChatListScreen
+                    search={chatSearch}
+                    onOpenConversation={handleOpenConversation}
+                    onOpenNotifications={handleOpenNotifications}
+                  />
+                )}
+                {isOwnProfileActive && (
+                  <ProfileScreen
+                    userId="me"
+                    isOwnProfile={true}
+                    onBack={pop}
+                    onOpenGroup={handleOpenGroup}
+                    onOpenSettings={handleOpenSettings}
+                    onOpenPersonalInfo={handleOpenPersonalInfo}
+                    onOpenVerification={handleOpenVerification}
+                    scrollY={profileScrollY}
+                  />
+                )}
+                {screen.name === 'profile' && screen.userId !== 'me' && (
+                  <ProfileScreen
+                    key={screen.userId}
+                    userId={screen.userId}
+                    isOwnProfile={false}
+                    onBack={pop}
+                    onOpenGroup={handleOpenGroup}
+                    onOpenSettings={handleOpenSettings}
+                    onOpenPersonalInfo={handleOpenPersonalInfo}
+                    onOpenVerification={handleOpenVerification}
+                    scrollY={profileScrollY}
+                  />
+                )}
+                {screen.name === 'group' && (
+                  <EkipDetail
+                    group={screen.group}
+                    onBack={handleBackToActivity}
+                    onOpenProfile={handleOpenProfile}
+                    onOpenChat={handleOpenConversation}
+                  />
+                )}
+                {screen.name === 'conversation' && (
+                  <ConversationScreen conversationId={screen.conversationId} onBack={pop} />
+                )}
+                {screen.name === 'notifications' && (
+                  <NotificationsScreen
+                    onBack={pop}
+                    onOpenConversation={handleOpenConversation}
+                  />
+                )}
+                {screen.name === 'ai' && <AIAssistant ref={aiRef} onBack={pop} />}
+                {screen.name === 'settings' && (
+                  <SettingsScreen
+                    onBack={pop}
+                    onOpenPlans={handleOpenPlans}
+                    onOpenPersonalInfo={handleOpenPersonalInfo}
+                    onOpenVerification={handleOpenVerification}
+                    onOpenPrivacy={handleOpenPrivacy}
+                    onOpenSecurity={handleOpenSecurity}
+                    onOpenNotifications={handleOpenNotificationsScreen}
+                    onOpenLocation={handleOpenLocation}
+                    onOpenChatTheme={handleOpenChatTheme}
+                    onOpenOnboarding={() => push({ name: 'onboarding' })}
+                    onSignOut={handleSignOut}
+                  />
+                )}
+                {screen.name === 'plans' && <PlansScreen onBack={pop} />}
+                {screen.name === 'personalInfo' && (
+                  <PersonalInfoScreen
+                    onBack={pop}
+                    onOpenVerification={handleOpenVerification}
+                  />
+                )}
+                {screen.name === 'verification' && <VerificationScreen onBack={pop} />}
+                {screen.name === 'privacy' && <PrivacyScreen onBack={pop} />}
+                {screen.name === 'security' && <SecurityScreen onBack={pop} />}
+                {screen.name === 'location' && <LocationScreen onBack={pop} />}
+                {screen.name === 'chatTheme' && <ChatThemeScreen onBack={pop} />}
               </ErrorBoundary>
             </SwipeNavigationContainer>
           </View>
+        )}
 
-          {/* Headers */}
-          {/* Stage 2: Discover Header */}
-          {bootStage >= 2 && (
-            <DeferredHeaderPane
-              active={isBootLoading || isDiscoverActive}
-              visible={isDiscoverActive}
-              pointerEvents="box-none"
-            >
-              {discoverHeaderContent}
-            </DeferredHeaderPane>
-          )}
-
-          {/* Stage 3: Activity Header */}
-          {bootStage >= 3 && (
-            <DeferredHeaderPane
-              active={isBootLoading || isActivityActive}
-              visible={isActivityActive}
-              pointerEvents="box-none"
-            >
-              {activityHeaderContent}
-            </DeferredHeaderPane>
-          )}
-
-          {/* Stage 5: Create Header */}
-          {bootStage >= 5 && (
-            <DeferredHeaderPane
-              active={isBootLoading || isCreateActive}
-              visible={isCreateActive}
-              pointerEvents="box-none"
-            >
-              {createHeaderContent}
-            </DeferredHeaderPane>
-          )}
-
-          {/* Stage 5: Create Continue Button (Bottom Action) */}
-          {bootStage >= 5 && isCreateActive && (
+        {isDiscoverActive && (
+          <DiscoverHeader
+            user={me}
+            unreadCount={unreadNotificationsCount}
+            search={discoverSearch}
+            onChangeSearch={setDiscoverSearch}
+            hasActiveFilters={false}
+            onOpenFilters={handleOpenFilters}
+            onOpenNotifications={handleOpenNotifications}
+            onOpenOwnProfile={handleOpenOwnProfile}
+          />
+        )}
+        {isActivityActive && (
+          <ActivityHeader
+            unreadCount={unreadNotificationsCount}
+            tab={activityTab}
+            onChangeTab={setActivityTab}
+            onOpenNotifications={handleOpenNotifications}
+          />
+        )}
+        {isCreateActive && (
+          <>
+            <CreateHeader
+              step={createState.step}
+              totalSteps={4}
+              onBack={handleCreatePrev}
+              onOpenAI={handleCreateOpenAI}
+            />
             <CreateContinueButton
               step={createState.step}
               totalSteps={4}
               disabled={!createState.canProceed}
               onPress={handleCreateNext}
             />
-          )}
-
-          {/* Stage 4: Chat List Header */}
-          {bootStage >= 4 && (
-            <DeferredHeaderPane
-              active={isBootLoading || isChatListActive}
-              visible={isChatListActive}
-              pointerEvents="box-none"
-            >
-              {chatHeaderContent}
-            </DeferredHeaderPane>
-          )}
-
-          {/* Stage 5: Own Profile Header */}
-          {bootStage >= 5 && (
-            <DeferredHeaderPane
-              active={isBootLoading || isOwnProfileActive}
-              visible={isOwnProfileActive}
-              pointerEvents="box-none"
-            >
-              {profileHeaderContent}
-            </DeferredHeaderPane>
-          )}
-
-          {screen.name === 'conversation' && (() => {
-            const conv = conversations.find((c) => c.id === screen.conversationId);
-            return conv ? (
-              <>
-                <ChatHeader conversation={conv} onBack={pop} />
-                <ChatInputBar
-                  onSendMessage={(text) => addMessage(screen.conversationId, text)}
-                  placeholder={t('chat.transmitDispatch')}
-                />
-              </>
-            ) : null;
-          })()}
-
-          {screen.name === 'ai' && (
+          </>
+        )}
+        {isChatListActive && (
+          <ChatListHeader
+            unreadTotal={unreadConversationsTotal}
+            notificationsCount={unreadNotificationsCount}
+            search={chatSearch}
+            onChangeSearch={setChatSearch}
+            onOpenNotifications={handleOpenNotifications}
+          />
+        )}
+        {isOwnProfileActive && (
+          <ProfileHeader
+            profile={me}
+            isOwnProfile={true}
+            onBack={pop}
+            onOpenSettings={handleOpenSettings}
+            scrollY={profileScrollY}
+          />
+        )}
+        {screen.name === 'conversation' && (() => {
+          const conv = conversations.find((item) => item.id === screen.conversationId);
+          return conv ? (
             <>
-              <AIHeader onBack={pop} />
+              <ChatHeader conversation={conv} onBack={pop} />
               <ChatInputBar
-                onSendMessage={(text) => aiRef.current?.sendMessage(text)}
-                placeholder={t('chat.queryCommandAI')}
+                onSendMessage={(text) => addMessage(screen.conversationId, text)}
+                placeholder={t('chat.transmitDispatch')}
               />
             </>
-          )}
-
-          {screen.name === 'profile' && screen.userId !== 'me' && (() => {
-            const profile = profiles.find((p) => p.id === screen.userId) ?? me;
-            return (
-              <ProfileHeader
-                key={screen.userId}
-                profile={profile}
-                isOwnProfile={false}
-                onBack={pop}
-                onOpenSettings={handleOpenSettings}
-                scrollY={profileScrollY}
-              />
-            );
-          })()}
-
-          {screen.name === 'settings' && <SettingsHeader onBack={pop} title={t('settings.headerSettings')} />}
-          {screen.name === 'plans' && <SettingsHeader onBack={pop} title={t('settings.headerPlans')} />}
-          {screen.name === 'personalInfo' && <SettingsHeader onBack={pop} title={t('settings.headerPersonalInfo')} />}
-          {screen.name === 'verification' && <SettingsHeader onBack={pop} title={t('settings.headerVerification')} />}
-          {screen.name === 'privacy' && <SettingsHeader onBack={pop} title={t('settings.headerPrivacy')} />}
-          {screen.name === 'security' && <SettingsHeader onBack={pop} title={t('settings.headerSecurity')} />}
-          {screen.name === 'location' && <SettingsHeader onBack={pop} title={t('settings.headerLocation')} />}
-          {screen.name === 'chatTheme' && <SettingsHeader onBack={pop} title={t('settings.headerChatTheme')} />}
-          {screen.name === 'notifications' && <SettingsHeader onBack={pop} title={t('settings.headerNotifications')} />}
-
-          {screen.name === 'group' && (
-            <EkipActionBar
-              group={screen.group}
-              onOpenProfile={handleOpenProfile}
-              onOpenChat={handleOpenConversation}
+          ) : null;
+        })()}
+        {screen.name === 'ai' && (
+          <>
+            <AIHeader onBack={pop} />
+            <ChatInputBar
+              onSendMessage={(text) => aiRef.current?.sendMessage(text)}
+              placeholder={t('chat.queryCommandAI')}
             />
-          )}
-
-          {/* Stage 5: BottomNav */}
-          {bootStage >= 5 && showBottomNav && (
-            <BottomNav active={tab} onChange={switchTab} />
-          )}
-
-          {/* Stage 6: Sheets (Frozen when closed so theme switches don't re-render hidden sheets!) */}
-          {bootStage >= 6 && (
-            <NotificationsSheetHost
-              ref={notificationsSheetRef}
-              bootLoading={isBootLoading}
-              onOpenConversation={handleOpenConversation}
+          </>
+        )}
+        {screen.name === 'profile' && screen.userId !== 'me' && (() => {
+          const profile = profiles.find((item) => item.id === screen.userId) ?? me;
+          return (
+            <ProfileHeader
+              key={screen.userId}
+              profile={profile}
+              isOwnProfile={false}
+              onBack={pop}
+              onOpenSettings={handleOpenSettings}
+              scrollY={profileScrollY}
             />
-          )}
-        </View>
+          );
+        })()}
+        {screen.name === 'settings' && <SettingsHeader onBack={pop} title={t('settings.headerSettings')} />}
+        {screen.name === 'plans' && <SettingsHeader onBack={pop} title={t('settings.headerPlans')} />}
+        {screen.name === 'personalInfo' && <SettingsHeader onBack={pop} title={t('settings.headerPersonalInfo')} />}
+        {screen.name === 'verification' && <SettingsHeader onBack={pop} title={t('settings.headerVerification')} />}
+        {screen.name === 'privacy' && <SettingsHeader onBack={pop} title={t('settings.headerPrivacy')} />}
+        {screen.name === 'security' && <SettingsHeader onBack={pop} title={t('settings.headerSecurity')} />}
+        {screen.name === 'location' && <SettingsHeader onBack={pop} title={t('settings.headerLocation')} />}
+        {screen.name === 'chatTheme' && <SettingsHeader onBack={pop} title={t('settings.headerChatTheme')} />}
+        {screen.name === 'notifications' && <SettingsHeader onBack={pop} title={t('settings.headerNotifications')} />}
+        {screen.name === 'group' && (
+          <EkipActionBar
+            group={screen.group}
+            onOpenProfile={handleOpenProfile}
+            onOpenChat={handleOpenConversation}
+          />
+        )}
 
-        {/* Layer 4: Initial Boot Loading Overlay (Stage 0 -> 6) */}
-        {isBootLoading && (
-          <Animated.View
-            pointerEvents="auto"
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                opacity: bootOverlayOpacity,
-                zIndex: 99999,
-              },
-            ]}
+        {authed && onboarded && (
+          <View
+            pointerEvents={showBottomNav ? 'box-none' : 'none'}
+            style={showBottomNav ? undefined : { display: 'none' }}
           >
-            <Loading minDuration={999999} />
-          </Animated.View>
+            <BottomNav active={tab} onChange={switchTab} />
+          </View>
+        )}
+        {authed && onboarded && (
+          <NotificationsSheetHost
+            ref={notificationsSheetRef}
+            onOpenConversation={handleOpenConversation}
+          />
         )}
       </View>
     </AppChrome>

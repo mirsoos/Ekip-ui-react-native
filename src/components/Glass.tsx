@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, type ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 import {
   View,
   Text,
@@ -6,47 +6,17 @@ import {
   TextInput,
   Image,
   StyleSheet,
-  Animated,
   type StyleProp,
   type ViewStyle,
   type TextStyle,
   Platform,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { getIcon, type IconName } from '../lib/icons';
 import { darkColors, lightColors, useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
-import { FrostedGlass } from './FrostedGlass';
 import { LiquidGlassToggle, type LiquidGlassToggleProps } from './common/LiquidGlassToggle';
 export { LiquidGlassToggle, type LiquidGlassToggleProps };
 
-const DARK_CARD_GRADIENT_COLORS = [
-  'rgba(255, 255, 255, 0.08)',
-  'rgba(255, 255, 255, 0.02)',
-  'transparent',
-] as const;
-const LIGHT_CARD_GRADIENT_COLORS = [
-  'rgba(255, 255, 255, 0.60)',
-  'rgba(255, 255, 255, 0.15)',
-  'transparent',
-] as const;
-const CARD_GRADIENT_START = { x: 0, y: 0 };
-const CARD_GRADIENT_END = { x: 1, y: 1 };
-const CARD_GRADIENT_STYLE: StyleProp<ViewStyle> = [
-  StyleSheet.absoluteFill,
-  { pointerEvents: 'none' },
-];
-const GRADIENT_START = { x: 0, y: 0 };
-const GRADIENT_END = { x: 1, y: 1 };
-const GRADIENT_TOP_START = { x: 0, y: 0 };
-const GRADIENT_TOP_END = { x: 0, y: 1 };
-const PROGRESS_LTR_START = { x: 0, y: 0 };
-const PROGRESS_LTR_END = { x: 1, y: 0 };
-const PROGRESS_RTL_START = { x: 1, y: 0 };
-const PROGRESS_RTL_END = { x: 0, y: 0 };
-const PRIMARY_BUTTON_GRADIENT = ['#f472b6', '#3b82f6'] as const;
-const DANGER_BUTTON_GRADIENT = ['#ef4444', '#dc2626'] as const;
-const CHIP_GRADIENT = ['#f472b6', '#3b82f6'] as const;
 const BUTTON_ICON_LEFT_STYLE = { marginRight: 6 };
 const BUTTON_ICON_RIGHT_STYLE = { marginLeft: 6 };
 const SMALL_CHIP_ICON_STYLE = { marginRight: 5 };
@@ -58,6 +28,8 @@ const GLASS_THEME_STYLES = {
       borderColor: lightColors.glassBorder,
       borderWidth: 1,
     },
+    buttonPrimary: { backgroundColor: '#d946a0' },
+    buttonDanger: { backgroundColor: '#dc2626' },
     buttonTextPrimary: { color: lightColors.textPrimary },
     buttonTextSecondary: { color: lightColors.textSecondary },
     chip: {
@@ -65,28 +37,30 @@ const GLASS_THEME_STYLES = {
       borderColor: lightColors.glassBorder,
       borderWidth: 1,
     },
+    activeChip: {
+      backgroundColor: '#d946a0',
+      borderColor: '#d946a0',
+    },
     chipText: { color: lightColors.textSecondary },
     input: {
       backgroundColor: lightColors.glassThinBg,
       borderColor: lightColors.glassBorder,
     },
-    backButton: { borderColor: lightColors.glassBorderStrong },
-    closeButton: { borderColor: lightColors.glassBorderStrong },
+    backButton: {
+      backgroundColor: lightColors.glassThinBg,
+      borderColor: lightColors.glassBorderStrong,
+    },
+    closeButton: {
+      backgroundColor: lightColors.glassThinBg,
+      borderColor: lightColors.glassBorderStrong,
+    },
     segmented: {
       backgroundColor: lightColors.glassThinBg,
       borderColor: lightColors.glassBorder,
     },
-    segmentedLens: {
-      backgroundColor: 'rgba(255, 255, 255, 0.65)',
-      borderColor: 'rgba(255, 255, 255, 0.85)',
-    },
+    segmentedSelected: { backgroundColor: 'rgba(255, 255, 255, 0.65)' },
     segmentedTextActive: { color: lightColors.textPrimary, fontWeight: '700' as const },
     segmentedTextInactive: { color: lightColors.textTertiary, fontWeight: '600' as const },
-    segmentedSheen: [
-      'rgba(255, 255, 255, 0.90)',
-      'rgba(255, 255, 255, 0.22)',
-      'transparent',
-    ] as const,
     progress: {
       backgroundColor: lightColors.glassThinBg,
       borderColor: lightColors.glassBorder,
@@ -108,6 +82,8 @@ const GLASS_THEME_STYLES = {
       borderColor: darkColors.glassBorder,
       borderWidth: 1,
     },
+    buttonPrimary: { backgroundColor: '#db2777' },
+    buttonDanger: { backgroundColor: '#b91c1c' },
     buttonTextPrimary: { color: darkColors.textPrimary },
     buttonTextSecondary: { color: darkColors.textSecondary },
     chip: {
@@ -115,28 +91,30 @@ const GLASS_THEME_STYLES = {
       borderColor: darkColors.glassBorder,
       borderWidth: 1,
     },
+    activeChip: {
+      backgroundColor: '#db2777',
+      borderColor: '#db2777',
+    },
     chipText: { color: darkColors.textSecondary },
     input: {
       backgroundColor: darkColors.glassThinBg,
       borderColor: darkColors.glassBorder,
     },
-    backButton: { borderColor: darkColors.glassBorderStrong },
-    closeButton: { borderColor: darkColors.glassBorderStrong },
+    backButton: {
+      backgroundColor: darkColors.glassThinBg,
+      borderColor: darkColors.glassBorderStrong,
+    },
+    closeButton: {
+      backgroundColor: darkColors.glassThinBg,
+      borderColor: darkColors.glassBorderStrong,
+    },
     segmented: {
       backgroundColor: darkColors.glassThinBg,
       borderColor: darkColors.glassBorder,
     },
-    segmentedLens: {
-      backgroundColor: 'rgba(255, 255, 255, 0.12)',
-      borderColor: 'rgba(255, 255, 255, 0.22)',
-    },
+    segmentedSelected: { backgroundColor: 'rgba(255, 255, 255, 0.12)' },
     segmentedTextActive: { color: darkColors.textPrimary, fontWeight: '700' as const },
     segmentedTextInactive: { color: darkColors.textTertiary, fontWeight: '600' as const },
-    segmentedSheen: [
-      'rgba(255, 255, 255, 0.32)',
-      'rgba(255, 255, 255, 0.05)',
-      'transparent',
-    ] as const,
     progress: {
       backgroundColor: darkColors.glassThinBg,
       borderColor: darkColors.glassBorder,
@@ -177,10 +155,10 @@ const TOGGLE_LABEL_STYLE: TextStyle = {
   fontWeight: '500',
   flex: 1,
 };
-const PROGRESS_GRADIENTS = {
-  accent: ['#f472b6', '#3b82f6'],
-  success: ['#22c55e', '#10b981'],
-  warning: ['#eab308', '#f59e0b'],
+const PROGRESS_COLORS = {
+  accent: '#3b82f6',
+  success: '#10b981',
+  warning: '#f59e0b',
 } as const;
 const BUTTON_TEXT_SIZE_STYLES: Record<'sm' | 'md' | 'lg', TextStyle> = {
   sm: { fontSize: 13 },
@@ -216,7 +194,7 @@ export function GlassCardComponent({
   onPress,
   onClick,
 }: GlassCardProps) {
-  const { isDark, colors } = useTheme();
+  const { colors } = useTheme();
   const handlePress = onPress ?? onClick;
 
   const bg =
@@ -257,21 +235,6 @@ export function GlassCardComponent({
     [bg, colors.cardShadow, colors.glassBorder, glow]
   );
   const containerStyle = React.useMemo(() => [cardStyle, style], [cardStyle, style]);
-  const gradientColors = isDark ? DARK_CARD_GRADIENT_COLORS : LIGHT_CARD_GRADIENT_COLORS;
-
-  const content = (
-    <>
-      {/* Specular subtle gradient highlight */}
-      <LinearGradient
-        colors={gradientColors}
-        start={CARD_GRADIENT_START}
-        end={CARD_GRADIENT_END}
-        style={CARD_GRADIENT_STYLE}
-      />
-      {children}
-    </>
-  );
-
   if (handlePress) {
     return (
       <TouchableOpacity
@@ -279,12 +242,12 @@ export function GlassCardComponent({
         onPress={handlePress}
         style={containerStyle}
       >
-        {content}
+        {children}
       </TouchableOpacity>
     );
   }
 
-  return <View style={containerStyle}>{content}</View>;
+  return <View style={containerStyle}>{children}</View>;
 }
 
 // ============================================
@@ -341,87 +304,41 @@ export function GlassButtonComponent({
     }),
     [disabled, fullWidth, padHorizontal, padVertical]
   );
-  const gradColors = variant === 'danger' ? DANGER_BUTTON_GRADIENT : PRIMARY_BUTTON_GRADIENT;
+  const primaryThemeStyle =
+    variant === 'danger' ? themeStyles.buttonDanger : themeStyles.buttonPrimary;
   const fullWidthStyle = fullWidth ? styles.fullWidth : undefined;
-  const primaryGradientStyle = React.useMemo(
-    () => [
-      baseStyle,
-      {
-        shadowColor: gradColors[0],
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.35,
-        shadowRadius: 10,
-        elevation: 4,
-      },
-    ],
-    [baseStyle, gradColors]
-  );
   const secondaryStyle = React.useMemo(
     () => [baseStyle, variant === 'secondary' ? themeStyles.buttonSecondary : styles.buttonGhost, style],
     [baseStyle, style, themeStyles.buttonSecondary, variant]
   );
 
-  if (variant === 'primary' || variant === 'danger') {
-    return (
-      <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={handlePress}
-        disabled={disabled}
-        style={fullWidthStyle ? [fullWidthStyle, style] : style}
-      >
-        <LinearGradient
-          colors={gradColors}
-          start={GRADIENT_START}
-          end={GRADIENT_END}
-          style={primaryGradientStyle}
-        >
-          {IconComp && (
-            <IconComp
-              size={iconSize}
-              color="#ffffff"
-              style={BUTTON_ICON_LEFT_STYLE}
-            />
-          )}
-          {typeof children === 'string' ? (
-            <Text
-              style={[styles.primaryButtonText, BUTTON_TEXT_SIZE_STYLES[size], textStyle]}
-            >
-              {children}
-            </Text>
-          ) : (
-            children
-          )}
-          {IconRightComp && (
-            <IconRightComp
-              size={iconSize}
-              color="#ffffff"
-              style={BUTTON_ICON_RIGHT_STYLE}
-            />
-          )}
-        </LinearGradient>
-      </TouchableOpacity>
-    );
-  }
-
   const isSecondary = variant === 'secondary';
+  const isPrimary = variant === 'primary' || variant === 'danger';
   return (
     <TouchableOpacity
-      activeOpacity={0.75}
+      activeOpacity={isPrimary ? 0.85 : 0.75}
       onPress={handlePress}
       disabled={disabled}
-      style={secondaryStyle}
+      style={[
+        isPrimary ? baseStyle : secondaryStyle,
+        isPrimary && primaryThemeStyle,
+        fullWidthStyle,
+        style,
+      ]}
     >
       {IconComp && (
         <IconComp
           size={iconSize}
-          color={isSecondary ? colors.textPrimary : colors.textSecondary}
+          color={isPrimary ? '#ffffff' : isSecondary ? colors.textPrimary : colors.textSecondary}
           style={BUTTON_ICON_LEFT_STYLE}
         />
       )}
       {typeof children === 'string' ? (
         <Text
           style={[
-            isSecondary ? themeStyles.buttonTextPrimary : themeStyles.buttonTextSecondary,
+            isPrimary
+              ? styles.primaryButtonText
+              : isSecondary ? themeStyles.buttonTextPrimary : themeStyles.buttonTextSecondary,
             BUTTON_TEXT_SIZE_STYLES[size],
             styles.secondaryButtonText,
             textStyle,
@@ -435,7 +352,7 @@ export function GlassButtonComponent({
       {IconRightComp && (
         <IconRightComp
           size={iconSize}
-          color={isSecondary ? colors.textPrimary : colors.textSecondary}
+          color={isPrimary ? '#ffffff' : isSecondary ? colors.textPrimary : colors.textSecondary}
           style={BUTTON_ICON_RIGHT_STYLE}
         />
       )}
@@ -465,45 +382,29 @@ export function GlassChipComponent({
   const themeStyles = GLASS_THEME_STYLES[isDark ? 'dark' : 'light'];
   const IconComp = icon ? getIcon(icon) : null;
 
-  if (active) {
-    return (
-      <TouchableOpacity activeOpacity={0.85} onPress={onPress} style={style}>
-        <LinearGradient
-          colors={CHIP_GRADIENT}
-          start={GRADIENT_START}
-          end={GRADIENT_END}
-          style={styles.chip}
-        >
-          {IconComp && (
-            <IconComp size={14} color="#ffffff" style={SMALL_CHIP_ICON_STYLE} />
-          )}
-          {typeof children === 'string' ? (
-            <Text style={styles.activeChipText}>
-              {children}
-            </Text>
-          ) : (
-            children
-          )}
-        </LinearGradient>
-      </TouchableOpacity>
-    );
-  }
-
   return (
     <TouchableOpacity
-      activeOpacity={0.8}
+      activeOpacity={active ? 0.85 : 0.8}
       onPress={onPress}
-      style={style ? [styles.chip, themeStyles.chip, style] : [styles.chip, themeStyles.chip]}
+      style={[
+        styles.chip,
+        themeStyles.chip,
+        active && themeStyles.activeChip,
+        style,
+      ]}
     >
       {IconComp && (
         <IconComp
           size={14}
-          color={colors.textSecondary}
+          color={active ? '#ffffff' : colors.textSecondary}
           style={SMALL_CHIP_ICON_STYLE}
         />
       )}
       {typeof children === 'string' ? (
-        <Text style={[styles.chipText, themeStyles.chipText]}>
+        <Text style={[
+          styles.chipText,
+          active ? styles.activeChipText : themeStyles.chipText,
+        ]}>
           {children}
         </Text>
       ) : (
@@ -646,17 +547,21 @@ export function GlassAvatarComponent({
             style={{ width: size, height: size, borderRadius: size / 2 }}
           />
         ) : (
-          <LinearGradient
-            colors={['#f472b6', '#3b82f6']}
+          <View
             style={[
               styles.avatarFallback,
-              { width: size, height: size, borderRadius: size / 2 },
+              {
+                width: size,
+                height: size,
+                borderRadius: size / 2,
+                backgroundColor: '#3b82f6',
+              },
             ]}
           >
             <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: size * 0.38 }}>
               {initials}
             </Text>
-          </LinearGradient>
+          </View>
         )}
       </View>
       {online && (
@@ -703,17 +608,7 @@ export function GlassBackButtonComponent({
         style,
       ]}
     >
-      <FrostedGlass
-        borderRadius={19}
-        marginWidth={8}
-        scale={20}
-        blurDeviation={1.6}
-        overlayOpacity={isDark ? 0.10 : 0.22}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.backButtonIconWrap}>
-        <IconComp size={18} color={colors.textPrimary} strokeWidth={2.4} />
-      </View>
+      <IconComp size={18} color={colors.textPrimary} strokeWidth={2.4} />
     </TouchableOpacity>
   );
 }
@@ -753,17 +648,7 @@ export function GlassCloseButtonComponent({
         style,
       ]}
     >
-      <FrostedGlass
-        borderRadius={radius}
-        marginWidth={Math.max(6, Math.round(size * 0.22))}
-        scale={Math.max(14, Math.round(size * 0.55))}
-        blurDeviation={1.5}
-        overlayOpacity={isDark ? 0.10 : 0.22}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.backButtonIconWrap}>
-        <CloseIcon size={Math.round(size * 0.5)} color={colors.textPrimary} strokeWidth={2.4} />
-      </View>
+      <CloseIcon size={Math.round(size * 0.5)} color={colors.textPrimary} strokeWidth={2.4} />
     </TouchableOpacity>
   );
 }
@@ -786,130 +671,22 @@ export function GlassSegmentedComponent({
 }: GlassSegmentedProps) {
   const { colors, isDark } = useTheme();
   const themeStyles = GLASS_THEME_STYLES[isDark ? 'dark' : 'light'];
-  const activeIndex = Math.max(0, options.findIndex((opt) => opt.value === value));
-  const count = Math.max(1, options.length);
-
-  const [containerWidth, setContainerWidth] = useState(0);
-  const slideAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (Platform.OS === 'web') return;
-    const padding = 8; // 4px on each side
-    const innerW = containerWidth > 0 ? containerWidth - padding : 320;
-    const itemW = innerW / count;
-    const targetX = activeIndex * itemW;
-
-    Animated.spring(slideAnim, {
-      toValue: targetX,
-      tension: 70,
-      friction: 10,
-      useNativeDriver: true,
-    }).start();
-  }, [activeIndex, containerWidth, count]);
-
-  const handleSelect = React.useCallback((v: string) => {
-    if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
-      try {
-        navigator.vibrate(6);
-      } catch {
-        // ignore
-      }
-    }
-    onChange(v);
-  }, [onChange]);
-  const selectHandlers = React.useMemo(
-    () => new Map(options.map((option) => [option.value, () => handleSelect(option.value)])),
-    [handleSelect, options]
-  );
-  const webLensStyle = React.useMemo(
-    () => ({
-      position: 'absolute' as const,
-      top: 4,
-      bottom: 4,
-      left: `calc(4px + ${activeIndex} * (100% - 8px) / ${count})`,
-      width: `calc((100% - 8px) / ${count})`,
-      transition: 'all 0.3s cubic-bezier(0.25, 1, 0.3, 1)',
-      ...themeStyles.segmentedLens,
-      borderWidth: 1,
-      borderRadius: 16,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: isDark ? 0.35 : 0.12,
-      shadowRadius: 8,
-      elevation: 4,
-      overflow: 'hidden' as const,
-      pointerEvents: 'none' as const,
-      zIndex: 1,
-    }),
-    [activeIndex, count, isDark, themeStyles.segmentedLens]
-  );
-  const nativeLensStyle = React.useMemo(
-    () => [
-      styles.segmentedLens,
-      themeStyles.segmentedLens,
-      {
-        width: containerWidth > 0 ? (containerWidth - 8) / count : `${100 / count}%`,
-        transform: [{ translateX: slideAnim }],
-        borderWidth: 1,
-        overflow: 'hidden' as const,
-      },
-    ],
-    [containerWidth, count, slideAnim, themeStyles.segmentedLens]
-  );
-  const segmentedContainerStyle = React.useMemo(
-    () => [styles.segmentedContainer, themeStyles.segmented, { position: 'relative' as const }, style],
-    [style, themeStyles.segmented]
-  );
 
   return (
-    <View
-      onLayout={(e) => {
-        const w = e.nativeEvent.layout.width;
-        if (w > 0) setContainerWidth(w);
-      }}
-      style={segmentedContainerStyle}
-    >
-      {/* Sliding Liquid Glass Lens */}
-      {Platform.OS === 'web' ? (
-        <View
-          pointerEvents="none"
-          style={webLensStyle as any}
-        >
-          {/* Top specular highlight sheen */}
-          <LinearGradient
-            colors={themeStyles.segmentedSheen}
-            start={GRADIENT_TOP_START}
-            end={GRADIENT_TOP_END}
-            style={styles.segmentedSheen}
-          />
-        </View>
-      ) : (
-        <Animated.View
-          style={nativeLensStyle}
-        >
-          <LinearGradient
-            colors={themeStyles.segmentedSheen}
-            start={GRADIENT_TOP_START}
-            end={GRADIENT_TOP_END}
-            style={styles.segmentedSheen}
-          />
-        </Animated.View>
-      )}
-
-      {options.map((opt) => {
-        const active = opt.value === value;
-        const IconComp = opt.icon ? getIcon(opt.icon) : null;
-
+    <View style={[styles.segmentedContainer, themeStyles.segmented, style]}>
+      {options.map((option) => {
+        const active = option.value === value;
+        const IconComp = option.icon ? getIcon(option.icon) : null;
         return (
           <TouchableOpacity
-            key={opt.value}
+            key={option.value}
             activeOpacity={0.8}
-            onPress={selectHandlers.get(opt.value)}
-            style={styles.segmentedItem}
+            onPress={() => onChange(option.value)}
+            style={[styles.segmentedItem, active && themeStyles.segmentedSelected]}
           >
             {IconComp && (
               <IconComp
-                size={count >= 4 ? 13 : 15}
+                size={options.length >= 4 ? 13 : 15}
                 color={active ? colors.textPrimary : colors.textTertiary}
                 style={SEGMENTED_ICON_STYLE}
                 strokeWidth={active ? 2.4 : 1.9}
@@ -922,7 +699,7 @@ export function GlassSegmentedComponent({
                 active ? themeStyles.segmentedTextActive : themeStyles.segmentedTextInactive,
               ]}
             >
-              {opt.label}
+              {option.label}
             </Text>
           </TouchableOpacity>
         );
@@ -952,8 +729,6 @@ export function GlassProgressComponent({
   const { isRTL } = useI18n();
   const pct = Math.min(100, Math.max(0, (value / (max || 1)) * 100));
 
-  const gradColors = PROGRESS_GRADIENTS[color];
-
   return (
     <View
       style={[
@@ -963,11 +738,12 @@ export function GlassProgressComponent({
         style,
       ]}
     >
-      <LinearGradient
-        colors={gradColors}
-        start={isRTL ? PROGRESS_RTL_START : PROGRESS_LTR_START}
-        end={isRTL ? PROGRESS_RTL_END : PROGRESS_LTR_END}
-        style={[styles.progressBar, { width: `${pct}%` }]}
+      <View
+        style={[
+          styles.progressBar,
+          PROGRESS_DIRECTION_STYLES[isRTL ? 'rtl' : 'ltr'],
+          { width: `${pct}%`, backgroundColor: PROGRESS_COLORS[color] },
+        ]}
       />
     </View>
   );
@@ -1310,11 +1086,6 @@ const styles = StyleSheet.create({
         } as any)
       : {}),
   },
-  backButtonIconWrap: {
-    zIndex: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   closeButton: {
     width: 32,
     height: 32,
@@ -1355,32 +1126,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     direction: 'ltr',
   },
-  segmentedLens: {
-    position: 'absolute',
-    top: 4,
-    bottom: 4,
-    left: 4,
-    borderRadius: 16,
-    borderWidth: 1,
-    ...(Platform.OS === 'ios'
-      ? {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.22,
-          shadowRadius: 8,
-        }
-      : Platform.OS === 'android'
-      ? { elevation: 0 }
-      : {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.22,
-          shadowRadius: 8,
-          elevation: 4,
-        }),
-    pointerEvents: 'none',
-    zIndex: 1,
-  },
   segmentedItem: {
     flex: 1,
     flexDirection: 'row',
@@ -1393,14 +1138,6 @@ const styles = StyleSheet.create({
   segmentedText: {
     fontSize: 12,
     fontWeight: '600',
-  },
-  segmentedSheen: {
-    position: 'absolute',
-    top: 0,
-    left: '6%',
-    right: '6%',
-    height: '45%',
-    borderRadius: 9999,
   },
   progressTrack: {
     height: 9,

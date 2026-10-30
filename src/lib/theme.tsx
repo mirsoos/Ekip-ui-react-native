@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef, type ReactNode } from 'react';
-import { useColorScheme, View, StyleSheet, Platform, Animated, Easing } from 'react-native';
+import React, { createContext, useContext, useState, useMemo, useCallback, type ReactNode } from 'react';
+import { useColorScheme } from 'react-native';
 
 export type Theme = 'light' | 'dark';
 
@@ -169,98 +169,39 @@ export interface ThemeContextValue {
   setChatTheme: (ct: ChatThemeId) => void;
 }
 
-export interface CurtainContextValue {
-  curtain: { active: boolean; color: string } | null;
-  curtainOpacity: Animated.Value;
-}
-
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
-export const CurtainContext = createContext<CurtainContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemColorScheme = useColorScheme();
   const [theme, setThemeState] = useState<Theme>(systemColorScheme === 'light' ? 'light' : 'dark');
   const [chatTheme, setChatThemeState] = useState<ChatThemeId>('default');
-  const [curtain, setCurtain] = useState<{ active: boolean; color: string } | null>(null);
-  const curtainOpacity = useRef(new Animated.Value(0)).current;
 
   const toggle = useCallback(() => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    const oldColor = theme === 'dark' ? '#04060c' : '#ebf0fa';
-
-    if (Platform.OS !== 'web') {
-      curtainOpacity.setValue(1);
-      setCurtain({ active: true, color: oldColor });
-      setThemeState(nextTheme);
-
-      Animated.timing(curtainOpacity, {
-        toValue: 0,
-        duration: 320,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1.0),
-        useNativeDriver: true,
-      }).start(() => {
-        setCurtain(null);
-      });
-    } else {
-      setThemeState(nextTheme);
-    }
-  }, [theme, curtainOpacity]);
-
-  const setTheme = useCallback((t: Theme) => {
-    if (t === theme) return;
-    const oldColor = theme === 'dark' ? '#04060c' : '#ebf0fa';
-
-    if (Platform.OS !== 'web') {
-      curtainOpacity.setValue(1);
-      setCurtain({ active: true, color: oldColor });
-      setThemeState(t);
-
-      Animated.timing(curtainOpacity, {
-        toValue: 0,
-        duration: 320,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1.0),
-        useNativeDriver: true,
-      }).start(() => {
-        setCurtain(null);
-      });
-    } else {
-      setThemeState(t);
-    }
-  }, [theme, curtainOpacity]);
+    setThemeState((current) => current === 'dark' ? 'light' : 'dark');
+  }, []);
+  const setTheme = useCallback((nextTheme: Theme) => {
+    setThemeState(nextTheme);
+  }, []);
 
   const setChatTheme = useCallback((ct: ChatThemeId) => {
     setChatThemeState(ct);
   }, []);
-
   const isDark = theme === 'dark';
-  const colors = useMemo(() => (isDark ? darkColors : lightColors), [isDark]);
-
+  const colors = isDark ? darkColors : lightColors;
   const value = useMemo(
     () => ({ theme, isDark, colors, toggle, setTheme, chatTheme, setChatTheme }),
     [theme, isDark, colors, toggle, setTheme, chatTheme, setChatTheme]
   );
-  const curtainValue = useMemo(
-    () => ({ curtain, curtainOpacity }),
-    [curtain, curtainOpacity]
-  );
 
   return (
-    <CurtainContext.Provider value={curtainValue}>
-      <ThemeContext.Provider value={value}>
-        {children}
-      </ThemeContext.Provider>
-    </CurtainContext.Provider>
+    <ThemeContext.Provider value={value}>
+      {children}
+    </ThemeContext.Provider>
   );
 }
 
-export function useTheme() {
+export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
-  return ctx;
-}
-
-export function useCurtain() {
-  const ctx = useContext(CurtainContext);
-  if (!ctx) throw new Error('useCurtain must be used within ThemeProvider');
   return ctx;
 }

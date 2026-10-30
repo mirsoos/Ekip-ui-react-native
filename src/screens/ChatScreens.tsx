@@ -64,10 +64,10 @@ export function ChatListScreenComponent({
             paddingBottom: 90 + insets.bottom,
           },
         ]}
-        initialNumToRender={8}
-        maxToRenderPerBatch={6}
+        initialNumToRender={4}
+        maxToRenderPerBatch={4}
         updateCellsBatchingPeriod={50}
-        windowSize={5}
+        windowSize={3}
         ListEmptyComponent={isLoading ? (
           <>
             <ChatListItemSkeleton />
