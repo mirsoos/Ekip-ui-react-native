@@ -226,8 +226,8 @@ export const DiscoverScreen = React.memo(
         data={isLoading ? [] : remaining}
         renderItem={renderGroup}
         keyExtractor={(group) => group.id}
-        initialNumToRender={2}
-        maxToRenderPerBatch={2}
+        initialNumToRender={4}
+        maxToRenderPerBatch={4}
         updateCellsBatchingPeriod={50}
         windowSize={3}
         removeClippedSubviews={Platform.OS === 'android'}

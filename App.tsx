@@ -1,7 +1,7 @@
 // --- START OF FILE App.tsx ---
 
-import React, { useState } from 'react';
-import { View, StyleSheet, Platform, Animated } from 'react-native';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { View, StyleSheet, Platform, Animated, Easing } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -48,6 +48,7 @@ import { Loading } from './src/screens/Loading';
 
 import { AuroraBackground } from './src/components/AuroraBackground';
 import { SwipeNavigationContainer } from './src/components/common/SwipeNavigationContainer';
+import { ScreenTransition } from './src/components/common/ScreenTransition';
 import { ErrorBoundary } from './src/components/common/ErrorBoundary';
 import { I18nProvider, useI18n } from './src/lib/i18n';
 
@@ -78,6 +79,23 @@ const AppChrome = React.memo(function AppChrome({
   children: React.ReactNode;
 }) {
   const { isDark } = useTheme();
+  const curtainOpacity = useRef(new Animated.Value(0)).current;
+  const previousTheme = useRef(isDark);
+
+  useLayoutEffect(() => {
+    if (previousTheme.current === isDark) return;
+    previousTheme.current = isDark;
+    if (Platform.OS === 'web') return;
+
+    curtainOpacity.stopAnimation();
+    curtainOpacity.setValue(1);
+    Animated.timing(curtainOpacity, {
+      toValue: 0,
+      duration: 320,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      useNativeDriver: true,
+    }).start();
+  }, [curtainOpacity, isDark]);
 
   return (
     <SafeAreaView
@@ -87,7 +105,58 @@ const AppChrome = React.memo(function AppChrome({
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <AuroraBackground isDark={isDark} />
       {children}
+      {Platform.OS !== 'web' && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.themeCurtain,
+            { backgroundColor: isDark ? '#ebf0fa' : '#04060c', opacity: curtainOpacity },
+          ]}
+        />
+      )}
     </SafeAreaView>
+  );
+});
+
+const ActiveHeaderTransition = React.memo(function ActiveHeaderTransition({
+  screenKey,
+  children,
+}: {
+  screenKey: string;
+  children: React.ReactNode;
+}) {
+  const animation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    animation.setValue(0);
+    Animated.timing(animation, {
+      toValue: 1,
+      duration: 220,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      useNativeDriver: Platform.OS !== 'web',
+    }).start();
+    return () => animation.stopAnimation();
+  }, [animation, screenKey]);
+
+  const translateY = animation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-10, 0],
+  });
+
+  return (
+    <Animated.View
+      pointerEvents="box-none"
+      renderToHardwareTextureAndroid
+      style={[
+        styles.headerOverlayWrapper,
+        {
+          opacity: Platform.OS === 'web' ? 1 : animation,
+          transform: Platform.OS === 'web' ? undefined : [{ translateY }],
+        },
+      ]}
+    >
+      {children}
+    </Animated.View>
   );
 });
 
@@ -373,6 +442,15 @@ function MainContent() {
   const showBottomNav =
     ['discover', 'activity', 'create', 'chatList'].includes(screen.name) ||
     (screen.name === 'profile' && screen.userId === 'me');
+  const activeHeaderKey = `${screen.name}-${
+    'userId' in screen
+      ? screen.userId
+      : 'conversationId' in screen
+      ? screen.conversationId
+      : 'group' in screen
+      ? screen.group.id
+      : ''
+  }-${history.length}`;
 
   if (!fontsLoaded && Platform.OS !== 'web') {
     return (
@@ -387,29 +465,36 @@ function MainContent() {
       <View nativeID="phone-container" style={styles.phoneContainer}>
         {!authed ? (
           <View style={styles.screenContainer}>
-            <AuthScreen onComplete={handleAuthSuccess} />
+            <ScreenTransition screenKey="auth">
+              <AuthScreen onComplete={handleAuthSuccess} />
+            </ScreenTransition>
           </View>
         ) : !onboarded || screen.name === 'onboarding' ? (
           <View style={styles.screenContainer}>
-            <Onboarding
-              onComplete={() => {
-                setTab('discover');
-                clearHistory();
-                setScreen({ name: 'discover' });
-              }}
-            />
+            <ScreenTransition screenKey="onboarding">
+              <Onboarding
+                onComplete={() => {
+                  setTab('discover');
+                  clearHistory();
+                  setScreen({ name: 'discover' });
+                }}
+              />
+            </ScreenTransition>
           </View>
         ) : (
           <View style={styles.screenContainer}>
-            <SwipeNavigationContainer
-              canGoBack={history.length > 0}
-              onGoBack={pop}
-              canSwipeLeftTab={isMainScreen && currentMainIndex < mainTabs.length - 1}
-              canSwipeRightTab={isMainScreen && currentMainIndex > 0}
-              onSwipeNextTab={handleSwipeNextTab}
-              onSwipePrevTab={handleSwipePrevTab}
+            <ScreenTransition
+              screenKey={`${screen.name}-${'userId' in screen ? screen.userId : ''}-${history.length}`}
             >
-              <ErrorBoundary onGoHome={handleGoHome}>
+              <SwipeNavigationContainer
+                canGoBack={history.length > 0}
+                onGoBack={pop}
+                canSwipeLeftTab={isMainScreen && currentMainIndex < mainTabs.length - 1}
+                canSwipeRightTab={isMainScreen && currentMainIndex > 0}
+                onSwipeNextTab={handleSwipeNextTab}
+                onSwipePrevTab={handleSwipePrevTab}
+              >
+                <ErrorBoundary onGoHome={handleGoHome}>
                 {isDiscoverActive && (
                   <DiscoverScreen
                     ref={discoverRef}
@@ -516,11 +601,13 @@ function MainContent() {
                 {screen.name === 'security' && <SecurityScreen onBack={pop} />}
                 {screen.name === 'location' && <LocationScreen onBack={pop} />}
                 {screen.name === 'chatTheme' && <ChatThemeScreen onBack={pop} />}
-              </ErrorBoundary>
-            </SwipeNavigationContainer>
+                </ErrorBoundary>
+              </SwipeNavigationContainer>
+            </ScreenTransition>
           </View>
         )}
 
+        <ActiveHeaderTransition screenKey={activeHeaderKey}>
         {isDiscoverActive && (
           <DiscoverHeader
             user={me}
@@ -625,6 +712,7 @@ function MainContent() {
             onOpenChat={handleOpenConversation}
           />
         )}
+        </ActiveHeaderTransition>
 
         {authed && onboarded && (
           <View
@@ -679,10 +767,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: '100%',
   },
+  themeCurtain: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 1000,
+  },
   tabContainer: {
     ...StyleSheet.absoluteFill,
   },
   headerOverlayWrapper: {
     ...StyleSheet.absoluteFill,
+    zIndex: 10,
   },
 });

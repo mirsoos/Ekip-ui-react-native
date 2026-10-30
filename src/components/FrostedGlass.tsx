@@ -22,17 +22,6 @@ interface FrostedThemeStyles {
   webOverlay: ViewStyle;
 }
 
-const androidSurfaceStyles = StyleSheet.create({
-  dark: {
-    backgroundColor: darkColors.glassBg,
-    borderColor: darkColors.glassBorder,
-  },
-  light: {
-    backgroundColor: lightColors.glassBg,
-    borderColor: lightColors.glassBorderStrong,
-  },
-});
-
 const frostedStyleCache = new Map<string, FrostedThemeStyles>();
 
 function getFrostedStyles(
@@ -94,23 +83,6 @@ export const FrostedGlass = React.memo(function FrostedGlass({
     themeContext?.colors.isDark === isDarkMode
       ? themeContext.colors
       : isDarkMode ? darkColors : lightColors;
-
-  if (Platform.OS === 'android') {
-    return (
-      <View
-        pointerEvents={pointerEvents}
-        style={[
-          styles.container,
-          isDarkMode ? androidSurfaceStyles.dark : androidSurfaceStyles.light,
-          { borderRadius },
-          style,
-        ]}
-      >
-        {children}
-      </View>
-    );
-  }
-
   const themedStyles = getFrostedStyles(
     isDarkMode,
     themeColors,
@@ -133,12 +105,13 @@ export const FrostedGlass = React.memo(function FrostedGlass({
     );
   }
 
-  // iOS retains native blur; Android uses the flat surface above.
+  // ANDROID & iOS: Pure BlurView directly as the container with solid frosted tint layer
   return (
     <BlurView
       pointerEvents={pointerEvents}
       intensity={50}
       tint={isDarkMode ? 'dark' : 'light'}
+      blurMethod={Platform.OS === 'android' ? 'none' : undefined}
       style={[styles.container, themedStyles.nativeContainer, style]}
     >
       {/* Top sheen overlay */}
