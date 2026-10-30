@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassAvatar } from '../Glass';
-import { useTheme, CHAT_THEMES } from '../../lib/theme';
+import { useChatTheme, useTheme, CHAT_THEMES } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Message } from '../../types/database';
 
@@ -15,7 +15,8 @@ export function ChatMessageBubbleComponent({
   isMe: boolean;
   showAvatar?: boolean;
 }) {
-  const { colors, chatTheme } = useTheme();
+  const { colors } = useTheme();
+  const { chatTheme } = useChatTheme();
   const { isRTL } = useI18n();
   const themeConfig = CHAT_THEMES[chatTheme] ?? CHAT_THEMES.default;
 

@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useMemo, useCallback, useRef, useEffect, type ReactNode } from 'react';
-import { Animated, Easing, Platform, useColorScheme } from 'react-native';
+import React, { createContext, useContext, useState, useMemo, useCallback, type ReactNode } from 'react';
+import { useColorScheme } from 'react-native';
 
 export type Theme = 'light' | 'dark';
 
@@ -159,121 +159,53 @@ export const lightColors: ThemeColors = {
   cardShadow: 'rgba(15, 23, 42, 0.12)',
 };
 
+export const themes = {
+  dark: darkColors,
+  light: lightColors,
+};
+
 export interface ThemeContextValue {
   theme: Theme;
   isDark: boolean;
-  colors: ThemeColors;
+  colors: typeof themes.light;
   toggle: () => void;
-  setTheme: (t: Theme) => void;
+}
+
+export interface ChatThemeContextValue {
   chatTheme: ChatThemeId;
   setChatTheme: (ct: ChatThemeId) => void;
 }
 
-export interface ThemeTransitionValue {
-  opacity: Animated.Value;
-  color: string;
-}
-
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
-export const ThemeTransitionContext = createContext<ThemeTransitionValue | null>(null);
+export const ChatThemeContext = createContext<ChatThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemColorScheme = useColorScheme();
-  const [theme, setThemeState] = useState<Theme>(systemColorScheme === 'light' ? 'light' : 'dark');
-  const [chatTheme, setChatThemeState] = useState<ChatThemeId>('default');
-  const [curtainColor, setCurtainColor] = useState(
-    systemColorScheme === 'light' ? lightColors.bgCanvas : darkColors.bgCanvas
+  const [theme, setThemeState] = useState<Theme>(
+    systemColorScheme === 'light' ? 'light' : 'dark'
   );
-  const curtainOpacity = useRef(new Animated.Value(0)).current;
-  const currentTheme = useRef(theme);
-  const requestedTheme = useRef(theme);
-  const transitionFrame = useRef<number | null>(null);
-  const transitionId = useRef(0);
-
-  const applyTheme = useCallback((nextTheme: Theme) => {
-    if (requestedTheme.current === nextTheme) return;
-    requestedTheme.current = nextTheme;
-    const activeTransition = ++transitionId.current;
-    curtainOpacity.stopAnimation();
-    if (transitionFrame.current !== null) {
-      cancelAnimationFrame(transitionFrame.current);
-      transitionFrame.current = null;
-    }
-
-    if (Platform.OS !== 'web') {
-      currentTheme.current = nextTheme;
-      setThemeState(nextTheme);
-      return;
-    }
-
-    if (currentTheme.current === nextTheme) {
-      Animated.timing(curtainOpacity, {
-        toValue: 0,
-        duration: 120,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-        useNativeDriver: false,
-      }).start();
-
-      return;
-    }
-
-    setCurtainColor(
-      currentTheme.current === 'dark' ? darkColors.bgCanvas : lightColors.bgCanvas
-    );
-    Animated.timing(curtainOpacity, {
-      toValue: 1,
-      duration: 60,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      useNativeDriver: false,
-    }).start(({ finished }) => {
-      if (!finished || activeTransition !== transitionId.current) return;
-      currentTheme.current = nextTheme;
-      setThemeState(nextTheme);
-      transitionFrame.current = requestAnimationFrame(() => {
-        transitionFrame.current = null;
-        if (activeTransition !== transitionId.current) return;
-        Animated.timing(curtainOpacity, {
-          toValue: 0,
-          duration: 320,
-          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          useNativeDriver: false,
-        }).start();
-      });
-    });
-  }, [curtainOpacity]);
+  const [chatTheme, setChatThemeState] = useState<ChatThemeId>('default');
   const toggle = useCallback(() => {
-    applyTheme(requestedTheme.current === 'dark' ? 'light' : 'dark');
-  }, [applyTheme]);
-  const setTheme = applyTheme;
-
-  useEffect(() => () => {
-    transitionId.current += 1;
-    if (transitionFrame.current !== null) {
-      cancelAnimationFrame(transitionFrame.current);
-    }
-    curtainOpacity.stopAnimation();
-  }, [curtainOpacity]);
-
-  const setChatTheme = useCallback((ct: ChatThemeId) => {
-    setChatThemeState(ct);
+    setThemeState((current) => current === 'dark' ? 'light' : 'dark');
   }, []);
   const isDark = theme === 'dark';
-  const colors = isDark ? darkColors : lightColors;
-  const value = useMemo(
-    () => ({ theme, isDark, colors, toggle, setTheme, chatTheme, setChatTheme }),
-    [theme, isDark, colors, toggle, setTheme, chatTheme, setChatTheme]
+  const colors = themes[theme];
+  const themeValue = useMemo(
+    () => ({ theme, isDark, colors, toggle }),
+    [theme, isDark, colors, toggle]
   );
-  const transitionValue = useMemo(
-    () => ({ opacity: curtainOpacity, color: curtainColor }),
-    [curtainColor, curtainOpacity]
+  const setChatTheme = useCallback((nextTheme: ChatThemeId) => {
+    setChatThemeState(nextTheme);
+  }, []);
+  const chatThemeValue = useMemo(
+    () => ({ chatTheme, setChatTheme }),
+    [chatTheme, setChatTheme]
   );
 
   return (
-    <ThemeTransitionContext.Provider value={transitionValue}>
-      <ThemeContext.Provider value={value}>
-        {children}
-      </ThemeContext.Provider>
-    </ThemeTransitionContext.Provider>
+    <ChatThemeContext.Provider value={chatThemeValue}>
+      <ThemeContext.Provider value={themeValue}>{children}</ThemeContext.Provider>
+    </ChatThemeContext.Provider>
   );
 }
 
@@ -283,8 +215,8 @@ export function useTheme(): ThemeContextValue {
   return ctx;
 }
 
-export function useThemeTransition(): ThemeTransitionValue {
-  const context = useContext(ThemeTransitionContext);
-  if (!context) throw new Error('useThemeTransition must be used within ThemeProvider');
+export function useChatTheme(): ChatThemeContextValue {
+  const context = useContext(ChatThemeContext);
+  if (!context) throw new Error('useChatTheme must be used within ThemeProvider');
   return context;
 }

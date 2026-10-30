@@ -19,7 +19,7 @@ export const ScreenTransition = React.memo(function ScreenTransition({
     if (Platform.OS === 'web') {
       if (webDivRef.current) {
         webDivRef.current.classList.remove('screen-enter-items');
-        void webDivRef.current.offsetWidth; // Force CSS reflow to replay animation without unmounting children
+        void webDivRef.current.offsetWidth;
         webDivRef.current.classList.add('screen-enter-items');
       }
     } else {
@@ -60,7 +60,7 @@ export const ScreenTransition = React.memo(function ScreenTransition({
 
   return (
     <Animated.View
-      renderToHardwareTextureAndroid={true}
+      renderToHardwareTextureAndroid
       style={[
         {
           flex: 1,

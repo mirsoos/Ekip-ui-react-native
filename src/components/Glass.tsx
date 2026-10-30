@@ -52,7 +52,7 @@ const BUTTON_ICON_RIGHT_STYLE = { marginLeft: 6 };
 const SMALL_CHIP_ICON_STYLE = { marginRight: 5 };
 const SEGMENTED_ICON_STYLE = { marginRight: 5 };
 const GLASS_THEME_STYLES = {
-  light: {
+  light: StyleSheet.create({
     buttonSecondary: {
       backgroundColor: lightColors.glassThinBg,
       borderColor: lightColors.glassBorder,
@@ -82,11 +82,6 @@ const GLASS_THEME_STYLES = {
     },
     segmentedTextActive: { color: lightColors.textPrimary, fontWeight: '700' as const },
     segmentedTextInactive: { color: lightColors.textTertiary, fontWeight: '600' as const },
-    segmentedSheen: [
-      'rgba(255, 255, 255, 0.90)',
-      'rgba(255, 255, 255, 0.22)',
-      'transparent',
-    ] as const,
     progress: {
       backgroundColor: lightColors.glassThinBg,
       borderColor: lightColors.glassBorder,
@@ -101,8 +96,8 @@ const GLASS_THEME_STYLES = {
     },
     emptyTitle: { color: lightColors.textPrimary },
     emptySubtitle: { color: lightColors.textSecondary },
-  },
-  dark: {
+  }),
+  dark: StyleSheet.create({
     buttonSecondary: {
       backgroundColor: darkColors.glassThinBg,
       borderColor: darkColors.glassBorder,
@@ -132,11 +127,6 @@ const GLASS_THEME_STYLES = {
     },
     segmentedTextActive: { color: darkColors.textPrimary, fontWeight: '700' as const },
     segmentedTextInactive: { color: darkColors.textTertiary, fontWeight: '600' as const },
-    segmentedSheen: [
-      'rgba(255, 255, 255, 0.32)',
-      'rgba(255, 255, 255, 0.05)',
-      'transparent',
-    ] as const,
     progress: {
       backgroundColor: darkColors.glassThinBg,
       borderColor: darkColors.glassBorder,
@@ -151,6 +141,22 @@ const GLASS_THEME_STYLES = {
     },
     emptyTitle: { color: darkColors.textPrimary },
     emptySubtitle: { color: darkColors.textSecondary },
+  }),
+};
+const GLASS_THEME_GRADIENTS = {
+  light: {
+    segmentedSheen: [
+      'rgba(255, 255, 255, 0.90)',
+      'rgba(255, 255, 255, 0.22)',
+      'transparent',
+    ] as const,
+  },
+  dark: {
+    segmentedSheen: [
+      'rgba(255, 255, 255, 0.32)',
+      'rgba(255, 255, 255, 0.05)',
+      'transparent',
+    ] as const,
   },
 } as const;
 const LIST_ROW_STYLES: Record<'ltr' | 'rtl', ViewStyle> = {
@@ -843,6 +849,7 @@ export function GlassSegmentedComponent({
     }),
     [activeIndex, count, isDark, themeStyles.segmentedLens]
   );
+  const segmentedSheen = GLASS_THEME_GRADIENTS[isDark ? 'dark' : 'light'].segmentedSheen;
   const nativeLensStyle = React.useMemo(
     () => [
       styles.segmentedLens,
@@ -877,7 +884,7 @@ export function GlassSegmentedComponent({
         >
           {/* Top specular highlight sheen */}
           <LinearGradient
-            colors={themeStyles.segmentedSheen}
+            colors={segmentedSheen}
             start={GRADIENT_TOP_START}
             end={GRADIENT_TOP_END}
             style={styles.segmentedSheen}
@@ -888,7 +895,7 @@ export function GlassSegmentedComponent({
           style={nativeLensStyle}
         >
           <LinearGradient
-            colors={themeStyles.segmentedSheen}
+            colors={segmentedSheen}
             start={GRADIENT_TOP_START}
             end={GRADIENT_TOP_END}
             style={styles.segmentedSheen}

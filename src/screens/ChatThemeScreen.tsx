@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useTheme, CHAT_THEMES, type ChatThemeId } from '../lib/theme';
+import { useChatTheme, CHAT_THEMES, type ChatThemeId } from '../lib/theme';
 import { GlassCard, GlassAvatar } from '../components/Glass';
 import { Toast } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
@@ -11,7 +11,7 @@ interface ChatThemeScreenProps {
 }
 
 export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
-  const { chatTheme, setChatTheme } = useTheme();
+  const { chatTheme, setChatTheme } = useChatTheme();
   const { isRTL } = useI18n();
   const [toastMsg, setToastMsg] = useState('');
 

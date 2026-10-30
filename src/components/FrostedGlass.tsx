@@ -11,51 +11,7 @@ import {
   ThemeContext,
   darkColors,
   lightColors,
-  type ThemeColors,
 } from '../lib/theme';
-
-interface FrostedThemeStyles {
-  borderColor: string;
-  webContainer: ViewStyle;
-  nativeContainer: ViewStyle;
-  overlay: ViewStyle;
-  webOverlay: ViewStyle;
-}
-
-const frostedStyleCache = new Map<string, FrostedThemeStyles>();
-
-function getFrostedStyles(
-  isDark: boolean,
-  colors: ThemeColors,
-  borderRadius: number,
-  overlayOpacity: number
-): FrostedThemeStyles {
-  const borderColor = isDark ? colors.glassBorder : colors.glassBorderStrong;
-  const key = `${isDark}:${borderRadius}:${overlayOpacity}:${borderColor}`;
-  const cached = frostedStyleCache.get(key);
-  if (cached) return cached;
-
-  const overlay = {
-    borderRadius,
-    backgroundColor: `rgba(255, 255, 255, ${overlayOpacity})`,
-  };
-  const result: FrostedThemeStyles = {
-    borderColor,
-    webContainer: {
-      borderRadius,
-      borderColor,
-      backdropFilter: 'blur(4px)',
-      WebkitBackdropFilter: 'blur(4px)',
-      boxShadow:
-        'inset 0 1px 1px rgba(255, 255, 255, 0.55), inset 0 -1px 1px rgba(255, 255, 255, 0.1), 0 6px 6px rgba(0, 0, 0, 0.2)',
-    } as ViewStyle,
-    nativeContainer: { borderRadius, borderColor },
-    overlay,
-    webOverlay: { ...overlay },
-  };
-  frostedStyleCache.set(key, result);
-  return result;
-}
 
 export interface FrostedGlassProps {
   children?: ReactNode;
@@ -77,54 +33,63 @@ export const FrostedGlass = React.memo(function FrostedGlass({
   tint,
   pointerEvents = 'none',
 }: FrostedGlassProps) {
-  const themeContext = React.useContext(ThemeContext);
-  const isDarkMode = tint !== undefined ? tint === 'dark' : themeContext?.isDark ?? true;
-  const themeColors =
-    themeContext?.colors.isDark === isDarkMode
-      ? themeContext.colors
-      : isDarkMode ? darkColors : lightColors;
-  const themedStyles = getFrostedStyles(
-    isDarkMode,
-    themeColors,
-    borderRadius,
-    overlayOpacity
-  );
+  const theme = React.useContext(ThemeContext);
+  const isDark = tint === undefined ? theme?.isDark ?? true : tint === 'dark';
+  const colors =
+    theme?.colors.isDark === isDark
+      ? theme.colors
+      : isDark
+      ? darkColors
+      : lightColors;
+  const themedStyle = isDark ? styles.dark : styles.light;
+  const containerStyle = [
+    styles.container,
+    themedStyle,
+    { borderColor: isDark ? colors.glassBorder : colors.glassBorderStrong, borderRadius },
+    style,
+  ];
 
-  if (Platform.OS === 'web') {
+  if (Platform.OS === 'android') {
     return (
-      <View
-        pointerEvents={pointerEvents}
-        style={[styles.container, themedStyles.webContainer, style]}
-      >
-        <View
-          pointerEvents="none"
-          style={[StyleSheet.absoluteFill, themedStyles.webOverlay]}
-        />
+      <View pointerEvents={pointerEvents} style={containerStyle}>
         {children}
       </View>
     );
   }
 
-  // ANDROID & iOS: Pure BlurView directly as the container with solid frosted tint layer
+  if (Platform.OS === 'web') {
+    return (
+      <View
+        pointerEvents={pointerEvents}
+        style={[containerStyle, styles.webBlur]}
+      >
+        {children}
+      </View>
+    );
+  }
+
   return (
     <BlurView
       pointerEvents={pointerEvents}
       intensity={50}
-      tint={isDarkMode ? 'dark' : 'light'}
-      blurMethod={Platform.OS === 'android' ? 'none' : undefined}
-      style={[styles.container, themedStyles.nativeContainer, style]}
+      tint={isDark ? 'dark' : 'light'}
+      style={containerStyle}
     >
-      {/* Top sheen overlay */}
       <View
         pointerEvents="none"
-        style={[StyleSheet.absoluteFill, themedStyles.overlay]}
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            borderRadius,
+            backgroundColor: `rgba(255, 255, 255, ${overlayOpacity})`,
+          },
+        ]}
       />
       {children}
     </BlurView>
   );
 });
 
-// Legacy aliases for backward compatibility
 export const LiquidLens = FrostedGlass;
 export type LiquidLensProps = FrostedGlassProps;
 
@@ -134,4 +99,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
   },
+  dark: {
+    backgroundColor: darkColors.glassBg,
+    borderColor: darkColors.glassBorder,
+  },
+  light: {
+    backgroundColor: lightColors.glassBg,
+    borderColor: lightColors.glassBorderStrong,
+  },
+  webBlur: {
+    backdropFilter: 'blur(4px)',
+    WebkitBackdropFilter: 'blur(4px)',
+  } as ViewStyle,
 });

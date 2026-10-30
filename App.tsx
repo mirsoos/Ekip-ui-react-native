@@ -8,7 +8,6 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import {
   ThemeProvider,
   useTheme,
-  useThemeTransition,
 } from './src/lib/theme';
 import { AppDataProvider, useAppData } from './src/lib/appData';
 import { BottomNav, type TabKey } from './src/components/BottomNav';
@@ -80,32 +79,29 @@ const AppChrome = React.memo(function AppChrome({
   children: React.ReactNode;
 }) {
   const { isDark } = useTheme();
-  const { opacity: curtainOpacity, color: curtainColor } = useThemeTransition();
-  const nativeCurtainOpacity = useRef(new Animated.Value(0)).current;
+  const curtainOpacity = useRef(new Animated.Value(0)).current;
   const previousTheme = useRef(isDark);
 
   useLayoutEffect(() => {
     if (previousTheme.current === isDark) return;
     previousTheme.current = isDark;
-    if (Platform.OS === 'web') return;
-
-    nativeCurtainOpacity.stopAnimation();
-    nativeCurtainOpacity.setValue(0);
+    curtainOpacity.stopAnimation();
+    curtainOpacity.setValue(0);
     Animated.sequence([
-      Animated.timing(nativeCurtainOpacity, {
+      Animated.timing(curtainOpacity, {
         toValue: 0.16,
         duration: 90,
         easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
-      Animated.timing(nativeCurtainOpacity, {
+      Animated.timing(curtainOpacity, {
         toValue: 0,
         duration: 260,
         easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
     ]).start();
-  }, [isDark, nativeCurtainOpacity]);
+  }, [curtainOpacity, isDark]);
 
   return (
     <SafeAreaView
@@ -115,27 +111,16 @@ const AppChrome = React.memo(function AppChrome({
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <AuroraBackground isDark={isDark} />
       {children}
-      {Platform.OS === 'web' && (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.themeCurtain,
-            { backgroundColor: curtainColor, opacity: curtainOpacity },
-          ]}
-        />
-      )}
-      {Platform.OS !== 'web' && (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.themeCurtain,
-            {
-              backgroundColor: isDark ? '#04060c' : '#ebf0fa',
-              opacity: nativeCurtainOpacity,
-            },
-          ]}
-        />
-      )}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.themeCurtain,
+          {
+            backgroundColor: isDark ? '#04060c' : '#ebf0fa',
+            opacity: curtainOpacity,
+          },
+        ]}
+      />
     </SafeAreaView>
   );
 });
@@ -488,7 +473,6 @@ function MainContent() {
       ? screen.group.id
       : ''
   }-${history.length}`;
-
   if (!fontsLoaded && Platform.OS !== 'web') {
     return (
       <AppChrome>
@@ -813,9 +797,6 @@ const styles = StyleSheet.create({
   themeCurtain: {
     ...StyleSheet.absoluteFill,
     zIndex: 1000,
-  },
-  tabContainer: {
-    ...StyleSheet.absoluteFill,
   },
   headerOverlayWrapper: {
     ...StyleSheet.absoluteFill,
