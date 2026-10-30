@@ -74,6 +74,7 @@ export function ProfileScreenComponent({
   onOpenPersonalInfo,
   onOpenVerification,
   scrollY: externalScrollY,
+  contentOffset = 0,
   isLoading = false,
 }: {
   userId?: string;
@@ -84,6 +85,7 @@ export function ProfileScreenComponent({
   onOpenPersonalInfo?: () => void;
   onOpenVerification?: () => void;
   scrollY?: Animated.Value;
+  contentOffset?: number;
   isLoading?: boolean;
 }) {
   const { me, profiles, groups, members, badges, missions, friends, addFriend, updateFriend, addNotification } = useAppData();
@@ -331,6 +333,7 @@ export function ProfileScreenComponent({
     <View style={styles.container}>
       <Animated.FlatList<ProfileListItem>
         data={listData}
+        contentOffset={{ x: 0, y: contentOffset }}
         renderItem={renderListItem}
         keyExtractor={(item) => `${item.kind}-${item.value.id}`}
         ListHeaderComponent={listHeader}

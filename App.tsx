@@ -217,6 +217,12 @@ function MainContent() {
   const discoverRef = React.useRef<DiscoverScreenHandle>(null);
   const aiRef = React.useRef<AIAssistantHandle>(null);
   const profileScrollY = React.useRef(new Animated.Value(0)).current;
+  const profileScrollOffsets = React.useRef(new Map<string, number>());
+  const activeProfileId = screen.name === 'profile' ? screen.userId : 'me';
+  const activeProfileScrollOffset = profileScrollOffsets.current.get(activeProfileId) ?? 0;
+  const saveActiveProfileScrollOffset = React.useCallback((offset: number) => {
+    profileScrollOffsets.current.set(activeProfileId, offset);
+  }, [activeProfileId]);
 
   const notificationsSheetRef = React.useRef<NotificationsSheetController>(null);
 
@@ -240,20 +246,27 @@ function MainContent() {
   }, []);
 
   const push = React.useCallback((s: Screen) => {
+    if (s.name === 'profile') {
+      profileScrollY.setValue(profileScrollOffsets.current.get(s.userId) ?? 0);
+    }
     const nextHistory = [...historyRef.current, screenRef.current];
     historyRef.current = nextHistory;
     setHistory(nextHistory);
     setScreen(s);
-  }, []);
+  }, [profileScrollY]);
 
   const pop = React.useCallback(() => {
     const currentHistory = historyRef.current;
     if (currentHistory.length === 0) return;
     const nextHistory = currentHistory.slice(0, -1);
+    const previousScreen = currentHistory[currentHistory.length - 1];
+    if (previousScreen.name === 'profile') {
+      profileScrollY.setValue(profileScrollOffsets.current.get(previousScreen.userId) ?? 0);
+    }
     historyRef.current = nextHistory;
     setHistory(nextHistory);
-    setScreen(currentHistory[currentHistory.length - 1]);
-  }, []);
+    setScreen(previousScreen);
+  }, [profileScrollY]);
 
   const switchTab = React.useCallback((t: TabKey) => {
     const currentScreen = screenRef.current;
@@ -271,7 +284,7 @@ function MainContent() {
     else if (t === 'create') setScreen({ name: 'create' });
     else if (t === 'chat') setScreen({ name: 'chatList' });
     else if (t === 'profile') {
-      profileScrollY.setValue(0);
+      profileScrollY.setValue(profileScrollOffsets.current.get('me') ?? 0);
       setScreen({ name: 'profile', userId: 'me' });
     }
   }, [clearHistory, profileScrollY]);
@@ -284,17 +297,19 @@ function MainContent() {
     if (uid === 'me') {
       setTab('profile');
       clearHistory();
+      profileScrollY.setValue(profileScrollOffsets.current.get('me') ?? 0);
       setScreen({ name: 'profile', userId: 'me' });
     } else {
       push({ name: 'profile', userId: uid });
     }
-  }, [clearHistory, push]);
+  }, [clearHistory, profileScrollY, push]);
 
   const handleOpenOwnProfile = React.useCallback(() => {
     setTab('profile');
     clearHistory();
+    profileScrollY.setValue(profileScrollOffsets.current.get('me') ?? 0);
     setScreen({ name: 'profile', userId: 'me' });
-  }, [clearHistory]);
+  }, [clearHistory, profileScrollY]);
 
   const handleOpenAI = React.useCallback(() => {
     push({ name: 'ai' });
@@ -541,6 +556,7 @@ function MainContent() {
                     onOpenPersonalInfo={handleOpenPersonalInfo}
                     onOpenVerification={handleOpenVerification}
                     scrollY={profileScrollY}
+                    contentOffset={activeProfileScrollOffset}
                   />
                 )}
                 {screen.name === 'profile' && screen.userId !== 'me' && (
@@ -554,6 +570,7 @@ function MainContent() {
                     onOpenPersonalInfo={handleOpenPersonalInfo}
                     onOpenVerification={handleOpenVerification}
                     scrollY={profileScrollY}
+                    contentOffset={activeProfileScrollOffset}
                   />
                 )}
                 {screen.name === 'group' && (
@@ -660,6 +677,8 @@ function MainContent() {
             onBack={pop}
             onOpenSettings={handleOpenSettings}
             scrollY={profileScrollY}
+            initialScrollOffset={activeProfileScrollOffset}
+            onScrollOffsetChange={saveActiveProfileScrollOffset}
           />
         )}
         {screen.name === 'conversation' && (() => {
@@ -693,6 +712,8 @@ function MainContent() {
               onBack={pop}
               onOpenSettings={handleOpenSettings}
               scrollY={profileScrollY}
+              initialScrollOffset={activeProfileScrollOffset}
+              onScrollOffsetChange={saveActiveProfileScrollOffset}
             />
           );
         })()}

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Animated, Easing } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Animated, Easing, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassBackButton } from '../Glass';
@@ -18,18 +18,42 @@ const actionButtonStyles = {
   dark: { borderColor: darkColors.glassBorderStrong },
 };
 
+interface HeaderLayout {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+function updateHeaderLayout(
+  setLayout: React.Dispatch<React.SetStateAction<HeaderLayout | null>>,
+  event: LayoutChangeEvent
+) {
+  const { x, y, width, height } = event.nativeEvent.layout;
+  setLayout((current) =>
+    current && current.x === x && current.y === y &&
+    current.width === width && current.height === height
+      ? current
+      : { x, y, width, height }
+  );
+}
+
 export function ProfileHeaderComponent({
   profile,
   isOwnProfile,
   onBack,
   onOpenSettings,
   scrollY,
+  initialScrollOffset = 0,
+  onScrollOffsetChange,
 }: {
   profile: Profile;
   isOwnProfile: boolean;
   onBack?: () => void;
   onOpenSettings: () => void;
   scrollY: Animated.Value;
+  initialScrollOffset?: number;
+  onScrollOffsetChange?: (offset: number) => void;
 }) {
   const insets = useSafeAreaInsets();
   const { theme, toggle, colors, isDark } = useTheme();
@@ -40,17 +64,28 @@ export function ProfileHeaderComponent({
   );
 
   const SCROLL_DISTANCE = 65;
-  const isIOS = Platform.OS === 'ios';
-  const targetTranslateY = isIOS ? -140 : -142;
-  const targetTranslateX = isRTL
-    ? (!isOwnProfile && onBack ? -29 : 15)
-    : (!isOwnProfile && onBack ? 29 : -15);
-
-  const initialDocked = ((scrollY as any)?._value ?? 0) >= 60;
+  const [avatarLayout, setAvatarLayout] = useState<HeaderLayout | null>(null);
+  const [capsuleLayout, setCapsuleLayout] = useState<HeaderLayout | null>(null);
+  const [avatarSlotLayout, setAvatarSlotLayout] = useState<HeaderLayout | null>(null);
+  const topPad = Platform.OS === 'web' ? 10 : Math.max(10, insets.top + 6);
+  const fallbackTranslateY = topPad + 28 - 180;
+  const initialDocked = initialScrollOffset >= 60;
   const [isDocked, setIsDocked] = useState(initialDocked);
   const [isMounted, setIsMounted] = useState(initialDocked);
   const capsuleAnim = useRef(new Animated.Value(initialDocked ? 1 : 0)).current;
   const isDockedRef = useRef(initialDocked);
+  const onAvatarLayout = useCallback(
+    (event: LayoutChangeEvent) => updateHeaderLayout(setAvatarLayout, event),
+    []
+  );
+  const onCapsuleLayout = useCallback(
+    (event: LayoutChangeEvent) => updateHeaderLayout(setCapsuleLayout, event),
+    []
+  );
+  const onAvatarSlotLayout = useCallback(
+    (event: LayoutChangeEvent) => updateHeaderLayout(setAvatarSlotLayout, event),
+    []
+  );
 
   // Avatar entrance animation when navigating into Profile screen
   const avatarEnterAnim = useRef(new Animated.Value(0)).current;
@@ -67,6 +102,7 @@ export function ProfileHeaderComponent({
 
   useEffect(() => {
     const id = scrollY.addListener(({ value }) => {
+      onScrollOffsetChange?.(value);
       const docked = value >= 60;
       if (docked !== isDockedRef.current) {
         isDockedRef.current = docked;
@@ -98,7 +134,7 @@ export function ProfileHeaderComponent({
     return () => {
       scrollY.removeListener(id);
     };
-  }, [scrollY, capsuleAnim]);
+  }, [scrollY, capsuleAnim, onScrollOffsetChange]);
 
   // Entrance & Exit animations for header capsule and unscrolled bar
   const capsuleTranslateY = React.useMemo(
@@ -111,6 +147,16 @@ export function ProfileHeaderComponent({
   );
 
   // GPU-Accelerated Transforms for the Avatar
+  const targetTranslateY = avatarLayout && capsuleLayout
+    ? capsuleLayout.y + capsuleLayout.height / 2 - (avatarLayout.y + avatarLayout.height / 2)
+    : fallbackTranslateY;
+  const targetTranslateX = avatarLayout && capsuleLayout && avatarSlotLayout
+    ? capsuleLayout.x + avatarSlotLayout.x + avatarSlotLayout.width / 2 -
+      (avatarLayout.x + avatarLayout.width / 2)
+    : isRTL
+    ? (!isOwnProfile && onBack ? -29 : 15)
+    : (!isOwnProfile && onBack ? 29 : -15);
+
   const translateY = React.useMemo(
     () =>
       scrollY.interpolate({
@@ -162,7 +208,6 @@ export function ProfileHeaderComponent({
     [avatarEnterScale, scale]
   );
 
-  const topPad = Platform.OS === 'web' ? 10 : Math.max(10, insets.top + 6);
   const capsuleStyle = React.useMemo(
     () => [
       styles.container,
@@ -207,6 +252,7 @@ export function ProfileHeaderComponent({
       {/* Docked Authentic Liquid Glass Header Capsule with Slide Enter/Exit */}
       {isMounted && (
         <Animated.View
+          onLayout={onCapsuleLayout}
           style={capsuleStyle}
           pointerEvents={isDocked ? 'auto' : 'none'}
         >
@@ -224,7 +270,7 @@ export function ProfileHeaderComponent({
           ) : null}
 
           {/* Reserved slot for docked avatar */}
-          <View style={{ width: 40 }} />
+          <View onLayout={onAvatarSlotLayout} style={{ width: 40 }} />
 
           {/* Title that appears when docked */}
           <View style={styles.titleWrap}>
@@ -352,6 +398,7 @@ export function ProfileHeaderComponent({
 
       {/* GPU-Accelerated Shrinking Avatar */}
       <Animated.View
+        onLayout={onAvatarLayout}
         style={avatarStyle}
         pointerEvents="none"
       >
