@@ -8,6 +8,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import {
   ThemeProvider,
   useTheme,
+  useThemeTransition,
 } from './src/lib/theme';
 import { AppDataProvider, useAppData } from './src/lib/appData';
 import { BottomNav, type TabKey } from './src/components/BottomNav';
@@ -79,7 +80,8 @@ const AppChrome = React.memo(function AppChrome({
   children: React.ReactNode;
 }) {
   const { isDark } = useTheme();
-  const curtainOpacity = useRef(new Animated.Value(0)).current;
+  const { opacity: curtainOpacity, color: curtainColor } = useThemeTransition();
+  const nativeCurtainOpacity = useRef(new Animated.Value(0)).current;
   const previousTheme = useRef(isDark);
 
   useLayoutEffect(() => {
@@ -87,15 +89,23 @@ const AppChrome = React.memo(function AppChrome({
     previousTheme.current = isDark;
     if (Platform.OS === 'web') return;
 
-    curtainOpacity.stopAnimation();
-    curtainOpacity.setValue(1);
-    Animated.timing(curtainOpacity, {
-      toValue: 0,
-      duration: 320,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      useNativeDriver: true,
-    }).start();
-  }, [curtainOpacity, isDark]);
+    nativeCurtainOpacity.stopAnimation();
+    nativeCurtainOpacity.setValue(0);
+    Animated.sequence([
+      Animated.timing(nativeCurtainOpacity, {
+        toValue: 0.16,
+        duration: 90,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(nativeCurtainOpacity, {
+        toValue: 0,
+        duration: 260,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [isDark, nativeCurtainOpacity]);
 
   return (
     <SafeAreaView
@@ -105,12 +115,24 @@ const AppChrome = React.memo(function AppChrome({
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <AuroraBackground isDark={isDark} />
       {children}
+      {Platform.OS === 'web' && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.themeCurtain,
+            { backgroundColor: curtainColor, opacity: curtainOpacity },
+          ]}
+        />
+      )}
       {Platform.OS !== 'web' && (
         <Animated.View
           pointerEvents="none"
           style={[
             styles.themeCurtain,
-            { backgroundColor: isDark ? '#ebf0fa' : '#04060c', opacity: curtainOpacity },
+            {
+              backgroundColor: isDark ? '#04060c' : '#ebf0fa',
+              opacity: nativeCurtainOpacity,
+            },
           ]}
         />
       )}
