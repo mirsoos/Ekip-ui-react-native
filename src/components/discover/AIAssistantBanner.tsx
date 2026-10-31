@@ -19,7 +19,7 @@ export const AIAssistantBanner = React.memo(function AIAssistantBanner({
   const ChevronRight = getIcon('ChevronRight');
 
   return (
-    <View style={[{ paddingHorizontal: 16, marginTop: 12 }, style]}>
+    <View style={[{ paddingHorizontal: 16 }, style]}>
       <GlassCard glow onPress={onPress} style={styles.card}>
         <LinearGradient
           colors={['rgba(244, 114, 182, 0.35)', 'rgba(59, 130, 246, 0.35)']}

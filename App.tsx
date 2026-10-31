@@ -152,7 +152,7 @@ const ActiveHeaderTransition = React.memo(function ActiveHeaderTransition({
       style={[
         styles.headerOverlayWrapper,
         {
-          opacity: animation,
+          opacity: Platform.OS === 'web' ? 1 : animation,
         },
       ]}
     >
@@ -641,10 +641,12 @@ function MainContent() {
         )}
         {isActivityActive && (
           <ActivityHeader
+            user={me}
             unreadCount={unreadNotificationsCount}
             tab={activityTab}
             onChangeTab={setActivityTab}
             onOpenNotifications={handleOpenNotifications}
+            onOpenOwnProfile={handleOpenOwnProfile}
           />
         )}
         {isCreateActive && (
@@ -803,6 +805,6 @@ const styles = StyleSheet.create({
   },
   headerOverlayWrapper: {
     ...StyleSheet.absoluteFill,
-    zIndex: 10,
+    zIndex: 100,
   },
 });

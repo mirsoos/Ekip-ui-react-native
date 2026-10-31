@@ -239,8 +239,8 @@ export function ProfileScreenComponent({
       styles.scrollContent,
       {
         paddingBottom: isOwnProfile
-          ? Platform.OS === 'web' ? 110 : 90 + insets.bottom
-          : Platform.OS === 'web' ? 24 : 24 + insets.bottom,
+          ? 100 + insets.bottom
+          : 24 + insets.bottom,
       },
     ],
     [insets.bottom, isOwnProfile]

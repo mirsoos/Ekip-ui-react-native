@@ -243,7 +243,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 85,
     paddingBottom: 40,
   },
   fieldLabel: {

@@ -1,23 +1,28 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GlassSegmented } from '../Glass';
+import { GlassSegmented, GlassAvatar } from '../Glass';
 import { NotificationButton } from '../NotificationButton';
 import { FrostedGlass } from '../FrostedGlass';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
+import type { Profile } from '../../types/database';
 
 export function ActivityHeaderComponent({
+  user,
   unreadCount,
   tab,
   onChangeTab,
   onOpenNotifications,
+  onOpenOwnProfile,
 }: {
+  user?: Profile;
   unreadCount: number;
   tab: string;
   onChangeTab: (tab: string) => void;
   onOpenNotifications: () => void;
+  onOpenOwnProfile?: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -51,17 +56,49 @@ export function ActivityHeaderComponent({
           style={StyleSheet.absoluteFill}
         />
 
-        <View style={[styles.titleRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-          <Text style={[styles.heading, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
-            {t('activity.myEkip')}
-          </Text>
-          <NotificationButton
-            unreadCount={unreadCount}
-            onPress={onOpenNotifications}
-          />
+        <View style={[styles.topRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+          <View style={{ flex: 1, zIndex: 10 }}>
+            {user?.city ? (
+              <Text style={[styles.cityText, { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' }]}>
+                {user.city}
+              </Text>
+            ) : null}
+            <Text style={[styles.titleText, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
+              {t('activity.myEkip')}
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.topActions,
+              {
+                zIndex: 10,
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+                gap: 8,
+              },
+            ]}
+          >
+            <NotificationButton
+              unreadCount={unreadCount}
+              onPress={onOpenNotifications}
+            />
+            {user && onOpenOwnProfile ? (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={onOpenOwnProfile}
+              >
+                <GlassAvatar
+                  src={user.avatar_url}
+                  name={`${user.first_name} ${user.last_name}`}
+                  size={38}
+                  online
+                />
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </View>
 
-        <View style={{ marginTop: 12, zIndex: 10 }}>
+        <View style={{ zIndex: 10 }}>
           <GlassSegmented
             options={[
               { label: t('activity.created'), value: 'created', icon: 'Crown' },
@@ -94,7 +131,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: HEADER_METRICS.paddingHorizontal,
     paddingTop: HEADER_METRICS.paddingVertical,
-    paddingBottom: 12,
+    paddingBottom: 10,
     ...(Platform.OS === 'ios'
       ? {
           shadowColor: '#000',
@@ -113,16 +150,28 @@ const styles = StyleSheet.create({
         }),
     overflow: 'visible',
   },
-  titleRow: {
+  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     minHeight: HEADER_METRICS.actionButtonSize,
+    paddingHorizontal: 8,
+    marginBottom: 10,
     zIndex: 10,
   },
-  heading: {
+  cityText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  titleText: {
     fontSize: 24,
     fontWeight: '800',
     letterSpacing: -0.5,
+  },
+  topActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

@@ -236,8 +236,8 @@ export const DiscoverScreen = React.memo(
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: getMultiRowContentPaddingTop(insets.top, 115),
-            paddingBottom: 90 + insets.bottom,
+            paddingTop: getMultiRowContentPaddingTop(insets.top),
+            paddingBottom: 100 + insets.bottom,
           },
         ]}
         ListHeaderComponent={listHeader}
@@ -265,8 +265,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 156,
-    paddingBottom: 110,
+    paddingBottom: 100,
   },
   sectionWrap: {
     paddingHorizontal: 16,

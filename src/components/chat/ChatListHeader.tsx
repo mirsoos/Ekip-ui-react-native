@@ -70,7 +70,7 @@ export function ChatListHeaderComponent({
           </View>
         </View>
 
-        <View style={{ marginTop: 12, zIndex: 10 }}>
+        <View style={{ marginTop: 10, zIndex: 10 }}>
           <GlassInput
             icon="Search"
             placeholder={t('chat.searchChannels')}
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: HEADER_METRICS.paddingHorizontal,
     paddingTop: HEADER_METRICS.paddingVertical,
-    paddingBottom: 12,
+    paddingBottom: 10,
     ...(Platform.OS === 'ios'
       ? {
           shadowColor: '#000',

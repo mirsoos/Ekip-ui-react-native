@@ -61,8 +61,8 @@ export function ChatListScreenComponent({
         contentContainerStyle={[
           styles.listContent,
           {
-            paddingTop: getMultiRowContentPaddingTop(insets.top, 119),
-            paddingBottom: 90 + insets.bottom,
+            paddingTop: getMultiRowContentPaddingTop(insets.top),
+            paddingBottom: 100 + insets.bottom,
           },
         ]}
         initialNumToRender={4}
@@ -155,13 +155,11 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingTop: 168,
-    paddingBottom: 110,
+    paddingBottom: 100,
     gap: 8,
   },
   messagesContent: {
     paddingHorizontal: 16,
-    paddingTop: 100,
     paddingBottom: 90,
     gap: 12,
   },

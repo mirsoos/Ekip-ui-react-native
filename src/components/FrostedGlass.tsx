@@ -58,10 +58,29 @@ export const FrostedGlass = React.memo(function FrostedGlass({
   }
 
   if (Platform.OS === 'web') {
+    const flattened = StyleSheet.flatten(style);
+    const bg =
+      flattened?.backgroundColor ??
+      (isDark ? 'rgba(15, 23, 42, 0.65)' : 'rgba(255, 255, 255, 0.7)');
+
+    const webBlurStyle: ViewStyle = {
+      backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
+      backgroundColor: bg,
+    } as any;
+
     return (
       <View
         pointerEvents={pointerEvents}
-        style={[containerStyle, styles.webBlur]}
+        style={[
+          styles.container,
+          {
+            borderRadius,
+            borderColor: isDark ? colors.glassBorder : colors.glassBorderStrong,
+          },
+          style,
+          webBlurStyle,
+        ]}
       >
         {children}
       </View>
@@ -108,7 +127,7 @@ const styles = StyleSheet.create({
     borderColor: lightColors.glassBorderStrong,
   },
   webBlur: {
-    backdropFilter: 'blur(4px)',
-    WebkitBackdropFilter: 'blur(4px)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
   } as ViewStyle,
 });

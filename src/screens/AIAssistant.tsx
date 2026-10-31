@@ -192,7 +192,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   messagesContent: {
-    paddingTop: 84,
     paddingBottom: 80,
     paddingHorizontal: 16,
   },

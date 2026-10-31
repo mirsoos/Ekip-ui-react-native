@@ -230,7 +230,6 @@ export const PlansScreen = React.memo(PlansScreenComponent);
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 100,
     paddingBottom: 40,
     paddingHorizontal: 16,
   },

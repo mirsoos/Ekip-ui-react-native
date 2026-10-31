@@ -289,8 +289,8 @@ export function ActivityScreenComponent({
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: getMultiRowContentPaddingTop(insets.top, 115),
-            paddingBottom: 90 + insets.bottom,
+            paddingTop: getMultiRowContentPaddingTop(insets.top),
+            paddingBottom: 100 + insets.bottom,
           },
         ]}
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
@@ -337,9 +337,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 148,
-    paddingBottom: 110,
+    paddingHorizontal: 16,
+    paddingBottom: 100,
   },
   cardContainer: {
     borderRadius: 28,
