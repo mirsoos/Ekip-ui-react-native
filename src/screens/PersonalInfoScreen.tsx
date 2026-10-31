@@ -8,6 +8,7 @@ import { Toast } from '../components/Overlays';
 import { allInterests } from '../lib/demoData';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 import type { Gender } from '../types/database';
 
 const AVATAR_PRESETS = [
@@ -75,8 +76,8 @@ export function PersonalInfoScreenComponent({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
-          Platform.OS !== 'web' && {
-            paddingTop: 76 + insets.top,
+          {
+            paddingTop: getSinglePillContentPaddingTop(insets.top),
             paddingBottom: 40 + insets.bottom,
           },
         ]}

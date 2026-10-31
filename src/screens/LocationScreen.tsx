@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassButton, LiquidGlassToggle } from '../components/Glass';
 import { GlassSheet, Toast } from '../components/Overlays';
 import { cities } from '../lib/demoData';
 import { getIcon } from '../lib/icons';
 import { useI18n } from '../lib/i18n';
+import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 interface LocationScreenProps {
   onBack: () => void;
@@ -19,6 +21,7 @@ interface SavedPlace {
 }
 
 export function LocationScreen({ onBack }: LocationScreenProps) {
+  const insets = useSafeAreaInsets();
   const { me, updateMe, addNotification } = useAppData();
   const { isRTL } = useI18n();
 
@@ -94,7 +97,14 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingTop: 84, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={{
+          paddingTop: getSinglePillContentPaddingTop(insets.top),
+          paddingBottom: 60 + insets.bottom,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Current Radar Card */}
         <GlassCard variant="thick" style={styles.heroCard}>
           <View style={styles.heroHeader}>

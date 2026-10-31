@@ -5,6 +5,7 @@ import { GlassCard, GlassButton } from '../components/Glass';
 import { Toast } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
 import { useI18n } from '../lib/i18n';
+import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 interface PlansScreenProps {
   onBack: () => void;
@@ -125,9 +126,9 @@ export function PlansScreenComponent({ onBack }: PlansScreenProps) {
     <ScrollView
       contentContainerStyle={[
         styles.container,
-        { alignItems: 'center' },
-        Platform.OS !== 'web' && {
-          paddingTop: 80 + insets.top,
+        {
+          alignItems: 'center',
+          paddingTop: getSinglePillContentPaddingTop(insets.top),
           paddingBottom: 40 + insets.bottom,
         },
       ]}

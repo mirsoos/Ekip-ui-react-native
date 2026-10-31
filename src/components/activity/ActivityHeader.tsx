@@ -1,11 +1,12 @@
-import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassSegmented } from '../Glass';
 import { NotificationButton } from '../NotificationButton';
 import { FrostedGlass } from '../FrostedGlass';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
+import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
 
 export function ActivityHeaderComponent({
   unreadCount,
@@ -22,39 +23,21 @@ export function ActivityHeaderComponent({
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
 
-  const enterAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    enterAnim.setValue(0);
-    Animated.spring(enterAnim, {
-      toValue: 1,
-      bounciness: 4,
-      speed: 14,
-      useNativeDriver: Platform.OS !== 'web',
-    }).start();
-  }, []);
-
-  const enterTranslateY = enterAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-85, 0],
-  });
-
   return (
     <View
       style={[
         styles.outerContainer,
         {
-          paddingTop: Platform.OS === 'web' ? 10 : Math.max(10, insets.top + 6),
+          paddingTop: getHeaderTopInset(insets.top),
         },
       ]}
       pointerEvents="box-none"
     >
-      <Animated.View
+      <View
         style={[
           styles.container,
           {
             borderColor: colors.glassBorderStrong,
-            transform: [{ translateY: enterTranslateY }],
           },
         ]}
       >
@@ -89,7 +72,7 @@ export function ActivityHeaderComponent({
             onChange={onChangeTab}
           />
         </View>
-      </Animated.View>
+      </View>
     </View>
   );
 }
@@ -102,15 +85,15 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 12,
+    paddingHorizontal: HEADER_METRICS.marginHorizontal,
     zIndex: 900,
   },
   container: {
     position: 'relative',
     borderRadius: 28,
     borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingHorizontal: HEADER_METRICS.paddingHorizontal,
+    paddingTop: HEADER_METRICS.paddingVertical,
     paddingBottom: 12,
     ...(Platform.OS === 'ios'
       ? {
@@ -134,6 +117,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: HEADER_METRICS.actionButtonSize,
     zIndex: 10,
   },
   heading: {

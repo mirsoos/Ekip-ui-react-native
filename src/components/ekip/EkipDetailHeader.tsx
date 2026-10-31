@@ -7,6 +7,7 @@ import { FrostedGlass } from '../FrostedGlass';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
+import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
 
 export interface EkipDetailHeaderProps {
   coverUrl: string;
@@ -26,7 +27,7 @@ export function EkipDetailHeader({
   const { isRTL } = useI18n();
   const ShareIcon = getIcon('Share');
   const BookmarkIcon = getIcon('Bookmark');
-  const topInset = Platform.OS === 'web' ? 16 : Math.max(16, insets.top + 8);
+  const buttonTop = getHeaderTopInset(insets.top) + HEADER_METRICS.buttonTopOffset;
 
   return (
     <View style={[styles.container, Platform.OS !== 'web' && { height: 220 + insets.top }]}>
@@ -46,9 +47,9 @@ export function EkipDetailHeader({
         style={[
           styles.backBtn,
           {
-            top: topInset,
-            left: isRTL ? 'auto' : 16,
-            right: isRTL ? 16 : 'auto',
+            top: buttonTop,
+            left: isRTL ? 'auto' : HEADER_METRICS.buttonOffset,
+            right: isRTL ? HEADER_METRICS.buttonOffset : 'auto',
           },
         ]}
       />
@@ -58,9 +59,9 @@ export function EkipDetailHeader({
         style={[
           styles.rightActions,
           {
-            top: topInset,
-            left: isRTL ? 16 : 'auto',
-            right: isRTL ? 'auto' : 16,
+            top: buttonTop,
+            left: isRTL ? HEADER_METRICS.buttonOffset : 'auto',
+            right: isRTL ? 'auto' : HEADER_METRICS.buttonOffset,
             flexDirection: isRTL ? 'row-reverse' : 'row',
           },
         ]}

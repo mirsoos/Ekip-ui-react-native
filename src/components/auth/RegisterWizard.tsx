@@ -8,6 +8,7 @@ import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
+import { HEADER_METRICS, getHeaderTopInset, getSinglePillContentPaddingTop } from '../../lib/headerLayout';
 
 const totalSteps = 4;
 
@@ -61,7 +62,7 @@ export function RegisterWizardComponent({
         style={[
           styles.headerOuter,
           {
-            paddingTop: Platform.OS === 'web' ? 10 : Math.max(10, insets.top + 6),
+            paddingTop: getHeaderTopInset(insets.top),
           },
         ]}
         pointerEvents="box-none"
@@ -85,7 +86,12 @@ export function RegisterWizardComponent({
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[
+          styles.container,
+          {
+            paddingTop: getSinglePillContentPaddingTop(insets.top),
+          },
+        ]}
       >
         {step === 0 && (
           <View key={0} className="animate-raise" style={{ gap: 14 }}>
@@ -277,16 +283,16 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 12,
-    paddingTop: Platform.OS === 'ios' ? 12 : 10,
+    paddingHorizontal: HEADER_METRICS.marginHorizontal,
     zIndex: 900,
   },
   headerContainer: {
     position: 'relative',
-    height: 60,
+    height: HEADER_METRICS.pillHeight,
     borderRadius: 36,
     borderWidth: 1,
-    paddingHorizontal: 12,
+    paddingVertical: HEADER_METRICS.paddingVertical,
+    paddingHorizontal: HEADER_METRICS.paddingHorizontal,
     flexDirection: 'row',
     alignItems: 'center',
     ...(Platform.OS === 'ios'

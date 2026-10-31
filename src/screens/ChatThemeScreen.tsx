@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useChatTheme, CHAT_THEMES, type ChatThemeId } from '../lib/theme';
 import { GlassCard, GlassAvatar } from '../components/Glass';
 import { Toast } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
 import { useI18n } from '../lib/i18n';
+import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 interface ChatThemeScreenProps {
   onBack: () => void;
 }
 
 export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
+  const insets = useSafeAreaInsets();
   const { chatTheme, setChatTheme } = useChatTheme();
   const { isRTL } = useI18n();
   const [toastMsg, setToastMsg] = useState('');
@@ -27,7 +30,14 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingTop: 84, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={{
+          paddingTop: getSinglePillContentPaddingTop(insets.top),
+          paddingBottom: 60 + insets.bottom,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Live Preview Card */}
         <Text style={styles.sectionHeading}>
           {isRTL ? 'پیش‌نمایش زنده گفتگو' : 'LIVE CHAT PREVIEW'}

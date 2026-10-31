@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassInput, GlassBackButton, GlassSegmented } from '../Glass';
 import { FrostedGlass } from '../FrostedGlass';
 import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
+import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
 
 export function LoginForm({
   onBack,
@@ -16,6 +18,7 @@ export function LoginForm({
   onSubmit: () => void;
   onOAuth: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
 
@@ -31,7 +34,13 @@ export function LoginForm({
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[
+        styles.container,
+        {
+          paddingTop: getHeaderTopInset(insets.top) + HEADER_METRICS.buttonTopOffset,
+          paddingHorizontal: HEADER_METRICS.buttonOffset,
+        },
+      ]}
     >
       {/* Top Header Row with Back Button and Language Switcher */}
       <View style={[styles.topBar, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
@@ -203,6 +212,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: HEADER_METRICS.actionButtonSize,
     marginBottom: 20,
   },
   heading: {

@@ -7,6 +7,7 @@ import { FrostedGlass } from '../FrostedGlass';
 import { getIcon } from '../../lib/icons';
 import { darkColors, lightColors, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
+import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
 import type { Profile } from '../../types/database';
 
 const Sun = getIcon('Sun');
@@ -67,7 +68,7 @@ export function ProfileHeaderComponent({
   const [avatarLayout, setAvatarLayout] = useState<HeaderLayout | null>(null);
   const [capsuleLayout, setCapsuleLayout] = useState<HeaderLayout | null>(null);
   const [avatarSlotLayout, setAvatarSlotLayout] = useState<HeaderLayout | null>(null);
-  const topPad = Platform.OS === 'web' ? 10 : Math.max(10, insets.top + 6);
+  const topPad = getHeaderTopInset(insets.top);
   const fallbackTranslateY = topPad + 28 - 180;
   const initialDocked = initialScrollOffset >= 60;
   const [isDocked, setIsDocked] = useState(initialDocked);
@@ -212,12 +213,13 @@ export function ProfileHeaderComponent({
     () => [
       styles.container,
       {
+        marginTop: topPad,
         flexDirection: isRTL ? 'row-reverse' as const : 'row' as const,
         borderColor: colors.glassBorderStrong,
         transform: [{ translateY: capsuleTranslateY }],
       },
     ],
-    [capsuleTranslateY, colors.glassBorderStrong, isRTL]
+    [capsuleTranslateY, colors.glassBorderStrong, isRTL, topPad]
   );
   const avatarStyle = React.useMemo(
     () => [
@@ -242,10 +244,7 @@ export function ProfileHeaderComponent({
       translateX,
     ]
   );
-  const outerStyle = React.useMemo(
-    () => [styles.outerContainer, { paddingTop: topPad }],
-    [topPad]
-  );
+  const outerStyle = styles.outerContainer;
 
   return (
     <View style={outerStyle} pointerEvents="box-none">
@@ -431,17 +430,18 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 12,
     zIndex: 900,
   },
   container: {
     position: 'relative',
+    marginHorizontal: HEADER_METRICS.marginHorizontal,
+    height: HEADER_METRICS.pillHeight,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 36,
     borderWidth: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: HEADER_METRICS.paddingVertical,
+    paddingHorizontal: HEADER_METRICS.paddingHorizontal,
     ...(Platform.OS === 'ios'
       ? {
           shadowColor: '#000',
@@ -467,14 +467,14 @@ const styles = StyleSheet.create({
   },
   unscrolledBar: {
     position: 'absolute',
-    left: 12,
-    right: 12,
+    left: HEADER_METRICS.marginHorizontal,
+    right: HEADER_METRICS.marginHorizontal,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    height: 54,
+    paddingVertical: HEADER_METRICS.paddingVertical + 1,
+    paddingHorizontal: HEADER_METRICS.paddingHorizontal + 1,
+    height: HEADER_METRICS.pillHeight,
   },
   titleWrap: {
     flex: 1,

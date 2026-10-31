@@ -6,6 +6,7 @@ import { ScreenHeader } from '../components/common/ScreenHeader';
 import { NotificationFilterTabs } from '../components/notifications/NotificationFilterTabs';
 import { NotificationItem } from '../components/notifications/NotificationItem';
 import { GlassEmpty } from '../components/Glass';
+import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 export function NotificationsScreenComponent({
   onBack,
@@ -34,8 +35,8 @@ export function NotificationsScreenComponent({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
-          Platform.OS !== 'web' && {
-            paddingTop: 76 + insets.top,
+          {
+            paddingTop: getSinglePillContentPaddingTop(insets.top),
             paddingBottom: 40 + insets.bottom,
           },
         ]}

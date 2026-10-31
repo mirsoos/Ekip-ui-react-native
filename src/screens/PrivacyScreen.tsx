@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassButton, GlassBackButton, GlassAvatar, GlassSegmented } from '../components/Glass';
 import { GlassSheet, Toast } from '../components/Overlays';
 import { LiquidGlassToggle } from '../components/common/LiquidGlassToggle';
 import { getIcon } from '../lib/icons';
 import { useI18n } from '../lib/i18n';
+import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 interface PrivacyScreenProps {
   onBack: () => void;
@@ -40,6 +42,7 @@ const INITIAL_BLOCKED_USERS: BlockedUser[] = [
 ];
 
 export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
+  const insets = useSafeAreaInsets();
   const { addNotification } = useAppData();
   const { isRTL } = useI18n();
 
@@ -84,7 +87,10 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
     <View style={styles.container}>
       <ScrollView
         style={styles.content}
-        contentContainerStyle={{ paddingTop: 84, paddingBottom: 60 }}
+        contentContainerStyle={{
+          paddingTop: getSinglePillContentPaddingTop(insets.top),
+          paddingBottom: 60 + insets.bottom,
+        }}
         showsVerticalScrollIndicator={false}
       >
         {/* Tactical Ghost Mode Hero */}

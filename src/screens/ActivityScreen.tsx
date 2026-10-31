@@ -9,6 +9,7 @@ import { RequestsModal } from '../components/activity/RequestsModal';
 import { getIcon, type IconName } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { getMultiRowContentPaddingTop } from '../lib/headerLayout';
 import type { Group, GroupMember, GroupRequest } from '../types/database';
 
 const EMPTY_GROUP_REQUESTS: GroupRequest[] = [];
@@ -287,8 +288,8 @@ export function ActivityScreenComponent({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
-          Platform.OS !== 'web' && {
-            paddingTop: 148 + insets.top,
+          {
+            paddingTop: getMultiRowContentPaddingTop(insets.top, 115),
             paddingBottom: 90 + insets.bottom,
           },
         ]}

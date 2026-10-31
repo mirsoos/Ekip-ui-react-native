@@ -7,6 +7,7 @@ import { LanguageSwitcherPill } from '../components/common/LanguageSwitcherPill'
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../../src/lib/theme';
 import { useI18n } from '../../src/lib/i18n';
+import { HEADER_METRICS, getHeaderTopInset } from '../lib/headerLayout';
 
 export function Onboarding({ onComplete }: { onComplete: () => void }) {
   const insets = useSafeAreaInsets();
@@ -53,7 +54,9 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
         style={[
           styles.topHeader,
           {
-            top: Platform.OS === 'web' ? 24 : Math.max(20, insets.top + 8),
+            top: getHeaderTopInset(insets.top) + HEADER_METRICS.buttonTopOffset,
+            left: HEADER_METRICS.buttonOffset,
+            right: HEADER_METRICS.buttonOffset,
           },
         ]}
       >
@@ -148,12 +151,10 @@ const styles = StyleSheet.create({
   },
   topHeader: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 52 : 24,
-    left: 20,
-    right: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: HEADER_METRICS.actionButtonSize,
     zIndex: 100,
   },
   skipBtn: {

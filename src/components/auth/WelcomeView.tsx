@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FrostedGlass } from '../FrostedGlass';
 import { getIcon } from '../../lib/icons';
 import { SocialAuthRow } from './SocialAuthRow';
 import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
+import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
 
 export function WelcomeViewComponent({
   onLogin,
@@ -14,6 +16,7 @@ export function WelcomeViewComponent({
   onLogin: () => void;
   onRegister: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
   const ArrowIcon = getIcon(isRTL ? 'ArrowLeft' : 'ArrowRight');
@@ -24,7 +27,11 @@ export function WelcomeViewComponent({
       <View
         style={[
           styles.langBar,
-          isRTL ? { left: 20, right: undefined } : { right: 20, left: undefined },
+          {
+            top: getHeaderTopInset(insets.top) + HEADER_METRICS.buttonTopOffset,
+            left: isRTL ? HEADER_METRICS.buttonOffset : undefined,
+            right: isRTL ? undefined : HEADER_METRICS.buttonOffset,
+          },
         ]}
       >
         <LanguageSwitcherPill />

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassButton, LiquidGlassToggle } from '../components/Glass';
 import { GlassSheet, Toast } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
 import { useI18n } from '../lib/i18n';
+import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 interface SecurityScreenProps {
   onBack: () => void;
@@ -75,6 +77,7 @@ const RECOVERY_CODES = [
 ];
 
 export function SecurityScreen({ onBack }: SecurityScreenProps) {
+  const insets = useSafeAreaInsets();
   const { isRTL } = useI18n();
 
   const [passkeyRegistered, setPasskeyRegistered] = useState(true);
@@ -129,7 +132,14 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingTop: 84, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={{
+          paddingTop: getSinglePillContentPaddingTop(insets.top),
+          paddingBottom: 60 + insets.bottom,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Passkey / Biometrics Card */}
         <GlassCard variant="thick" style={styles.heroCard}>
           <View style={styles.heroHeader}>

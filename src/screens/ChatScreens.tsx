@@ -11,6 +11,7 @@ import { ChatInputBar } from '../components/chat/ChatInputBar';
 import { ChatListItemSkeleton } from '../components/skeleton';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { getMultiRowContentPaddingTop, getSinglePillContentPaddingTop } from '../lib/headerLayout';
 import type { Conversation } from '../types/database';
 
 export function ChatListScreenComponent({
@@ -59,8 +60,8 @@ export function ChatListScreenComponent({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.listContent,
-          Platform.OS !== 'web' && {
-            paddingTop: 168 + insets.top,
+          {
+            paddingTop: getMultiRowContentPaddingTop(insets.top, 119),
             paddingBottom: 90 + insets.bottom,
           },
         ]}
@@ -127,8 +128,8 @@ export function ConversationScreenComponent({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.messagesContent,
-          Platform.OS !== 'web' && {
-            paddingTop: 75 + insets.top,
+          {
+            paddingTop: getSinglePillContentPaddingTop(insets.top),
             paddingBottom: 75 + insets.bottom,
           },
         ]}

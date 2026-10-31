@@ -11,6 +11,7 @@ import { EkipCardSkeleton, CommunityMembersRowSkeleton } from '../components/ske
 import { cities } from '../lib/demoData';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { getMultiRowContentPaddingTop } from '../lib/headerLayout';
 import type { Group } from '../types/database';
 
 export interface DiscoverScreenHandle {
@@ -234,8 +235,8 @@ export const DiscoverScreen = React.memo(
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
-          Platform.OS !== 'web' && {
-            paddingTop: 156 + insets.top,
+          {
+            paddingTop: getMultiRowContentPaddingTop(insets.top, 115),
             paddingBottom: 90 + insets.bottom,
           },
         ]}

@@ -1,10 +1,11 @@
-import React, { useRef, useEffect, type ReactNode } from 'react';
-import { View, Text, StyleSheet, Platform, Animated, type StyleProp, type ViewStyle } from 'react-native';
+import React, { type ReactNode } from 'react';
+import { View, Text, StyleSheet, Platform, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassBackButton } from '../Glass';
 import { FrostedGlass } from '../FrostedGlass';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
+import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
 
 export interface FloatingGlassHeaderProps {
   /** Optional title */
@@ -39,41 +40,23 @@ export function FloatingGlassHeaderComponent({
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
 
-  const enterAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    enterAnim.setValue(0);
-    Animated.spring(enterAnim, {
-      toValue: 1,
-      bounciness: 4,
-      speed: 14,
-      useNativeDriver: Platform.OS !== 'web',
-    }).start();
-  }, []);
-
-  const enterTranslateY = enterAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-85, 0],
-  });
-
   return (
     <View
       style={[
         styles.outerContainer,
         {
-          paddingTop: Platform.OS === 'web' ? 10 : Math.max(10, insets.top + 6),
+          paddingTop: getHeaderTopInset(insets.top),
         },
         style,
       ]}
       pointerEvents="box-none"
     >
-      <Animated.View
+      <View
         style={[
           styles.container,
           {
             flexDirection: isRTL ? 'row-reverse' : 'row',
             borderColor: colors.glassBorderStrong,
-            transform: [{ translateY: enterTranslateY }],
           },
           pillStyle,
         ]}
@@ -142,7 +125,7 @@ export function FloatingGlassHeaderComponent({
             {trailing}
           </View>
         )}
-      </Animated.View>
+      </View>
     </View>
   );
 }
@@ -155,7 +138,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 12,
+    paddingHorizontal: HEADER_METRICS.marginHorizontal,
     zIndex: 900,
   },
   container: {
@@ -163,10 +146,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    height: HEADER_METRICS.pillHeight,
     borderRadius: 36,
     borderWidth: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: HEADER_METRICS.paddingVertical,
+    paddingHorizontal: HEADER_METRICS.paddingHorizontal,
     ...(Platform.OS === 'ios'
       ? {
           shadowColor: '#000',

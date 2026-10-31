@@ -10,6 +10,7 @@ import { SettingsDivider } from '../components/settings/SettingsDivider';
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n, LANGUAGES } from '../lib/i18n';
+import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 export function SettingsScreenComponent({
   onBack,
@@ -64,8 +65,8 @@ export function SettingsScreenComponent({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
-          Platform.OS !== 'web' && {
-            paddingTop: 90 + insets.top,
+          {
+            paddingTop: getSinglePillContentPaddingTop(insets.top),
             paddingBottom: 40 + insets.bottom,
           },
         ]}

@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassBackButton } from '../Glass';
 import { FrostedGlass } from '../FrostedGlass';
 import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
+import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
 
 export function TwoFactorView({
   otp,
@@ -18,13 +20,24 @@ export function TwoFactorView({
   onBack: () => void;
   onComplete: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
   const Shield = getIcon('ShieldCheck');
 
   return (
     <View style={styles.container}>
-      <View style={[styles.topBar, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+      <View
+        style={[
+          styles.topBar,
+          {
+            top: getHeaderTopInset(insets.top) + HEADER_METRICS.buttonTopOffset,
+            left: HEADER_METRICS.buttonOffset,
+            right: HEADER_METRICS.buttonOffset,
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+          },
+        ]}
+      >
         <GlassBackButton onPress={onBack} />
         <LanguageSwitcherPill />
       </View>
@@ -115,12 +128,10 @@ const styles = StyleSheet.create({
   },
   topBar: {
     position: 'absolute',
-    top: 40,
-    left: 20,
-    right: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: HEADER_METRICS.actionButtonSize,
     zIndex: 10,
   },
   iconCircle: {

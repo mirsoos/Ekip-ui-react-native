@@ -138,17 +138,12 @@ const ActiveHeaderTransition = React.memo(function ActiveHeaderTransition({
     animation.setValue(0);
     Animated.timing(animation, {
       toValue: 1,
-      duration: 220,
+      duration: 180,
       easing: Easing.bezier(0.25, 0.1, 0.25, 1),
       useNativeDriver: Platform.OS !== 'web',
     }).start();
     return () => animation.stopAnimation();
   }, [animation, screenKey]);
-
-  const translateY = animation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-10, 0],
-  });
 
   return (
     <Animated.View
@@ -157,8 +152,7 @@ const ActiveHeaderTransition = React.memo(function ActiveHeaderTransition({
       style={[
         styles.headerOverlayWrapper,
         {
-          opacity: Platform.OS === 'web' ? 1 : animation,
-          transform: Platform.OS === 'web' ? undefined : [{ translateY }],
+          opacity: animation,
         },
       ]}
     >

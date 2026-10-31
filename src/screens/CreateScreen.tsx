@@ -13,6 +13,7 @@ import { getIcon } from '../lib/icons';
 import { allInterests } from '../lib/demoData';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 import type { Group, GroupCategory, GroupType } from '../types/database';
 
 const coverOptions = [
@@ -166,8 +167,8 @@ export const CreateScreen = React.memo(
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
-          Platform.OS !== 'web' && {
-            paddingTop: 98 + insets.top,
+          {
+            paddingTop: getSinglePillContentPaddingTop(insets.top),
             paddingBottom: 135 + insets.bottom,
           },
         ]}
