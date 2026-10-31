@@ -204,8 +204,9 @@ function MainContent() {
     IRANSans: require('./assets/fonts/IRANSans.ttf'),
   });
 
-  const [authed, setAuthed] = useState(true);
-  const [onboarded, setOnboarded] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [authed, setAuthed] = useState(false);
+  const [onboarded, setOnboarded] = useState(false);
   const [tab, setTab] = useState<TabKey>('discover');
   const [screen, setScreen] = useState<Screen>({ name: 'discover' });
   const handleAuthSuccess = React.useCallback(() => {
@@ -449,7 +450,14 @@ function MainContent() {
 
   const handleOnboardingComplete = React.useCallback(() => {
     setOnboarded(true);
-  }, []);
+    if (historyRef.current.length > 0) {
+      pop();
+    } else {
+      setTab('discover');
+      clearHistory();
+      setScreen({ name: 'discover' });
+    }
+  }, [clearHistory, pop]);
 
   const isDiscoverActive = isAppReady && isMainScreen && screen.name === 'discover';
   const isActivityActive = isAppReady && isMainScreen && screen.name === 'activity';
@@ -476,7 +484,7 @@ function MainContent() {
   if (!fontsLoaded && Platform.OS !== 'web') {
     return (
       <AppChrome>
-        <Loading minDuration={0} />
+        <Loading minDuration={2000} onFinish={() => setIsLoading(false)} />
       </AppChrome>
     );
   }
@@ -493,13 +501,7 @@ function MainContent() {
         ) : !onboarded || screen.name === 'onboarding' ? (
           <View style={styles.screenContainer}>
             <ScreenTransition screenKey="onboarding">
-              <Onboarding
-                onComplete={() => {
-                  setTab('discover');
-                  clearHistory();
-                  setScreen({ name: 'discover' });
-                }}
-              />
+              <Onboarding onComplete={handleOnboardingComplete} />
             </ScreenTransition>
           </View>
         ) : (
@@ -753,6 +755,13 @@ function MainContent() {
           <NotificationsSheetHost
             ref={notificationsSheetRef}
             onOpenConversation={handleOpenConversation}
+          />
+        )}
+
+        {isLoading && (
+          <Loading
+            minDuration={2000}
+            onFinish={() => setIsLoading(false)}
           />
         )}
       </View>

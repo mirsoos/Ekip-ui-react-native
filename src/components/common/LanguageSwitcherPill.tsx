@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { FrostedGlass } from '../FrostedGlass';
 import { GlassSheet, Toast } from '../Overlays';
 import { GlassCard } from '../Glass';
 import { useI18n, LANGUAGES } from '../../lib/i18n';
 import { useTheme } from '../../lib/theme';
 import { getIcon } from '../../lib/icons';
 
-export function LanguageSwitcherPillComponent({ style }: { style?: any }) {
+export interface LanguageSwitcherButtonProps {
+  style?: any;
+}
+
+export function LanguageSwitcherPillComponent({ style }: LanguageSwitcherButtonProps) {
   const { language, setLanguage, t, isRTL } = useI18n();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [showLanguageSheet, setShowLanguageSheet] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const Globe = getIcon('Globe');
+  const GlobeIcon = getIcon('Globe');
   const Check = getIcon('Check');
-  const ChevronDown = getIcon('ChevronDown');
-
-  const currentLangObj = LANGUAGES.find((l) => l.code === language) ?? LANGUAGES[1];
 
   return (
     <>
@@ -24,23 +26,27 @@ export function LanguageSwitcherPillComponent({ style }: { style?: any }) {
         activeOpacity={0.75}
         onPress={() => setShowLanguageSheet(true)}
         style={[
-          styles.pill,
+          styles.button,
           {
-            backgroundColor: colors.glassThickBg,
             borderColor: colors.glassBorderStrong,
           },
           style,
         ]}
       >
-        <Globe size={13} color={colors.textSecondary} style={{ marginHorizontal: 3 }} />
-        <Text style={styles.flag}>{currentLangObj.flag}</Text>
-        <Text style={[styles.text, { color: colors.textPrimary }]}>
-          {currentLangObj.nativeName}
-        </Text>
-        <ChevronDown size={12} color={colors.textTertiary} style={{ marginHorizontal: 2 }} />
+        <FrostedGlass
+          borderRadius={19}
+          marginWidth={8}
+          scale={20}
+          blurDeviation={1.6}
+          overlayOpacity={isDark ? 0.10 : 0.22}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.iconWrap}>
+          <GlobeIcon size={18} color={colors.textPrimary} strokeWidth={2.3} />
+        </View>
       </TouchableOpacity>
 
-      {/* Language Selection Bottom Sheet — Identical to Settings */}
+      {/* Language Selection Bottom Sheet */}
       <GlassSheet
         open={showLanguageSheet}
         onClose={() => setShowLanguageSheet(false)}
@@ -104,38 +110,36 @@ export function LanguageSwitcherPillComponent({ style }: { style?: any }) {
 }
 
 const styles = StyleSheet.create({
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 20,
+  button: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    position: 'relative',
     ...(Platform.OS === 'ios'
       ? {
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
+          shadowOpacity: 0.25,
+          shadowRadius: 6,
         }
       : Platform.OS === 'android'
       ? { elevation: 0 }
       : {
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
+          shadowOpacity: 0.25,
+          shadowRadius: 6,
           elevation: 4,
         }),
   },
-  flag: {
-    fontSize: 14,
-    marginHorizontal: 3,
-  },
-  text: {
-    fontSize: 12,
-    fontWeight: '700',
-    marginHorizontal: 3,
+  iconWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
   },
   langOptionCard: {
     flexDirection: 'row',

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useMemo, useCallback, type ReactNode } from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, Platform } from 'react-native';
 
 export type Theme = 'light' | 'dark';
 
@@ -179,14 +179,39 @@ export interface ChatThemeContextValue {
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
 export const ChatThemeContext = createContext<ChatThemeContextValue | null>(null);
 
+function getInitialTheme(): Theme {
+  if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('ekip_theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+    } catch {}
+  }
+  return 'dark';
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemColorScheme = useColorScheme();
-  const [theme, setThemeState] = useState<Theme>(
-    systemColorScheme === 'light' ? 'light' : 'dark'
-  );
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('ekip_theme');
+        if (saved === 'light' || saved === 'dark') return saved;
+      } catch {}
+    }
+    return systemColorScheme === 'light' ? 'light' : 'dark';
+  });
   const [chatTheme, setChatThemeState] = useState<ChatThemeId>('default');
+
   const toggle = useCallback(() => {
-    setThemeState((current) => current === 'dark' ? 'light' : 'dark');
+    setThemeState((current) => {
+      const next: Theme = current === 'dark' ? 'light' : 'dark';
+      if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+        try {
+          localStorage.setItem('ekip_theme', next);
+        } catch {}
+      }
+      return next;
+    });
   }, []);
   const isDark = theme === 'dark';
   const colors = themes[theme];

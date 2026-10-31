@@ -21,7 +21,12 @@ export function WelcomeViewComponent({
   return (
     <View style={styles.container}>
       {/* Top Language Switcher Bar */}
-      <View style={styles.langBar}>
+      <View
+        style={[
+          styles.langBar,
+          isRTL ? { left: 20, right: undefined } : { right: 20, left: undefined },
+        ]}
+      >
         <LanguageSwitcherPill />
       </View>
 
@@ -50,6 +55,7 @@ export function WelcomeViewComponent({
             styles.registerButton,
             {
               borderColor: colors.glassBorderStrong,
+              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.55)',
             },
           ]}
         >
@@ -85,6 +91,7 @@ export function WelcomeViewComponent({
             styles.registerButton,
             {
               borderColor: colors.glassBorderStrong,
+              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.55)',
               marginTop: 10,
             },
           ]}
@@ -135,7 +142,6 @@ const styles = StyleSheet.create({
   langBar: {
     position: 'absolute',
     top: Platform.OS === 'ios' ? 52 : 24,
-    right: 20,
     zIndex: 100,
   },
   brandSection: {
@@ -171,22 +177,12 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     borderWidth: 1,
     overflow: 'visible',
-    ...(Platform.OS === 'ios'
-      ? {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 16 },
-          shadowOpacity: 0.35,
-          shadowRadius: 28,
-        }
-      : Platform.OS === 'android'
-      ? { elevation: 0 }
-      : {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 16 },
-          shadowOpacity: 0.35,
-          shadowRadius: 28,
-          elevation: 14,
-        }),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
     justifyContent: 'center',
     alignItems: 'center',
   },
