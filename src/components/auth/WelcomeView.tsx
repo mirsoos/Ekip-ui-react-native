@@ -12,9 +12,11 @@ import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
 export function WelcomeViewComponent({
   onLogin,
   onRegister,
+  onOAuth,
 }: {
   onLogin: () => void;
   onRegister: () => void;
+  onOAuth?: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -129,7 +131,15 @@ export function WelcomeViewComponent({
         <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
       </View>
 
-      <SocialAuthRow onSelect={onLogin} />
+      <SocialAuthRow
+        onSelect={(provider) => {
+          if (provider === 'Google' && onOAuth) {
+            onOAuth();
+          } else {
+            onLogin();
+          }
+        }}
+      />
 
       <Text style={[styles.disclaimer, { color: colors.textTertiary }]}>
         {t('auth.disclaimer')}

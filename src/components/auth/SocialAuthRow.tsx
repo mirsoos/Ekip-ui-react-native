@@ -1,25 +1,23 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { FrostedGlass } from '../FrostedGlass';
+import { GoogleLogo } from './GoogleLogo';
+
+export type AuthProviderType = 'Google';
 
 export function SocialAuthRow({
   onSelect,
-  providers = ['Apple', 'Mail', 'Phone'],
+  providers = ['Google'],
 }: {
-  onSelect: (provider: string) => void;
-  providers?: ('Apple' | 'Google' | 'Mail' | 'Phone')[];
+  onSelect: (provider: AuthProviderType) => void;
+  providers?: AuthProviderType[];
 }) {
   const { colors, isDark } = useTheme();
 
   return (
     <View style={styles.row}>
       {providers.map((p) => {
-        const IconComp = getIcon(
-          p === 'Apple' ? 'Sparkles' : p === 'Mail' ? 'Mail' : p === 'Phone' ? 'Phone' : 'Globe'
-        );
-
         return (
           <TouchableOpacity
             key={p}
@@ -34,7 +32,7 @@ export function SocialAuthRow({
           >
             {/* 360° Frosted Glass */}
             <FrostedGlass
-              borderRadius={20}
+              borderRadius={22}
               marginWidth={10}
               scale={22}
               blurDeviation={1.8}
@@ -42,7 +40,7 @@ export function SocialAuthRow({
               style={StyleSheet.absoluteFill}
             />
             <View style={styles.iconContent}>
-              <IconComp size={20} color={colors.textPrimary} strokeWidth={2.2} />
+              <GoogleLogo size={24} />
             </View>
           </TouchableOpacity>
         );
@@ -56,13 +54,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
   },
   btn: {
     position: 'relative',
-    width: 48,
-    height: 48,
-    borderRadius: 20,
+    width: 52,
+    height: 52,
+    borderRadius: 22,
     borderWidth: 1,
     overflow: 'visible',
     shadowColor: '#000',

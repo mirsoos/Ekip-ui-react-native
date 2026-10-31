@@ -531,6 +531,7 @@ export interface GlassInputProps {
   multiline?: boolean;
   numberOfLines?: number;
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   style?: StyleProp<ViewStyle>;
 }
 
@@ -543,6 +544,7 @@ export function GlassInputComponent({
   multiline,
   numberOfLines = 3,
   keyboardType = 'default',
+  autoCapitalize,
   style,
 }: GlassInputProps) {
   const { colors, isDark } = useTheme();
@@ -599,6 +601,7 @@ export function GlassInputComponent({
         multiline={multiline}
         numberOfLines={numberOfLines}
         keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
         style={inputTextStyle}
       />
     </View>

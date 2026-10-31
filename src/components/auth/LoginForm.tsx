@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassInput, GlassBackButton, GlassSegmented } from '../Glass';
 import { FrostedGlass } from '../FrostedGlass';
 import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
-import { getIcon } from '../../lib/icons';
+import { SocialAuthRow } from './SocialAuthRow';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
@@ -13,23 +13,22 @@ export function LoginForm({
   onBack,
   onSubmit,
   onOAuth,
+  onForgotPassword,
 }: {
   onBack: () => void;
   onSubmit: () => void;
   onOAuth: () => void;
+  onForgotPassword?: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
 
-  const [loginMethod, setLoginMethod] = useState<'email' | 'phone' | 'username'>('email');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
+  const [loginMethod, setLoginMethod] = useState<'username' | 'email' | 'phone'>('username');
   const [username, setUsername] = useState('');
-
-  const Sparkles = getIcon('Sparkles');
-  const Globe = getIcon('Globe');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
 
   return (
     <ScrollView
@@ -59,9 +58,9 @@ export function LoginForm({
       <View style={{ marginTop: 20 }}>
         <GlassSegmented
           options={[
+            { label: t('auth.tabUsername'), value: 'username' },
             { label: t('auth.tabEmail'), value: 'email' },
             { label: t('auth.tabPhone'), value: 'phone' },
-            { label: t('auth.tabUsername'), value: 'username' },
           ]}
           value={loginMethod}
           onChange={(v) => setLoginMethod(v as any)}
@@ -71,6 +70,15 @@ export function LoginForm({
       {/* Input fields */}
       <View style={{ gap: 12, marginTop: 16 }}>
         <View key={loginMethod} className="animate-raise">
+          {loginMethod === 'username' && (
+            <GlassInput
+              icon="User"
+              placeholder={t('auth.usernamePlaceholder')}
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+            />
+          )}
           {loginMethod === 'email' && (
             <GlassInput
               icon="Mail"
@@ -78,6 +86,7 @@ export function LoginForm({
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
+              autoCapitalize="none"
             />
           )}
           {loginMethod === 'phone' && (
@@ -87,14 +96,6 @@ export function LoginForm({
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
-            />
-          )}
-          {loginMethod === 'username' && (
-            <GlassInput
-              icon="User"
-              placeholder={t('auth.usernamePlaceholder')}
-              value={username}
-              onChangeText={setUsername}
             />
           )}
         </View>
@@ -107,7 +108,11 @@ export function LoginForm({
           secure
         />
 
-        <TouchableOpacity style={{ alignSelf: isRTL ? 'flex-start' : 'flex-end', marginTop: 2 }}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={onForgotPassword}
+          style={{ alignSelf: isRTL ? 'flex-start' : 'flex-end', marginTop: 2 }}
+        >
           <Text style={[styles.forgotText, { color: colors.textSecondary }]}>
             {t('auth.forgotPassword')}
           </Text>
@@ -147,57 +152,7 @@ export function LoginForm({
         <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
       </View>
 
-      <View style={styles.oauthRow}>
-        <TouchableOpacity
-          activeOpacity={0.75}
-          onPress={onOAuth}
-          style={[
-            styles.oauthBtn,
-            {
-              borderColor: colors.glassBorderStrong,
-            },
-          ]}
-        >
-          {/* 360° Frosted Glass */}
-          <FrostedGlass
-            borderRadius={20}
-            marginWidth={12}
-            scale={24}
-            blurDeviation={1.8}
-            overlayOpacity={isDark ? 0.08 : 0.15}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.oauthContent}>
-            <Sparkles size={18} color={colors.textPrimary} style={{ marginHorizontal: 8 }} />
-            <Text style={[styles.oauthText, { color: colors.textPrimary }]}>Apple</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          activeOpacity={0.75}
-          onPress={onOAuth}
-          style={[
-            styles.oauthBtn,
-            {
-              borderColor: colors.glassBorderStrong,
-            },
-          ]}
-        >
-          {/* 360° Frosted Glass */}
-          <FrostedGlass
-            borderRadius={20}
-            marginWidth={12}
-            scale={24}
-            blurDeviation={1.8}
-            overlayOpacity={isDark ? 0.08 : 0.15}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.oauthContent}>
-            <Globe size={18} color={colors.textPrimary} style={{ marginHorizontal: 8 }} />
-            <Text style={[styles.oauthText, { color: colors.textPrimary }]}>Google</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
+      <SocialAuthRow onSelect={onOAuth} />
     </ScrollView>
   );
 }
@@ -266,34 +221,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginHorizontal: 10,
     textTransform: 'uppercase',
-  },
-  oauthRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  oauthBtn: {
-    flex: 1,
-    position: 'relative',
-    height: 48,
-    borderRadius: 20,
-    borderWidth: 1,
-    overflow: 'visible',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 6,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  oauthContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  oauthText: {
-    fontSize: 14,
-    fontWeight: '600',
   },
 });
