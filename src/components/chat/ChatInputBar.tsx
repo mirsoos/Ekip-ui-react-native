@@ -75,7 +75,6 @@ export function ChatInputBarComponent({
         style={[
           styles.dockContainer,
           {
-            flexDirection: isRTL ? 'row-reverse' : 'row',
             borderColor: colors.glassBorderStrong,
             transform: [{ translateY: enterTranslateY }],
           },
