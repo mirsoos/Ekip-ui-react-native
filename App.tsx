@@ -132,18 +132,49 @@ const ActiveHeaderTransition = React.memo(function ActiveHeaderTransition({
   screenKey: string;
   children: React.ReactNode;
 }) {
-  const animation = useRef(new Animated.Value(0)).current;
+  const anim = useRef(new Animated.Value(0)).current;
+  const webDivRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    animation.setValue(0);
-    Animated.timing(animation, {
-      toValue: 1,
-      duration: 180,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      useNativeDriver: Platform.OS !== 'web',
-    }).start();
-    return () => animation.stopAnimation();
-  }, [animation, screenKey]);
+    if (Platform.OS === 'web') {
+      if (webDivRef.current) {
+        webDivRef.current.classList.remove('header-enter-items');
+        void webDivRef.current.offsetWidth;
+        webDivRef.current.classList.add('header-enter-items');
+      }
+    } else {
+      anim.setValue(0);
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 260,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [screenKey, anim]);
+
+  const translateY = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-50, 0],
+  });
+
+  if (Platform.OS === 'web') {
+    return (
+      <View pointerEvents="box-none" style={styles.headerOverlayWrapper}>
+        <div
+          ref={webDivRef}
+          className="header-enter-items"
+          style={{
+            height: "100%",
+            width: "100%",
+            pointerEvents: "none",
+          }}
+        >
+          {children}
+        </div>
+      </View>
+    );
+  }
 
   return (
     <Animated.View
@@ -152,9 +183,79 @@ const ActiveHeaderTransition = React.memo(function ActiveHeaderTransition({
       style={[
         styles.headerOverlayWrapper,
         {
-          opacity: Platform.OS === 'web' ? 1 : animation,
+          opacity: anim,
+          transform: [{ translateY }],
         },
       ]}
+    >
+      {children}
+    </Animated.View>
+  );
+});
+
+const ActiveBottomNavTransition = React.memo(function ActiveBottomNavTransition({
+  show,
+  children,
+}: {
+  show: boolean;
+  children: React.ReactNode;
+}) {
+  const anim = useRef(new Animated.Value(show ? 1 : 0)).current;
+  const webDivRef = useRef<HTMLDivElement>(null);
+  const wasShown = useRef(show);
+
+  useEffect(() => {
+    if (show && !wasShown.current) {
+      if (Platform.OS === 'web') {
+        if (webDivRef.current) {
+          webDivRef.current.classList.remove('bottomnav-enter-items');
+          void webDivRef.current.offsetWidth;
+          webDivRef.current.classList.add('bottomnav-enter-items');
+        }
+      } else {
+        anim.setValue(0);
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 260,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          useNativeDriver: true,
+        }).start();
+      }
+    }
+    wasShown.current = show;
+  }, [show, anim]);
+
+  const translateY = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [16, 0],
+  });
+
+  if (!show) {
+    return <View pointerEvents="none" style={{ display: "none" }}>{children}</View>;
+  }
+
+  if (Platform.OS === 'web') {
+    return (
+      <View pointerEvents="box-none">
+        <div
+          ref={webDivRef}
+          className="bottomnav-enter-items"
+          style={{ width: "100%", pointerEvents: "none" }}
+        >
+          {children}
+        </div>
+      </View>
+    );
+  }
+
+  return (
+    <Animated.View
+      pointerEvents="box-none"
+      renderToHardwareTextureAndroid
+      style={{
+        opacity: anim,
+        transform: [{ translateY }],
+      }}
     >
       {children}
     </Animated.View>
@@ -740,12 +841,9 @@ function MainContent() {
         </ActiveHeaderTransition>
 
         {authed && onboarded && (
-          <View
-            pointerEvents={showBottomNav ? 'box-none' : 'none'}
-            style={showBottomNav ? undefined : { display: 'none' }}
-          >
+          <ActiveBottomNavTransition show={showBottomNav}>
             <BottomNav active={tab} onChange={switchTab} />
-          </View>
+          </ActiveBottomNavTransition>
         )}
         {authed && onboarded && (
           <NotificationsSheetHost

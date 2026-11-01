@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getIcon, type IconName } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
@@ -11,6 +11,14 @@ export interface SlideData {
   color: string;
 }
 
+function hexToRgba(hex: string, alpha: number): string {
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export function OnboardingSlide({ slide }: { slide: SlideData }) {
   const { colors } = useTheme();
   const IconComp = getIcon(slide.icon);
@@ -18,7 +26,7 @@ export function OnboardingSlide({ slide }: { slide: SlideData }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[`${slide.color}50`, `${slide.color}15`]}
+        colors={[hexToRgba(slide.color, 0.28), hexToRgba(slide.color, 0.08)]}
         style={styles.iconBox}
       >
         <IconComp size={54} color={colors.textPrimary} strokeWidth={1.8} />
@@ -43,14 +51,25 @@ const styles = StyleSheet.create({
     width: 110,
     height: 110,
     borderRadius: 36,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 28,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 6,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.25,
+          shadowRadius: 16,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.25,
+          shadowRadius: 16,
+        }),
   },
   title: {
     fontSize: 26,

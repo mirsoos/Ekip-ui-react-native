@@ -276,6 +276,38 @@
         will-change: transform, opacity;
       }
 
+      @keyframes ek-header-drop {
+        from {
+          opacity: 0;
+          transform: translate3d(0, -50px, 0);
+        }
+        to {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+      }
+
+      .header-enter-items {
+        animation: ek-header-drop 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+        will-change: transform, opacity;
+      }
+
+      @keyframes ek-nav-rise {
+        from {
+          opacity: 0;
+          transform: translate3d(0, 16px, 0);
+        }
+        to {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+      }
+
+      .bottomnav-enter-items {
+        animation: ek-nav-rise 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+        will-change: transform, opacity;
+      }
+
       /* Never apply enter animations to overlays, sheets, or backdrops */
       .screen-enter-items [style*="position: fixed"],
       .screen-enter-items [style*="position:fixed"],
