@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 300" width="100%" height="100%">
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0052D4" />
+      <stop offset="100%" stop-color="#00A8FF" />
+    </linearGradient>
+    
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#D83F00" />
+      <stop offset="100%" stop-color="#FF9900" />
+    </linearGradient>
+    
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#007A18" />
+      <stop offset="100%" stop-color="#76CC1E" />
+    </linearGradient>
+
+    <rect id="pillShape" x="80" y="122" width="198" height="66" rx="33" />
+    
+  </defs>
+
+  <use href="#pillShape" fill="url(#orangeGrad)" filter="url(#shadow)" 
+       transform="translate(175, 150) rotate(247) scale(0.95, -0.95) translate(-180, -155)" />
+
+  <use href="#pillShape" fill="url(#blueGrad)" filter="url(#shadow)" 
+       transform="translate(124, 149) rotate(-65) scale(0.95, 0.95) translate(-180, -155)" />
+
+  <use href="#pillShape" fill="url(#greenGrad)" filter="url(#shadow)" 
+       transform="translate(275, 150) rotate(-90) scale(0.95) translate(-180, -155)" />
+</svg>

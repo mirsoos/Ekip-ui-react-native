@@ -1,16 +1,22 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassEmpty, GlassBadgeIcon, GlassButton } from '../components/Glass';
 import { Toast } from '../components/Overlays';
 import { StatBox } from '../components/common/StatBox';
 import { RequestsModal } from '../components/activity/RequestsModal';
-import { getIcon, type IconName } from '../lib/icons';
+import { getIcon, Icons, type IconName } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { getMultiRowContentPaddingTop } from '../lib/headerLayout';
 import type { Group, GroupMember, GroupRequest } from '../types/database';
+
+const categoryIcons: Record<string, IconName> = {
+  entertainment: 'PartyPopper',
+  work: 'Briefcase',
+};
 
 const EMPTY_GROUP_REQUESTS: GroupRequest[] = [];
 const EMPTY_GROUP_MEMBERS: GroupMember[] = [];
@@ -120,11 +126,30 @@ export function ActivityScreenComponent({
       : myRequests.filter((request) => groupsById.has(request.group_id)),
     [activeTab, createdGroups, groupsById, joinedGroups, myRequests]
   );
+  const typeLabels: Record<string, string> = {
+    solo: t('ekip.typeSolo'),
+    couple: t('ekip.typeCouple'),
+    group: t('ekip.typeGroup'),
+  };
+
+  const categoryLabels: Record<string, string> = {
+    work: t('discover.cat.work'),
+    entertainment: t('discover.cat.entertainment'),
+  };
+
   const renderItem = useCallback(({ item }: { item: Group | GroupRequest }) => {
     if (activeTab === 'created' && !('group_id' in item)) {
       const group = item;
       const pendingReqs = pendingRequestsByGroup.get(group.id) ?? EMPTY_GROUP_REQUESTS;
       const groupMembers = activeMembersByGroup.get(group.id) ?? EMPTY_GROUP_MEMBERS;
+
+      const eventDate = new Date(group.event_date);
+      const dateStr = eventDate.toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', { month: 'short', day: 'numeric' });
+      const timeStr = eventDate.toLocaleTimeString(isRTL ? 'fa-IR' : 'en-US', { hour: 'numeric', minute: '2-digit' });
+
+      const CatIcon = Icons[categoryIcons[group.category] ?? 'PartyPopper'];
+      const CalendarIcon = Icons.Calendar;
+      const CrownIcon = Icons.Crown;
 
       return (
         <GlassCard style={styles.cardContainer}>
@@ -138,21 +163,50 @@ export function ActivityScreenComponent({
             ) : (
               <View style={[styles.bannerImage, { backgroundColor: colors.glassThinBg }]} />
             )}
-            <View style={styles.bannerContent}>
-              <View style={{ flex: 1, marginRight: 10 }}>
-                <Text style={styles.bannerTitle} numberOfLines={1}>{group.title}</Text>
-                <Text style={styles.bannerDate}>
-                  {new Date(group.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })}
+            <LinearGradient
+              colors={['transparent', 'rgba(0, 0, 0, 0.72)']}
+              style={styles.bannerGradient}
+            />
+
+            {/* Top badges */}
+            <View style={[styles.topBadgesRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+              <View style={[styles.chipsGroup, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <View style={[styles.tagChip, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                  <CatIcon size={11} color="#ffffff" strokeWidth={2.4} style={{ marginRight: isRTL ? 0 : 3, marginLeft: isRTL ? 3 : 0 }} />
+                  <Text style={styles.tagChipText}>{categoryLabels[group.category] ?? group.category}</Text>
+                </View>
+                <View style={styles.tagChip}>
+                  <Text style={styles.tagChipText}>{typeLabels[group.group_type] ?? group.group_type}</Text>
+                </View>
+                {group.premium_only && (
+                  <LinearGradient
+                    colors={['#eab308', '#f59e0b']}
+                    style={[styles.tagChip, { borderColor: 'transparent', flexDirection: isRTL ? 'row-reverse' : 'row' }]}
+                  >
+                    <CrownIcon size={11} color="#ffffff" strokeWidth={2.4} style={{ marginRight: isRTL ? 0 : 3, marginLeft: isRTL ? 3 : 0 }} />
+                    <Text style={styles.tagChipText}>{t('ekip.premium')}</Text>
+                  </LinearGradient>
+                )}
+              </View>
+
+              <GlassBadgeIcon icon="Crown" label={t('activity.owner')} color="amber" solid />
+            </View>
+
+            {/* Title & Date pill at bottom */}
+            <View style={[styles.bannerBottomRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+              <Text style={[styles.bannerTitle, { textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={1}>
+                {group.title}
+              </Text>
+              <View style={[styles.datePill, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <CalendarIcon size={11} color="#ffffff" strokeWidth={2.2} style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }} />
+                <Text style={styles.datePillText}>
+                  {dateStr} · {timeStr}
                 </Text>
               </View>
-              <GlassBadgeIcon icon="Crown" label={t('activity.owner')} color="amber" />
             </View>
           </TouchableOpacity>
           <View style={styles.cardBody}>
-            <View style={styles.statsGrid}>
+            <View style={[styles.statsGrid, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
               <StatBox icon="Users" value={groupMembers.length} label={t('common.members')} />
               <StatBox
                 icon="UserPlus"
@@ -164,7 +218,7 @@ export function ActivityScreenComponent({
               <StatBox icon="Eye" value={group.views} label={t('activity.views')} />
               <StatBox icon="TrendingUp" value={group.member_count} label={t('activity.joined')} />
             </View>
-            <View style={styles.actionsRow}>
+            <View style={[styles.actionsRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
               <View style={{ flex: 1 }}>
                 <GlassButton
                   size="sm"
@@ -198,23 +252,34 @@ export function ActivityScreenComponent({
       const group = item;
       return (
         <TouchableOpacity activeOpacity={0.82} onPress={() => onOpenGroup(group)}>
-          <GlassCard variant="thin" style={styles.joinedCard}>
+          <GlassCard variant="thin" style={[styles.joinedCard, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             {group.cover_url ? (
               <Image source={{ uri: group.cover_url }} style={styles.thumbImage} resizeMode="cover" />
             ) : (
               <View style={[styles.thumbImage, { backgroundColor: colors.glassThinBg }]} />
             )}
-            <View style={styles.joinedInfo}>
-              <Text style={[styles.groupTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+            <View style={[styles.joinedInfo, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
+              <Text
+                style={[
+                  styles.groupTitle,
+                  { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+                ]}
+                numberOfLines={1}
+              >
                 {group.title}
               </Text>
-              <Text style={[styles.groupMeta, { color: colors.textTertiary }]}>
+              <Text
+                style={[
+                  styles.groupMeta,
+                  { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' },
+                ]}
+              >
                 {group.city} · {new Date(group.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
                   month: 'short',
                   day: 'numeric',
                 })}
               </Text>
-              <GlassBadgeIcon icon="CheckCircle2" label={t('activity.joinedBadge')} color="green" />
+              <GlassBadgeIcon icon="CheckCircle2" label={t('activity.joinedBadge')} color="green" solid />
             </View>
             <ChevronRight size={18} color={colors.textTertiary} />
           </GlassCard>
@@ -233,23 +298,34 @@ export function ActivityScreenComponent({
       const status = statusConfig[item.status] ?? statusConfig.pending;
       return (
         <TouchableOpacity activeOpacity={0.82} onPress={() => onOpenGroup(group)}>
-          <GlassCard variant="thin" style={styles.joinedCard}>
+          <GlassCard variant="thin" style={[styles.joinedCard, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             {group.cover_url ? (
               <Image source={{ uri: group.cover_url }} style={styles.thumbImage} resizeMode="cover" />
             ) : (
               <View style={[styles.thumbImage, { backgroundColor: colors.glassThinBg }]} />
             )}
-            <View style={styles.joinedInfo}>
-              <Text style={[styles.groupTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+            <View style={[styles.joinedInfo, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
+              <Text
+                style={[
+                  styles.groupTitle,
+                  { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+                ]}
+                numberOfLines={1}
+              >
                 {group.title}
               </Text>
-              <Text style={[styles.groupMeta, { color: colors.textTertiary }]}>
+              <Text
+                style={[
+                  styles.groupMeta,
+                  { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' },
+                ]}
+              >
                 {new Date(group.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
                   month: 'short',
                   day: 'numeric',
                 })}
               </Text>
-              <GlassBadgeIcon icon={status.icon} label={status.label} color={status.color} />
+              <GlassBadgeIcon icon={status.icon} label={status.label} color={status.color} solid />
             </View>
             <ChevronRight size={18} color={colors.textTertiary} />
           </GlassCard>
@@ -346,7 +422,7 @@ const styles = StyleSheet.create({
   },
   bannerWrapper: {
     position: 'relative',
-    height: 120,
+    height: 140,
     width: '100%',
     overflow: 'hidden',
   },
@@ -354,24 +430,75 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  bannerContent: {
+  bannerGradient: {
     position: 'absolute',
-    bottom: 12,
-    left: 14,
-    right: 14,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  topBadgesRow: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    right: 10,
     flexDirection: 'row',
-    alignItems: 'flex-end',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  chipsGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  tagChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  tagChipText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#ffffff',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  bannerBottomRow: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
   },
   bannerTitle: {
-    fontSize: 16,
+    flex: 1,
+    fontSize: 15,
     fontWeight: '700',
     color: '#ffffff',
   },
-  bannerDate: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.82)',
-    marginTop: 2,
+  datePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  datePillText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#ffffff',
   },
   cardBody: {
     padding: 14,

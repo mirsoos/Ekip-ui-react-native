@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard } from '../Glass';
+import { AiEkipLogo } from '../common/AiEkipLogo';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
@@ -15,7 +16,6 @@ export const AIAssistantBanner = React.memo(function AIAssistantBanner({
 }) {
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
-  const SparklesIcon = getIcon('Sparkles');
   const ChevronIcon = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
 
   return (
@@ -31,7 +31,7 @@ export const AIAssistantBanner = React.memo(function AIAssistantBanner({
           end={{ x: 1, y: 1 }}
           style={styles.iconBox}
         >
-          <SparklesIcon size={22} color="#f472b6" strokeWidth={2.4} />
+          <AiEkipLogo size={32} />
         </LinearGradient>
 
         <View style={{ flex: 1, marginLeft: isRTL ? 0 : 12, marginRight: isRTL ? 12 : 0 }}>

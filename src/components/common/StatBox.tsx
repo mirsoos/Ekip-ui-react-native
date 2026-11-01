@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { getIcon, type IconName } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export interface StatBoxProps {
   icon: IconName;
@@ -21,6 +22,7 @@ export const StatBox = React.memo(function StatBox({
   style,
 }: StatBoxProps) {
   const { colors } = useTheme();
+  const { isRTL } = useI18n();
   const IconComp = getIcon(icon);
 
   const content = (
@@ -34,12 +36,12 @@ export const StatBox = React.memo(function StatBox({
         style,
       ]}
     >
-      <View style={styles.topRow}>
+      <View style={[styles.topRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <IconComp
           size={14}
           color={highlight ? colors.accentPink : colors.textTertiary}
           strokeWidth={2.2}
-          style={{ marginRight: 4 }}
+          style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }}
         />
         <Text
           style={[

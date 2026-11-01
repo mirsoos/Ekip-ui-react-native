@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { getIcon } from '../../lib/icons';
+import { AiEkipLogo } from '../common/AiEkipLogo';
 import { useTheme } from '../../lib/theme';
 
 export function AIChatBubble({
@@ -16,7 +16,6 @@ export function AIChatBubble({
   onSelectChip?: (chip: string) => void;
 }) {
   const { colors } = useTheme();
-  const Sparkles = getIcon('Sparkles');
   const isUser = role === 'user';
 
   return (
@@ -29,12 +28,9 @@ export function AIChatBubble({
       <View style={{ maxWidth: '85%' }}>
         {!isUser && (
           <View style={styles.aiBadge}>
-            <LinearGradient
-              colors={['rgba(244, 114, 182, 0.4)', 'rgba(59, 130, 246, 0.4)']}
-              style={styles.sparkleBox}
-            >
-              <Sparkles size={11} color="#f472b6" strokeWidth={2.4} />
-            </LinearGradient>
+            <View style={styles.sparkleBox}>
+              <AiEkipLogo size={14} />
+            </View>
             <Text style={[styles.aiLabel, { color: colors.textTertiary }]}>
               Ekip Tactical AI
             </Text>

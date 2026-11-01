@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { StepProgressBar } from '../common/StepProgressBar';
 import { FloatingGlassHeader } from '../common/FloatingGlassHeader';
-import { getIcon } from '../../lib/icons';
+import { AiEkipLogo } from '../common/AiEkipLogo';
 import { useTheme } from '../../lib/theme';
 
 export const CreateHeader = React.memo(function CreateHeader({
@@ -17,7 +17,6 @@ export const CreateHeader = React.memo(function CreateHeader({
   onOpenAI: () => void;
 }) {
   const { colors } = useTheme();
-  const Sparkles = getIcon('Sparkles');
 
   return (
     <FloatingGlassHeader
@@ -31,7 +30,7 @@ export const CreateHeader = React.memo(function CreateHeader({
             { backgroundColor: colors.glassThinBg, borderColor: colors.glassBorder },
           ]}
         >
-          <Sparkles size={16} color="#f472b6" strokeWidth={2.4} />
+          <AiEkipLogo size={24} />
         </TouchableOpacity>
       }
     >

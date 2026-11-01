@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { GlassCard, GlassButton } from '../Glass';
 import { GlassSheet } from '../Overlays';
-import { getIcon } from '../../lib/icons';
+import { AiEkipLogo } from '../common/AiEkipLogo';
 import { useTheme } from '../../lib/theme';
 
 interface Suggestion {
@@ -42,7 +42,6 @@ export function AISuggestionsSheetComponent({
   onApplyDescription?: (description: string) => void;
 }) {
   const { colors } = useTheme();
-  const Sparkles = getIcon('Sparkles');
 
   return (
     <GlassSheet open={open} onClose={onClose} title="پیشنهادات هوشمند ساخت اکیپ">
@@ -50,7 +49,7 @@ export function AISuggestionsSheetComponent({
         {suggestions.map((s, i) => (
           <GlassCard key={i} variant="thin" style={styles.card}>
             <View style={styles.iconBox}>
-              <Sparkles size={16} color="#f472b6" strokeWidth={2.4} />
+              <AiEkipLogo size={22} />
             </View>
             <View style={{ flex: 1, marginLeft: 10 }}>
               <Text style={[styles.text, { color: colors.textSecondary }]}>

@@ -53,7 +53,7 @@ export function RequestsModalComponent({
                 <TouchableOpacity
                   activeOpacity={0.75}
                   onPress={() => handleProfilePress(profile.id)}
-                  style={styles.profileRow}
+                  style={[styles.profileRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                 >
                   <GlassAvatar
                     src={profile.avatar_url}
@@ -61,16 +61,16 @@ export function RequestsModalComponent({
                     size={42}
                   />
 
-                  <View style={{ flex: 1, marginLeft: 10 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
+                  <View style={{ flex: 1, marginLeft: isRTL ? 0 : 10, marginRight: isRTL ? 10 : 0 }}>
+                    <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={[styles.name, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={1}>
                         {profile.first_name} {profile.last_name}
                       </Text>
                       {profile.is_verified && <GlassBadgeIcon icon="Verified" label="" color="blue" />}
                       {profile.is_premium && <GlassBadgeIcon icon="Crown" label="" color="amber" />}
                     </View>
 
-                    <Text style={[styles.meta, { color: colors.textTertiary }]} numberOfLines={1}>
+                    <Text style={[styles.meta, { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={1}>
                       {isRTL ? `سطح ${profile.level} · اعتبار ${profile.honor_score}` : `Level ${profile.level} · Honor ${profile.honor_score}`} {profile.city ? `· ${profile.city}` : ''}
                     </Text>
                   </View>
@@ -80,13 +80,13 @@ export function RequestsModalComponent({
 
                 {r.message && (
                   <View style={[styles.msgBox, { backgroundColor: colors.glassThinBg }]}>
-                    <Text style={[styles.msgText, { color: colors.textSecondary }]}>
+                    <Text style={[styles.msgText, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
                       "{r.message}"
                     </Text>
                   </View>
                 )}
 
-                <View style={styles.actionsRow}>
+                <View style={[styles.actionsRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                   <View style={{ flex: 1 }}>
                     <GlassButton
                       size="sm"

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { FloatingGlassHeader } from '../common/FloatingGlassHeader';
+import { AiEkipLogo } from '../common/AiEkipLogo';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
@@ -15,20 +15,14 @@ export const AIHeader = React.memo(function AIHeader({
 }) {
   const { colors } = useTheme();
   const { isRTL } = useI18n();
-  const Sparkles = getIcon('Sparkles');
   const MoreIcon = getIcon('MoreVertical');
 
   return (
     <FloatingGlassHeader
       onBack={onBack}
       leading={
-        <View style={[styles.aiAvatar, { borderColor: colors.glassBorderStrong }]}>
-          <LinearGradient
-            colors={['#8b5cf6', '#ec4899']}
-            style={styles.aiAvatarGrad}
-          >
-            <Sparkles size={18} color="#ffffff" strokeWidth={2.4} />
-          </LinearGradient>
+        <View style={[styles.aiAvatar, { borderColor: colors.glassBorderStrong, backgroundColor: colors.glassThinBg }]}>
+          <AiEkipLogo size={28} />
         </View>
       }
       title={isRTL ? 'دستیار هوشمند اکیپ' : 'Ekip AI Assistant'}
@@ -57,6 +51,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     zIndex: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   aiAvatarGrad: {
     width: '100%',

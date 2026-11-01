@@ -58,11 +58,6 @@ export function ActivityHeaderComponent({
 
         <View style={[styles.topRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
           <View style={{ flex: 1, zIndex: 10 }}>
-            {user?.city ? (
-              <Text style={[styles.cityText, { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' }]}>
-                {user.city}
-              </Text>
-            ) : null}
             <Text style={[styles.titleText, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
               {t('activity.myEkip')}
             </Text>
