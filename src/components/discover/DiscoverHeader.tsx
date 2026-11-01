@@ -109,7 +109,7 @@ export function DiscoverHeaderComponent({
                   style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.locationIconWrap}>
-                  <Icons.MapPin size={18} color="#000000" strokeWidth={2.4} />
+                  <Icons.MapPin size={18} color={colors.textPrimary} strokeWidth={2.4} />
                 </View>
               </TouchableOpacity>
             </View>

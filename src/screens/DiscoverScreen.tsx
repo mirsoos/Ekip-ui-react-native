@@ -3,7 +3,7 @@ import { View, Text, FlatList, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { EkipCard } from '../components/EkipCard';
-import { GlassEmpty, GlassButton, GlassSegmented } from '../components/Glass';
+import { GlassEmpty, GlassButton } from '../components/Glass';
 import { AIAssistantBanner } from '../components/discover/AIAssistantBanner';
 import { CommunityMembersRow } from '../components/discover/CommunityMembersRow';
 import { DiscoverFilterSheet } from '../components/discover/DiscoverFilterSheet';
@@ -148,22 +148,6 @@ export const DiscoverScreen = React.memo(
             />
           )}
 
-        <View style={styles.categoryWrap}>
-          <GlassSegmented
-            options={isRTL ? [
-              { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' },
-              { label: t('discover.cat.entertainment'), value: 'entertainment', icon: 'PartyPopper' },
-              { label: t('discover.cat.all'), value: 'all' },
-            ] : [
-              { label: t('discover.cat.all'), value: 'all' },
-              { label: t('discover.cat.entertainment'), value: 'entertainment', icon: 'PartyPopper' },
-              { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' },
-            ]}
-            value={categoryFilter}
-            onChange={handleCategoryChange}
-          />
-        </View>
-
         <View style={styles.sectionWrap}>
           <Text
             style={[
@@ -181,11 +165,9 @@ export const DiscoverScreen = React.memo(
       </View>
     ),
     [
-      categoryFilter,
       colors.textPrimary,
       featured,
       filtered.length,
-      handleCategoryChange,
       isLoading,
       isRTL,
       onOpenAI,

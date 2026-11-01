@@ -47,6 +47,7 @@ interface BottomNavTabItemProps {
   avatarUrl?: string | null;
   accentColor: string;
   activeTextColor: string;
+  inactiveColor: string;
   onPress: () => void;
 }
 
@@ -59,6 +60,7 @@ const BottomNavTabItem = React.memo(function BottomNavTabItem({
   avatarUrl,
   accentColor,
   activeTextColor,
+  inactiveColor,
   onPress,
 }: BottomNavTabItemProps) {
   if (tabKey === 'create') {
@@ -85,7 +87,7 @@ const BottomNavTabItem = React.memo(function BottomNavTabItem({
         ) : (
           <IconComp
             size={22}
-            color={active ? accentColor : '#ffffff'}
+            color={active ? accentColor : inactiveColor}
             strokeWidth={active ? 2.4 : 1.9}
           />
         )}
@@ -103,7 +105,7 @@ const BottomNavTabItem = React.memo(function BottomNavTabItem({
         style={[
           styles.tabLabel,
           {
-            color: active ? activeTextColor : '#ffffff',
+            color: active ? activeTextColor : inactiveColor,
             fontWeight: active ? '700' : '500',
           },
         ]}
@@ -469,6 +471,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
             avatarUrl={tab.key === 'profile' ? me?.avatar_url : undefined}
             accentColor={colors.accentPink}
             activeTextColor={colors.textPrimary}
+            inactiveColor={isDark ? 'rgba(255, 255, 255, 0.7)' : colors.textSecondary}
             onPress={tabPressHandlers.get(tab.key)!}
           />
         ))}
