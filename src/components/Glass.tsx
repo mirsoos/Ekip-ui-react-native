@@ -990,11 +990,13 @@ export function GlassBadgeIconComponent({
   icon,
   label,
   color = 'pink',
+  solid = false,
   style,
 }: {
   icon: IconName;
   label: string;
   color?: string;
+  solid?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
   const IconComp = getIcon(icon);
@@ -1014,14 +1016,14 @@ export function GlassBadgeIconComponent({
       style={[
         styles.badgeContainer,
         {
-          backgroundColor: `${c}20`,
-          borderColor: `${c}40`,
+          backgroundColor: solid ? c : `${c}20`,
+          borderColor: solid ? c : `${c}40`,
         },
         style,
       ]}
     >
-      <IconComp size={11} color={c} strokeWidth={2.5} style={{ marginRight: 4 }} />
-      <Text style={[styles.badgeText, { color: c }]}>{label}</Text>
+      <IconComp size={11} color={solid ? '#ffffff' : c} strokeWidth={2.5} style={{ marginRight: 4 }} />
+      <Text style={[styles.badgeText, { color: solid ? '#ffffff' : c }]}>{label}</Text>
     </View>
   );
 }

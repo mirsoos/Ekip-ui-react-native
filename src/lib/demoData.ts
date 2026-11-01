@@ -101,7 +101,7 @@ export const demoGroups: Group[] = [
     tags: ['بوردگیم', 'کافه', 'بازی فکری', 'پنجشنبه', 'دورهمی'],
     age_min: 19, age_max: 38, required_level: 3, required_honor: 85,
     gender_preference: 'any', avg_cost: 120000, cover_url: cover('3184292'),
-    premium_only: false, visibility: 'public', auto_accept: true, is_repeating: true,
+    premium_only: true, visibility: 'public', auto_accept: true, is_repeating: true,
     event_date: '2026-08-06T17:30:00Z', views: 1250, member_count: 10, created_at: '2026-07-18T10:00:00Z',
     owner: profileById('me'),
   },

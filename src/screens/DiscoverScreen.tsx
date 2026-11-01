@@ -99,7 +99,9 @@ export const DiscoverScreen = React.memo(
 
   const renderGroup = React.useCallback(
     ({ item }: { item: Group }) => (
-      <EkipCard group={item} onPress={() => onOpenGroup(item)} />
+      <View style={styles.groupCardWrap}>
+        <EkipCard group={item} onPress={() => onOpenGroup(item)} />
+      </View>
     ),
     [onOpenGroup]
   );
@@ -111,8 +113,8 @@ export const DiscoverScreen = React.memo(
 
         {isLoading ? (
             <View style={styles.sectionWrap}>
-              <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              <View style={[styles.sectionHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
                   {t('ekip.featured')}
                 </Text>
               </View>
@@ -120,8 +122,8 @@ export const DiscoverScreen = React.memo(
             </View>
           ) : featured ? (
             <View style={styles.sectionWrap}>
-              <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              <View style={[styles.sectionHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
                   {t('ekip.featured')}
                 </Text>
                 <Text style={[styles.sectionBadge, { color: '#f472b6' }]}>
@@ -142,12 +144,17 @@ export const DiscoverScreen = React.memo(
             <CommunityMembersRow
               profiles={otherProfiles}
               onOpenProfile={onOpenProfile}
+              isRTL={isRTL}
             />
           )}
 
         <View style={styles.categoryWrap}>
           <GlassSegmented
-            options={[
+            options={isRTL ? [
+              { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' },
+              { label: t('discover.cat.entertainment'), value: 'entertainment', icon: 'PartyPopper' },
+              { label: t('discover.cat.all'), value: 'all' },
+            ] : [
               { label: t('discover.cat.all'), value: 'all' },
               { label: t('discover.cat.entertainment'), value: 'entertainment', icon: 'PartyPopper' },
               { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' },
@@ -226,6 +233,7 @@ export const DiscoverScreen = React.memo(
       <FlatList<Group>
         data={isLoading ? [] : remaining}
         renderItem={renderGroup}
+        ItemSeparatorComponent={GroupCardSeparator}
         keyExtractor={(group) => group.id}
         initialNumToRender={4}
         maxToRenderPerBatch={4}
@@ -271,6 +279,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 18,
   },
+  groupCardWrap: {
+    paddingHorizontal: 16,
+  },
+  groupCardSeparator: {
+    height: 14,
+  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -292,3 +306,7 @@ const styles = StyleSheet.create({
     marginTop: 18,
   },
 });
+
+function GroupCardSeparator() {
+  return <View style={styles.groupCardSeparator} />;
+}

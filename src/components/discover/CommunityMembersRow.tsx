@@ -9,9 +9,11 @@ import type { Profile } from '../../types/database';
 export const CommunityMembersRow = React.memo(function CommunityMembersRow({
   profiles,
   onOpenProfile,
+  isRTL,
 }: {
   profiles: Profile[];
   onOpenProfile: (id: string) => void;
+  isRTL: boolean;
 }) {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -19,9 +21,9 @@ export const CommunityMembersRow = React.memo(function CommunityMembersRow({
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <UsersIcon size={16} color="#f472b6" strokeWidth={2.4} style={{ marginRight: 6 }} />
-        <Text style={[styles.heading, { color: colors.textPrimary }]}>
+      <View style={[styles.headerRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <UsersIcon size={16} color="#f472b6" strokeWidth={2.4} style={{ marginRight: isRTL ? 0 : 6, marginLeft: isRTL ? 6 : 0 }} />
+        <Text style={[styles.heading, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
           {t('discover.activeInSector')}
         </Text>
       </View>
@@ -29,7 +31,7 @@ export const CommunityMembersRow = React.memo(function CommunityMembersRow({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 10, paddingVertical: 4 }}
+        contentContainerStyle={{ gap: 10, paddingVertical: 4, flexDirection: isRTL ? 'row-reverse' : 'row' }}
       >
         {profiles.map((p) => (
           <TouchableOpacity

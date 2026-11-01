@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard } from '../Glass';
 import { getIcon } from '../../lib/icons';
@@ -14,13 +14,17 @@ export const AIAssistantBanner = React.memo(function AIAssistantBanner({
   style?: StyleProp<ViewStyle>;
 }) {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, isRTL } = useI18n();
   const SparklesIcon = getIcon('Sparkles');
-  const ChevronRight = getIcon('ChevronRight');
+  const ChevronIcon = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
 
   return (
     <View style={[{ paddingHorizontal: 16 }, style]}>
-      <GlassCard glow onPress={onPress} style={styles.card}>
+      <GlassCard
+        glow
+        onPress={onPress}
+        style={[styles.card, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
+      >
         <LinearGradient
           colors={['rgba(244, 114, 182, 0.35)', 'rgba(59, 130, 246, 0.35)']}
           start={{ x: 0, y: 0 }}
@@ -30,16 +34,16 @@ export const AIAssistantBanner = React.memo(function AIAssistantBanner({
           <SparklesIcon size={22} color="#f472b6" strokeWidth={2.4} />
         </LinearGradient>
 
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
+        <View style={{ flex: 1, marginLeft: isRTL ? 0 : 12, marginRight: isRTL ? 12 : 0 }}>
+          <Text style={[styles.title, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
             {t('discover.askAI')}
           </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          <Text style={[styles.subtitle, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
             {t('discover.askAISub')}
           </Text>
         </View>
 
-        <ChevronRight size={18} color={colors.textTertiary} />
+        <ChevronIcon size={18} color={colors.textTertiary} />
       </GlassCard>
     </View>
   );

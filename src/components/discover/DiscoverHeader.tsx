@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassInput, GlassAvatar } from '../Glass';
 import { NotificationButton } from '../NotificationButton';
 import { FrostedGlass } from '../FrostedGlass';
-import { getIcon } from '../../lib/icons';
+import { Icons } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
@@ -34,7 +34,6 @@ export function DiscoverHeaderComponent({
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
-  const SlidersIcon = getIcon('SlidersHorizontal');
 
   return (
     <View
@@ -66,11 +65,8 @@ export function DiscoverHeaderComponent({
 
         <View style={[styles.topRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
           <View style={{ flex: 1, zIndex: 10 }}>
-            <Text style={[styles.cityText, { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' }]}>
-              {user.city}
-            </Text>
             <Text style={[styles.titleText, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
-              {t('discover.title')}
+              {isRTL ? 'اکیپ' : 'Ekip'}
             </Text>
           </View>
 
@@ -84,6 +80,39 @@ export function DiscoverHeaderComponent({
               },
             ]}
           >
+            <View
+              style={[
+                styles.locationInfo,
+                { flexDirection: isRTL ? 'row-reverse' : 'row' },
+              ]}
+            >
+              {user.city && (
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
+                  style={[styles.locationText, { color: colors.textSecondary, flexShrink: 1 }]}
+                >
+                  {user.city}
+                </Text>
+              )}
+              <TouchableOpacity
+                activeOpacity={0.75}
+                style={[styles.locationButton, { borderColor: colors.glassBorderStrong }]}
+              >
+                <FrostedGlass
+                  borderRadius={19}
+                  marginWidth={8}
+                  scale={20}
+                  blurDeviation={1.6}
+                  overlayOpacity={isDark ? 0.1 : 0.22}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View style={styles.locationIconWrap}>
+                  <Icons.MapPin size={18} color="#000000" strokeWidth={2.4} />
+                </View>
+              </TouchableOpacity>
+            </View>
             <NotificationButton
               unreadCount={unreadCount}
               onPress={onOpenNotifications}
@@ -156,7 +185,7 @@ export function DiscoverHeaderComponent({
               />
             )}
             <View style={styles.filterIconWrap}>
-              <SlidersIcon
+              <Icons.SlidersHorizontal
                 size={18}
                 color={hasActiveFilters ? colors.accentPink : colors.textPrimary}
                 strokeWidth={2.2}
@@ -213,16 +242,51 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     zIndex: 10,
   },
-  cityText: {
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
   titleText: {
     fontSize: 24,
     fontWeight: '800',
     letterSpacing: -0.5,
+  },
+  locationInfo: {
+    maxWidth: 150,
+    gap: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  locationButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25,
+          shadowRadius: 6,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25,
+          shadowRadius: 6,
+          elevation: 4,
+        }),
+  },
+  locationIconWrap: {
+    zIndex: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  locationText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   topActions: {
     flexDirection: 'row',

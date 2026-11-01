@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { GlassSheet } from '../Overlays';
 import { GlassSegmented, GlassChip, GlassToggle, GlassButton } from '../Glass';
 import { useTheme } from '../../lib/theme';
@@ -31,18 +31,22 @@ export function DiscoverFilterSheetComponent({
   onReset,
 }: DiscoverFilterSheetProps) {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, isRTL } = useI18n();
 
   return (
     <GlassSheet open={open} onClose={onClose} title={t('discover.filterTitle')}>
       <View style={{ gap: 18 }}>
         {/* Category selection */}
         <View>
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
             {t('discover.filterCategory')}
           </Text>
           <GlassSegmented
-            options={[
+            options={isRTL ? [
+              { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' },
+              { label: t('discover.cat.entertainment'), value: 'entertainment', icon: 'PartyPopper' },
+              { label: t('discover.cat.all'), value: 'all' },
+            ] : [
               { label: t('discover.cat.all'), value: 'all' },
               { label: t('discover.cat.entertainment'), value: 'entertainment', icon: 'PartyPopper' },
               { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' },
@@ -54,10 +58,10 @@ export function DiscoverFilterSheetComponent({
 
         {/* City selection */}
         <View>
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
             {t('discover.filterLocation')}
           </Text>
-          <View style={styles.chipsWrap}>
+          <View style={[styles.chipsWrap, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <GlassChip
               active={cityFilter === 'all'}
               onPress={() => onChangeCity('all')}
@@ -86,7 +90,7 @@ export function DiscoverFilterSheetComponent({
         </View>
 
         {/* Action Buttons */}
-        <View style={styles.actionsRow}>
+        <View style={[styles.actionsRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
           <View style={{ flex: 1 }}>
             <GlassButton variant="secondary" fullWidth onPress={onReset}>
               {t('discover.filterReset')}
