@@ -64,27 +64,35 @@ export function NotificationsSheetComponent({
 
   return (
     <>
-      <GlassSheet open={open} onClose={onClose} title={t('notifications.title')}>
-        <View style={[styles.topControl, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-          <View style={{ flex: 1 }}>
-            <GlassSegmented
-              options={[
-                { label: t('common.all'), value: 'all' },
-                { label: t('notifications.unreadTab', { count: unreadCount }), value: 'unread' },
-              ]}
-              value={filter}
-              onChange={(v) => setFilter(v as 'all' | 'unread')}
-            />
+      <GlassSheet
+        open={open}
+        onClose={onClose}
+        title={t('notifications.title')}
+        headerContent={
+          <View style={[styles.topControl, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+            <View style={{ flex: 1 }}>
+              <GlassSegmented
+                options={isRTL ? [
+                  { label: t('notifications.unreadTab', { count: unreadCount }), value: 'unread' },
+                  { label: t('common.all'), value: 'all' },
+                ] : [
+                  { label: t('common.all'), value: 'all' },
+                  { label: t('notifications.unreadTab', { count: unreadCount }), value: 'unread' },
+                ]}
+                value={filter}
+                onChange={(v) => setFilter(v as 'all' | 'unread')}
+              />
+            </View>
+
+            {unreadCount > 0 && (
+              <TouchableOpacity activeOpacity={0.7} onPress={handleMarkAllRead} style={styles.markBtn}>
+                <Text style={styles.markText}>{t('notifications.markAllRead')}</Text>
+              </TouchableOpacity>
+            )}
           </View>
-
-          {unreadCount > 0 && (
-            <TouchableOpacity activeOpacity={0.7} onPress={handleMarkAllRead} style={styles.markBtn}>
-              <Text style={styles.markText}>{t('notifications.markAllRead')}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <View style={{ marginTop: 10 }}>
+        }
+      >
+        <View style={{ marginTop: 2 }}>
           {filtered.length === 0 ? (
             <GlassEmpty
               icon="Bell"

@@ -31,6 +31,7 @@ export interface GlassSheetProps {
   children: ReactNode;
   title?: string;
   fullHeight?: boolean;
+  headerContent?: ReactNode;
 }
 
 export const GlassSheet = React.memo(function GlassSheet({
@@ -39,6 +40,7 @@ export const GlassSheet = React.memo(function GlassSheet({
   children,
   title,
   fullHeight,
+  headerContent,
 }: GlassSheetProps) {
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
@@ -186,6 +188,12 @@ export const GlassSheet = React.memo(function GlassSheet({
             </Text>
             <GlassCloseButton onPress={onClose} />
           </View>
+
+          {headerContent && (
+            <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 6 }}>
+              {headerContent}
+            </View>
+          )}
 
           {/* Keep children mounted in RAM so opening/closing has ZERO mount/unmount spike! */}
           <ScrollView
