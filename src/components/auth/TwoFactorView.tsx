@@ -26,7 +26,7 @@ export function TwoFactorView({
   const Shield = getIcon('ShieldCheck');
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} className="animate-raise">
       <View
         style={[
           styles.topBar,

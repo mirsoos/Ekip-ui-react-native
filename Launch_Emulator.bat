@@ -5,7 +5,7 @@ echo   Starting Ekip in Development Mode (Fast Refresh)
 echo ===================================================
 
 cd /d "%LOCALAPPDATA%\Android\Sdk\emulator"
-start "" emulator.exe -avd Small_Phone -no-snapshot-load -gpu auto
+start "" emulator.exe -avd Small_Phone -no-snapshot-load -gpu host -feature -Vulkan
 
 echo Waiting for Android device to connect...
 cd /d "%LOCALAPPDATA%\Android\Sdk\platform-tools"
