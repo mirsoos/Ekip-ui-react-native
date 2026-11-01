@@ -13,6 +13,7 @@ export function AuthScreen({ onComplete }: { onComplete: () => void }) {
   const [mode, setMode] = useState<'welcome' | 'login' | 'register' | 'forgot'>('welcome');
   const [show2FA, setShow2FA] = useState(false);
   const [otp, setOtp] = useState('');
+  const [forgotStep, setForgotStep] = useState<'request' | 'otp' | 'new-password' | 'success'>('request');
 
   if (mode === 'welcome') {
     return (
@@ -31,10 +32,11 @@ export function AuthScreen({ onComplete }: { onComplete: () => void }) {
   if (mode === 'forgot') {
     return (
       <View style={styles.container}>
-        <ScreenTransition screenKey={`auth-forgot-${language}`}>
+        <ScreenTransition screenKey={`auth-forgot-${forgotStep}-${language}`}>
           <ForgotPasswordView
             onBack={() => setMode('login')}
             onComplete={() => setMode('login')}
+            onStepChange={setForgotStep}
           />
         </ScreenTransition>
       </View>
@@ -63,7 +65,10 @@ export function AuthScreen({ onComplete }: { onComplete: () => void }) {
             onBack={() => setMode('welcome')}
             onSubmit={() => setShow2FA(true)}
             onOAuth={onComplete}
-            onForgotPassword={() => setMode('forgot')}
+            onForgotPassword={() => {
+              setForgotStep('request');
+              setMode('forgot');
+            }}
           />
         </ScreenTransition>
       </View>

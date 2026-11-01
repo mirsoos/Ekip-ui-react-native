@@ -300,6 +300,7 @@ function MainContent() {
   });
 
   const [isLoading, setIsLoading] = useState(true);
+  const finishLoading = React.useCallback(() => setIsLoading(false), []);
   const [authed, setAuthed] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
   const [tab, setTab] = useState<TabKey>('discover');
@@ -576,14 +577,6 @@ function MainContent() {
       ? screen.group.id
       : ''
   }-${history.length}`;
-  if (!fontsLoaded && Platform.OS !== 'web') {
-    return (
-      <AppChrome>
-        <Loading minDuration={2000} onFinish={() => setIsLoading(false)} />
-      </AppChrome>
-    );
-  }
-
   return (
     <AppChrome>
       <View nativeID="phone-container" style={styles.phoneContainer}>
@@ -855,7 +848,8 @@ function MainContent() {
         {isLoading && (
           <Loading
             minDuration={2000}
-            onFinish={() => setIsLoading(false)}
+            onFinish={finishLoading}
+            canFinish={fontsLoaded || Platform.OS === 'web'}
           />
         )}
       </View>

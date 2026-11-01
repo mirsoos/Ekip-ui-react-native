@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Text, StyleSheet, Platform, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getIcon, type IconName } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
@@ -19,12 +19,41 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-export function OnboardingSlide({ slide }: { slide: SlideData }) {
+export function OnboardingSlide({ slide, step }: { slide: SlideData; step: number }) {
   const { colors } = useTheme();
   const IconComp = getIcon(slide.icon);
+  const [entrance] = useState(() => new Animated.Value(0));
+
+  useEffect(() => {
+    entrance.setValue(0);
+    const animation = Animated.timing(entrance, {
+      toValue: 1,
+      duration: 260,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      useNativeDriver: Platform.OS !== 'web',
+    });
+    animation.start();
+
+    return () => animation.stop();
+  }, [step, entrance]);
 
   return (
-    <View style={styles.container}>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          opacity: entrance,
+          transform: [
+            {
+              translateY: entrance.interpolate({
+                inputRange: [0, 1],
+                outputRange: [16, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
       <LinearGradient
         colors={[hexToRgba(slide.color, 0.28), hexToRgba(slide.color, 0.08)]}
         style={styles.iconBox}
@@ -38,7 +67,7 @@ export function OnboardingSlide({ slide }: { slide: SlideData }) {
       <Text style={[styles.desc, { color: colors.textSecondary }]}>
         {slide.desc}
       </Text>
-    </View>
+    </Animated.View>
   );
 }
 

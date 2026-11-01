@@ -15,9 +15,11 @@ type ResetMethod = 'username' | 'email' | 'phone';
 export function ForgotPasswordView({
   onBack,
   onComplete,
+  onStepChange,
 }: {
   onBack: () => void;
   onComplete: () => void;
+  onStepChange: (step: ResetStep) => void;
 }) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -51,16 +53,21 @@ export function ForgotPasswordView({
     return false;
   };
 
+  const changeStep = (nextStep: ResetStep) => {
+    setStep(nextStep);
+    onStepChange(nextStep);
+  };
+
   const handleSendCode = () => {
     if (canSubmitRequest()) {
       setResendTimer(60);
-      setStep('otp');
+      changeStep('otp');
     }
   };
 
   const handleVerifyOtp = () => {
     if (otp.length === 6) {
-      setStep('new-password');
+      changeStep('new-password');
     }
   };
 
@@ -68,19 +75,20 @@ export function ForgotPasswordView({
 
   const handleResetPassword = () => {
     if (passwordsMatch) {
-      setStep('success');
+      changeStep('success');
     }
   };
 
   const handleBackStep = () => {
-    if (step === 'otp') setStep('request');
-    else if (step === 'new-password') setStep('otp');
+    if (step === 'otp') changeStep('request');
+    else if (step === 'new-password') changeStep('otp');
     else onBack();
   };
 
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
+      className="animate-raise"
       contentContainerStyle={[
         styles.container,
         {

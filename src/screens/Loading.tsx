@@ -3,7 +3,6 @@ import {
   StyleSheet,
   Animated,
   Platform,
-  Image,
   Easing,
   View,
   Text,
@@ -19,10 +18,6 @@ import Svg, {
   SvgXml,
 } from 'react-native-svg';
 import { useTheme } from '../lib/theme';
-
-const TOP_SVG = Platform.OS === 'web' ? '/top-logo.svg' : require('../../assets/top-logo.svg');
-const MID_SVG = Platform.OS === 'web' ? '/mid-logo.svg' : require('../../assets/mid-logo.svg');
-const BOT_SVG = Platform.OS === 'web' ? '/bot-logo.svg' : require('../../assets/bot-logo.svg');
 
 const TOP_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 270" width="100%" height="100%" preserveAspectRatio="xMinYMid meet">
   <defs>
@@ -75,12 +70,14 @@ const BOT_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 240" 
 export interface LoadingProps {
   onFinish?: () => void;
   minDuration?: number;
+  canFinish?: boolean;
 }
 
 const BRAND_TEXT_WIDTH = 130;
 
-export function Loading({ onFinish, minDuration = 2000 }: LoadingProps) {
+export function Loading({ onFinish, minDuration = 2000, canFinish = true }: LoadingProps) {
   const { isDark } = useTheme();
+  const [startedAt] = useState(() => Date.now());
 
   // Screen level transitions
   const [containerOpacity] = useState(() => new Animated.Value(1));
@@ -249,43 +246,16 @@ export function Loading({ onFinish, minDuration = 2000 }: LoadingProps) {
     const t2 = runPulse(pulseOrangeAnim, 550);
     const t3 = runPulse(pulseGreenAnim, 1100);
 
-    // 7. Smooth dissolve exit
-    const exitTimer = setTimeout(() => {
-      setIsFadingOut(true);
-      twinkleLoopA.stop();
-      twinkleLoopB.stop();
-      floatLoop.stop();
-
-      Animated.parallel([
-        Animated.timing(containerOpacity, {
-          toValue: 0,
-          duration: 480,
-          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-        Animated.timing(sceneScale, {
-          toValue: 1.05,
-          duration: 480,
-          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-      ]).start(() => {
-        onFinish?.();
-      });
-    }, minDuration);
-
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
-      clearTimeout(exitTimer);
       twinkleLoopA.stop();
       twinkleLoopB.stop();
       floatLoop.stop();
     };
   }, [
     minDuration,
-    onFinish,
     contentOpacity,
     sceneScale,
     logoScaleAnim,
@@ -299,6 +269,33 @@ export function Loading({ onFinish, minDuration = 2000 }: LoadingProps) {
     twinkleB,
     textFillWidth,
   ]);
+
+  useEffect(() => {
+    if (!canFinish) return;
+
+    const remainingDuration = Math.max(0, minDuration - (Date.now() - startedAt));
+    const exitTimer = setTimeout(() => {
+      setIsFadingOut(true);
+      Animated.parallel([
+        Animated.timing(containerOpacity, {
+          toValue: 0,
+          duration: 480,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(sceneScale, {
+          toValue: 1.05,
+          duration: 480,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ]).start(({ finished }) => {
+        if (finished) onFinish?.();
+      });
+    }, remainingDuration);
+
+    return () => clearTimeout(exitTimer);
+  }, [canFinish, minDuration, startedAt, onFinish, containerOpacity, sceneScale]);
 
   // Dynamic displacements for the 3 SVG pieces
   const topPieceTranslateY = Animated.add(
@@ -358,16 +355,6 @@ export function Loading({ onFinish, minDuration = 2000 }: LoadingProps) {
 
   const totalLogoHeight = pieceHeight * 2 + botHeight + baseGap * 2;
   const logoBorderRadius = 22;
-
-  const imgStyle = {
-    width: logoSize,
-    ...(Platform.OS === 'web'
-      ? ({
-          objectFit: 'contain',
-          objectPosition: 'left center',
-        } as any)
-      : {}),
-  };
 
   return (
     <Animated.View
@@ -529,15 +516,7 @@ export function Loading({ onFinish, minDuration = 2000 }: LoadingProps) {
                 zIndex: 3,
               }}
             >
-              {Platform.OS === 'web' ? (
-                <Image
-                  source={typeof TOP_SVG === 'string' ? { uri: TOP_SVG } : TOP_SVG}
-                  style={[imgStyle, { height: pieceHeight }]}
-                  resizeMode="contain"
-                />
-              ) : (
-                <SvgXml xml={TOP_XML} width={logoSize} height={pieceHeight} />
-              )}
+              <SvgXml xml={TOP_XML} width={logoSize} height={pieceHeight} />
             </Animated.View>
 
             {/* MID PIECE (Orange Speech Arc) */}
@@ -552,26 +531,7 @@ export function Loading({ onFinish, minDuration = 2000 }: LoadingProps) {
                 zIndex: 2,
               }}
             >
-              {Platform.OS === 'web' ? (
-                <Image
-                  source={typeof MID_SVG === 'string' ? { uri: MID_SVG } : MID_SVG}
-                  style={[
-                    {
-                      width: midWidth,
-                      height: pieceHeight,
-                      ...(Platform.OS === 'web'
-                        ? ({
-                            objectFit: 'contain',
-                            objectPosition: 'left center',
-                          } as any)
-                        : {}),
-                    },
-                  ]}
-                  resizeMode="contain"
-                />
-              ) : (
-                <SvgXml xml={MID_XML} width={midWidth} height={pieceHeight} />
-              )}
+              <SvgXml xml={MID_XML} width={midWidth} height={pieceHeight} />
             </Animated.View>
 
             {/* BOT PIECE (Green Capsule Foundation) */}
@@ -585,15 +545,7 @@ export function Loading({ onFinish, minDuration = 2000 }: LoadingProps) {
                 zIndex: 1,
               }}
             >
-              {Platform.OS === 'web' ? (
-                <Image
-                  source={typeof BOT_SVG === 'string' ? { uri: BOT_SVG } : BOT_SVG}
-                  style={[imgStyle, { height: botHeight }]}
-                  resizeMode="contain"
-                />
-              ) : (
-                <SvgXml xml={BOT_XML} width={logoSize} height={botHeight} />
-              )}
+              <SvgXml xml={BOT_XML} width={logoSize} height={botHeight} />
             </Animated.View>
           </Animated.View>
         </View>

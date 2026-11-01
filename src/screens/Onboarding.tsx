@@ -72,7 +72,7 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
         </TouchableOpacity>
       </View>
 
-      <OnboardingSlide slide={slide} />
+      <OnboardingSlide slide={slide} step={step} />
 
       <View style={styles.dotsRow}>
         {slides.map((_, i) => (
