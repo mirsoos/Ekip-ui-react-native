@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
   },
   fightStageWrap: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 44 : 24,
+    top: Platform.OS === 'web' ? 65 : (Platform.OS === 'ios' ? 140 : 125),
     left: 0,
     right: 0,
     zIndex: 99999,

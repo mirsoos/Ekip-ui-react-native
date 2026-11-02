@@ -1,11 +1,16 @@
 {
   "expo": {
-    "name": "antigravity",
-    "slug": "antigravity",
+    "name": "Ekip",
+    "slug": "ekip",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#080c14"
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -30,7 +35,8 @@
             "./assets/fonts/IRANSans.ttf"
           ]
         }
-      ]
+      ],
+      "expo-status-bar"
     ]
   }
 }

@@ -34,7 +34,6 @@ export function NotificationsSheetComponent({
     setTimeout(() => setToastMessage(''), 2400);
   };
 
-  // FIXED: No `if (!open) return [];`! Content stays intact until sheet finishes sliding down!
   const filtered = useMemo(() => {
     return notifications.filter((n) => {
       if (filter === 'unread') return !n.is_read;
@@ -67,18 +66,23 @@ export function NotificationsSheetComponent({
       <GlassSheet
         open={open}
         onClose={onClose}
+        fullHeight={true} // 👈 قفل کردن ارتفاع شیت در وب و موبایل تا با تغییر تب اصلاً نپرد!
         title={t('notifications.title')}
         headerContent={
           <View style={[styles.topControl, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <View style={{ flex: 1 }}>
               <GlassSegmented
-                options={isRTL ? [
-                  { label: t('notifications.unreadTab', { count: unreadCount }), value: 'unread' },
-                  { label: t('common.all'), value: 'all' },
-                ] : [
-                  { label: t('common.all'), value: 'all' },
-                  { label: t('notifications.unreadTab', { count: unreadCount }), value: 'unread' },
-                ]}
+                options={
+                  isRTL
+                    ? [
+                        { label: t('notifications.unreadTab', { count: unreadCount }), value: 'unread' },
+                        { label: t('common.all'), value: 'all' },
+                      ]
+                    : [
+                        { label: t('common.all'), value: 'all' },
+                        { label: t('notifications.unreadTab', { count: unreadCount }), value: 'unread' },
+                      ]
+                }
                 value={filter}
                 onChange={(v) => setFilter(v as 'all' | 'unread')}
               />
@@ -92,17 +96,23 @@ export function NotificationsSheetComponent({
           </View>
         }
       >
-        <View style={{ marginTop: 2 }}>
+        <View style={styles.listWrapper}>
           {filtered.length === 0 ? (
-            <GlassEmpty
-              icon="Bell"
-              title={isRTL ? 'هیچ اعلانی وجود ندارد' : 'No notifications'}
-              subtitle={
-                filter === 'unread'
-                  ? (isRTL ? 'تمامی اعلان‌ها بررسی شده‌اند.' : 'All notifications have been reviewed.')
-                  : (isRTL ? 'در حال حاضر هیچ اعلان جدیدی ندارید.' : 'You have no notifications at this time.')
-              }
-            />
+            <View style={styles.emptyWrapper}>
+              <GlassEmpty
+                icon="Bell"
+                title={isRTL ? 'هیچ اعلانی وجود ندارد' : 'No notifications'}
+                subtitle={
+                  filter === 'unread'
+                    ? isRTL
+                      ? 'تمامی اعلان‌ها بررسی شده‌اند.'
+                      : 'All notifications have been reviewed.'
+                    : isRTL
+                    ? 'در حال حاضر هیچ اعلان جدیدی ندارید.'
+                    : 'You have no notifications at this time.'
+                }
+              />
+            </View>
           ) : (
             filtered.map((item) => (
               <NotificationItem
@@ -126,6 +136,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     marginBottom: 10,
+    minHeight: 40,
   },
   markBtn: {
     paddingHorizontal: 8,
@@ -136,12 +147,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  scrollArea: {
-    maxHeight: 380,
+  listWrapper: {
+    marginTop: 2,
+    minHeight: 380,
   },
-  scrollContent: {
-    gap: 8,
-    paddingBottom: 16,
+  emptyWrapper: {
+    paddingTop: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

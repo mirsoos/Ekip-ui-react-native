@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Platform } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Platform, Image, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassButton } from '../components/Glass';
 import { GlassSheet, Toast } from '../components/Overlays';
 import { getIcon, type IconName } from '../lib/icons';
+import { FloatingGlassHeader } from '../components/common/FloatingGlassHeader';
+import { FrostedGlass } from '../components/FrostedGlass';
+import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 import { EkipDetailHeader } from '../components/ekip/EkipDetailHeader';
 import { EkipEventInfoCard } from '../components/ekip/EkipEventInfoCard';
 import { EkipHostCard } from '../components/ekip/EkipHostCard';
@@ -35,7 +38,7 @@ export function EkipDetailComponent({
 }) {
   const { me, members, requests, addRequest, updateRequest, addNotification, conversations } = useAppData();
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
 
   const [showJoinSheet, setShowJoinSheet] = useState(false);
@@ -45,6 +48,7 @@ export function EkipDetailComponent({
   const [toast, setToast] = useState('');
 
   const CatIcon = getIcon(categoryIcons[group.category] ?? 'PartyPopper');
+  const ShareIcon = getIcon('Share');
   const groupMembers = members.filter((m) => m.group_id === group.id && m.status === 'active');
   const myRequest = requests.find((r) => r.group_id === group.id && r.user_id === 'me');
   const isOwner = group.owner_id === 'me';
@@ -120,20 +124,61 @@ export function EkipDetailComponent({
 
   return (
     <View style={styles.container}>
+      {isOwner && (
+        <FloatingGlassHeader
+          onBack={onBack}
+          title={group.title}
+          subtitle={t('ekip.manage')}
+          trailing={
+            <TouchableOpacity
+              activeOpacity={0.75}
+              onPress={() => setShowShare(true)}
+              style={[
+                styles.headerActionBtn,
+                { borderColor: colors.glassBorderStrong },
+              ]}
+            >
+              <FrostedGlass
+                borderRadius={19}
+                marginWidth={8}
+                scale={20}
+                blurDeviation={1.6}
+                overlayOpacity={isDark ? 0.10 : 0.22}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={styles.headerIconWrap}>
+                <ShareIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+              </View>
+            </TouchableOpacity>
+          }
+        />
+      )}
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
+          isOwner && {
+            paddingTop: getSinglePillContentPaddingTop(insets.top),
+          },
           Platform.OS !== 'web' && {
             paddingBottom: 110 + insets.bottom,
           },
         ]}
       >
-        <EkipDetailHeader
-          coverUrl={group.cover_url ?? ''}
-          onBack={onBack}
-          onShare={() => setShowShare(true)}
-        />
+        {isOwner ? (
+          group.cover_url ? (
+            <View style={[styles.ownerCoverCard, { borderColor: colors.glassBorderStrong }]}>
+              <Image source={{ uri: group.cover_url }} style={styles.ownerCoverImage} resizeMode="cover" />
+            </View>
+          ) : null
+        ) : (
+          <EkipDetailHeader
+            coverUrl={group.cover_url ?? ''}
+            onBack={onBack}
+            onShare={() => setShowShare(true)}
+          />
+        )}
 
         <View style={styles.bodyWrap}>
           {/* Category Chip */}
@@ -305,5 +350,42 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 11,
     fontWeight: '600',
+  },
+  ownerCoverCard: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    height: 180,
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  ownerCoverImage: {
+    width: '100%',
+    height: '100%',
+  },
+  headerActionBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: Platform.OS === 'android' ? 0 : 4,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  headerIconWrap: {
+    zIndex: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Animated, Easing } from 'react-native';
+// --- START OF FILE EkipCard.tsx ---
+
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, Image, Animated, Easing, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { LucideIcon } from 'lucide-react-native';
 import Svg, {
   LinearGradient as SvgLinearGradient,
   Rect,
   Stop,
+  Defs,
+  Mask,
 } from 'react-native-svg';
 import { type Group } from '../types/database';
 import { GlassCard, GlassAvatar, GlassBadgeIcon } from './Glass';
@@ -24,50 +28,75 @@ const AnimatedSvgLinearGradient = Animated.createAnimatedComponent(SvgLinearGrad
 const gradientRotationInput = Array.from({ length: 9 }, (_, index) => index / 8);
 const gradientAngles = gradientRotationInput.map((progress) => progress * Math.PI * 2);
 
+// ============================================================================
+// یک تایمر سراسری با Native Driver برای موبایل (جلوگیری از ساخت ده‌ها تایمر مجزا برای هر کارت)
+// ============================================================================
+const sharedGoldRotation = new Animated.Value(0);
+const sharedGoldPulse = new Animated.Value(0);
+const sharedRgbRotation = new Animated.Value(0);
+let sharedAnimationsStarted = false;
+
+function ensureSharedNativeAnimations() {
+  if (sharedAnimationsStarted || Platform.OS === 'web') return;
+  sharedAnimationsStarted = true;
+
+  Animated.loop(
+    Animated.timing(sharedGoldRotation, {
+      toValue: 1,
+      duration: 10000,
+      easing: Easing.linear,
+      useNativeDriver: true, // 👈 100% روی GPU
+    })
+  ).start();
+
+  Animated.loop(
+    Animated.sequence([
+      Animated.timing(sharedGoldPulse, {
+        toValue: 1,
+        duration: 2800,
+        easing: Easing.inOut(Easing.sin),
+        useNativeDriver: true, // 👈 100% روی GPU
+      }),
+      Animated.timing(sharedGoldPulse, {
+        toValue: 0,
+        duration: 2800,
+        easing: Easing.inOut(Easing.sin),
+        useNativeDriver: true, // 👈 100% روی GPU
+      }),
+    ])
+  ).start();
+
+  Animated.loop(
+    Animated.timing(sharedRgbRotation, {
+      toValue: 1,
+      duration: 9000,
+      easing: Easing.linear,
+      useNativeDriver: true, // 👈 100% روی GPU
+    })
+  ).start();
+}
+
 function PremiumGoldBorder({ radius }: { radius: number }) {
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [rotation] = useState(() => new Animated.Value(0));
   const [pulse] = useState(() => new Animated.Value(0));
+
   const inset = 1;
   const borderRadius = Math.max(0, radius - inset);
   const width = Math.max(0, size.width - 2 * inset);
   const height = Math.max(0, size.height - 2 * inset);
-  const glowOpacity = pulse.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0.02, 0.62, 0.02],
-  });
-  const coreOpacity = pulse.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0.35, 0.98, 0.35],
-  });
-  const glowWidth = pulse.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [3, 10, 3],
-  });
-  const coreWidth = pulse.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [1.2, 2.5, 1.2],
-  });
-  const getGradientCoordinate = (offset: number, direction: 'x' | 'y') =>
-    rotation.interpolate({
-      inputRange: gradientRotationInput,
-      outputRange: gradientAngles.map((angle) =>
-        direction === 'x'
-          ? 0.5 + Math.cos(angle + offset) * 0.5
-          : 0.5 + Math.sin(angle + offset) * 0.5
-      ),
-    });
-  const x1 = getGradientCoordinate(Math.PI, 'x');
-  const y1 = getGradientCoordinate(Math.PI, 'y');
-  const x2 = getGradientCoordinate(0, 'x');
-  const y2 = getGradientCoordinate(0, 'y');
 
   useEffect(() => {
+    if (Platform.OS !== 'web') {
+      ensureSharedNativeAnimations();
+      return;
+    }
     if (width <= 0 || height <= 0) return;
 
     rotation.setValue(0);
     pulse.setValue(0);
-    const movement = Animated.loop(Animated.timing(rotation, {
+    const movement = Animated.loop(
+      Animated.timing(rotation, {
         toValue: 1,
         duration: 30000,
         easing: Easing.linear,
@@ -99,6 +128,128 @@ function PremiumGoldBorder({ radius }: { radius: number }) {
       breathing.stop();
     };
   }, [height, pulse, rotation, width]);
+
+  // در محیط موبایل (iOS / Android): رندر ۱۰۰٪ با Native Driver (بدون افت حتی ۱ فریم)
+  if (Platform.OS !== 'web') {
+    const nativeCoreOpacity = sharedGoldPulse.interpolate({
+      inputRange: [0, 0.5, 1],
+      outputRange: [0.38, 1, 0.38],
+    });
+    const nativeGlowOpacity = sharedGoldPulse.interpolate({
+      inputRange: [0, 0.5, 1],
+      outputRange: [0.05, 0.55, 0.05],
+    });
+
+    return (
+      <View
+        pointerEvents="none"
+        onLayout={({ nativeEvent }) => {
+          const { width: lw, height: lh } = nativeEvent.layout;
+          setSize((c) => (c.width === lw && c.height === lh ? c : { width: lw, height: lh }));
+        }}
+        style={StyleSheet.absoluteFill}
+      >
+        {width > 0 && height > 0 && (
+          <>
+            {/* لایه پایه ثابت طلایی */}
+            <Svg width={size.width} height={size.height} style={StyleSheet.absoluteFill}>
+              <Rect
+                x={inset}
+                y={inset}
+                width={width}
+                height={height}
+                rx={borderRadius}
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth={1}
+                strokeOpacity={0.55}
+              />
+            </Svg>
+
+            {/* لایه درخشش و گرادینت طلایی با انیمیشن GPU */}
+            <Animated.View
+              renderToHardwareTextureAndroid={true}
+              shouldRasterizeIOS={true}
+              style={[StyleSheet.absoluteFill, { opacity: nativeCoreOpacity }]}
+            >
+              <Svg width={size.width} height={size.height}>
+                <Defs>
+                  <SvgLinearGradient id="goldNativeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <Stop offset="0%" stopColor="#d4af37" stopOpacity={0.35} />
+                    <Stop offset="35%" stopColor="#ffd966" stopOpacity={0.85} />
+                    <Stop offset="50%" stopColor="#fff7c2" stopOpacity={1} />
+                    <Stop offset="65%" stopColor="#ffd966" stopOpacity={0.85} />
+                    <Stop offset="100%" stopColor="#d4af37" stopOpacity={0.35} />
+                  </SvgLinearGradient>
+                </Defs>
+                <Rect
+                  x={inset}
+                  y={inset}
+                  width={width}
+                  height={height}
+                  rx={borderRadius}
+                  fill="none"
+                  stroke="url(#goldNativeGrad)"
+                  strokeWidth={2}
+                />
+              </Svg>
+            </Animated.View>
+
+            {/* لایه Glow طلایی روی GPU */}
+            <Animated.View
+              renderToHardwareTextureAndroid={true}
+              shouldRasterizeIOS={true}
+              style={[StyleSheet.absoluteFill, { opacity: nativeGlowOpacity }]}
+            >
+              <Svg width={size.width} height={size.height}>
+                <Rect
+                  x={inset}
+                  y={inset}
+                  width={width}
+                  height={height}
+                  rx={borderRadius}
+                  fill="none"
+                  stroke="#ffd966"
+                  strokeWidth={5}
+                />
+              </Svg>
+            </Animated.View>
+          </>
+        )}
+      </View>
+    );
+  }
+
+  // در محیط وب: اجرای دقیق همان کد قبلی
+  const glowOpacity = pulse.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.02, 0.62, 0.02],
+  });
+  const coreOpacity = pulse.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.35, 0.98, 0.35],
+  });
+  const glowWidth = pulse.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [3, 10, 3],
+  });
+  const coreWidth = pulse.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [1.2, 2.5, 1.2],
+  });
+  const getGradientCoordinate = (offset: number, direction: 'x' | 'y') =>
+    rotation.interpolate({
+      inputRange: gradientRotationInput,
+      outputRange: gradientAngles.map((angle) =>
+        direction === 'x'
+          ? 0.5 + Math.cos(angle + offset) * 0.5
+          : 0.5 + Math.sin(angle + offset) * 0.5
+      ),
+    });
+  const x1 = getGradientCoordinate(Math.PI, 'x');
+  const y1 = getGradientCoordinate(Math.PI, 'y');
+  const x2 = getGradientCoordinate(0, 'x');
+  const y2 = getGradientCoordinate(0, 'y');
 
   return (
     <View
@@ -174,6 +325,10 @@ function FeaturedRgbBorder() {
   const [rotation] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
+    if (Platform.OS !== 'web') {
+      ensureSharedNativeAnimations();
+      return;
+    }
     rotation.setValue(0);
     const animation = Animated.loop(
       Animated.timing(rotation, {
@@ -188,6 +343,92 @@ function FeaturedRgbBorder() {
     return () => animation.stop();
   }, [rotation]);
 
+  // در محیط موبایل: تغییر فاز دو لایه گرادینت مکمل با useNativeDriver: true (صفر درصد درگیری CPU)
+  if (Platform.OS !== 'web') {
+    const crossfade = sharedRgbRotation.interpolate({
+      inputRange: [0, 0.5, 1],
+      outputRange: [0, 1, 0],
+    });
+
+    return (
+      <View
+        pointerEvents="none"
+        onLayout={({ nativeEvent }) => {
+          const { width, height } = nativeEvent.layout;
+          setSize((current) =>
+            current.width === width && current.height === height
+              ? current
+              : { width, height }
+          );
+        }}
+        style={StyleSheet.absoluteFill}
+      >
+        {size.width > 0 && size.height > 0 && (
+          <>
+            <View
+              renderToHardwareTextureAndroid={true}
+              shouldRasterizeIOS={true}
+              style={StyleSheet.absoluteFill}
+            >
+              <Svg width={size.width} height={size.height}>
+                <Defs>
+                  <SvgLinearGradient id="rgbGradA" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <Stop offset="0%" stopColor="#ff3b30" />
+                    <Stop offset="20%" stopColor="#ffcc00" />
+                    <Stop offset="40%" stopColor="#34c759" />
+                    <Stop offset="60%" stopColor="#00c7be" />
+                    <Stop offset="80%" stopColor="#007aff" />
+                    <Stop offset="100%" stopColor="#af52de" />
+                  </SvgLinearGradient>
+                </Defs>
+                <Rect
+                  x={0.75}
+                  y={0.75}
+                  width={size.width - 1.5}
+                  height={size.height - 1.5}
+                  rx={24}
+                  fill="none"
+                  stroke="url(#rgbGradA)"
+                  strokeWidth={1.5}
+                />
+              </Svg>
+            </View>
+
+            <Animated.View
+              renderToHardwareTextureAndroid={true}
+              shouldRasterizeIOS={true}
+              style={[StyleSheet.absoluteFill, { opacity: crossfade }]}
+            >
+              <Svg width={size.width} height={size.height}>
+                <Defs>
+                  <SvgLinearGradient id="rgbGradB" x1="100%" y1="100%" x2="0%" y2="0%">
+                    <Stop offset="0%" stopColor="#ff3b30" />
+                    <Stop offset="20%" stopColor="#ffcc00" />
+                    <Stop offset="40%" stopColor="#34c759" />
+                    <Stop offset="60%" stopColor="#00c7be" />
+                    <Stop offset="80%" stopColor="#007aff" />
+                    <Stop offset="100%" stopColor="#af52de" />
+                  </SvgLinearGradient>
+                </Defs>
+                <Rect
+                  x={0.75}
+                  y={0.75}
+                  width={size.width - 1.5}
+                  height={size.height - 1.5}
+                  rx={24}
+                  fill="none"
+                  stroke="url(#rgbGradB)"
+                  strokeWidth={1.5}
+                />
+              </Svg>
+            </Animated.View>
+          </>
+        )}
+      </View>
+    );
+  }
+
+  // در محیط وب: اجرای دقیق کد قبلی
   const getGradientCoordinate = (offset: number, direction: 'x' | 'y') =>
     rotation.interpolate({
       inputRange: gradientRotationInput,
@@ -299,7 +540,7 @@ const EkipCardBody = React.memo(function EkipCardBody({
       )}
 
       <View style={[styles.cardFooter, { borderTopColor: colors.divider, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-      <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center' }}>
+        <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center' }}>
           <GlassAvatar
             user={group.owner}
             src={group.owner?.avatar_url}

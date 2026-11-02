@@ -1,3 +1,5 @@
+// --- START OF FILE Overlays.web.tsx ---
+
 import React, { type ReactNode, useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { getIcon, type IconName } from '../lib/icons';
@@ -44,7 +46,7 @@ export function GlassSheet({
       isMounted.current = true;
       setIsRendered(true);
     } else if (isMounted.current) {
-      const closeTimer = window.setTimeout(() => setIsRendered(false), 360);
+      const closeTimer = window.setTimeout(() => setIsRendered(false), 520);
       return () => window.clearTimeout(closeTimer);
     }
   }, [open]);
@@ -75,8 +77,9 @@ export function GlassSheet({
         overflow: 'hidden',
       }}
     >
-      {/* 1. Backdrop: subtle blur and subtle darkness to prevent content clash */}
+      {/* 1. Backdrop */}
       <div
+        onClick={onClose}
         className={`ekip-sheet-backdrop ${open ? 'animate-fade' : 'animate-fade-out'}`}
         style={{
           position: 'absolute',
@@ -85,10 +88,12 @@ export function GlassSheet({
           backdropFilter: 'blur(2px)',
           WebkitBackdropFilter: 'blur(2px)',
           willChange: 'opacity',
+          animationDuration: '500ms',
+          cursor: 'pointer',
         }}
       />
 
-      {/* 2. Sheet sliding up from bottom with authentic liquid glass container */}
+      {/* 2. Sheet container */}
       <div
         onClick={(e) => e.stopPropagation()}
         className={`ekip-sheet-container ${
@@ -96,14 +101,17 @@ export function GlassSheet({
         }`}
         style={{
           position: 'relative',
+          zIndex: 2,
           width: '100%',
           maxHeight: '92%',
-          height: fullHeight ? '92%' : undefined,
+          height: fullHeight ? '86%' : undefined,
           borderTopLeftRadius: 32,
           borderTopRightRadius: 32,
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
+          animationDuration: open ? '620ms' : '460ms',
+          animationTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
           backgroundColor: isDark ? 'rgba(14, 20, 34, 0.75)' : 'rgba(255, 255, 255, 0.78)',
           backdropFilter: 'blur(32px) saturate(180%)',
           WebkitBackdropFilter: 'blur(32px) saturate(180%)',
@@ -116,10 +124,8 @@ export function GlassSheet({
             : 'inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px 0 rgba(255, 255, 255, 0.35), 0 -16px 48px -8px rgba(15, 23, 42, 0.35)',
         }}
       >
-        {/* Top drag handle indicator */}
         <div className="ekip-sheet-handle" />
 
-        {/* Sheet header */}
         <div
           className="ekip-sheet-header"
           style={{
@@ -149,7 +155,6 @@ export function GlassSheet({
           <div style={{ padding: '4px 20px 6px 20px' }}>{headerContent}</div>
         )}
 
-        {/* Scrollable content */}
         <div className={`ekip-sheet-content ${contentClassName}`}>{children}</div>
 
         {footerContent && (
@@ -220,6 +225,7 @@ export function GlassDialog({
       }}
     >
       <div
+        onClick={onClose}
         key={`dialog-backdrop-${open}`}
         className={`ekip-dialog-backdrop ${open ? 'animate-fade' : 'animate-fade-out'}`}
       />
