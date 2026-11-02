@@ -124,41 +124,39 @@ export function EkipDetailComponent({
 
   return (
     <View style={styles.container}>
-      {isOwner && (
-        <FloatingGlassHeader
-          onBack={onBack}
-          title={group.title}
-          subtitle={t('ekip.manage')}
-          trailing={
-            <TouchableOpacity
-              activeOpacity={0.75}
-              onPress={() => setShowShare(true)}
-              style={[
-                styles.headerActionBtn,
-                { borderColor: colors.glassBorderStrong },
-              ]}
-            >
-              <FrostedGlass
-                borderRadius={19}
-                marginWidth={8}
-                scale={20}
-                blurDeviation={1.6}
-                overlayOpacity={isDark ? 0.10 : 0.22}
-                style={StyleSheet.absoluteFill}
-              />
-              <View style={styles.headerIconWrap}>
-                <ShareIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
-              </View>
-            </TouchableOpacity>
-          }
-        />
-      )}
+      <FloatingGlassHeader
+        onBack={onBack}
+        title={group.title}
+        subtitle={isOwner ? t('ekip.manage') : (group.category === 'work' ? t('discover.cat.work') : t('discover.cat.entertainment'))}
+        trailing={
+          <TouchableOpacity
+            activeOpacity={0.75}
+            onPress={() => setShowShare(true)}
+            style={[
+              styles.headerActionBtn,
+              { borderColor: colors.glassBorderStrong },
+            ]}
+          >
+            <FrostedGlass
+              borderRadius={19}
+              marginWidth={8}
+              scale={20}
+              blurDeviation={1.6}
+              overlayOpacity={isDark ? 0.10 : 0.22}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.headerIconWrap}>
+              <ShareIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+            </View>
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
-          isOwner && {
+          {
             paddingTop: getSinglePillContentPaddingTop(insets.top),
           },
           Platform.OS !== 'web' && {
@@ -166,19 +164,11 @@ export function EkipDetailComponent({
           },
         ]}
       >
-        {isOwner ? (
-          group.cover_url ? (
-            <View style={[styles.ownerCoverCard, { borderColor: colors.glassBorderStrong }]}>
-              <Image source={{ uri: group.cover_url }} style={styles.ownerCoverImage} resizeMode="cover" />
-            </View>
-          ) : null
-        ) : (
-          <EkipDetailHeader
-            coverUrl={group.cover_url ?? ''}
-            onBack={onBack}
-            onShare={() => setShowShare(true)}
-          />
-        )}
+        {group.cover_url ? (
+          <View style={[styles.ownerCoverCard, { borderColor: colors.glassBorderStrong }]}>
+            <Image source={{ uri: group.cover_url }} style={styles.ownerCoverImage} resizeMode="cover" />
+          </View>
+        ) : null}
 
         <View style={styles.bodyWrap}>
           {/* Category Chip */}
