@@ -7,6 +7,7 @@ import { GlassCard, GlassEmpty, GlassBadgeIcon, GlassButton } from '../component
 import { Toast } from '../components/Overlays';
 import { StatBox } from '../components/common/StatBox';
 import { RequestsModal } from '../components/activity/RequestsModal';
+import { MembersSheet } from '../components/activity/MembersSheet';
 import { getIcon, Icons, type IconName } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
@@ -44,6 +45,8 @@ export function ActivityScreenComponent({
 
   const [showRequests, setShowRequests] = useState(false);
   const [requestsGroupId, setRequestsGroupId] = useState<string | null>(null);
+  const [showMembers, setShowMembers] = useState(false);
+  const [membersGroupId, setMembersGroupId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
 
   const {
@@ -115,9 +118,17 @@ export function ActivityScreenComponent({
     setShowRequests(true);
   }, []);
 
+  const openMembers = useCallback((groupId: string) => {
+    setMembersGroupId(groupId);
+    setShowMembers(true);
+  }, []);
+
   const activeGroupRequests = requestsGroupId
     ? pendingRequestsByGroup.get(requestsGroupId) ?? EMPTY_GROUP_REQUESTS
     : EMPTY_GROUP_REQUESTS;
+  const activeGroupMembers = membersGroupId
+    ? activeMembersByGroup.get(membersGroupId) ?? EMPTY_GROUP_MEMBERS
+    : EMPTY_GROUP_MEMBERS;
   const listData = useMemo(
     () => activeTab === 'created'
       ? createdGroups
@@ -188,35 +199,43 @@ export function ActivityScreenComponent({
                   </LinearGradient>
                 )}
               </View>
-
-              <GlassBadgeIcon icon="Crown" label={t('activity.owner')} color="amber" solid />
             </View>
 
-            {/* Title & Date pill at bottom */}
-            <View style={[styles.bannerBottomRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-              <Text style={[styles.bannerTitle, { textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={1}>
-                {group.title}
+            {/* Date pill at bottom */}
+            <View style={[styles.datePill, isRTL ? styles.datePillRTL : styles.datePillLTR]}>
+              <CalendarIcon size={11} color="#ffffff" strokeWidth={2.2} style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }} />
+              <Text style={styles.datePillText}>
+                {dateStr} · {timeStr}
               </Text>
-              <View style={[styles.datePill, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                <CalendarIcon size={11} color="#ffffff" strokeWidth={2.2} style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }} />
-                <Text style={styles.datePillText}>
-                  {dateStr} · {timeStr}
-                </Text>
-              </View>
             </View>
           </TouchableOpacity>
           <View style={styles.cardBody}>
+            <Text
+              style={[
+                styles.groupCardTitle,
+                { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+              ]}
+              numberOfLines={1}
+            >
+              {group.title}
+            </Text>
             <View style={[styles.statsGrid, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-              <StatBox icon="Users" value={groupMembers.length} label={t('common.members')} />
               <StatBox
-                icon="UserPlus"
-                value={pendingReqs.length}
-                label={t('activity.requests')}
-                highlight={pendingReqs.length > 0}
-                onPress={() => openRequests(group.id)}
+                icon="Users"
+                value={groupMembers.length}
+                label={t('common.members')}
+                onPress={() => openMembers(group.id)}
               />
-              <StatBox icon="Eye" value={group.views} label={t('activity.views')} />
-              <StatBox icon="TrendingUp" value={group.member_count} label={t('activity.joined')} />
+              <StatBox
+                icon="TrendingUp"
+                value={`${group.member_count}/${group.max_members ?? '∞'}`}
+                label={t('activity.capacity')}
+              />
+              <StatBox
+                icon="Eye"
+                value={group.views}
+                label={t('activity.views')}
+              />
             </View>
             <View style={[styles.actionsRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
               <View style={{ flex: 1 }}>
@@ -383,6 +402,14 @@ export function ActivityScreenComponent({
         onOpenProfile={onOpenProfile}
       />
 
+      {/* Members Sheet */}
+      <MembersSheet
+        open={showMembers}
+        onClose={() => setShowMembers(false)}
+        members={activeGroupMembers}
+        onOpenProfile={onOpenProfile}
+      />
+
       {/* Toast Notification */}
       <Toast message={toast} visible={Boolean(toast)} />
     </View>
@@ -469,23 +496,9 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  bannerBottomRow: {
+  datePill: {
     position: 'absolute',
     bottom: 10,
-    left: 10,
-    right: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  bannerTitle: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#ffffff',
-  },
-  datePill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -495,6 +508,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.12)',
   },
+  datePillLTR: {
+    left: 10,
+  },
+  datePillRTL: {
+    right: 10,
+    flexDirection: 'row-reverse',
+  },
   datePillText: {
     fontSize: 10,
     fontWeight: '600',
@@ -503,10 +523,16 @@ const styles = StyleSheet.create({
   cardBody: {
     padding: 14,
   },
+  groupCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+    marginBottom: 12,
+  },
   statsGrid: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 8,
     marginBottom: 12,
   },
   actionsRow: {
@@ -529,13 +555,15 @@ const styles = StyleSheet.create({
   joinedInfo: {
     flex: 1,
     minWidth: 0,
+    justifyContent: 'center',
+    gap: 5,
   },
   groupTitle: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   groupMeta: {
     fontSize: 12,
-    marginTop: 3,
   },
 });

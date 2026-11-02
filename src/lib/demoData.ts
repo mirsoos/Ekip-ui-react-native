@@ -15,7 +15,7 @@ export const demoProfiles: Profile[] = [
     avatar_url: av('220453'), banner_url: cover('355465'),
     interests: ['بوردگیم', 'کافه‌گردی', 'طراحی محصول', 'سینما', 'کوهنوردی', 'عکاسی'],
     personality_type: 'ENFP-A', social_links: { telegram: 'amirsaberi', instagram: 'amir.ux' },
-    is_premium: true, is_verified: true, is_identity_verified: true,
+    is_premium: true, is_business: true, subscription_tier: 'business_premium', is_verified: true, is_identity_verified: true, is_online: true,
     level: 18, xp: 4850, xp_to_next: 5000, honor_score: 98, reputation_level: 'میزبان برتر',
     mood: 'پایه دورهمی و سفر ☕🎲', created_at: '2025-01-15T10:00:00Z',
   },
@@ -37,7 +37,7 @@ export const demoProfiles: Profile[] = [
     avatar_url: av('1043471'), banner_url: cover('1640777'),
     interests: ['کوهنوردی', 'کمپینگ', 'برنامه‌نویسی', 'طبیعت', 'بوردگیم'],
     personality_type: 'ISTP-A', social_links: { github: 'pouriash', telegram: 'pouria_sh' },
-    is_premium: true, is_verified: true, is_identity_verified: true,
+    is_premium: true, is_business: false, subscription_tier: 'premium', is_verified: true, is_identity_verified: true, is_online: true,
     level: 22, xp: 6400, xp_to_next: 7000, honor_score: 99, reputation_level: 'هم‌سفر طلایی',
     mood: 'جمعه بریم کوه؟ ⛰️⛺', created_at: '2024-12-10T10:00:00Z',
   },
@@ -59,7 +59,7 @@ export const demoProfiles: Profile[] = [
     avatar_url: av('1220794'), banner_url: cover('1677256'),
     interests: ['دویدن', 'دوچرخه‌سواری', 'فیتنس', 'تغذیه سالم', 'ورزش'],
     personality_type: 'ESTP-A', social_links: { instagram: 'alireza_fit' },
-    is_premium: true, is_verified: true, is_identity_verified: true,
+    is_premium: true, is_business: false, subscription_tier: 'premium', is_verified: true, is_identity_verified: true, is_online: true,
     level: 16, xp: 4100, xp_to_next: 5000, honor_score: 97, reputation_level: 'ورزشکار حرفه‌ای',
     mood: 'انرژی مثبت و تحرک 💪🏃', created_at: '2025-01-28T10:00:00Z',
   },
@@ -180,11 +180,11 @@ export const demoRequests: GroupRequest[] = [
 ];
 
 export const demoConversations: Conversation[] = [
-  { id: 'c1', type: 'direct', title: 'پوریا شایان (کوهنوردی)', avatar_url: av('1043471'), group_id: null, last_message: 'عالیه امیررضا، من فلاسک چای و صبحانه رو هماهنگ می‌کنم.', last_message_at: '2026-07-28T11:30:00Z', unread_count: 2 },
+  { id: 'c1', type: 'direct', title: 'پوریا شایان (کوهنوردی)', avatar_url: av('1043471'), group_id: null, user_id: 'u3', user: profileById('u3'), last_message: 'عالیه امیررضا، من فلاسک چای و صبحانه رو هماهنگ می‌کنم.', last_message_at: '2026-07-28T11:30:00Z', unread_count: 2 },
   { id: 'c2', type: 'group', title: 'گپ اکیپ بوردگیم عصر پنجشنبه', avatar_url: cover('3184292'), group_id: 'g2', last_message: 'سارا: بچه‌ها من بازی آوالون و سکرت هیتلر رو آوردم!', last_message_at: '2026-07-28T10:15:00Z', unread_count: 3 },
-  { id: 'c3', type: 'direct', title: 'مهسا ناصری', avatar_url: av('1130626'), group_id: null, last_message: 'سانس اتاق فرار برای جمعه ساعت ۷ عصر اوکی شد.', last_message_at: '2026-07-28T09:00:00Z', unread_count: 0 },
+  { id: 'c3', type: 'direct', title: 'مهسا ناصری', avatar_url: av('1130626'), group_id: null, user_id: 'u6', user: profileById('u6'), last_message: 'سانس اتاق فرار برای جمعه ساعت ۷ عصر اوکی شد.', last_message_at: '2026-07-28T09:00:00Z', unread_count: 0 },
   { id: 'c4', type: 'group', title: 'اکیپ عکاسی ۳۰ تیر و بافت تاریخی', avatar_url: cover('1103970'), group_id: 'g3', last_message: 'نگین: ساعت ۴ جلوی سردر باغ ملی می‌بینمتون.', last_message_at: '2026-07-27T18:00:00Z', unread_count: 0 },
-  { id: 'c5', type: 'direct', title: 'علیرضا کریمی (ورزش چیتگر)', avatar_url: av('1220794'), group_id: null, last_message: 'فردا صبح ساعت ۷ پیست چیتگر یادت نره!', last_message_at: '2026-07-27T14:00:00Z', unread_count: 0 },
+  { id: 'c5', type: 'direct', title: 'علیرضا کریمی (ورزش چیتگر)', avatar_url: av('1220794'), group_id: null, user_id: 'u5', user: profileById('u5'), last_message: 'فردا صبح ساعت ۷ پیست چیتگر یادت نره!', last_message_at: '2026-07-27T14:00:00Z', unread_count: 0 },
 ];
 
 export const demoMessages: Record<string, Message[]> = {

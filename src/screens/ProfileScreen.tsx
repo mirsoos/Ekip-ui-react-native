@@ -217,6 +217,7 @@ export function ProfileScreenComponent({
       <TouchableOpacity activeOpacity={0.75} onPress={() => noopOpenProfile(friendProfile.id)}>
         <GlassCard variant="thin" style={styles.friendCard}>
           <GlassAvatar
+            user={friendProfile}
             src={friendProfile.avatar_url}
             name={`${friendProfile.first_name} ${friendProfile.last_name}`}
             size={42}

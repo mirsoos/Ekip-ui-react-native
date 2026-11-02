@@ -83,10 +83,10 @@ export function ActivityHeaderComponent({
                 onPress={onOpenOwnProfile}
               >
                 <GlassAvatar
+                  user={user}
                   src={user.avatar_url}
                   name={`${user.first_name} ${user.last_name}`}
                   size={38}
-                  online
                 />
               </TouchableOpacity>
             ) : null}

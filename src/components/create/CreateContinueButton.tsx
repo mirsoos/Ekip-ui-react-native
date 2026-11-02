@@ -23,10 +23,19 @@ export function CreateContinueButtonComponent({
   const isFinal = step === totalSteps - 1;
   const IconComp = getIcon(isFinal ? 'Check' : isRTL ? 'ArrowLeft' : 'ArrowRight');
 
-  const bottomOffset = Platform.OS === 'web' ? 74 : 74 + Math.max(0, insets.bottom);
+  const bottomOffset = Platform.OS === 'web' ? 88 : 88 + Math.max(0, insets.bottom);
 
   return (
-    <View style={[styles.outerContainer, { bottom: bottomOffset }]} pointerEvents="box-none">
+    <View
+      style={[
+        styles.outerContainer,
+        {
+          bottom: bottomOffset,
+          alignItems: isRTL ? 'flex-start' : 'flex-end',
+        },
+      ]}
+      pointerEvents="box-none"
+    >
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={onPress}
@@ -41,9 +50,9 @@ export function CreateContinueButtonComponent({
       >
         {/* 360° Frosted Glass */}
         <FrostedGlass
-          borderRadius={36}
-          marginWidth={16}
-          scale={36}
+          borderRadius={24}
+          marginWidth={12}
+          scale={28}
           blurDeviation={2.0}
           overlayOpacity={isDark ? 0.08 : 0.15}
           style={StyleSheet.absoluteFill}
@@ -72,31 +81,33 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
     zIndex: 900,
   },
   continueButton: {
     position: 'relative',
-    height: 54,
-    borderRadius: 36,
+    height: 46,
+    borderRadius: 24,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 160,
+    paddingHorizontal: 28,
     ...(Platform.OS === 'ios'
       ? {
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 16 },
-          shadowOpacity: 0.35,
-          shadowRadius: 28,
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.25,
+          shadowRadius: 20,
         }
       : Platform.OS === 'android'
       ? { elevation: 0 }
       : {
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 16 },
-          shadowOpacity: 0.35,
-          shadowRadius: 28,
-          elevation: 14,
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.25,
+          shadowRadius: 20,
+          elevation: 10,
         }),
     overflow: 'visible',
   },
@@ -107,7 +118,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   continueText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
   },
 });

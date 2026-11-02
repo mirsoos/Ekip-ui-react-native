@@ -6,6 +6,7 @@ export type GroupCategory = 'work' | 'entertainment';
 export type RequestStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled';
 export type MemberRole = 'owner' | 'member';
 export type MemberStatus = 'active' | 'left' | 'kicked';
+export type SubscriptionTier = 'free' | 'premium' | 'business_premium';
 
 export interface Profile {
   id: string;
@@ -25,8 +26,11 @@ export interface Profile {
   personality_type: string | null;
   social_links: Record<string, string> | null;
   is_premium: boolean;
+  is_business?: boolean;
+  subscription_tier?: SubscriptionTier;
   is_verified: boolean;
   is_identity_verified: boolean;
+  is_online?: boolean;
   level: number;
   xp: number;
   xp_to_next: number;
@@ -106,6 +110,8 @@ export interface Conversation {
   title: string;
   avatar_url: string | null;
   group_id: string | null;
+  user_id?: string | null;
+  user?: Profile | null;
   last_message: string | null;
   last_message_at: string | null;
   unread_count: number;

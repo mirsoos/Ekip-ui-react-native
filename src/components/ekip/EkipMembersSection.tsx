@@ -54,6 +54,7 @@ export function EkipMembersSection({
               style={styles.memberItem}
             >
               <GlassAvatar
+                user={profile}
                 src={profile.avatar_url}
                 name={`${profile.first_name} ${profile.last_name}`}
                 size={40}

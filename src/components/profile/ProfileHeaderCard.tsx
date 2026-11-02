@@ -42,9 +42,9 @@ export const ProfileHeaderCard = React.memo(function ProfileHeaderCard({
             <View style={{ width: 88, height: 88 }} />
           ) : (
             <GlassAvatar
-              src={profile.avatar_url}
-              name={`${profile.first_name} ${profile.last_name}`}
+              user={profile}
               size={88}
+              online={!isOwnProfile && !!profile.is_online}
             />
           )}
         </View>
@@ -144,6 +144,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 10,
     elevation: 8,
+    overflow: 'visible',
   },
   actionsGroup: {
     flexDirection: 'row',

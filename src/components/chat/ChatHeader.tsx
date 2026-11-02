@@ -26,10 +26,11 @@ export const ChatHeader = React.memo(function ChatHeader({
       onBack={onBack}
       leading={
         <GlassAvatar
+          user={conversation.user}
           src={conversation.avatar_url}
           name={conversation.title}
           size={38}
-          online={!isGroup}
+          online={!isGroup && !!conversation.user?.is_online}
         />
       }
       title={conversation.title}

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { GlassChip } from '../Glass';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 const TagSelectorChip = React.memo(function TagSelectorChip({
   tag,
@@ -31,19 +32,20 @@ export function TagSelector({
   onToggleTag: (tag: string) => void;
 }) {
   const { colors } = useTheme();
+  const { t, isRTL } = useI18n();
 
   return (
     <View style={{ gap: 8 }}>
-      <View style={styles.headerRow}>
+      <View style={[styles.headerRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <Text style={[styles.label, { color: colors.textSecondary }]}>
-          Tags & Objectives
+          {t('create.tagsTitle')}
         </Text>
         <Text style={[styles.count, { color: colors.textTertiary }]}>
-          {selectedTags.length} selected
+          {t('create.selectedCount', { count: selectedTags.length })}
         </Text>
       </View>
 
-      <View style={styles.wrap}>
+      <View style={[styles.wrap, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         {availableTags.map((tag) => {
           const isSelected = selectedTags.includes(tag);
           return (

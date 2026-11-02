@@ -32,6 +32,7 @@ export interface GlassSheetProps {
   title?: string;
   fullHeight?: boolean;
   headerContent?: ReactNode;
+  footerContent?: ReactNode;
 }
 
 export const GlassSheet = React.memo(function GlassSheet({
@@ -41,6 +42,7 @@ export const GlassSheet = React.memo(function GlassSheet({
   title,
   fullHeight,
   headerContent,
+  footerContent,
 }: GlassSheetProps) {
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
@@ -198,10 +200,16 @@ export const GlassSheet = React.memo(function GlassSheet({
           {/* Keep children mounted in RAM so opening/closing has ZERO mount/unmount spike! */}
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36, paddingTop: 10 }}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24, paddingTop: 10 }}
           >
             {children}
           </ScrollView>
+
+          {footerContent && (
+            <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 24 }}>
+              {footerContent}
+            </View>
+          )}
         </Animated.View>
       </View>
     </Modal>

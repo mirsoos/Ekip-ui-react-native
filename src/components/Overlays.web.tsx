@@ -21,6 +21,7 @@ export interface GlassSheetProps {
   fullHeight?: boolean;
   contentClassName?: string;
   headerContent?: ReactNode;
+  footerContent?: ReactNode;
 }
 
 export function GlassSheet({
@@ -31,6 +32,7 @@ export function GlassSheet({
   fullHeight,
   contentClassName = '',
   headerContent,
+  footerContent,
 }: GlassSheetProps) {
   const { isDark } = useTheme();
   const { isRTL } = useI18n();
@@ -149,6 +151,10 @@ export function GlassSheet({
 
         {/* Scrollable content */}
         <div className={`ekip-sheet-content ${contentClassName}`}>{children}</div>
+
+        {footerContent && (
+          <div style={{ padding: '8px 20px 24px 20px' }}>{footerContent}</div>
+        )}
       </div>
     </div>
   );

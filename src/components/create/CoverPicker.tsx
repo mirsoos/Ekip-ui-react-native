@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export function CoverPicker({
   options,
@@ -13,18 +14,19 @@ export function CoverPicker({
   onSelect: (url: string) => void;
 }) {
   const { colors } = useTheme();
+  const { t, isRTL } = useI18n();
   const Check = getIcon('Check');
 
   return (
     <View style={{ gap: 8 }}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>
-        Tactical Cover Image
+      <Text style={[styles.label, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
+        {t('create.coverImage')}
       </Text>
 
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 10, paddingVertical: 4 }}
+        contentContainerStyle={{ gap: 10, paddingVertical: 4, flexDirection: isRTL ? 'row-reverse' : 'row' }}
       >
         {options.map((url) => {
           const isSelected = selectedUrl === url;

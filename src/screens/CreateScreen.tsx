@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
@@ -9,12 +9,13 @@ import { CoverPicker } from '../components/create/CoverPicker';
 import { CategoryTypeSelector } from '../components/create/CategoryTypeSelector';
 import { TagSelector } from '../components/create/TagSelector';
 import { AISuggestionsSheet } from '../components/create/AISuggestionsSheet';
+import { SelectMembersSheet } from '../components/create/SelectMembersSheet';
 import { getIcon } from '../lib/icons';
 import { allInterests } from '../lib/demoData';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
-import type { Group, GroupCategory, GroupType } from '../types/database';
+import type { Group, GroupCategory, GroupType, Profile } from '../types/database';
 
 const coverOptions = [
   'https://images.pexels.com/photos/167964/pexels-photo-167964.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop',
@@ -54,7 +55,10 @@ export const CreateScreen = React.memo(
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<GroupCategory>('entertainment');
-  const [groupType, setGroupType] = useState<GroupType>('group');
+  const [groupType, setGroupType] = useState<GroupType>('solo');
+  const [initialMembers, setInitialMembers] = useState<Profile[]>([]);
+  const [showMembersSheet, setShowMembersSheet] = useState(false);
+  const scrollViewRef = useRef<any>(null);
   const [minMembers, setMinMembers] = useState('2');
   const [maxMembers, setMaxMembers] = useState('10');
   const [city, setCity] = useState(me.city ?? 'بخش ۷ - ستاد فرماندهی');
@@ -77,12 +81,35 @@ export const CreateScreen = React.memo(
   const Sparkles = getIcon('Sparkles');
 
   const canProceed = (): boolean => {
-    if (step === 0) return title.trim().length > 2 && description.trim().length > 5;
+    if (step === 0) {
+      const basicValid = title.trim().length > 2 && description.trim().length > 5;
+      const membersValid =
+        groupType === 'solo'
+          ? true
+          : groupType === 'couple'
+          ? initialMembers.length === 1
+          : initialMembers.length >= 1;
+      return basicValid && membersValid;
+    }
     if (step === 1) return Boolean(minMembers && city);
     if (step === 2) return true;
     if (step === 3) return Boolean(eventDate && eventTime);
     return true;
   };
+
+  const toggleInitialMember = React.useCallback((profile: Profile) => {
+    setInitialMembers((prev) => {
+      const exists = prev.some((m) => m.id === profile.id);
+      if (exists) {
+        return prev.filter((m) => m.id !== profile.id);
+      }
+      // In couple (duo) mode, allow only 1 companion
+      if (groupType === 'couple') {
+        return [profile];
+      }
+      return [...prev, profile];
+    });
+  }, [groupType]);
 
   const toggleTag = React.useCallback((tag: string) => {
     setTags((prev) =>
@@ -114,7 +141,7 @@ export const CreateScreen = React.memo(
 
   React.useEffect(() => {
     onStateChange?.({ step, canProceed: canProceed() });
-  }, [step, title, description, minMembers, city, eventDate, eventTime]);
+  }, [step, title, description, groupType, initialMembers, minMembers, city, eventDate, eventTime]);
 
   const handleCreate = () => {
     const newGroup: Group = {
@@ -164,21 +191,22 @@ export const CreateScreen = React.memo(
   return (
     <View style={styles.container}>
       <ScrollView
+        ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
           {
             paddingTop: getSinglePillContentPaddingTop(insets.top),
-            paddingBottom: 135 + insets.bottom,
+            paddingBottom: 175 + insets.bottom,
           },
         ]}
       >
         {step === 0 && (
           <View key={0} className="animate-raise" style={{ gap: 14 }}>
-            <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
+            <Text style={[styles.stepTitle, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
               {t('create.step0Title')}
             </Text>
-            <Text style={[styles.stepSub, { color: colors.textSecondary }]}>
+            <Text style={[styles.stepSub, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
               {t('create.step0Sub')}
             </Text>
 
@@ -200,21 +228,30 @@ export const CreateScreen = React.memo(
               category={category}
               groupType={groupType}
               onChangeCategory={setCategory}
-              onChangeGroupType={setGroupType}
+              onChangeGroupType={(type) => {
+                setGroupType(type);
+                if (type !== 'solo') {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                  }, 120);
+                }
+              }}
+              initialMembers={initialMembers}
+              onOpenMembersSheet={() => setShowMembersSheet(true)}
             />
           </View>
         )}
 
         {step === 1 && (
           <View key={1} className="animate-raise" style={{ gap: 14 }}>
-            <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
+            <Text style={[styles.stepTitle, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
               {t('create.step1Title')}
             </Text>
-            <Text style={[styles.stepSub, { color: colors.textSecondary }]}>
+            <Text style={[styles.stepSub, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
               {t('create.step1Sub')}
             </Text>
 
-            <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', gap: 10 }}>
               <View style={{ flex: 1 }}>
                 <GlassInput
                   placeholder={t('create.minOperators')}
@@ -256,14 +293,14 @@ export const CreateScreen = React.memo(
 
         {step === 2 && (
           <View key={2} className="animate-raise" style={{ gap: 14 }}>
-            <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
+            <Text style={[styles.stepTitle, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
               {t('create.step2Title')}
             </Text>
-            <Text style={[styles.stepSub, { color: colors.textSecondary }]}>
+            <Text style={[styles.stepSub, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
               {t('create.step2Sub')}
             </Text>
 
-            <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', gap: 10 }}>
               <View style={{ flex: 1 }}>
                 <GlassInput
                   placeholder={t('create.minLevel')}
@@ -282,7 +319,7 @@ export const CreateScreen = React.memo(
               </View>
             </View>
 
-            <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', gap: 10 }}>
               <View style={{ flex: 1 }}>
                 <GlassInput
                   placeholder={t('create.minAge')}
@@ -302,11 +339,15 @@ export const CreateScreen = React.memo(
             </View>
 
             <View>
-              <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
+              <Text style={[styles.fieldLabel, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
                 {t('create.genderPref')}
               </Text>
               <GlassSegmented
-                options={[
+                options={isRTL ? [
+                  { label: t('create.genderFemale'), value: 'female' },
+                  { label: t('create.genderMale'), value: 'male' },
+                  { label: t('create.genderAny'), value: 'any' },
+                ] : [
                   { label: t('create.genderAny'), value: 'any' },
                   { label: t('create.genderMale'), value: 'male' },
                   { label: t('create.genderFemale'), value: 'female' },
@@ -320,18 +361,18 @@ export const CreateScreen = React.memo(
 
         {step === 3 && (
           <View key={3} className="animate-raise" style={{ gap: 14 }}>
-            <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
+            <Text style={[styles.stepTitle, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
               {t('create.step3Title')}
             </Text>
-            <Text style={[styles.stepSub, { color: colors.textSecondary }]}>
+            <Text style={[styles.stepSub, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
               {t('create.step3Sub')}
             </Text>
 
-            <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', gap: 10 }}>
               <View style={{ flex: 1 }}>
                 <GlassInput
                   icon="Calendar"
-                  placeholder="Date (YYYY-MM-DD)"
+                  placeholder={t('create.datePlaceholder')}
                   value={eventDate}
                   onChangeText={setEventDate}
                 />
@@ -339,7 +380,7 @@ export const CreateScreen = React.memo(
               <View style={{ flex: 1 }}>
                 <GlassInput
                   icon="Clock"
-                  placeholder="Time (HH:MM)"
+                  placeholder={t('create.timePlaceholder')}
                   value={eventTime}
                   onChangeText={setEventTime}
                 />
@@ -378,6 +419,14 @@ export const CreateScreen = React.memo(
         onClose={() => setShowAI(false)}
         onApplyTitle={setTitle}
         onApplyDescription={setDescription}
+      />
+
+      <SelectMembersSheet
+        open={showMembersSheet}
+        onClose={() => setShowMembersSheet(false)}
+        selectedMembers={initialMembers}
+        onToggleMember={toggleInitialMember}
+        maxSelection={groupType === 'couple' ? 1 : undefined}
       />
     </View>
   );

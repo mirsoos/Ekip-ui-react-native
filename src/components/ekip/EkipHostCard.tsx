@@ -22,6 +22,7 @@ export function EkipHostCard({
     <TouchableOpacity activeOpacity={0.8} onPress={onOpenProfile} style={{ marginBottom: 12 }}>
       <GlassCard variant="thin" style={[styles.card, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <GlassAvatar
+          user={host}
           src={host.avatar_url}
           name={`${host.first_name} ${host.last_name}`}
           size={46}

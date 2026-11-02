@@ -56,6 +56,7 @@ export function RequestsModalComponent({
                   style={[styles.profileRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
                 >
                   <GlassAvatar
+                    user={profile}
                     src={profile.avatar_url}
                     name={`${profile.first_name} ${profile.last_name}`}
                     size={42}

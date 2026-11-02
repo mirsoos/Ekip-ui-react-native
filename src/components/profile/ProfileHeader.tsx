@@ -2,13 +2,16 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Animated, Easing, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GlassBackButton } from '../Glass';
+import { GlassBackButton, VerifiedBadge } from '../Glass';
 import { FrostedGlass } from '../FrostedGlass';
 import { getIcon } from '../../lib/icons';
 import { darkColors, lightColors, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
 import type { Profile } from '../../types/database';
+
+const BORDER_PREMIUM = require('../../../assets/borders/premium.png');
+const BORDER_BUSINESS = require('../../../assets/borders/bsuiness-premium.png');
 
 const Sun = getIcon('Sun');
 const Moon = getIcon('Moon');
@@ -209,6 +212,25 @@ export function ProfileHeaderComponent({
     [avatarEnterScale, scale]
   );
 
+  const tier =
+    profile.subscription_tier ??
+    (profile.is_business && profile.is_premium
+      ? 'business_premium'
+      : profile.is_premium
+      ? 'premium'
+      : 'free');
+
+  const borderSource =
+    tier === 'business_premium'
+      ? BORDER_BUSINESS
+      : tier === 'premium'
+      ? BORDER_PREMIUM
+      : null;
+
+  const borderScale = tier === 'business_premium' ? 1.20 : 1.14;
+  const borderSize = Math.round(88 * borderScale);
+  const borderOffset = Math.round((88 - borderSize) / 2);
+
   const capsuleStyle = React.useMemo(
     () => [
       styles.container,
@@ -226,6 +248,7 @@ export function ProfileHeaderComponent({
       styles.avatarContainer,
       {
         [isRTL ? 'right' : 'left']: 16,
+        borderWidth: borderSource ? 0 : 2.5,
         borderColor: colors.glassBorderStrong,
         opacity: avatarEnterOpacity,
         transform: [
@@ -237,6 +260,7 @@ export function ProfileHeaderComponent({
     ],
     [
       avatarEnterOpacity,
+      borderSource,
       colors.glassBorderStrong,
       combinedScale,
       combinedTranslateY,
@@ -401,21 +425,56 @@ export function ProfileHeaderComponent({
         style={avatarStyle}
         pointerEvents="none"
       >
-        {profile.avatar_url ? (
-          <Image
-            source={{ uri: profile.avatar_url }}
-            style={styles.avatarImage}
-            resizeMode="cover"
-          />
-        ) : (
-          <LinearGradient
-            colors={['#f472b6', '#3b82f6']}
-            style={styles.avatarFallback}
+        <View style={styles.avatarInnerWrap}>
+          {profile.avatar_url ? (
+            <Image
+              source={{ uri: profile.avatar_url }}
+              style={styles.avatarImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <LinearGradient
+              colors={['#f472b6', '#3b82f6']}
+              style={styles.avatarFallback}
+            >
+              <Text style={styles.avatarInitials}>
+                {profile.first_name?.[0] ?? ''}{profile.last_name?.[0] ?? ''}
+              </Text>
+            </LinearGradient>
+          )}
+        </View>
+
+        {/* Subscription Border Frame Overlay */}
+        {borderSource && (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              width: borderSize,
+              height: borderSize,
+              top: borderOffset,
+              left: borderOffset,
+              zIndex: 10,
+            }}
           >
-            <Text style={styles.avatarInitials}>
-              {profile.first_name?.[0] ?? ''}{profile.last_name?.[0] ?? ''}
-            </Text>
-          </LinearGradient>
+            <Image
+              source={borderSource}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="contain"
+            />
+          </View>
+        )}
+
+        {/* Verified Badge (South-West) */}
+        {profile.is_verified && (
+          <View style={styles.verifiedBadgeContainer}>
+            <VerifiedBadge size={26} color="#3b82f6" checkColor="#ffffff" />
+          </View>
+        )}
+
+        {/* Online Indicator Badge (South-East) - only for other users, never own profile */}
+        {!isOwnProfile && profile.is_online && (
+          <View style={styles.onlineBadgeContainer} />
         )}
       </Animated.View>
     </View>
@@ -538,7 +597,7 @@ const styles = StyleSheet.create({
     height: 88,
     borderRadius: 44,
     borderWidth: 2.5,
-    overflow: 'hidden',
+    overflow: 'visible',
     ...(Platform.OS === 'ios'
       ? {
           shadowColor: '#000',
@@ -556,6 +615,32 @@ const styles = StyleSheet.create({
           elevation: 12,
         }),
     zIndex: 950,
+  },
+  avatarInnerWrap: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 44,
+    overflow: 'hidden',
+  },
+  verifiedBadgeContainer: {
+    position: 'absolute',
+    bottom: -2,
+    left: -2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 15,
+  },
+  onlineBadgeContainer: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#22c55e',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    zIndex: 15,
   },
   avatarImage: {
     width: '100%',

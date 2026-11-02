@@ -28,10 +28,11 @@ export function ChatListItemComponent({
         style={styles.card}
       >
         <GlassAvatar
+          user={conversation.user}
           src={conversation.avatar_url}
           name={conversation.title}
           size={48}
-          online={conversation.type === 'direct'}
+          online={conversation.type === 'direct' && !!conversation.user?.is_online}
         />
 
         <View style={{ flex: 1, marginLeft: 12 }}>

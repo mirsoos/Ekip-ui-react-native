@@ -301,6 +301,7 @@ const EkipCardBody = React.memo(function EkipCardBody({
       <View style={[styles.cardFooter, { borderTopColor: colors.divider, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
       <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center' }}>
           <GlassAvatar
+            user={group.owner}
             src={group.owner?.avatar_url}
             name={`${group.owner?.first_name} ${group.owner?.last_name}`}
             size={28}

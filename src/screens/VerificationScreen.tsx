@@ -123,13 +123,11 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
         <GlassCard variant="thick" style={styles.heroCard}>
           <View style={styles.avatarWrap}>
             <GlassAvatar
+              user={me}
               src={me.avatar_url}
               name={`${me.first_name} ${me.last_name}`}
               size={84}
             />
-            <View style={styles.avatarShield}>
-              <ShieldCheck size={18} color="#fff" />
-            </View>
           </View>
 
           <View style={styles.nameRow}>

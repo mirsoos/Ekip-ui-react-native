@@ -38,6 +38,7 @@ export function ChatMessageBubbleComponent({
         <View style={{ width: 28, marginRight: 8, alignSelf: 'flex-end' }}>
           {showAvatar && (
             <GlassAvatar
+              user={message.sender}
               src={message.sender?.avatar_url}
               name={message.sender?.first_name ?? 'User'}
               size={28}

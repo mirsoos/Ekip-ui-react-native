@@ -75,6 +75,7 @@ export function SettingsScreenComponent({
         <TouchableOpacity activeOpacity={0.8} onPress={onOpenPersonalInfo}>
           <GlassCard style={styles.profileCard}>
             <GlassAvatar
+              user={me}
               src={me.avatar_url}
               name={`${me.first_name} ${me.last_name}`}
               size={54}

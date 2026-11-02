@@ -41,6 +41,7 @@ export function FriendsList({
           >
             <GlassCard variant="thin" style={styles.card}>
               <GlassAvatar
+                user={p}
                 src={p.avatar_url}
                 name={`${p.first_name} ${p.last_name}`}
                 size={42}
