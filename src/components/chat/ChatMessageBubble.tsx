@@ -1,3 +1,5 @@
+// --- START OF FILE ChatMessageBubble.tsx ---
+
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,6 +26,8 @@ export function ChatMessageBubbleComponent({
     hour: 'numeric',
     minute: '2-digit',
   });
+
+  const textAlign = isRTL ? ('right' as const) : ('left' as const);
 
   return (
     <View
@@ -55,7 +59,7 @@ export function ChatMessageBubbleComponent({
           end={{ x: 1, y: 1 }}
           style={[styles.bubble, styles.myBubble]}
         >
-          <Text style={[styles.bubbleText, { color: themeConfig.myBubbleText }]}>
+          <Text style={[styles.bubbleText, { color: themeConfig.myBubbleText, textAlign }]}>
             {message.body}
           </Text>
           <Text style={styles.myTime}>{time}</Text>
@@ -71,10 +75,10 @@ export function ChatMessageBubbleComponent({
             },
           ]}
         >
-          <Text style={[styles.senderName, { color: themeConfig.accentHex }]}>
+          <Text style={[styles.senderName, { color: themeConfig.accentHex, textAlign }]}>
             {message.sender?.first_name} {message.sender?.last_name}
           </Text>
-          <Text style={[styles.bubbleText, { color: colors.textPrimary }]}>
+          <Text style={[styles.bubbleText, { color: colors.textPrimary, textAlign }]}>
             {message.body}
           </Text>
           <Text style={[styles.theirTime, { color: colors.textTertiary }]}>{time}</Text>

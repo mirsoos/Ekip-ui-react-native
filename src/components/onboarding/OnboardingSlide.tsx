@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Text, StyleSheet, Platform, Animated, Easing } from 'react-native';
+// --- START OF FILE OnboardingSlide.tsx ---
+
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Platform, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getIcon, type IconName } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
@@ -19,12 +21,19 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-export function OnboardingSlide({ slide, step }: { slide: SlideData; step: number }) {
+export const OnboardingSlide = React.memo(function OnboardingSlide({
+  slide,
+  step,
+}: {
+  slide: SlideData;
+  step: number;
+}) {
   const { colors } = useTheme();
   const IconComp = getIcon(slide.icon);
-  const [entrance] = useState(() => new Animated.Value(0));
+  const entrance = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    entrance.stopAnimation();
     entrance.setValue(0);
     const animation = Animated.timing(entrance, {
       toValue: 1,
@@ -37,44 +46,67 @@ export function OnboardingSlide({ slide, step }: { slide: SlideData; step: numbe
     return () => animation.stop();
   }, [step, entrance]);
 
+  const translateY = entrance.interpolate({
+    inputRange: [0, 1],
+    outputRange: [16, 0],
+  });
+
   return (
     <Animated.View
+      renderToHardwareTextureAndroid={true}
       style={[
         styles.container,
         {
           opacity: entrance,
-          transform: [
-            {
-              translateY: entrance.interpolate({
-                inputRange: [0, 1],
-                outputRange: [16, 0],
-              }),
-            },
-          ],
+          transform: [{ translateY }],
         },
       ]}
     >
-      <LinearGradient
-        colors={[hexToRgba(slide.color, 0.28), hexToRgba(slide.color, 0.08)]}
-        style={styles.iconBox}
-      >
-        <IconComp size={54} color={colors.textPrimary} strokeWidth={1.8} />
-      </LinearGradient>
+      <View style={styles.iconShadowWrap}>
+        <LinearGradient
+          colors={[hexToRgba(slide.color, 0.28), hexToRgba(slide.color, 0.08)]}
+          style={styles.iconBox}
+        >
+          <IconComp size={54} color={colors.textPrimary} strokeWidth={1.8} />
+        </LinearGradient>
+      </View>
 
-      <Text style={[styles.title, { color: colors.textPrimary }]}>
-        {slide.title}
-      </Text>
-      <Text style={[styles.desc, { color: colors.textSecondary }]}>
-        {slide.desc}
-      </Text>
+      {/* باکس متن با ارتفاع ثابت از بالا تا با کم و زیاد شدن خطوط توضیحات، آیکون هرگز بالا و پایین نپرد */}
+      <View style={styles.textBlock}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
+          {slide.title}
+        </Text>
+        <Text style={[styles.desc, { color: colors.textSecondary }]}>
+          {slide.desc}
+        </Text>
+      </View>
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     paddingHorizontal: 24,
+  },
+  iconShadowWrap: {
+    marginBottom: 28,
+    borderRadius: 36,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.25,
+          shadowRadius: 16,
+        }
+      : Platform.OS === 'web'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.25,
+          shadowRadius: 16,
+        }
+      : {}),
   },
   iconBox: {
     width: 110,
@@ -83,22 +115,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 28,
-    ...(Platform.OS === 'ios'
-      ? {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.25,
-          shadowRadius: 16,
-        }
-      : Platform.OS === 'android'
-      ? { elevation: 0 }
-      : {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.25,
-          shadowRadius: 16,
-        }),
+  },
+  textBlock: {
+    minHeight: 116,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   title: {
     fontSize: 26,

@@ -1,3 +1,5 @@
+// --- START OF FILE ChatListItem.tsx ---
+
 import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { GlassCard, GlassAvatar } from '../Glass';
@@ -21,11 +23,14 @@ export function ChatListItemComponent({
     [conversationId, onSelectConversation]
   );
 
+  const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);
+  const textAlign = isRTL ? ('right' as const) : ('left' as const);
+
   return (
     <TouchableOpacity activeOpacity={0.75} onPress={handlePress} style={{ marginBottom: 8 }}>
       <GlassCard
         variant={conversation.unread_count > 0 ? 'default' : 'thin'}
-        style={styles.card}
+        style={[styles.card, { flexDirection: rowDir }]}
       >
         <GlassAvatar
           user={conversation.user}
@@ -35,9 +40,26 @@ export function ChatListItemComponent({
           online={conversation.type === 'direct' && !!conversation.user?.is_online}
         />
 
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <View style={styles.topRow}>
-            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+        <View
+          style={{
+            flex: 1,
+            marginLeft: isRTL ? 0 : 12,
+            marginRight: isRTL ? 12 : 0,
+          }}
+        >
+          <View style={[styles.topRow, { flexDirection: rowDir }]}>
+            <Text
+              style={[
+                styles.title,
+                {
+                  color: colors.textPrimary,
+                  textAlign,
+                  marginRight: isRTL ? 0 : 8,
+                  marginLeft: isRTL ? 8 : 0,
+                },
+              ]}
+              numberOfLines={1}
+            >
               {conversation.title}
             </Text>
             <Text style={[styles.time, { color: colors.textTertiary }]}>
@@ -45,13 +67,21 @@ export function ChatListItemComponent({
             </Text>
           </View>
 
-          <Text style={[styles.message, { color: colors.textSecondary }]} numberOfLines={1}>
+          <Text
+            style={[styles.message, { color: colors.textSecondary, textAlign }]}
+            numberOfLines={1}
+          >
             {conversation.last_message}
           </Text>
         </View>
 
         {conversation.unread_count > 0 && (
-          <View style={styles.badge}>
+          <View
+            style={[
+              styles.badge,
+              { marginLeft: isRTL ? 0 : 8, marginRight: isRTL ? 8 : 0 },
+            ]}
+          >
             <Text style={styles.badgeText}>{conversation.unread_count}</Text>
           </View>
         )}
@@ -92,7 +122,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     flex: 1,
-    marginRight: 8,
   },
   time: {
     fontSize: 11,
@@ -108,7 +137,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
-    marginLeft: 8,
   },
   badgeText: {
     color: '#ffffff',

@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+// --- START OF FILE BottomNav.tsx ---
+
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -37,6 +39,7 @@ const tabs: { key: TabKey; label: string; icon: IconName }[] = [
 
 const NAV_ANIM_DURATION = 260;
 const NAV_EASING = Easing.bezier(0.25, 0.1, 0.25, 1.0);
+const USE_NATIVE_DRIVER = Platform.OS !== 'web';
 
 interface BottomNavTabItemProps {
   tabKey: TabKey;
@@ -102,6 +105,7 @@ const BottomNavTabItem = React.memo(function BottomNavTabItem({
       </View>
 
       <Text
+        numberOfLines={1}
         style={[
           styles.tabLabel,
           {
@@ -122,26 +126,46 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
 
-  const tabLabels: Record<TabKey, string> = {
-    discover: t('nav.discover'),
-    activity: t('nav.activity'),
-    create: t('nav.create'),
-    chat: t('nav.chat'),
-    profile: t('nav.profile'),
-  };
+  const tabLabels: Record<TabKey, string> = useMemo(
+    () => ({
+      discover: t('nav.discover'),
+      activity: t('nav.activity'),
+      create: t('nav.create'),
+      chat: t('nav.chat'),
+      profile: t('nav.profile'),
+    }),
+    [t]
+  );
 
-  const unreadChats = conversations.reduce((s, c) => s + c.unread_count, 0);
-  const unreadNotifs = notifications.filter((n) => !n.is_read).length;
+  const unreadChats = useMemo(
+    () => conversations.reduce((s, c) => s + c.unread_count, 0),
+    [conversations]
+  );
+  const unreadNotifs = useMemo(
+    () => notifications.filter((n) => !n.is_read).length,
+    [notifications]
+  );
 
-  const badges: Partial<Record<TabKey, number>> = {
-    chat: unreadChats,
-    activity: unreadNotifs,
-  };
+  const badges: Partial<Record<TabKey, number>> = useMemo(
+    () => ({
+      chat: unreadChats,
+      activity: unreadNotifs,
+    }),
+    [unreadChats, unreadNotifs]
+  );
 
-  const activeIndex = Math.max(0, tabs.findIndex((t) => t.key === active));
+  const activeIndex = Math.max(0, tabs.findIndex((item) => item.key === active));
 
   // Dock measurements & animation values
   const [dockWidth, setDockWidth] = useState(0);
+  const dockWidthRef = useRef(0);
+  const activeRef = useRef<TabKey>(active);
+  const activeIndexRef = useRef(activeIndex);
+
+  dockWidthRef.current = dockWidth;
+  activeRef.current = active;
+  activeIndexRef.current = activeIndex;
+
   const lensX = useRef(new Animated.Value(0)).current;
   const lensScale = useRef(new Animated.Value(active === 'create' ? 0 : 1)).current;
   const createRotate = useRef(new Animated.Value(active === 'create' ? 1 : 0)).current;
@@ -151,7 +175,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
   const lastLensXRef = useRef(0);
   const prevActiveTab = useRef(active);
 
-  // Entrance animation (spring physics from bottom up)
+  // Entrance animation
   const enterAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -160,9 +184,9 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
       toValue: 1,
       duration: 220,
       easing: NAV_EASING,
-      useNativeDriver: Platform.OS !== 'web',
+      useNativeDriver: USE_NATIVE_DRIVER,
     }).start();
-  }, []);
+  }, [enterAnim]);
 
   const enterTranslateY = enterAnim.interpolate({
     inputRange: [0, 1],
@@ -170,19 +194,23 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
   });
 
   // Handle dock width layout
-  const handleDockLayout = (e: LayoutChangeEvent) => {
-    const w = e.nativeEvent.layout.width;
-    if (w > 0) {
-      if (dockWidth === 0) {
-        const slotW = (w - 12) / 5;
-        const initialX = 6 + activeIndex * slotW;
-        lensX.setValue(initialX);
-        currentLensX.current = initialX;
-        lensScale.setValue(active === 'create' ? 0 : 1);
+  const handleDockLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      const w = e.nativeEvent.layout.width;
+      if (w > 0) {
+        if (dockWidthRef.current === 0) {
+          const slotW = (w - 12) / 5;
+          const initialX = 6 + activeIndexRef.current * slotW;
+          lensX.setValue(initialX);
+          currentLensX.current = initialX;
+          lensScale.setValue(activeRef.current === 'create' ? 0 : 1);
+        }
+        dockWidthRef.current = w;
+        setDockWidth((prev) => (Math.abs(prev - w) > 0.5 ? w : prev));
       }
-      setDockWidth(w);
-    }
-  };
+    },
+    [lensScale, lensX]
+  );
 
   // 1. Unified Tab Transition Animation
   useEffect(() => {
@@ -196,102 +224,106 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
     const targetX = 6 + activeIndex * slotW;
     currentLensX.current = targetX;
 
-    // Rotate Create plus icon smoothly: 0deg when normal, 45deg when create
     Animated.timing(createRotate, {
       toValue: active === 'create' ? 1 : 0,
       duration: NAV_ANIM_DURATION,
       easing: NAV_EASING,
-      useNativeDriver: Platform.OS !== 'web',
+      useNativeDriver: USE_NATIVE_DRIVER,
     }).start();
 
     if (active === 'create') {
-      // Transitioning INTO Create: slide to slot 2 and shrink to 0 inside Create button
       Animated.parallel([
         Animated.timing(lensX, {
           toValue: targetX,
           duration: NAV_ANIM_DURATION,
           easing: NAV_EASING,
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
         Animated.timing(lensScale, {
           toValue: 0,
           duration: NAV_ANIM_DURATION,
           easing: NAV_EASING,
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
       ]).start();
     } else if (prev === 'create') {
-      // Transitioning OUT OF Create: start at slot 2, pop from 0 to 1, and slide to targetX
       lensX.setValue(6 + 2 * slotW);
       Animated.parallel([
         Animated.timing(lensScale, {
           toValue: 1,
           duration: NAV_ANIM_DURATION,
           easing: NAV_EASING,
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
         Animated.timing(lensX, {
           toValue: targetX,
           duration: NAV_ANIM_DURATION,
           easing: NAV_EASING,
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
       ]).start();
     } else {
-      // Standard tab transition (e.g. Discover -> Activity)
       lensScale.setValue(1);
       Animated.timing(lensX, {
         toValue: targetX,
         duration: NAV_ANIM_DURATION,
         easing: NAV_EASING,
-        useNativeDriver: Platform.OS !== 'web',
+        useNativeDriver: USE_NATIVE_DRIVER,
       }).start();
     }
-  }, [active, activeIndex, dockWidth]);
+  }, [active, activeIndex, dockWidth, createRotate, lensScale, lensX]);
 
-  // Create Plus icon rotation interpolation
-  const plusRotation = createRotate.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '45deg'],
-  });
-
-  const handleSelectTab = React.useCallback((key: TabKey) => {
-    if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
-      try {
-        navigator.vibrate(8);
-      } catch {
-        // ignore
+  const handleSelectTab = useCallback(
+    (key: TabKey) => {
+      if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate(8);
+        } catch {
+          // ignore
+        }
       }
-    }
-    onChange(key);
-  }, [onChange]);
+      onChange(key);
+    },
+    [onChange]
+  );
+
+  const handleSelectTabRef = useRef(handleSelectTab);
+  handleSelectTabRef.current = handleSelectTab;
+
   const tabPressHandlers = useMemo(
     () => new Map(tabs.map((tab) => [tab.key, () => handleSelectTab(tab.key)])),
     [handleSelectTab]
   );
 
-  // 2. Unified PanResponder for Drag & Drop (Touch on Mobile)
+  // 2. Unified PanResponder for Drag & Drop (Touch on Mobile — Fixed Stale Closure!)
   const dragStartRef = useRef(0);
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponderCapture: () => false,
-      onMoveShouldSetPanResponderCapture: (_, gs) => Math.abs(gs.dx) > 6,
+      onMoveShouldSetPanResponderCapture: (_, gs) => Math.abs(gs.dx) > 6 && Math.abs(gs.dx) > Math.abs(gs.dy),
       onPanResponderGrant: () => {
+        const w = dockWidthRef.current;
+        if (w <= 0) return;
         isDragging.current = true;
-        if (dockWidth <= 0) return;
-        const slotW = (dockWidth - 12) / 5;
-        if (active === 'create') {
+        const slotW = (w - 12) / 5;
+        if (activeRef.current === 'create') {
           dragStartRef.current = 6 + 2 * slotW;
           lensX.setValue(dragStartRef.current);
-          Animated.timing(lensScale, { toValue: 1, duration: NAV_ANIM_DURATION, easing: NAV_EASING, useNativeDriver: Platform.OS !== 'web' }).start();
+          Animated.timing(lensScale, {
+            toValue: 1,
+            duration: NAV_ANIM_DURATION,
+            easing: NAV_EASING,
+            useNativeDriver: USE_NATIVE_DRIVER,
+          }).start();
         } else {
           dragStartRef.current = currentLensX.current;
         }
       },
       onPanResponderMove: (_, gs) => {
-        if (dockWidth <= 0) return;
-        const slotW = (dockWidth - 12) / 5;
+        const w = dockWidthRef.current;
+        if (w <= 0) return;
+        const slotW = (w - 12) / 5;
         const minX = 6;
         const maxX = 6 + 4 * slotW;
         const nextX = Math.max(minX, Math.min(maxX, dragStartRef.current + gs.dx));
@@ -302,8 +334,9 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
       },
       onPanResponderRelease: (_, gs) => {
         isDragging.current = false;
-        if (dockWidth <= 0) return;
-        const slotW = (dockWidth - 12) / 5;
+        const w = dockWidthRef.current;
+        if (w <= 0) return;
+        const slotW = (w - 12) / 5;
         const minX = 6;
         const maxX = 6 + 4 * slotW;
         const finalX = Math.max(minX, Math.min(maxX, dragStartRef.current + gs.dx));
@@ -312,28 +345,46 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         droppedIndex = Math.max(0, Math.min(4, droppedIndex));
 
         const chosenTab = tabs[droppedIndex].key;
-        handleSelectTab(chosenTab);
+        const targetX = 6 + droppedIndex * slotW;
+        currentLensX.current = targetX;
+        handleSelectTabRef.current(chosenTab);
 
         if (chosenTab === 'create') {
           Animated.parallel([
-            Animated.timing(lensX, { toValue: 6 + 2 * slotW, duration: NAV_ANIM_DURATION, easing: NAV_EASING, useNativeDriver: Platform.OS !== 'web' }),
-            Animated.timing(lensScale, { toValue: 0, duration: NAV_ANIM_DURATION, easing: NAV_EASING, useNativeDriver: Platform.OS !== 'web' }),
+            Animated.timing(lensX, {
+              toValue: 6 + 2 * slotW,
+              duration: NAV_ANIM_DURATION,
+              easing: NAV_EASING,
+              useNativeDriver: USE_NATIVE_DRIVER,
+            }),
+            Animated.timing(lensScale, {
+              toValue: 0,
+              duration: NAV_ANIM_DURATION,
+              easing: NAV_EASING,
+              useNativeDriver: USE_NATIVE_DRIVER,
+            }),
           ]).start();
         } else {
           Animated.timing(lensX, {
-            toValue: 6 + droppedIndex * slotW,
+            toValue: targetX,
             duration: NAV_ANIM_DURATION,
             easing: NAV_EASING,
-            useNativeDriver: Platform.OS !== 'web',
+            useNativeDriver: USE_NATIVE_DRIVER,
           }).start();
         }
       },
       onPanResponderTerminate: () => {
         isDragging.current = false;
-        if (dockWidth > 0) {
-          const slotW = (dockWidth - 12) / 5;
-          const targetX = 6 + activeIndex * slotW;
-          Animated.timing(lensX, { toValue: targetX, duration: NAV_ANIM_DURATION, easing: NAV_EASING, useNativeDriver: Platform.OS !== 'web' }).start();
+        const w = dockWidthRef.current;
+        if (w > 0) {
+          const slotW = (w - 12) / 5;
+          const targetX = 6 + activeIndexRef.current * slotW;
+          Animated.timing(lensX, {
+            toValue: targetX,
+            duration: NAV_ANIM_DURATION,
+            easing: NAV_EASING,
+            useNativeDriver: USE_NATIVE_DRIVER,
+          }).start();
         }
       },
     })
@@ -358,7 +409,12 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         isDragging.current = true;
         if (active === 'create') {
           lensX.setValue(6 + 2 * slotW);
-          Animated.timing(lensScale, { toValue: 1, duration: NAV_ANIM_DURATION, easing: NAV_EASING, useNativeDriver: Platform.OS !== 'web' }).start();
+          Animated.timing(lensScale, {
+            toValue: 1,
+            duration: NAV_ANIM_DURATION,
+            easing: NAV_EASING,
+            useNativeDriver: USE_NATIVE_DRIVER,
+          }).start();
         }
       }
       if (hasMoved) {
@@ -387,15 +443,25 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
 
         if (chosenTab === 'create') {
           Animated.parallel([
-            Animated.timing(lensX, { toValue: 6 + 2 * slotW, duration: NAV_ANIM_DURATION, easing: NAV_EASING, useNativeDriver: Platform.OS !== 'web' }),
-            Animated.timing(lensScale, { toValue: 0, duration: NAV_ANIM_DURATION, easing: NAV_EASING, useNativeDriver: Platform.OS !== 'web' }),
+            Animated.timing(lensX, {
+              toValue: 6 + 2 * slotW,
+              duration: NAV_ANIM_DURATION,
+              easing: NAV_EASING,
+              useNativeDriver: USE_NATIVE_DRIVER,
+            }),
+            Animated.timing(lensScale, {
+              toValue: 0,
+              duration: NAV_ANIM_DURATION,
+              easing: NAV_EASING,
+              useNativeDriver: USE_NATIVE_DRIVER,
+            }),
           ]).start();
         } else {
           Animated.timing(lensX, {
             toValue: 6 + droppedIndex * slotW,
             duration: NAV_ANIM_DURATION,
             easing: NAV_EASING,
-            useNativeDriver: Platform.OS !== 'web',
+            useNativeDriver: USE_NATIVE_DRIVER,
           }).start();
         }
       }
@@ -442,6 +508,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         {/* Active Tab Sliding Pill Indicator */}
         {dockWidth > 0 && (
           <Animated.View
+            pointerEvents="none"
             renderToHardwareTextureAndroid={true}
             style={[
               styles.activeIndicator,
@@ -500,7 +567,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingVertical: 6,
     paddingHorizontal: 6,
-    ...(Platform.OS === 'web' ? ({ direction: 'ltr' } as any) : {}),
+    direction: 'ltr',
     ...(Platform.OS === 'ios'
       ? {
           shadowColor: '#000',
@@ -533,7 +600,6 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderWidth: 1,
     zIndex: 1,
-    pointerEvents: 'none',
     ...(Platform.OS === 'ios'
       ? {
           shadowColor: '#000',

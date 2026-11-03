@@ -1,4 +1,6 @@
-import React, { useCallback, useMemo, useState } from 'react';
+// --- START OF FILE ActivityScreen.tsx ---
+
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,6 +23,11 @@ const categoryIcons: Record<string, IconName> = {
 
 const EMPTY_GROUP_REQUESTS: GroupRequest[] = [];
 const EMPTY_GROUP_MEMBERS: GroupMember[] = [];
+const keyExtractor = (item: Group | GroupRequest) => item.id;
+
+function ActivityItemSeparator() {
+  return <View style={styles.itemSeparator} />;
+}
 
 export function ActivityScreenComponent({
   tab = 'created',
@@ -40,7 +47,7 @@ export function ActivityScreenComponent({
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
 
-  const [internalTab, setInternalTab] = useState('created');
+  const [internalTab] = useState('created');
   const activeTab = onChangeTab ? tab : internalTab;
 
   const [showRequests, setShowRequests] = useState(false);
@@ -48,6 +55,19 @@ export function ActivityScreenComponent({
   const [showMembers, setShowMembers] = useState(false);
   const [membersGroupId, setMembersGroupId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showToastMessage = useCallback((msg: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast(msg);
+    toastTimerRef.current = setTimeout(() => setToast(''), 2500);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
 
   const {
     groupsById,
@@ -57,70 +77,82 @@ export function ActivityScreenComponent({
     activeMembersByGroup,
     pendingRequestsByGroup,
   } = useMemo(() => {
-    const groupsById = new Map(groups.map((group) => [group.id, group]));
-    const activeMembersByGroup = new Map<string, GroupMember[]>();
+    const groupsByIdMap = new Map(groups.map((group) => [group.id, group]));
+    const activeMembersMap = new Map<string, GroupMember[]>();
     const joinedGroupIds = new Set<string>();
 
     for (const member of members) {
       if (member.status !== 'active') continue;
-      const groupMembers = activeMembersByGroup.get(member.group_id);
+      const groupMembers = activeMembersMap.get(member.group_id);
       if (groupMembers) groupMembers.push(member);
-      else activeMembersByGroup.set(member.group_id, [member]);
+      else activeMembersMap.set(member.group_id, [member]);
       if (member.user_id === 'me') joinedGroupIds.add(member.group_id);
     }
 
-    const pendingRequestsByGroup = new Map<string, GroupRequest[]>();
-    const myRequests: GroupRequest[] = [];
+    const pendingRequestsMap = new Map<string, GroupRequest[]>();
+    const userRequests: GroupRequest[] = [];
     for (const request of requests) {
-      if (request.user_id === 'me') myRequests.push(request);
+      if (request.user_id === 'me') userRequests.push(request);
       if (request.status !== 'pending') continue;
-      const groupRequests = pendingRequestsByGroup.get(request.group_id);
+      const groupRequests = pendingRequestsMap.get(request.group_id);
       if (groupRequests) groupRequests.push(request);
-      else pendingRequestsByGroup.set(request.group_id, [request]);
+      else pendingRequestsMap.set(request.group_id, [request]);
     }
 
     return {
-      groupsById,
+      groupsById: groupsByIdMap,
       createdGroups: groups.filter((group) => group.owner_id === 'me'),
       joinedGroups: groups.filter(
         (group) => group.owner_id !== 'me' && joinedGroupIds.has(group.id)
       ),
-      myRequests,
-      activeMembersByGroup,
-      pendingRequestsByGroup,
+      myRequests: userRequests,
+      activeMembersByGroup: activeMembersMap,
+      pendingRequestsByGroup: pendingRequestsMap,
     };
   }, [groups, members, requests]);
 
   const ChevronRight = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
 
-  const handleAccept = useCallback((reqId: string, profileName: string, groupTitle: string) => {
-    updateRequest(reqId, 'accepted');
-    addNotification({
-      type: 'group_request',
-      title: isRTL ? 'درخواست تایید شد' : 'Request accepted',
-      body: isRTL
-        ? `شما ${profileName} را به ${groupTitle} پذیرفتید.`
-        : `You accepted ${profileName} into ${groupTitle}.`,
-      icon: 'CheckCircle2',
-    });
-    setToast(isRTL ? 'درخواست پذیرفته شد' : 'Request accepted');
-    setTimeout(() => setToast(''), 2500);
-  }, [addNotification, isRTL, updateRequest]);
+  const handleAccept = useCallback(
+    (reqId: string, profileName: string, groupTitle: string) => {
+      updateRequest(reqId, 'accepted');
+      addNotification({
+        type: 'group_request',
+        title: isRTL ? 'درخواست تایید شد' : 'Request accepted',
+        body: isRTL
+          ? `شما ${profileName} را به ${groupTitle} پذیرفتید.`
+          : `You accepted ${profileName} into ${groupTitle}.`,
+        icon: 'CheckCircle2',
+      });
+      showToastMessage(isRTL ? 'درخواست پذیرفته شد' : 'Request accepted');
+    },
+    [addNotification, isRTL, updateRequest, showToastMessage]
+  );
 
-  const handleReject = useCallback((reqId: string) => {
-    updateRequest(reqId, 'rejected');
-    setToast(isRTL ? 'درخواست رد شد' : 'Request rejected');
-    setTimeout(() => setToast(''), 2500);
-  }, [isRTL, updateRequest]);
+  const handleReject = useCallback(
+    (reqId: string) => {
+      updateRequest(reqId, 'rejected');
+      showToastMessage(isRTL ? 'درخواست رد شد' : 'Request rejected');
+    },
+    [isRTL, updateRequest, showToastMessage]
+  );
 
   const openRequests = useCallback((groupId: string) => {
     setRequestsGroupId(groupId);
     setShowRequests(true);
   }, []);
 
+  const closeRequests = useCallback(() => {
+    setShowRequests(false);
+  }, []);
+
   const openMembers = useCallback((groupId: string) => {
     setMembersGroupId(groupId);
     setShowMembers(true);
+  }, []);
+
+  const closeMembers = useCallback(() => {
+    setShowMembers(false);
   }, []);
 
   const activeGroupRequests = requestsGroupId
@@ -129,273 +161,363 @@ export function ActivityScreenComponent({
   const activeGroupMembers = membersGroupId
     ? activeMembersByGroup.get(membersGroupId) ?? EMPTY_GROUP_MEMBERS
     : EMPTY_GROUP_MEMBERS;
+
   const listData = useMemo(
-    () => activeTab === 'created'
-      ? createdGroups
-      : activeTab === 'joined'
-      ? joinedGroups
-      : myRequests.filter((request) => groupsById.has(request.group_id)),
+    () =>
+      activeTab === 'created'
+        ? createdGroups
+        : activeTab === 'joined'
+        ? joinedGroups
+        : myRequests.filter((request) => groupsById.has(request.group_id)),
     [activeTab, createdGroups, groupsById, joinedGroups, myRequests]
   );
-  const typeLabels: Record<string, string> = {
-    solo: t('ekip.typeSolo'),
-    couple: t('ekip.typeCouple'),
-    group: t('ekip.typeGroup'),
-  };
 
-  const categoryLabels: Record<string, string> = {
-    work: t('discover.cat.work'),
-    entertainment: t('discover.cat.entertainment'),
-  };
+  const typeLabels = useMemo<Record<string, string>>(
+    () => ({
+      solo: t('ekip.typeSolo'),
+      couple: t('ekip.typeCouple'),
+      group: t('ekip.typeGroup'),
+    }),
+    [t]
+  );
 
-  const renderItem = useCallback(({ item }: { item: Group | GroupRequest }) => {
-    if (activeTab === 'created' && !('group_id' in item)) {
-      const group = item;
-      const pendingReqs = pendingRequestsByGroup.get(group.id) ?? EMPTY_GROUP_REQUESTS;
-      const groupMembers = activeMembersByGroup.get(group.id) ?? EMPTY_GROUP_MEMBERS;
+  const categoryLabels = useMemo<Record<string, string>>(
+    () => ({
+      work: t('discover.cat.work'),
+      entertainment: t('discover.cat.entertainment'),
+    }),
+    [t]
+  );
 
-      const eventDate = new Date(group.event_date);
-      const dateStr = eventDate.toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', { month: 'short', day: 'numeric' });
-      const timeStr = eventDate.toLocaleTimeString(isRTL ? 'fa-IR' : 'en-US', { hour: 'numeric', minute: '2-digit' });
+  const renderItem = useCallback(
+    ({ item }: { item: Group | GroupRequest }) => {
+      if (activeTab === 'created' && !('group_id' in item)) {
+        const group = item;
+        const pendingReqs = pendingRequestsByGroup.get(group.id) ?? EMPTY_GROUP_REQUESTS;
+        const groupMembers = activeMembersByGroup.get(group.id) ?? EMPTY_GROUP_MEMBERS;
 
-      const CatIcon = Icons[categoryIcons[group.category] ?? 'PartyPopper'];
-      const CalendarIcon = Icons.Calendar;
-      const CrownIcon = Icons.Crown;
+        const eventDate = new Date(group.event_date);
+        const dateStr = eventDate.toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
+          month: 'short',
+          day: 'numeric',
+        });
+        const timeStr = eventDate.toLocaleTimeString(isRTL ? 'fa-IR' : 'en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+        });
 
-      return (
-        <GlassCard style={styles.cardContainer}>
-          <TouchableOpacity
-            activeOpacity={0.88}
-            onPress={() => onOpenGroup(group)}
-            style={styles.bannerWrapper}
-          >
-            {group.cover_url ? (
-              <Image source={{ uri: group.cover_url }} style={styles.bannerImage} resizeMode="cover" />
-            ) : (
-              <View style={[styles.bannerImage, { backgroundColor: colors.glassThinBg }]} />
-            )}
-            <LinearGradient
-              colors={['transparent', 'rgba(0, 0, 0, 0.72)']}
-              style={styles.bannerGradient}
-            />
+        const CatIcon = Icons[categoryIcons[group.category] ?? 'PartyPopper'];
+        const CalendarIcon = Icons.Calendar;
+        const CrownIcon = Icons.Crown;
 
-            {/* Top badges */}
-            <View style={[styles.topBadgesRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-              <View style={[styles.chipsGroup, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                <View style={[styles.tagChip, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                  <CatIcon size={11} color="#ffffff" strokeWidth={2.4} style={{ marginRight: isRTL ? 0 : 3, marginLeft: isRTL ? 3 : 0 }} />
-                  <Text style={styles.tagChipText}>{categoryLabels[group.category] ?? group.category}</Text>
-                </View>
-                <View style={styles.tagChip}>
-                  <Text style={styles.tagChipText}>{typeLabels[group.group_type] ?? group.group_type}</Text>
-                </View>
-                {group.premium_only && (
-                  <LinearGradient
-                    colors={['#eab308', '#f59e0b']}
-                    style={[styles.tagChip, { borderColor: 'transparent', flexDirection: isRTL ? 'row-reverse' : 'row' }]}
-                  >
-                    <CrownIcon size={11} color="#ffffff" strokeWidth={2.4} style={{ marginRight: isRTL ? 0 : 3, marginLeft: isRTL ? 3 : 0 }} />
-                    <Text style={styles.tagChipText}>{t('ekip.premium')}</Text>
-                  </LinearGradient>
-                )}
-              </View>
-            </View>
-
-            {/* Date pill at bottom */}
-            <View style={[styles.datePill, isRTL ? styles.datePillRTL : styles.datePillLTR]}>
-              <CalendarIcon size={11} color="#ffffff" strokeWidth={2.2} style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }} />
-              <Text style={styles.datePillText}>
-                {dateStr} · {timeStr}
-              </Text>
-            </View>
-          </TouchableOpacity>
-          <View style={styles.cardBody}>
-            <Text
-              style={[
-                styles.groupCardTitle,
-                { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
-              ]}
-              numberOfLines={1}
+        return (
+          <GlassCard style={styles.cardContainer}>
+            <TouchableOpacity
+              activeOpacity={0.88}
+              onPress={() => onOpenGroup(group)}
+              style={styles.bannerWrapper}
             >
-              {group.title}
-            </Text>
-            <View style={[styles.statsGrid, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-              <StatBox
-                icon="Users"
-                value={groupMembers.length}
-                label={t('common.members')}
-                onPress={() => openMembers(group.id)}
+              {group.cover_url ? (
+                <Image
+                  source={{ uri: group.cover_url }}
+                  style={styles.bannerImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={[styles.bannerImage, { backgroundColor: colors.glassThinBg }]} />
+              )}
+              <LinearGradient
+                colors={['transparent', 'rgba(0, 0, 0, 0.72)']}
+                style={styles.bannerGradient}
               />
-              <StatBox
-                icon="TrendingUp"
-                value={`${group.member_count}/${group.max_members ?? '∞'}`}
-                label={t('activity.capacity')}
-              />
-              <StatBox
-                icon="Eye"
-                value={group.views}
-                label={t('activity.views')}
-              />
-            </View>
-            <View style={[styles.actionsRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-              <View style={{ flex: 1 }}>
-                <GlassButton
-                  size="sm"
-                  variant="secondary"
-                  icon="Edit"
-                  onPress={() => onOpenGroup(group)}
-                  fullWidth
-                >
-                  {t('common.edit')}
-                </GlassButton>
+
+              {/* Top badges */}
+              <View style={[styles.topBadgesRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <View style={[styles.chipsGroup, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                  <View style={[styles.tagChip, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                    <CatIcon
+                      size={11}
+                      color="#ffffff"
+                      strokeWidth={2.4}
+                      style={{ marginRight: isRTL ? 0 : 3, marginLeft: isRTL ? 3 : 0 }}
+                    />
+                    <Text style={styles.tagChipText}>
+                      {categoryLabels[group.category] ?? group.category}
+                    </Text>
+                  </View>
+                  <View style={styles.tagChip}>
+                    <Text style={styles.tagChipText}>
+                      {typeLabels[group.group_type] ?? group.group_type}
+                    </Text>
+                  </View>
+                  {group.premium_only && (
+                    <LinearGradient
+                      colors={['#eab308', '#f59e0b']}
+                      style={[
+                        styles.tagChip,
+                        { borderColor: 'transparent', flexDirection: isRTL ? 'row-reverse' : 'row' },
+                      ]}
+                    >
+                      <CrownIcon
+                        size={11}
+                        color="#ffffff"
+                        strokeWidth={2.4}
+                        style={{ marginRight: isRTL ? 0 : 3, marginLeft: isRTL ? 3 : 0 }}
+                      />
+                      <Text style={styles.tagChipText}>{t('ekip.premium')}</Text>
+                    </LinearGradient>
+                  )}
+                </View>
               </View>
-              {pendingReqs.length > 0 && (
+
+              {/* Date pill at bottom */}
+              <View style={[styles.datePill, isRTL ? styles.datePillRTL : styles.datePillLTR]}>
+                <CalendarIcon
+                  size={11}
+                  color="#ffffff"
+                  strokeWidth={2.2}
+                  style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }}
+                />
+                <Text style={styles.datePillText}>
+                  {dateStr} · {timeStr}
+                </Text>
+              </View>
+            </TouchableOpacity>
+            <View style={styles.cardBody}>
+              <Text
+                style={[
+                  styles.groupCardTitle,
+                  { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+                ]}
+                numberOfLines={1}
+              >
+                {group.title}
+              </Text>
+              <View style={[styles.statsGrid, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <StatBox
+                  icon="Users"
+                  value={groupMembers.length}
+                  label={t('common.members')}
+                  onPress={() => openMembers(group.id)}
+                />
+                <StatBox
+                  icon="TrendingUp"
+                  value={`${group.member_count}/${group.max_members ?? '∞'}`}
+                  label={t('activity.capacity')}
+                />
+                <StatBox icon="Eye" value={group.views} label={t('activity.views')} />
+              </View>
+              <View style={[styles.actionsRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 <View style={{ flex: 1 }}>
                   <GlassButton
                     size="sm"
-                    icon="UserPlus"
-                    onPress={() => openRequests(group.id)}
+                    variant="secondary"
+                    icon="Edit"
+                    onPress={() => onOpenGroup(group)}
                     fullWidth
                   >
-                    {t('activity.requestsPending', { count: pendingReqs.length })}
+                    {t('common.edit')}
                   </GlassButton>
                 </View>
+                {pendingReqs.length > 0 && (
+                  <View style={{ flex: 1 }}>
+                    <GlassButton
+                      size="sm"
+                      icon="UserPlus"
+                      onPress={() => openRequests(group.id)}
+                      fullWidth
+                    >
+                      {t('activity.requestsPending', { count: pendingReqs.length })}
+                    </GlassButton>
+                  </View>
+                )}
+              </View>
+            </View>
+          </GlassCard>
+        );
+      }
+
+      if (activeTab === 'joined' && !('group_id' in item)) {
+        const group = item;
+        return (
+          <TouchableOpacity activeOpacity={0.82} onPress={() => onOpenGroup(group)}>
+            <GlassCard
+              variant="thin"
+              style={[styles.joinedCard, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
+            >
+              {group.cover_url ? (
+                <Image
+                  source={{ uri: group.cover_url }}
+                  style={styles.thumbImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={[styles.thumbImage, { backgroundColor: colors.glassThinBg }]} />
               )}
-            </View>
-          </View>
-        </GlassCard>
-      );
-    }
+              <View style={[styles.joinedInfo, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
+                <Text
+                  style={[
+                    styles.groupTitle,
+                    { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {group.title}
+                </Text>
+                <Text
+                  style={[
+                    styles.groupMeta,
+                    { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' },
+                  ]}
+                >
+                  {group.city} ·{' '}
+                  {new Date(group.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </Text>
+                <GlassBadgeIcon
+                  icon="CheckCircle2"
+                  label={t('activity.joinedBadge')}
+                  color="green"
+                  solid
+                />
+              </View>
+              <ChevronRight size={18} color={colors.textTertiary} />
+            </GlassCard>
+          </TouchableOpacity>
+        );
+      }
 
-    if (activeTab === 'joined' && !('group_id' in item)) {
-      const group = item;
-      return (
-        <TouchableOpacity activeOpacity={0.82} onPress={() => onOpenGroup(group)}>
-          <GlassCard variant="thin" style={[styles.joinedCard, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-            {group.cover_url ? (
-              <Image source={{ uri: group.cover_url }} style={styles.thumbImage} resizeMode="cover" />
-            ) : (
-              <View style={[styles.thumbImage, { backgroundColor: colors.glassThinBg }]} />
-            )}
-            <View style={[styles.joinedInfo, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
-              <Text
-                style={[
-                  styles.groupTitle,
-                  { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
-                ]}
-                numberOfLines={1}
-              >
-                {group.title}
-              </Text>
-              <Text
-                style={[
-                  styles.groupMeta,
-                  { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' },
-                ]}
-              >
-                {group.city} · {new Date(group.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </Text>
-              <GlassBadgeIcon icon="CheckCircle2" label={t('activity.joinedBadge')} color="green" solid />
-            </View>
-            <ChevronRight size={18} color={colors.textTertiary} />
-          </GlassCard>
-        </TouchableOpacity>
-      );
-    }
+      if (activeTab === 'requested' && 'group_id' in item) {
+        const group = groupsById.get(item.group_id);
+        if (!group) return null;
+        const statusConfig: Record<
+          string,
+          { icon: IconName; color: 'blue' | 'green' | 'pink'; label: string }
+        > = {
+          pending: { icon: 'Clock', color: 'blue', label: t('activity.pendingBadge') },
+          accepted: { icon: 'CheckCircle2', color: 'green', label: t('activity.acceptedBadge') },
+          rejected: { icon: 'XCircle', color: 'pink', label: t('activity.rejectedBadge') },
+        };
+        const status = statusConfig[item.status] ?? statusConfig.pending;
+        return (
+          <TouchableOpacity activeOpacity={0.82} onPress={() => onOpenGroup(group)}>
+            <GlassCard
+              variant="thin"
+              style={[styles.joinedCard, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
+            >
+              {group.cover_url ? (
+                <Image
+                  source={{ uri: group.cover_url }}
+                  style={styles.thumbImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={[styles.thumbImage, { backgroundColor: colors.glassThinBg }]} />
+              )}
+              <View style={[styles.joinedInfo, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
+                <Text
+                  style={[
+                    styles.groupTitle,
+                    { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {group.title}
+                </Text>
+                <Text
+                  style={[
+                    styles.groupMeta,
+                    { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' },
+                  ]}
+                >
+                  {new Date(group.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </Text>
+                <GlassBadgeIcon icon={status.icon} label={status.label} color={status.color} solid />
+              </View>
+              <ChevronRight size={18} color={colors.textTertiary} />
+            </GlassCard>
+          </TouchableOpacity>
+        );
+      }
+      return null;
+    },
+    [
+      activeMembersByGroup,
+      activeTab,
+      categoryLabels,
+      colors,
+      ChevronRight,
+      groupsById,
+      isRTL,
+      onOpenGroup,
+      openMembers,
+      openRequests,
+      pendingRequestsByGroup,
+      t,
+      typeLabels,
+    ]
+  );
 
-    if (activeTab === 'requested' && 'group_id' in item) {
-      const group = groupsById.get(item.group_id);
-      if (!group) return null;
-      const statusConfig: Record<string, { icon: IconName; color: 'blue' | 'green' | 'pink'; label: string }> = {
-        pending: { icon: 'Clock', color: 'blue', label: t('activity.pendingBadge') },
-        accepted: { icon: 'CheckCircle2', color: 'green', label: t('activity.acceptedBadge') },
-        rejected: { icon: 'XCircle', color: 'pink', label: t('activity.rejectedBadge') },
-      };
-      const status = statusConfig[item.status] ?? statusConfig.pending;
-      return (
-        <TouchableOpacity activeOpacity={0.82} onPress={() => onOpenGroup(group)}>
-          <GlassCard variant="thin" style={[styles.joinedCard, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-            {group.cover_url ? (
-              <Image source={{ uri: group.cover_url }} style={styles.thumbImage} resizeMode="cover" />
-            ) : (
-              <View style={[styles.thumbImage, { backgroundColor: colors.glassThinBg }]} />
-            )}
-            <View style={[styles.joinedInfo, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
-              <Text
-                style={[
-                  styles.groupTitle,
-                  { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
-                ]}
-                numberOfLines={1}
-              >
-                {group.title}
-              </Text>
-              <Text
-                style={[
-                  styles.groupMeta,
-                  { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' },
-                ]}
-              >
-                {new Date(group.event_date).toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </Text>
-              <GlassBadgeIcon icon={status.icon} label={status.label} color={status.color} solid />
-            </View>
-            <ChevronRight size={18} color={colors.textTertiary} />
-          </GlassCard>
-        </TouchableOpacity>
-      );
-    }
-    return null;
-  }, [
-    activeMembersByGroup,
-    activeTab,
-    colors,
-    ChevronRight,
-    groupsById,
-    isRTL,
-    onOpenGroup,
-    openRequests,
-    pendingRequestsByGroup,
-    t,
-  ]);
-  const emptyList = activeTab === 'created'
-    ? <GlassEmpty icon="Crown" title={t('activity.noCreated')} subtitle={t('activity.noCreatedSub')} />
-    : activeTab === 'joined'
-    ? <GlassEmpty icon="Users" title={t('activity.noJoined')} subtitle={t('activity.noJoinedSub')} />
-    : <GlassEmpty icon="Clock" title={t('activity.noRequests')} subtitle={t('activity.noRequestsSub')} />;
+  const emptyList = useMemo(
+    () =>
+      activeTab === 'created' ? (
+        <GlassEmpty
+          icon="Crown"
+          title={t('activity.noCreated')}
+          subtitle={t('activity.noCreatedSub')}
+        />
+      ) : activeTab === 'joined' ? (
+        <GlassEmpty
+          icon="Users"
+          title={t('activity.noJoined')}
+          subtitle={t('activity.noJoinedSub')}
+        />
+      ) : (
+        <GlassEmpty
+          icon="Clock"
+          title={t('activity.noRequests')}
+          subtitle={t('activity.noRequestsSub')}
+        />
+      ),
+    [activeTab, t]
+  );
+
+  const contentContainerStyle = useMemo(
+    () => [
+      styles.scrollContent,
+      {
+        paddingTop: getMultiRowContentPaddingTop(insets.top),
+        paddingBottom: 100 + insets.bottom,
+      },
+    ],
+    [insets.top, insets.bottom]
+  );
 
   return (
     <View style={styles.container}>
       <FlatList<Group | GroupRequest>
         data={listData}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={keyExtractor}
         initialNumToRender={4}
         maxToRenderPerBatch={4}
-        windowSize={3}
+        windowSize={5}
         removeClippedSubviews={Platform.OS === 'android'}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingTop: getMultiRowContentPaddingTop(insets.top),
-            paddingBottom: 100 + insets.bottom,
-          },
-        ]}
-        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        contentContainerStyle={contentContainerStyle}
+        ItemSeparatorComponent={ActivityItemSeparator}
         ListEmptyComponent={emptyList}
       />
 
       {/* Requests Modal Sheet */}
       <RequestsModal
         open={showRequests}
-        onClose={() => setShowRequests(false)}
+        onClose={closeRequests}
         requests={activeGroupRequests}
         onAccept={handleAccept}
         onReject={handleReject}
@@ -405,7 +527,7 @@ export function ActivityScreenComponent({
       {/* Members Sheet */}
       <MembersSheet
         open={showMembers}
-        onClose={() => setShowMembers(false)}
+        onClose={closeMembers}
         members={activeGroupMembers}
         onOpenProfile={onOpenProfile}
       />
@@ -442,6 +564,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingBottom: 100,
+  },
+  itemSeparator: {
+    height: 12,
   },
   cardContainer: {
     borderRadius: 28,

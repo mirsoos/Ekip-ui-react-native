@@ -1,3 +1,5 @@
+// --- START OF FILE ChatListHeader.tsx ---
+
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,6 +38,7 @@ export function ChatListHeaderComponent({
       pointerEvents="box-none"
     >
       <View
+        renderToHardwareTextureAndroid={true}
         style={[
           styles.container,
           {

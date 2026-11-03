@@ -1,4 +1,6 @@
-import React, { useRef, useEffect, useState } from 'react';
+// --- START OF FILE CategoryTypeSelector.tsx ---
+
+import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard, GlassSegmented, GlassButton, GlassAvatar } from '../Glass';
@@ -7,7 +9,7 @@ import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { GroupCategory, GroupType, Profile } from '../../types/database';
 
-export function CategoryTypeSelector({
+export const CategoryTypeSelector = React.memo(function CategoryTypeSelector({
   category,
   groupType,
   onChangeCategory,
@@ -53,14 +55,33 @@ export function CategoryTypeSelector({
     outputRange: [-16, 0],
   });
 
+  const formatOptions = useMemo(
+    () =>
+      isRTL
+        ? [
+            { label: t('ekip.typeGroup'), value: 'group', icon: 'Layers' as const },
+            { label: t('ekip.typeCouple'), value: 'couple', icon: 'Users' as const },
+            { label: t('ekip.typeSolo'), value: 'solo', icon: 'User' as const },
+          ]
+        : [
+            { label: t('ekip.typeSolo'), value: 'solo', icon: 'User' as const },
+            { label: t('ekip.typeCouple'), value: 'couple', icon: 'Users' as const },
+            { label: t('ekip.typeGroup'), value: 'group', icon: 'Layers' as const },
+          ],
+    [isRTL, t]
+  );
+
+  const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);
+  const textAlign = isRTL ? ('right' as const) : ('left' as const);
+
   return (
     <View style={{ gap: 14 }}>
       {/* Category Selection */}
       <View>
-        <Text style={[styles.label, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
+        <Text style={[styles.label, { color: colors.textSecondary, textAlign }]}>
           {t('create.category')}
         </Text>
-        <View style={[styles.gridRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <View style={[styles.gridRow, { flexDirection: rowDir }]}>
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => onChangeCategory('entertainment')}
@@ -70,7 +91,7 @@ export function CategoryTypeSelector({
               variant={category === 'entertainment' ? 'default' : 'thin'}
               style={[
                 styles.categoryCard,
-                { flexDirection: isRTL ? 'row-reverse' : 'row' },
+                { flexDirection: rowDir },
                 category === 'entertainment' && { borderColor: '#f472b6', borderWidth: 2 },
               ]}
             >
@@ -86,11 +107,11 @@ export function CategoryTypeSelector({
                   <PartyPopper size={20} color={colors.textPrimary} />
                 </View>
               )}
-              <View style={{ marginLeft: isRTL ? 0 : 10, marginRight: isRTL ? 10 : 0 }}>
-                <Text style={[styles.categoryTitle, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
+              <View style={{ flex: 1, marginLeft: isRTL ? 0 : 10, marginRight: isRTL ? 10 : 0 }}>
+                <Text style={[styles.categoryTitle, { color: colors.textPrimary, textAlign }]} numberOfLines={1}>
                   {t('discover.cat.entertainment')}
                 </Text>
-                <Text style={[styles.categorySubtitle, { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' }]}>
+                <Text style={[styles.categorySubtitle, { color: colors.textTertiary, textAlign }]} numberOfLines={1}>
                   {t('create.categoryEntertainmentSub')}
                 </Text>
               </View>
@@ -106,7 +127,7 @@ export function CategoryTypeSelector({
               variant={category === 'work' ? 'default' : 'thin'}
               style={[
                 styles.categoryCard,
-                { flexDirection: isRTL ? 'row-reverse' : 'row' },
+                { flexDirection: rowDir },
                 category === 'work' && { borderColor: '#3b82f6', borderWidth: 2 },
               ]}
             >
@@ -122,11 +143,11 @@ export function CategoryTypeSelector({
                   <Briefcase size={20} color={colors.textPrimary} />
                 </View>
               )}
-              <View style={{ marginLeft: isRTL ? 0 : 10, marginRight: isRTL ? 10 : 0 }}>
-                <Text style={[styles.categoryTitle, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
+              <View style={{ flex: 1, marginLeft: isRTL ? 0 : 10, marginRight: isRTL ? 10 : 0 }}>
+                <Text style={[styles.categoryTitle, { color: colors.textPrimary, textAlign }]} numberOfLines={1}>
                   {t('discover.cat.work')}
                 </Text>
-                <Text style={[styles.categorySubtitle, { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' }]}>
+                <Text style={[styles.categorySubtitle, { color: colors.textTertiary, textAlign }]} numberOfLines={1}>
                   {t('create.categoryWorkSub')}
                 </Text>
               </View>
@@ -137,19 +158,11 @@ export function CategoryTypeSelector({
 
       {/* Group Format */}
       <View>
-        <Text style={[styles.label, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
+        <Text style={[styles.label, { color: colors.textSecondary, textAlign }]}>
           {t('create.squadFormat')}
         </Text>
         <GlassSegmented
-          options={isRTL ? [
-            { label: t('ekip.typeGroup'), value: 'group', icon: 'Layers' },
-            { label: t('ekip.typeCouple'), value: 'couple', icon: 'Users' },
-            { label: t('ekip.typeSolo'), value: 'solo', icon: 'User' },
-          ] : [
-            { label: t('ekip.typeSolo'), value: 'solo', icon: 'User' },
-            { label: t('ekip.typeCouple'), value: 'couple', icon: 'Users' },
-            { label: t('ekip.typeGroup'), value: 'group', icon: 'Layers' },
-          ]}
+          options={formatOptions}
           value={groupType}
           onChange={(v) => onChangeGroupType(v as GroupType)}
         />
@@ -166,7 +179,7 @@ export function CategoryTypeSelector({
             },
           ]}
         >
-          <View style={[styles.membersHeaderRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+          <View style={[styles.membersHeaderRow, { flexDirection: rowDir }]}>
             <Text style={[styles.label, { color: colors.textSecondary, marginBottom: 0 }]}>
               {isRTL ? 'معرفی اعضای اولیه اکیپ (الزامی)' : 'Introduce Initial Members (Required)'}
             </Text>
@@ -185,15 +198,35 @@ export function CategoryTypeSelector({
             onPress={onOpenMembersSheet}
           >
             {initialMembers.length === 0
-              ? (isRTL ? 'معرفی اعضا' : 'Introduce Members')
-              : (isRTL ? 'ویرایش اعضا' : 'Edit Members')}
+              ? isRTL
+                ? 'معرفی اعضا'
+                : 'Introduce Members'
+              : isRTL
+              ? 'ویرایش اعضا'
+              : 'Edit Members'}
           </GlassButton>
 
           {initialMembers.length > 0 && (
-            <View style={[styles.selectedAvatarsRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+            <View style={[styles.selectedAvatarsRow, { flexDirection: rowDir }]}>
               {initialMembers.map((m) => (
-                <View key={m.id} style={[styles.memberChip, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                  <GlassAvatar user={m} src={m.avatar_url} name={`${m.first_name} ${m.last_name}`} size={24} ring={false} />
+                <View
+                  key={m.id}
+                  style={[
+                    styles.memberChip,
+                    {
+                      flexDirection: rowDir,
+                      backgroundColor: colors.glassThinBg,
+                      borderColor: colors.glassBorder,
+                    },
+                  ]}
+                >
+                  <GlassAvatar
+                    user={m}
+                    src={m.avatar_url}
+                    name={`${m.first_name} ${m.last_name}`}
+                    size={24}
+                    ring={false}
+                  />
                   <Text style={[styles.memberChipName, { color: colors.textPrimary }]} numberOfLines={1}>
                     {m.first_name}
                   </Text>
@@ -203,24 +236,28 @@ export function CategoryTypeSelector({
           )}
 
           {!hasEnough && (
-            <Text style={[styles.warningText, { textAlign: isRTL ? 'right' : 'left' }]}>
+            <Text style={[styles.warningText, { textAlign }]}>
               {isCouple
-                ? (isRTL ? '⚠️ برای ساخت اکیپ دونفره، باید دقیقاً ۱ نفر همراه معرفی کنید.' : '⚠️ For a duo ekip, you must introduce exactly 1 partner.')
-                : (isRTL ? '⚠️ برای ساخت اکیپ چندنفره، حداقل باید ۱ نفر را معرفی کنید.' : '⚠️ For a group ekip, introduce at least 1 member.')}
+                ? isRTL
+                  ? '⚠️ برای ساخت اکیپ دونفره، باید دقیقاً ۱ نفر همراه معرفی کنید.'
+                  : '⚠️ For a duo ekip, you must introduce exactly 1 partner.'
+                : isRTL
+                ? '⚠️ برای ساخت اکیپ چندنفره، حداقل باید ۱ نفر را معرفی کنید.'
+                : '⚠️ For a group ekip, introduce at least 1 member.'}
             </Text>
           )}
         </Animated.View>
       )}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '600',
     marginBottom: 8,
-    marginLeft: 2,
+    marginHorizontal: 2,
   },
   gridRow: {
     flexDirection: 'row',
@@ -270,13 +307,11 @@ const styles = StyleSheet.create({
   memberChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 16,
     paddingHorizontal: 8,
     paddingVertical: 4,
     gap: 6,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   memberChipName: {
     fontSize: 12,
@@ -290,4 +325,3 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
 });
-

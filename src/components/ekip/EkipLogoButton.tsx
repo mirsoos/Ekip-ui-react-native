@@ -1,6 +1,7 @@
+// --- START OF FILE EkipLogoButton.tsx ---
+
 import React, { useRef, useEffect } from 'react';
 import {
-  View,
   TouchableOpacity,
   StyleSheet,
   Platform,
@@ -10,11 +11,7 @@ import {
 } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
-const TOP_SVG = Platform.OS === 'web' ? '/top-logo.svg' : require('../../../assets/top-logo.svg');
-const MID_SVG = Platform.OS === 'web' ? '/mid-logo.svg' : require('../../../assets/mid-logo.svg');
-const BOT_SVG = Platform.OS === 'web' ? '/bot-logo.svg' : require('../../../assets/bot-logo.svg');
-
-const TOP_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 270" width="100%" height="100%" preserveAspectRatio="xMinYMid meet">
+export const EKIP_TOP_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 270" width="100%" height="100%" preserveAspectRatio="xMinYMid meet">
   <defs>
     <linearGradient id="blueGrad" x1="0%" y1="50%" x2="100%" y2="50%">
       <stop offset="0%" stop-color="#006cdb"/>
@@ -30,7 +27,7 @@ const TOP_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 270" 
   <path d="M 165 4 H 885 A 110 110 0 0 1 885 224 H 165 C 80 224, 30 248, 2 266 L 2 110 C 2 50, 75 4, 165 4 Z" fill="url(#blueGrad)" stroke="url(#blueBorder)" stroke-width="1.5" />
 </svg>`;
 
-const MID_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 270" width="100%" height="100%" preserveAspectRatio="xMinYMid meet">
+export const EKIP_MID_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 270" width="100%" height="100%" preserveAspectRatio="xMinYMid meet">
   <defs>
     <linearGradient id="orangeGrad" x1="0%" y1="50%" x2="100%" y2="50%">
       <stop offset="0%" stop-color="#e64600"/>
@@ -46,7 +43,7 @@ const MID_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 270" w
   <path d="M 165 4 H 785 A 110 110 0 0 1 785 224 H 165 C 80 224, 30 248, 2 266 L 2 110 C 2 50, 75 4, 165 4 Z" fill="url(#orangeGrad)" stroke="url(#orangeBorder)" stroke-width="1.5" />
 </svg>`;
 
-const BOT_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 240" width="100%" height="100%" preserveAspectRatio="xMinYMid meet">
+export const EKIP_BOT_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 240" width="100%" height="100%" preserveAspectRatio="xMinYMid meet">
   <defs>
     <linearGradient id="greenGrad" x1="0%" y1="50%" x2="100%" y2="50%">
       <stop offset="0%" stop-color="#1b9338"/>
@@ -61,6 +58,85 @@ const BOT_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 240" 
   </defs>
   <rect x="2" y="6" width="996" height="228" rx="114" fill="url(#greenGrad)" stroke="url(#greenBorder)" stroke-width="1.5" />
 </svg>`;
+
+// کامپوننت‌های مشترک قطعات لوگو که هم در BottomNav و هم در Loading از یک جا خوانده می‌شوند
+export const EkipTopPiece = React.memo(function EkipTopPiece({
+  width,
+  height,
+}: {
+  width: number;
+  height: number;
+}) {
+  if (Platform.OS === 'web') {
+    return (
+      <Image
+        source={{ uri: '/top-logo.svg' }}
+        style={
+          {
+            width,
+            height,
+            objectFit: 'contain',
+            objectPosition: 'left center',
+          } as any
+        }
+        resizeMode="contain"
+      />
+    );
+  }
+  return <SvgXml xml={EKIP_TOP_XML} width={width} height={height} />;
+});
+
+export const EkipMidPiece = React.memo(function EkipMidPiece({
+  width,
+  height,
+}: {
+  width: number;
+  height: number;
+}) {
+  if (Platform.OS === 'web') {
+    return (
+      <Image
+        source={{ uri: '/mid-logo.svg' }}
+        style={
+          {
+            width,
+            height,
+            objectFit: 'contain',
+            objectPosition: 'left center',
+          } as any
+        }
+        resizeMode="contain"
+      />
+    );
+  }
+  return <SvgXml xml={EKIP_MID_XML} width={width} height={height} />;
+});
+
+export const EkipBotPiece = React.memo(function EkipBotPiece({
+  width,
+  height,
+}: {
+  width: number;
+  height: number;
+}) {
+  if (Platform.OS === 'web') {
+    return (
+      <Image
+        source={{ uri: '/bot-logo.svg' }}
+        style={
+          {
+            width,
+            height,
+            objectFit: 'contain',
+            objectPosition: 'left center',
+          } as any
+        }
+        resizeMode="contain"
+      />
+    );
+  }
+  return <SvgXml xml={EKIP_BOT_XML} width={width} height={height} />;
+});
 
 export interface EkipLogoButtonProps {
   active: boolean;
@@ -94,6 +170,31 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
 
   const timeoutsRef = useRef<any[]>([]);
   const isRunningRef = useRef(false);
+
+  // Continuous floating wave on the SVG pieces while active
+  const startFloatingWave = () => {
+    floatAnim.setValue(0);
+    const floatAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 1350,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: Platform.OS !== 'web',
+          isInteraction: false,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 1350,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: Platform.OS !== 'web',
+          isInteraction: false,
+        }),
+      ])
+    );
+    floatLoopRef.current = floatAnimation;
+    floatAnimation.start();
+  };
 
   useEffect(() => {
     if (active) {
@@ -196,11 +297,10 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
       runSinglePulseLoop(pulseBlueAnim, 0);
       runSinglePulseLoop(pulseOrangeAnim, STAGGER_INTERVAL);
       runSinglePulseLoop(pulseGreenAnim, STAGGER_INTERVAL * 2);
-
     } else {
       isRunningRef.current = false;
 
-      // 1. Smoothly dissolve any active pulse rings over 280ms (no sudden pop or jarring cut)
+      // 1. Smoothly dissolve any active pulse rings over 280ms
       Animated.timing(pulseContainerFade, {
         toValue: 0,
         duration: 280,
@@ -220,9 +320,7 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
         floatLoopRef.current = null;
       }
 
-      // 3. Dignified, smooth magnetic lock & settle on exit:
-      // The pieces smoothly lock back into unified alignment,
-      // and the logo performs a soft cushion settle to 1.0 (natural size, full vibrant color)
+      // 3. Dignified, smooth magnetic lock & settle on exit
       Animated.parallel([
         Animated.spring(pieceSeparationAnim, {
           toValue: 0,
@@ -237,14 +335,12 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
           useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.sequence([
-          // Subtle cushioned latch as the tab disengages
           Animated.timing(logoScaleAnim, {
             toValue: 0.96,
             duration: 90,
             easing: Easing.bezier(0.25, 1, 0.5, 1),
             useNativeDriver: Platform.OS !== 'web',
           }),
-          // Gentle spring settlement to normal size 1.0
           Animated.spring(logoScaleAnim, {
             toValue: 1.0,
             tension: 140,
@@ -261,31 +357,6 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
       if (floatLoopRef.current) floatLoopRef.current.stop();
     };
   }, [active]);
-
-  // Continuous floating wave on the SVG pieces while active
-  const startFloatingWave = () => {
-    floatAnim.setValue(0);
-    const floatAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnim, {
-          toValue: 1,
-          duration: 1350,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: Platform.OS !== 'web',
-          isInteraction: false,
-        }),
-        Animated.timing(floatAnim, {
-          toValue: 0,
-          duration: 1350,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: Platform.OS !== 'web',
-          isInteraction: false,
-        }),
-      ])
-    );
-    floatLoopRef.current = floatAnimation;
-    floatAnimation.start();
-  };
 
   const handlePressIn = () => {
     Animated.spring(pressAnim, {
@@ -305,23 +376,17 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
     }).start();
   };
 
-  // Dimensional ratios for the 3 SVG pieces matching exact logo bounds:
-  // top: 1000 x 270 (hRatio = 0.27)
-  // mid: 900 x 270  (wRatio = 0.90, hRatio = 0.27)
-  // bot: 1000 x 240 (hRatio = 0.24)
   const pieceHeight = Math.round(size * 0.27); // ~12px
   const midWidth = Math.round(size * 0.90);    // ~40px
   const botHeight = Math.round(size * 0.24);   // ~11px
   const baseGap = 2;
 
-  // Exact bounding shape of the logo (capsule shape matching the logo outline)
   const logoWidth = size; // 44px
   const totalLogoHeight = pieceHeight * 2 + botHeight + baseGap * 2; // ~39px
   const logoBorderRadius = 14;
 
   const combinedScale = Animated.multiply(logoScaleAnim, pressAnim);
 
-  // Dynamic vertical displacement for TOP piece (Blue speech arc)
   const topPieceTranslateY = Animated.add(
     pieceSeparationAnim.interpolate({
       inputRange: [-1, 0, 1.3],
@@ -333,7 +398,6 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
     })
   );
 
-  // Dynamic horizontal displacement for MID piece (Orange speech arc)
   const midPieceTranslateX = Animated.add(
     pieceSeparationAnim.interpolate({
       inputRange: [-1, 0, 1.3],
@@ -345,7 +409,6 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
     })
   );
 
-  // Dynamic vertical displacement for BOT piece (Green capsule foundation)
   const botPieceTranslateY = Animated.add(
     pieceSeparationAnim.interpolate({
       inputRange: [-1, 0, 1.3],
@@ -357,7 +420,6 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
     })
   );
 
-  // Pulse Ring Interpolator (scales outward along the logo's capsule shape)
   const getPulseStyle = (anim: Animated.Value) => {
     const scale = anim.interpolate({
       inputRange: [0, 1],
@@ -375,16 +437,6 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
     };
   };
 
-  const imgStyle = {
-    width: size,
-    ...(Platform.OS === 'web'
-      ? ({
-          objectFit: 'contain',
-          objectPosition: 'left center',
-        } as any)
-      : {}),
-  };
-
   return (
     <TouchableOpacity
       activeOpacity={0.88}
@@ -393,7 +445,7 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
       onPressOut={handlePressOut}
       style={styles.container}
     >
-      {/* 3 Sequential Brand-Colored Pulse Rings (Capsule shape, smoothly fades out on exit) */}
+      {/* 3 Sequential Brand-Colored Pulse Rings */}
       <Animated.View
         pointerEvents="none"
         style={[
@@ -401,7 +453,6 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
           { opacity: pulseContainerFade },
         ]}
       >
-        {/* 1. آبی لوگو (Blue Pulse) */}
         <Animated.View
           pointerEvents="none"
           style={[
@@ -412,7 +463,6 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
           ]}
         />
 
-        {/* 2. نارنجی لوگو (Orange Pulse) */}
         <Animated.View
           pointerEvents="none"
           style={[
@@ -423,7 +473,6 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
           ]}
         />
 
-        {/* 3. سبز لوگو (Green Pulse) */}
         <Animated.View
           pointerEvents="none"
           style={[
@@ -435,7 +484,7 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
         />
       </Animated.View>
 
-      {/* 3-Piece SVG Logo Stack with kinetic up/down animations (Full vibrancy at all times) */}
+      {/* 3-Piece SVG Logo Stack */}
       <Animated.View
         style={[
           styles.logoStack,
@@ -445,7 +494,7 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
           },
         ]}
       >
-        {/* TOP PIECE (Blue Speech Arc - animates up and down) */}
+        {/* TOP PIECE (Blue Speech Arc) */}
         <Animated.View
           style={{
             width: size,
@@ -457,18 +506,10 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
             zIndex: 3,
           }}
         >
-          {Platform.OS === 'web' ? (
-            <Image
-              source={typeof TOP_SVG === 'string' ? { uri: TOP_SVG } : TOP_SVG}
-              style={[imgStyle, { height: pieceHeight }]}
-              resizeMode="contain"
-            />
-          ) : (
-            <SvgXml xml={TOP_XML} width={size} height={pieceHeight} />
-          )}
+          <EkipTopPiece width={size} height={pieceHeight} />
         </Animated.View>
 
-        {/* MID PIECE (Orange Speech Arc - subtle sway) */}
+        {/* MID PIECE (Orange Speech Arc) */}
         <Animated.View
           style={{
             width: midWidth,
@@ -480,29 +521,10 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
             zIndex: 2,
           }}
         >
-          {Platform.OS === 'web' ? (
-            <Image
-              source={typeof MID_SVG === 'string' ? { uri: MID_SVG } : MID_SVG}
-              style={[
-                {
-                  width: midWidth,
-                  height: pieceHeight,
-                  ...(Platform.OS === 'web'
-                    ? ({
-                        objectFit: 'contain',
-                        objectPosition: 'left center',
-                      } as any)
-                    : {}),
-                },
-              ]}
-              resizeMode="contain"
-            />
-          ) : (
-            <SvgXml xml={MID_XML} width={midWidth} height={pieceHeight} />
-          )}
+          <EkipMidPiece width={midWidth} height={pieceHeight} />
         </Animated.View>
 
-        {/* BOT PIECE (Green Capsule Foundation - animates up and down) */}
+        {/* BOT PIECE (Green Capsule Foundation) */}
         <Animated.View
           style={{
             width: size,
@@ -513,15 +535,7 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
             zIndex: 1,
           }}
         >
-          {Platform.OS === 'web' ? (
-            <Image
-              source={typeof BOT_SVG === 'string' ? { uri: BOT_SVG } : BOT_SVG}
-              style={[imgStyle, { height: botHeight }]}
-              resizeMode="contain"
-            />
-          ) : (
-            <SvgXml xml={BOT_XML} width={size} height={botHeight} />
-          )}
+          <EkipBotPiece width={size} height={botHeight} />
         </Animated.View>
       </Animated.View>
     </TouchableOpacity>
@@ -555,6 +569,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 2,
     position: 'relative',
+    direction: 'ltr',
   },
   pulseRing: {
     position: 'absolute',

@@ -1,4 +1,6 @@
-import React, { useRef, useEffect, useState } from 'react';
+// --- START OF FILE ChatInputBar.tsx ---
+
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,12 +26,15 @@ export function ChatInputBarComponent({
   const isControlled = controlledValue !== undefined;
   const currentText = isControlled ? controlledValue : internalText;
 
-  const handleChange = (text: string) => {
-    if (!isControlled) setInternalText(text);
-    controlledOnChange?.(text);
-  };
+  const handleChange = useCallback(
+    (text: string) => {
+      if (!isControlled) setInternalText(text);
+      controlledOnChange?.(text);
+    },
+    [isControlled, controlledOnChange]
+  );
 
-  const handleSend = () => {
+  const handleSend = useCallback(() => {
     if (!currentText.trim()) return;
     if (onSendMessage) {
       onSendMessage(currentText.trim());
@@ -37,7 +42,7 @@ export function ChatInputBarComponent({
     } else if (onSend) {
       onSend();
     }
-  };
+  }, [currentText, isControlled, onSend, onSendMessage]);
 
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -54,12 +59,14 @@ export function ChatInputBarComponent({
       speed: 14,
       useNativeDriver: Platform.OS !== 'web',
     }).start();
-  }, []);
+  }, [enterAnim]);
 
   const enterTranslateY = enterAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [85, 0],
   });
+
+  const hasText = Boolean(currentText.trim());
 
   return (
     <View
@@ -72,9 +79,11 @@ export function ChatInputBarComponent({
       pointerEvents="box-none"
     >
       <Animated.View
+        renderToHardwareTextureAndroid={true}
         style={[
           styles.dockContainer,
           {
+            flexDirection: isRTL ? 'row-reverse' : 'row',
             borderColor: colors.glassBorderStrong,
             transform: [{ translateY: enterTranslateY }],
           },
@@ -109,6 +118,7 @@ export function ChatInputBarComponent({
               {
                 color: colors.textPrimary,
                 textAlign: isRTL ? 'right' : 'left',
+                writingDirection: isRTL ? 'rtl' : 'ltr',
               },
             ]}
             onSubmitEditing={handleSend}
@@ -119,8 +129,8 @@ export function ChatInputBarComponent({
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={handleSend}
-          disabled={!currentText.trim()}
-          style={[styles.sendBtn, { opacity: currentText.trim() ? 1 : 0.4 }]}
+          disabled={!hasText}
+          style={[styles.sendBtn, { opacity: hasText ? 1 : 0.4 }]}
         >
           <LinearGradient
             colors={['#f472b6', '#3b82f6']}

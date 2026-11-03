@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+// --- START OF FILE ChatThemeScreen.tsx ---
+
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, BackHandler } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useChatTheme, CHAT_THEMES, type ChatThemeId } from '../lib/theme';
+import { useChatTheme, useTheme, CHAT_THEMES, type ChatThemeId } from '../lib/theme';
 import { GlassCard, GlassAvatar } from '../components/Glass';
 import { Toast } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
@@ -14,19 +16,44 @@ interface ChatThemeScreenProps {
 
 export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const { chatTheme, setChatTheme } = useChatTheme();
   const { isRTL } = useI18n();
   const [toastMsg, setToastMsg] = useState('');
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const Check = getIcon('Check');
   const Palette = getIcon('Palette');
 
   const selectedConfig = CHAT_THEMES[chatTheme] ?? CHAT_THEMES.default;
 
-  const handleSelectTheme = (id: ChatThemeId) => {
-    setChatTheme(id);
-    setToastMsg(isRTL ? `تم چت به «${CHAT_THEMES[id].name}» تغییر یافت` : `Chat theme changed to ${CHAT_THEMES[id].name}`);
-  };
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onBack();
+      return true;
+    });
+    return () => {
+      sub.remove();
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, [onBack]);
+
+  const handleSelectTheme = useCallback(
+    (id: ChatThemeId) => {
+      setChatTheme(id);
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      setToastMsg(
+        isRTL
+          ? `تم چت به «${CHAT_THEMES[id].name}» تغییر یافت`
+          : `Chat theme changed to ${CHAT_THEMES[id].name}`
+      );
+      toastTimerRef.current = setTimeout(() => setToastMsg(''), 2400);
+    },
+    [isRTL, setChatTheme]
+  );
+
+  const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);
+  const textAlign = isRTL ? ('right' as const) : ('left' as const);
 
   return (
     <View style={styles.container}>
@@ -39,62 +66,88 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
         showsVerticalScrollIndicator={false}
       >
         {/* Live Preview Card */}
-        <Text style={styles.sectionHeading}>
+        <Text style={[styles.sectionHeading, { color: colors.textTertiary, textAlign }]}>
           {isRTL ? 'پیش‌نمایش زنده گفتگو' : 'LIVE CHAT PREVIEW'}
         </Text>
         <GlassCard variant="thick" style={styles.previewCard}>
           {/* Micro Chat Header */}
-          <View style={styles.previewHeader}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View
+            style={[
+              styles.previewHeader,
+              { flexDirection: rowDir, borderBottomColor: colors.divider },
+            ]}
+          >
+            <View style={{ flexDirection: rowDir, alignItems: 'center', gap: 10 }}>
               <GlassAvatar name={isRTL ? 'النا روستوا' : 'Alex Rivera'} size={32} online />
               <View>
-                <Text style={styles.previewSender}>
+                <Text style={[styles.previewSender, { color: colors.textPrimary, textAlign }]}>
                   {isRTL ? 'سرگروه آلفا · النا' : 'Alpha Lead · Alex'}
                 </Text>
-                <Text style={styles.previewStatus}>
+                <Text style={[styles.previewStatus, { color: colors.textTertiary, textAlign }]}>
                   {isRTL ? 'اکنون فعال در کانال اکیپ' : 'Active now in Squad Chat'}
                 </Text>
               </View>
             </View>
-            <View style={styles.badgePill}>
-              <Text style={styles.badgeText}>{selectedConfig.name}</Text>
+            <View
+              style={[
+                styles.badgePill,
+                { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)' },
+              ]}
+            >
+              <Text style={[styles.badgeText, { color: colors.textPrimary }]}>
+                {selectedConfig.name}
+              </Text>
             </View>
           </View>
 
           {/* Sample Messages */}
           <View style={styles.bubblesContainer}>
             {/* Incoming */}
-            <View style={styles.incomingRow}>
+            <View style={[styles.incomingRow, { flexDirection: rowDir }]}>
               <GlassAvatar name={isRTL ? 'النا روستوا' : 'Alex Rivera'} size={24} />
-              <View style={[styles.bubble, styles.incomingBubble]}>
-                <Text style={[styles.senderName, { color: selectedConfig.accentHex }]}>
+              <View
+                style={[
+                  styles.bubble,
+                  styles.incomingBubble,
+                  {
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.06)',
+                  },
+                ]}
+              >
+                <Text style={[styles.senderName, { color: selectedConfig.accentHex, textAlign }]}>
                   {isRTL ? 'النا روستوا' : 'Alex Rivera'}
                 </Text>
-                <Text style={styles.incomingText}>
+                <Text style={[styles.incomingText, { color: colors.textPrimary, textAlign }]}>
                   {isRTL
                     ? 'برای جلسه توجیهی عملیات آماده‌ای؟ اعضای تیم منتظرند! 🚀'
                     : "Ready for tonight's mission briefing? Squad is ready! 🚀"}
                 </Text>
-                <Text style={styles.timestamp}>18:42</Text>
+                <Text style={[styles.timestamp, { color: colors.textTertiary }]}>18:42</Text>
               </View>
             </View>
 
             {/* Outgoing */}
             <View style={styles.outgoingRow}>
-              <View style={[styles.bubble, styles.outgoingBubble, { backgroundColor: selectedConfig.accentHex }]}>
-                <Text style={styles.outgoingText}>
+              <View
+                style={[
+                  styles.bubble,
+                  styles.outgoingBubble,
+                  { backgroundColor: selectedConfig.accentHex },
+                ]}
+              >
+                <Text style={[styles.outgoingText, { textAlign }]}>
                   {isRTL
                     ? 'دریافت شد! تله‌متری هماهنگ است. در جلسه می‌بینمت. 🔥'
                     : 'Roger that! Telemetry synced. See you at briefing. 🔥'}
                 </Text>
-                <Text style={[styles.timestamp, { color: 'rgba(255,255,255,0.7)' }]}>18:43</Text>
+                <Text style={[styles.timestamp, { color: 'rgba(255,255,255,0.75)' }]}>18:43</Text>
               </View>
             </View>
           </View>
         </GlassCard>
 
         {/* Theme List */}
-        <Text style={styles.sectionHeading}>
+        <Text style={[styles.sectionHeading, { color: colors.textTertiary, textAlign }]}>
           {isRTL ? 'تم‌های شیشه‌ای گفتگو' : 'AVAILABLE THEMES'}
         </Text>
         <View style={{ gap: 10 }}>
@@ -109,15 +162,24 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
                 <GlassCard
                   style={[
                     styles.themeCard,
+                    { flexDirection: rowDir },
                     isSelected && styles.themeCardActive,
                   ]}
                 >
                   <View style={[styles.swatchBox, { backgroundColor: item.accentHex }]}>
                     <Palette size={20} color="#fff" />
                   </View>
-                  <View style={{ flex: 1, marginLeft: 14 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <Text style={styles.themeName}>{item.name}</Text>
+                  <View
+                    style={{
+                      flex: 1,
+                      marginLeft: isRTL ? 0 : 14,
+                      marginRight: isRTL ? 14 : 0,
+                    }}
+                  >
+                    <View style={{ flexDirection: rowDir, alignItems: 'center', gap: 8 }}>
+                      <Text style={[styles.themeName, { color: colors.textPrimary, textAlign }]}>
+                        {item.name}
+                      </Text>
                       {isSelected && (
                         <View style={styles.activePill}>
                           <Text style={styles.activeText}>
@@ -126,7 +188,9 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
                         </View>
                       )}
                     </View>
-                    <Text style={styles.themeDesc}>{item.description}</Text>
+                    <Text style={[styles.themeDesc, { color: colors.textSecondary, textAlign }]}>
+                      {item.description}
+                    </Text>
                   </View>
                   {isSelected && <Check size={18} color="#ec4899" />}
                 </GlassCard>
@@ -152,10 +216,9 @@ const styles = StyleSheet.create({
   sectionHeading: {
     fontSize: 11,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.4)',
     letterSpacing: 1,
     marginBottom: 8,
-    marginLeft: 4,
+    marginHorizontal: 4,
   },
   previewCard: {
     padding: 16,
@@ -168,27 +231,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
   },
   previewSender: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#fff',
   },
   previewStatus: {
     fontSize: 10,
-    color: 'rgba(255,255,255,0.5)',
   },
   badgePill: {
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   badgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#fff',
   },
   bubblesContainer: {
     paddingTop: 14,
@@ -210,7 +268,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   incomingBubble: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
     borderBottomLeftRadius: 4,
   },
   outgoingBubble: {
@@ -223,7 +280,6 @@ const styles = StyleSheet.create({
   },
   incomingText: {
     fontSize: 12,
-    color: '#fff',
     lineHeight: 17,
   },
   outgoingText: {
@@ -233,7 +289,6 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     fontSize: 9,
-    color: 'rgba(255,255,255,0.4)',
     alignSelf: 'flex-end',
     marginTop: 4,
   },
@@ -257,11 +312,9 @@ const styles = StyleSheet.create({
   themeName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#fff',
   },
   themeDesc: {
     fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
     marginTop: 2,
   },
   activePill: {

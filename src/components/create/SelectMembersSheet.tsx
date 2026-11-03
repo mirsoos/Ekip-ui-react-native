@@ -1,5 +1,7 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, Easing, Platform } from 'react-native';
+// --- START OF FILE SelectMembersSheet.tsx ---
+
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Platform } from 'react-native';
 import { GlassCard, GlassAvatar, GlassButton, GlassEmpty, GlassSegmented, GlassInput } from '../Glass';
 import { GlassSheet } from '../Overlays';
 import { useAppData } from '../../lib/appData';
@@ -68,23 +70,23 @@ const MemberAddRemoveButton = React.memo(function MemberAddRemoveButton({
     outputRange: [1, 0],
   });
 
-  const handlePressIn = () => {
+  const handlePressIn = useCallback(() => {
     Animated.spring(pressScale, {
       toValue: 0.88,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
       speed: 40,
       bounciness: 4,
     }).start();
-  };
+  }, [pressScale]);
 
-  const handlePressOut = () => {
+  const handlePressOut = useCallback(() => {
     Animated.spring(pressScale, {
       toValue: 1,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
       speed: 30,
       bounciness: 6,
     }).start();
-  };
+  }, [pressScale]);
 
   const lineWidth = Math.round(size * 0.44);
   const lineHeight = Math.max(2.5, Math.round(size * 0.07));
@@ -137,7 +139,7 @@ const MemberAddRemoveButton = React.memo(function MemberAddRemoveButton({
             }}
           />
 
-          {/* Vertical Line (|) - fades out and scales down in place */}
+          {/* Vertical Line (|) */}
           <Animated.View
             style={{
               position: 'absolute',
@@ -164,7 +166,7 @@ export function SelectMembersSheetComponent({
 }: SelectMembersSheetProps) {
   const { profiles, friends, me } = useAppData();
   const { colors } = useTheme();
-  const { t, isRTL } = useI18n();
+  const { isRTL } = useI18n();
 
   const [activeTab, setActiveTab] = useState<'friends' | 'search'>('friends');
   const [searchQuery, setSearchQuery] = useState('');
@@ -237,27 +239,40 @@ export function SelectMembersSheetComponent({
     });
   }, [me.id, profiles, searchQuery]);
 
+  const tabOptions = useMemo(
+    () =>
+      isRTL
+        ? [
+            { label: 'جستجو', value: 'search', icon: 'Search' as const },
+            { label: 'دوستان', value: 'friends', icon: 'Users' as const },
+          ]
+        : [
+            { label: 'Friends', value: 'friends', icon: 'Users' as const },
+            { label: 'Search', value: 'search', icon: 'Search' as const },
+          ],
+    [isRTL]
+  );
+
   const currentList = activeTab === 'friends' ? friendsList : searchResults;
 
   return (
     <GlassSheet
       open={open}
       onClose={onClose}
+      fullHeight={true} // 👈 قفل کردن ارتفاع شیت تا هنگام سرچ یا تعویض تب دوستان/جستجو نپرد!
       title={
         typeof maxSelection === 'number'
-          ? (isRTL ? `معرفی اعضا (حداکثر ${maxSelection} نفر)` : `Introduce Members (Max ${maxSelection})`)
-          : (isRTL ? 'معرفی اعضای اولیه' : 'Introduce Initial Members')
+          ? isRTL
+            ? `معرفی اعضا (حداکثر ${maxSelection} نفر)`
+            : `Introduce Members (Max ${maxSelection})`
+          : isRTL
+          ? 'معرفی اعضای اولیه'
+          : 'Introduce Initial Members'
       }
       headerContent={
         <View style={{ gap: 10 }}>
           <GlassSegmented
-            options={isRTL ? [
-              { label: isRTL ? 'جستجو' : 'Search', value: 'search', icon: 'Search' },
-              { label: isRTL ? 'دوستان' : 'Friends', value: 'friends', icon: 'Users' },
-            ] : [
-              { label: 'Friends', value: 'friends', icon: 'Users' },
-              { label: 'Search', value: 'search', icon: 'Search' },
-            ]}
+            options={tabOptions}
             value={activeTab}
             onChange={(v) => setActiveTab(v as 'friends' | 'search')}
           />
@@ -266,8 +281,12 @@ export function SelectMembersSheetComponent({
             icon="Search"
             placeholder={
               activeTab === 'friends'
-                ? (isRTL ? 'جستجو در بین دوستان...' : 'Search in friends...')
-                : (isRTL ? 'جستجو بر اساس نام، شهر، مهارت یا شغل...' : 'Search by name, city, skill...')
+                ? isRTL
+                  ? 'جستجو در بین دوستان...'
+                  : 'Search in friends...'
+                : isRTL
+                ? 'جستجو بر اساس نام، شهر، مهارت یا شغل...'
+                : 'Search by name, city, skill...'
             }
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -288,19 +307,28 @@ export function SelectMembersSheetComponent({
             icon={activeTab === 'friends' ? 'Users' : 'Search'}
             title={
               activeTab === 'friends'
-                ? (isRTL ? 'دوستی یافت نشد' : 'No friends found')
-                : (isRTL ? 'کاربری یافت نشد' : 'No users found')
+                ? isRTL
+                  ? 'دوستی یافت نشد'
+                  : 'No friends found'
+                : isRTL
+                ? 'کاربری یافت نشد'
+                : 'No users found'
             }
             subtitle={
               activeTab === 'friends'
-                ? (isRTL ? 'هیچ موردی مطابق جستجو یافت نشد.' : 'No matching friends found.')
-                : (isRTL ? 'عبارت دیگری را جستجو کنید.' : 'Try a different search term.')
+                ? isRTL
+                  ? 'هیچ موردی مطابق جستجو یافت نشد.'
+                  : 'No matching friends found.'
+                : isRTL
+                ? 'عبارت دیگری را جستجو کنید.'
+                : 'Try a different search term.'
             }
           />
         ) : (
           currentList.map((profile) => {
             const isAdded = selectedIds.has(profile.id);
-            const isLimitReached = !isAdded && typeof maxSelection === 'number' && selectedMembers.length >= maxSelection;
+            const isLimitReached =
+              !isAdded && typeof maxSelection === 'number' && selectedMembers.length >= maxSelection;
 
             return (
               <GlassCard key={profile.id} variant="thin" style={styles.card}>
@@ -312,15 +340,40 @@ export function SelectMembersSheetComponent({
                     size={42}
                   />
 
-                  <View style={{ flex: 1, marginLeft: isRTL ? 0 : 10, marginRight: isRTL ? 10 : 0 }}>
-                    <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={[styles.name, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={1}>
+                  <View
+                    style={{
+                      flex: 1,
+                      marginLeft: isRTL ? 0 : 10,
+                      marginRight: isRTL ? 10 : 0,
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: isRTL ? 'row-reverse' : 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.name,
+                          { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+                        ]}
+                        numberOfLines={1}
+                      >
                         {profile.first_name} {profile.last_name}
                       </Text>
                     </View>
 
-                    <Text style={[styles.meta, { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={1}>
-                      {profile.job ? `${profile.job} · ` : ''}{profile.city ?? ''}
+                    <Text
+                      style={[
+                        styles.meta,
+                        { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {profile.job ? `${profile.job} · ` : ''}
+                      {profile.city ?? ''}
                     </Text>
                   </View>
 
@@ -371,8 +424,8 @@ const styles = StyleSheet.create({
         }
       : Platform.OS === 'android'
       ? { elevation: 3 }
-      : {
+      : ({
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
-        } as any),
+        } as any)),
   },
 });

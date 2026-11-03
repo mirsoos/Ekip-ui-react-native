@@ -1,18 +1,26 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, FlatList, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+// --- START OF FILE ChatScreens.tsx ---
+
+import React, { useRef, useEffect, useCallback, useMemo } from 'react';
+import {
+  View,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  BackHandler,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
-import { GlassInput, GlassEmpty } from '../components/Glass';
-import { NotificationButton } from '../components/NotificationButton';
+import { GlassEmpty } from '../components/Glass';
 import { ChatListItem } from '../components/chat/ChatListItem';
 import { ChatMessageBubble } from '../components/chat/ChatMessageBubble';
-import { ChatHeader } from '../components/chat/ChatHeader';
-import { ChatInputBar } from '../components/chat/ChatInputBar';
 import { ChatListItemSkeleton } from '../components/skeleton';
-import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { getMultiRowContentPaddingTop, getSinglePillContentPaddingTop } from '../lib/headerLayout';
 import type { Conversation } from '../types/database';
+
+const extractConversationKey = (conversation: Conversation) => conversation.id;
 
 export function ChatListScreenComponent({
   onOpenConversation,
@@ -30,16 +38,18 @@ export function ChatListScreenComponent({
   const { t } = useI18n();
 
   const filtered = useMemo(() => {
-    const query = search.toLowerCase();
+    const query = search.trim().toLowerCase();
+    if (!query) return conversations;
     return conversations.filter((conversation) =>
       conversation.title.toLowerCase().includes(query)
     );
   }, [conversations, search]);
+
   const onSelectConversation = useCallback(
     (conversationId: string) => onOpenConversation(conversationId),
     [onOpenConversation]
   );
-  const keyExtractor = useCallback((conversation: Conversation) => conversation.id, []);
+
   const renderItem = useCallback(
     ({ item }: { item: Conversation }) => (
       <ChatListItem
@@ -51,38 +61,54 @@ export function ChatListScreenComponent({
     [onSelectConversation]
   );
 
+  const contentContainerStyle = useMemo(
+    () => [
+      styles.listContent,
+      {
+        paddingTop: getMultiRowContentPaddingTop(insets.top),
+        paddingBottom: 100 + insets.bottom,
+      },
+    ],
+    [insets.top, insets.bottom]
+  );
+
+  const emptyComponent = useMemo(() => {
+    if (isLoading) {
+      return (
+        <>
+          <ChatListItemSkeleton />
+          <ChatListItemSkeleton />
+          <ChatListItemSkeleton />
+          <ChatListItemSkeleton />
+        </>
+      );
+    }
+    if (filtered.length === 0) {
+      return (
+        <GlassEmpty
+          icon="MessageCircle"
+          title={t('chat.noCommsLogs')}
+          subtitle={t('chat.noCommsLogsSub')}
+        />
+      );
+    }
+    return undefined;
+  }, [filtered.length, isLoading, t]);
+
   return (
     <View style={styles.container}>
       <FlatList
         data={isLoading ? [] : filtered}
-        keyExtractor={keyExtractor}
+        keyExtractor={extractConversationKey}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.listContent,
-          {
-            paddingTop: getMultiRowContentPaddingTop(insets.top),
-            paddingBottom: 100 + insets.bottom,
-          },
-        ]}
-        initialNumToRender={4}
-        maxToRenderPerBatch={4}
+        contentContainerStyle={contentContainerStyle}
+        initialNumToRender={6}
+        maxToRenderPerBatch={6}
         updateCellsBatchingPeriod={50}
-        windowSize={3}
-        ListEmptyComponent={isLoading ? (
-          <>
-            <ChatListItemSkeleton />
-            <ChatListItemSkeleton />
-            <ChatListItemSkeleton />
-            <ChatListItemSkeleton />
-          </>
-        ) : filtered.length === 0 ? (
-          <GlassEmpty
-            icon="MessageCircle"
-            title={t('chat.noCommsLogs')}
-            subtitle={t('chat.noCommsLogsSub')}
-          />
-        ) : undefined}
+        windowSize={5}
+        removeClippedSubviews={Platform.OS === 'android'}
+        ListEmptyComponent={emptyComponent}
       />
     </View>
   );
@@ -98,25 +124,41 @@ export function ConversationScreenComponent({
   onBack: () => void;
 }) {
   const insets = useSafeAreaInsets();
-  const { conversations, messages, addMessage } = useAppData();
-  const { colors } = useTheme();
-  const [input, setInput] = useState('');
+  const { conversations, messages } = useAppData();
   const scrollRef = useRef<any>(null);
+  const prevCountRef = useRef<number>(0);
 
-  const conv = conversations.find((c) => c.id === conversationId);
+  const conv = useMemo(
+    () => conversations.find((c) => c.id === conversationId),
+    [conversations, conversationId]
+  );
   const convMessages = messages[conversationId] ?? [];
 
   useEffect(() => {
-    scrollRef.current?.scrollToEnd({ animated: true });
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onBack();
+      return true;
+    });
+    return () => sub.remove();
+  }, [onBack]);
+
+  useEffect(() => {
+    if (convMessages.length > prevCountRef.current) {
+      const animated = prevCountRef.current > 0;
+      prevCountRef.current = convMessages.length;
+      const timer = setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated });
+      }, 30);
+      return () => clearTimeout(timer);
+    }
+    prevCountRef.current = convMessages.length;
   }, [convMessages.length]);
 
-  if (!conv) return null;
+  const handleContentSizeChange = useCallback(() => {
+    scrollRef.current?.scrollToEnd({ animated: false });
+  }, []);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    addMessage(conversationId, input.trim());
-    setInput('');
-  };
+  if (!conv) return null;
 
   return (
     <KeyboardAvoidingView
@@ -126,6 +168,7 @@ export function ConversationScreenComponent({
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews={Platform.OS === 'android'}
         contentContainerStyle={[
           styles.messagesContent,
           {
@@ -133,7 +176,7 @@ export function ConversationScreenComponent({
             paddingBottom: 75 + insets.bottom,
           },
         ]}
-        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
+        onContentSizeChange={handleContentSizeChange}
       >
         {convMessages.map((m) => (
           <ChatMessageBubble

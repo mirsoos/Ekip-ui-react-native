@@ -17,9 +17,9 @@ import Svg, {
   Stop,
   Rect,
   Circle,
-  Path,
 } from 'react-native-svg';
 import { useTheme } from '../lib/theme';
+import { EkipTopPiece, EkipMidPiece, EkipBotPiece } from '../components/ekip/EkipLogoButton';
 
 export interface LoadingProps {
   onFinish?: () => void;
@@ -29,82 +29,6 @@ export interface LoadingProps {
 
 const BRAND_TEXT_WIDTH = 130;
 const USE_NATIVE_DRIVER = Platform.OS !== 'web';
-
-// ============================================================================
-// قطعات برداری نیتیو لوگوی ۳ تکه (بدون سربار پارس کردن XML و ۱۰۰٪ سازگار با Android/iOS/Web)
-// ============================================================================
-const TopBluePiece = React.memo(({ width, height }: { width: number; height: number }) => (
-  <Svg width={width} height={height} viewBox="0 0 1000 270" preserveAspectRatio="xMinYMid meet">
-    <Defs>
-      <SvgLinearGradient id="blueGrad" x1="0%" y1="50%" x2="100%" y2="50%">
-        <Stop offset="0%" stopColor="#006cdb" />
-        <Stop offset="35%" stopColor="#007fe8" />
-        <Stop offset="70%" stopColor="#0096f5" />
-        <Stop offset="100%" stopColor="#00a6ff" />
-      </SvgLinearGradient>
-      <SvgLinearGradient id="blueBorder" x1="0%" y1="0%" x2="0%" y2="100%">
-        <Stop offset="0%" stopColor="#ffffff" stopOpacity={0.45} />
-        <Stop offset="100%" stopColor="#003c96" stopOpacity={0.5} />
-      </SvgLinearGradient>
-    </Defs>
-    <Path
-      d="M 165 4 H 885 A 110 110 0 0 1 885 224 H 165 C 80 224, 30 248, 2 266 L 2 110 C 2 50, 75 4, 165 4 Z"
-      fill="url(#blueGrad)"
-      stroke="url(#blueBorder)"
-      strokeWidth={1.5}
-    />
-  </Svg>
-));
-
-const MidOrangePiece = React.memo(({ width, height }: { width: number; height: number }) => (
-  <Svg width={width} height={height} viewBox="0 0 900 270" preserveAspectRatio="xMinYMid meet">
-    <Defs>
-      <SvgLinearGradient id="orangeGrad" x1="0%" y1="50%" x2="100%" y2="50%">
-        <Stop offset="0%" stopColor="#e64600" />
-        <Stop offset="35%" stopColor="#f55a00" />
-        <Stop offset="70%" stopColor="#ff7b00" />
-        <Stop offset="100%" stopColor="#ffa600" />
-      </SvgLinearGradient>
-      <SvgLinearGradient id="orangeBorder" x1="0%" y1="0%" x2="0%" y2="100%">
-        <Stop offset="0%" stopColor="#ffffff" stopOpacity={0.45} />
-        <Stop offset="100%" stopColor="#962300" stopOpacity={0.5} />
-      </SvgLinearGradient>
-    </Defs>
-    <Path
-      d="M 165 4 H 785 A 110 110 0 0 1 785 224 H 165 C 80 224, 30 248, 2 266 L 2 110 C 2 50, 75 4, 165 4 Z"
-      fill="url(#orangeGrad)"
-      stroke="url(#orangeBorder)"
-      strokeWidth={1.5}
-    />
-  </Svg>
-));
-
-const BotGreenPiece = React.memo(({ width, height }: { width: number; height: number }) => (
-  <Svg width={width} height={height} viewBox="0 0 1000 240" preserveAspectRatio="xMinYMid meet">
-    <Defs>
-      <SvgLinearGradient id="greenGrad" x1="0%" y1="50%" x2="100%" y2="50%">
-        <Stop offset="0%" stopColor="#1b9338" />
-        <Stop offset="40%" stopColor="#3ea935" />
-        <Stop offset="85%" stopColor="#80c33a" />
-        <Stop offset="100%" stopColor="#91cc3b" />
-      </SvgLinearGradient>
-      <SvgLinearGradient id="greenBorder" x1="0%" y1="0%" x2="0%" y2="100%">
-        <Stop offset="0%" stopColor="#ffffff" stopOpacity={0.45} />
-        <Stop offset="100%" stopColor="#0f5a1e" stopOpacity={0.45} />
-      </SvgLinearGradient>
-    </Defs>
-    <Rect
-      x={2}
-      y={6}
-      width={996}
-      height={228}
-      rx={114}
-      fill="url(#greenGrad)"
-      stroke="url(#greenBorder)"
-      strokeWidth={1.5}
-    />
-  </Svg>
-));
 
 export function Loading({ onFinish, minDuration = 2000, canFinish = true }: LoadingProps) {
   const { isDark } = useTheme();
@@ -130,7 +54,7 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
   const pulseOrangeAnim = useRef(new Animated.Value(0)).current;
   const pulseGreenAnim = useRef(new Animated.Value(0)).current;
 
-  // Typographic Progress (0 to 1 — 100% GPU Native Driver!)
+  // Typographic Progress
   const textFillProgress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -186,7 +110,7 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
     twinkleLoopA.start();
     twinkleLoopB.start();
 
-    // 3. Typographic Progress Fill (100% GPU Driven via Counter-Translate!)
+    // 3. Typographic Progress Fill
     Animated.timing(textFillProgress, {
       toValue: 1,
       duration: Math.max(100, minDuration - 200),
@@ -259,7 +183,7 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
     );
     floatLoop.start();
 
-    // 6. Continuous Tri-Color Pulse Rhythm (Clean Animated.loop without memory leak)
+    // 6. Continuous Tri-Color Pulse Rhythm
     const createPulseLoop = (anim: Animated.Value) =>
       Animated.loop(
         Animated.sequence([
@@ -324,7 +248,6 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
     return () => clearTimeout(exitTimer);
   }, [canFinish, minDuration, startedAt, onFinish, containerOpacity, sceneScale]);
 
-  // Dynamic displacements for the 3 SVG pieces
   const topPieceTranslateY = Animated.add(
     pieceSeparationAnim.interpolate({
       inputRange: [-1, 0, 1.3],
@@ -358,7 +281,6 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
     })
   );
 
-  // GPU Counter-Translation for left-to-right text fill without layout recalculation
   const clipTranslateX = textFillProgress.interpolate({
     inputRange: [0, 1],
     outputRange: [-BRAND_TEXT_WIDTH, 0],
@@ -439,7 +361,6 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
           <Rect x="0" y="0" width="100%" height="100%" fill="url(#meshRose)" />
           <Rect x="0" y="0" width="100%" height="100%" fill="url(#meshIndigo)" />
 
-          {/* Static Ambient Dust (Dark mode only) */}
           {isDark && (
             <>
               <Circle cx="22%" cy="75%" r="1.1" fill="url(#starGlow)" opacity={0.35} />
@@ -450,7 +371,6 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
           )}
         </Svg>
 
-        {/* Twinkling Stars (Dark mode only) */}
         {isDark && (
           <>
             <Animated.View
@@ -505,7 +425,6 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
       >
         {/* Central Logo Stage */}
         <View style={styles.holoPod}>
-          {/* 3 Sequential Pulse Rings matching exact Logo colors */}
           <View pointerEvents="none" style={StyleSheet.absoluteFill}>
             <Animated.View
               pointerEvents="none"
@@ -536,7 +455,7 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
             />
           </View>
 
-          {/* 3-Piece SVG Logo Stack (LTR locked so pieces always align left-to-right identically in FA & EN) */}
+          {/* 3-Piece SVG Logo Stack reading directly from EkipLogoButton */}
           <Animated.View
             style={[
               styles.logoStack,
@@ -546,10 +465,8 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
               },
             ]}
           >
-            {/* TOP PIECE (Blue Speech Arc) */}
+            {/* TOP PIECE */}
             <Animated.View
-              renderToHardwareTextureAndroid={true}
-              shouldRasterizeIOS={true}
               style={{
                 width: logoSize,
                 height: pieceHeight,
@@ -560,13 +477,11 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
                 zIndex: 3,
               }}
             >
-              <TopBluePiece width={logoSize} height={pieceHeight} />
+              <EkipTopPiece width={logoSize} height={pieceHeight} />
             </Animated.View>
 
-            {/* MID PIECE (Orange Speech Arc) */}
+            {/* MID PIECE */}
             <Animated.View
-              renderToHardwareTextureAndroid={true}
-              shouldRasterizeIOS={true}
               style={{
                 width: midWidth,
                 height: pieceHeight,
@@ -577,13 +492,11 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
                 zIndex: 2,
               }}
             >
-              <MidOrangePiece width={midWidth} height={pieceHeight} />
+              <EkipMidPiece width={midWidth} height={pieceHeight} />
             </Animated.View>
 
-            {/* BOT PIECE (Green Capsule Foundation) */}
+            {/* BOT PIECE */}
             <Animated.View
-              renderToHardwareTextureAndroid={true}
-              shouldRasterizeIOS={true}
               style={{
                 width: logoSize,
                 height: botHeight,
@@ -593,15 +506,14 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
                 zIndex: 1,
               }}
             >
-              <BotGreenPiece width={logoSize} height={botHeight} />
+              <EkipBotPiece width={logoSize} height={botHeight} />
             </Animated.View>
           </Animated.View>
         </View>
 
-        {/* Brand Typography with 100% Native-Driver GPU Fill Progress */}
+        {/* Brand Typography */}
         <View style={styles.telemetrySection}>
           <View style={styles.progressTextContainer}>
-            {/* Background Muted Track Text */}
             <Text
               style={[
                 styles.brandTitle,
@@ -611,7 +523,6 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
               EKIP
             </Text>
 
-            {/* Glowing Active Progress Text Filling from Left to Right on GPU */}
             <View style={styles.progressOuterClip}>
               <Animated.View
                 style={[
