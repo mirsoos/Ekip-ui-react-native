@@ -107,40 +107,49 @@ const MemberAddRemoveButton = React.memo(function MemberAddRemoveButton({
       }}
     >
       <Animated.View
-        style={[
-          styles.toggleButton,
-          {
-            width: size,
-            height: buttonHeight,
-            borderRadius: buttonRadius,
-            backgroundColor,
-            transform: [{ scale: pressScale }],
-          },
-        ]}
+        style={{
+          width: size,
+          height: size,
+          alignItems: 'center',
+          justifyContent: 'center',
+          transform: [{ scale: pressScale }],
+        }}
       >
-        {/* Horizontal Line (-) */}
-        <View
-          style={{
-            position: 'absolute',
-            width: lineWidth,
-            height: lineHeight,
-            borderRadius: lineHeight / 2,
-            backgroundColor: '#ffffff',
-          }}
-        />
-
-        {/* Vertical Line (|) - fades out and scales down in place */}
         <Animated.View
-          style={{
-            position: 'absolute',
-            width: lineHeight,
-            height: lineWidth,
-            borderRadius: lineHeight / 2,
-            backgroundColor: '#ffffff',
-            opacity: vLineOpacity,
-            transform: [{ scaleY: vLineScale }],
-          }}
-        />
+          style={[
+            styles.toggleButton,
+            {
+              width: size,
+              height: buttonHeight,
+              borderRadius: buttonRadius,
+              backgroundColor,
+            },
+          ]}
+        >
+          {/* Horizontal Line (-) */}
+          <View
+            style={{
+              position: 'absolute',
+              width: lineWidth,
+              height: lineHeight,
+              borderRadius: lineHeight / 2,
+              backgroundColor: '#ffffff',
+            }}
+          />
+
+          {/* Vertical Line (|) - fades out and scales down in place */}
+          <Animated.View
+            style={{
+              position: 'absolute',
+              width: lineHeight,
+              height: lineWidth,
+              borderRadius: lineHeight / 2,
+              backgroundColor: '#ffffff',
+              opacity: vLineOpacity,
+              transform: [{ scaleY: vLineScale }],
+            }}
+          />
+        </Animated.View>
       </Animated.View>
     </TouchableOpacity>
   );

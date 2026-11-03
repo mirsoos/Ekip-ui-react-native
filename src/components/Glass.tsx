@@ -1513,7 +1513,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 4,
     overflow: 'hidden',
-    direction: 'ltr',
+    ...(Platform.OS === 'web' ? ({ direction: 'ltr' } as any) : {}),
   },
   segmentedLens: {
     position: 'absolute',

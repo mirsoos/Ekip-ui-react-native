@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingVertical: 6,
     paddingHorizontal: 6,
-    direction: 'ltr',
+    ...(Platform.OS === 'web' ? ({ direction: 'ltr' } as any) : {}),
     ...(Platform.OS === 'ios'
       ? {
           shadowColor: '#000',

@@ -19,9 +19,9 @@ import { useTheme } from '../../lib/theme';
 const GRADIENT_START = { x: 0, y: 0 };
 const GRADIENT_END = { x: 1, y: 1 };
 const NATIVE_TOGGLE_DIMS = {
-  sm: { width: 62, height: 28, radius: 14, font: 10.5 },
-  md: { width: 78, height: 32, radius: 16, font: 11.5 },
-  lg: { width: 106, height: 40, radius: 20, font: 13.5 },
+  sm: { width: 64, height: 24, radius: 16, font: 10.5 },
+  md: { width: 84, height: 28, radius: 22, font: 14 },
+  lg: { width: 140, height: 44, radius: 40, font: 24 },
 } as const;
 const NATIVE_TOGGLE_THEME_STYLES = {
   dark: {
@@ -277,8 +277,8 @@ export function LiquidGlassToggleComponent({
   const finalRadius = nativeDims.radius;
   const finalFont = nativeDims.font;
 
-  const pillWidth = Math.round((finalWidth - 4) / 2);
-  const pillHeight = finalHeight - 4;
+  const pillWidth = finalWidth / 2;
+  const pillHeight = finalHeight;
 
   const highlightTranslate = React.useMemo(
     () => animProgress.interpolate({ inputRange: [0, 1], outputRange: [0, pillWidth] }),
@@ -305,7 +305,7 @@ export function LiquidGlassToggleComponent({
       {
         width: pillWidth,
         height: pillHeight,
-        borderRadius: finalRadius - 2,
+        borderRadius: finalRadius,
         backgroundColor: highlightBg,
         borderColor: nativeThemeStyles.highlightBorder,
         transform: [{ translateX: highlightTranslate }],
@@ -321,7 +321,7 @@ export function LiquidGlassToggleComponent({
     ]
   );
   const nativeLabelRowStyle = React.useMemo(
-    () => [styles.nativeLabelRow, { width: finalWidth - 4, height: pillHeight }],
+    () => [styles.nativeLabelRow, { width: finalWidth, height: finalHeight }],
     [finalWidth, pillHeight]
   );
   const nativeCellStyles = React.useMemo(
@@ -344,7 +344,7 @@ export function LiquidGlassToggleComponent({
     [finalFont]
   );
   const gradientOverlayStyle = React.useMemo(
-    () => [StyleSheet.absoluteFill, { borderRadius: finalRadius - 2 }],
+    () => [StyleSheet.absoluteFill, { borderRadius: finalRadius }],
     [finalRadius]
   );
 
@@ -423,12 +423,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 2,
+    padding: 0,
   },
   nativeHighlight: {
     position: 'absolute',
-    top: 2,
-    left: 2,
+    top: 0,
+    bottom: 0,
+    left: 0,
     borderWidth: 1,
     overflow: 'hidden',
   },

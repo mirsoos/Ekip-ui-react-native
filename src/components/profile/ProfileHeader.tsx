@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassBackButton, VerifiedBadge } from '../Glass';
 import { FrostedGlass } from '../FrostedGlass';
+import { CelestialBallToggle } from '../common/CelestialBallToggle';
 import { getIcon } from '../../lib/icons';
 import { darkColors, lightColors, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
@@ -307,27 +308,11 @@ export function ProfileHeaderComponent({
 
           {/* Right Action Buttons */}
           <View style={styles.rightActions}>
-            <TouchableOpacity
-              activeOpacity={0.75}
-              onPress={toggle}
-              style={actionButtonStyle}
-            >
-              <FrostedGlass
-                borderRadius={19}
-                marginWidth={8}
-                scale={20}
-                blurDeviation={1.6}
-                overlayOpacity={isDark ? 0.10 : 0.22}
-                style={StyleSheet.absoluteFill}
-              />
-              <View style={styles.iconWrap}>
-                {theme === 'dark' ? (
-                  <Sun size={18} color="#eab308" strokeWidth={2.4} />
-                ) : (
-                  <Moon size={18} color="#6366f1" strokeWidth={2.4} />
-                )}
-              </View>
-            </TouchableOpacity>
+            <CelestialBallToggle
+              isDark={theme === 'dark'}
+              onToggle={toggle}
+              size={38}
+            />
 
             {isOwnProfile && (
               <TouchableOpacity
@@ -373,47 +358,31 @@ export function ProfileHeaderComponent({
             )}
 
             <View style={styles.rightActions}>
-          <TouchableOpacity
-            activeOpacity={0.75}
-            onPress={toggle}
-            style={actionButtonStyle}
-          >
-            <FrostedGlass
-              borderRadius={19}
-              marginWidth={8}
-              scale={20}
-              blurDeviation={1.6}
-              overlayOpacity={isDark ? 0.10 : 0.22}
-              style={StyleSheet.absoluteFill}
-            />
-            <View style={styles.iconWrap}>
-              {theme === 'dark' ? (
-                <Sun size={18} color="#eab308" strokeWidth={2.4} />
-              ) : (
-                <Moon size={18} color="#6366f1" strokeWidth={2.4} />
-              )}
-            </View>
-          </TouchableOpacity>
-
-          {isOwnProfile && (
-            <TouchableOpacity
-              activeOpacity={0.75}
-              onPress={onOpenSettings}
-              style={actionButtonStyle}
-            >
-              <FrostedGlass
-                borderRadius={19}
-                marginWidth={8}
-                scale={20}
-                blurDeviation={1.6}
-                overlayOpacity={isDark ? 0.10 : 0.22}
-                style={StyleSheet.absoluteFill}
+              <CelestialBallToggle
+                isDark={theme === 'dark'}
+                onToggle={toggle}
+                size={38}
               />
-              <View style={styles.iconWrap}>
-                <SettingsIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
-              </View>
-            </TouchableOpacity>
-          )}
+
+              {isOwnProfile && (
+                <TouchableOpacity
+                  activeOpacity={0.75}
+                  onPress={onOpenSettings}
+                  style={actionButtonStyle}
+                >
+                  <FrostedGlass
+                    borderRadius={19}
+                    marginWidth={8}
+                    scale={20}
+                    blurDeviation={1.6}
+                    overlayOpacity={isDark ? 0.10 : 0.22}
+                    style={StyleSheet.absoluteFill}
+                  />
+                  <View style={styles.iconWrap}>
+                    <SettingsIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+                  </View>
+                </TouchableOpacity>
+              )}
             </View>
           </>
         )}

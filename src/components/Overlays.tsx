@@ -68,14 +68,14 @@ export const GlassSheet = React.memo(function GlassSheet({
       Animated.parallel([
         Animated.timing(backdropAnim, {
           toValue: 1,
-          duration: 220,
-          easing: Easing.out(Easing.quad),
+          duration: 380,
+          easing: Easing.bezier(0.16, 1, 0.3, 1),
           useNativeDriver: true,
         }),
         Animated.timing(slideAnim, {
           toValue: 0,
-          duration: 240,
-          easing: Easing.bezier(0.22, 1, 0.36, 1),
+          duration: 420,
+          easing: Easing.bezier(0.16, 1, 0.3, 1),
           useNativeDriver: true,
         }),
       ]).start();
@@ -83,14 +83,14 @@ export const GlassSheet = React.memo(function GlassSheet({
       Animated.parallel([
         Animated.timing(backdropAnim, {
           toValue: 0,
-          duration: 180,
-          easing: Easing.in(Easing.quad),
+          duration: 260,
+          easing: Easing.bezier(0.4, 0, 1, 1),
           useNativeDriver: true,
         }),
         Animated.timing(slideAnim, {
           toValue: DISMISS_DISTANCE,
-          duration: 200,
-          easing: Easing.bezier(0.32, 0, 0.67, 0),
+          duration: 300,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
           useNativeDriver: true,
         }),
       ]).start(({ finished }) => {
@@ -138,7 +138,6 @@ export const GlassSheet = React.memo(function GlassSheet({
         </TouchableWithoutFeedback>
 
         <Animated.View
-          renderToHardwareTextureAndroid={true}
           style={[
             styles.sheetContainer,
             {
@@ -265,8 +264,8 @@ export const GlassDialog = React.memo(function GlassDialog({
       Animated.parallel([
         Animated.timing(backdropAnim, {
           toValue: 1,
-          duration: 220,
-          easing: Easing.out(Easing.quad),
+          duration: 380,
+          easing: Easing.bezier(0.16, 1, 0.3, 1),
           useNativeDriver: true,
         }),
         Animated.timing(scaleAnim, {
@@ -442,7 +441,7 @@ const styles = StyleSheet.create({
           shadowOpacity: 0.45,
           shadowRadius: 36,
         }
-      : { elevation: 32 }),
+      : Platform.OS === 'android' ? { elevation: 0 } : { elevation: 32 }),
     zIndex: 100000,
   },
   sheetHandleBar: {
@@ -486,7 +485,7 @@ const styles = StyleSheet.create({
           shadowOpacity: 0.45,
           shadowRadius: 32,
         }
-      : { elevation: 32 }),
+      : Platform.OS === 'android' ? { elevation: 0 } : { elevation: 32 }),
     zIndex: 100000,
   },
   dialogTitle: {
