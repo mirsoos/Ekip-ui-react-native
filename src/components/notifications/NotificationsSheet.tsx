@@ -3,11 +3,12 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useAppData } from '../../lib/appData';
-import { GlassSheet, Toast } from '../Overlays';
+import { GlassSheet } from '../Overlays';
 import { GlassEmpty, GlassSegmented } from '../Glass';
 import { NotificationItem } from './NotificationItem';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
+import { useToast } from '../../lib/ToastContext';
 import type { Group } from '../../types/database';
 
 export function NotificationsSheetComponent({
@@ -26,13 +27,8 @@ export function NotificationsSheetComponent({
   const { notifications, groups, markNotificationRead, markAllNotificationsRead } = useAppData();
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
+  const { showToast } = useToast();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
-  const [toastMessage, setToastMessage] = useState('');
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 2400);
-  };
 
   const filtered = useMemo(() => {
     return notifications.filter((n) => {
@@ -124,8 +120,6 @@ export function NotificationsSheetComponent({
           )}
         </View>
       </GlassSheet>
-
-      <Toast message={toastMessage} visible={Boolean(toastMessage)} />
     </>
   );
 }

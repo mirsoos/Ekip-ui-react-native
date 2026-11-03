@@ -13,11 +13,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassButton, LiquidGlassToggle } from '../components/Glass';
-import { GlassSheet, Toast } from '../components/Overlays';
+import { GlassSheet } from '../components/Overlays';
 import { cities } from '../lib/demoData';
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 interface LocationScreenProps {
@@ -36,6 +37,7 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
   const { me, updateMe, addNotification } = useAppData();
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
+  const { showToast } = useToast();
 
   const initialPlaces: SavedPlace[] = isRTL
     ? [
@@ -59,9 +61,6 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
   const [newPlaceName, setNewPlaceName] = useState('');
   const [newPlaceAddress, setNewPlaceAddress] = useState('');
 
-  const [toastMessage, setToastMessage] = useState('');
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const MapPin = getIcon('MapPin');
   const Compass = getIcon('Compass');
   const Navigation = getIcon('Navigation');
@@ -79,15 +78,8 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
     });
     return () => {
       sub.remove();
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     };
   }, [onBack, showAddPlaceModal]);
-
-  const showToast = useCallback((msg: string) => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToastMessage(msg);
-    toastTimerRef.current = setTimeout(() => setToastMessage(''), 2600);
-  }, []);
 
   const handleCityChange = (city: string) => {
     setSelectedCity(city);
@@ -393,8 +385,6 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
           </View>
         </View>
       </GlassSheet>
-
-      <Toast message={toastMessage} visible={Boolean(toastMessage)} />
     </View>
   );
 }

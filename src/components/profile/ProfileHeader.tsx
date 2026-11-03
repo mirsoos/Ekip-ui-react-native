@@ -5,14 +5,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GlassBackButton, VerifiedBadge } from '../Glass';
 import { FrostedGlass } from '../FrostedGlass';
 import { CelestialBallToggle } from '../common/CelestialBallToggle';
+import { SubscriptionBorder } from '../common/SubscriptionBorder';
 import { getIcon } from '../../lib/icons';
 import { darkColors, lightColors, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
 import type { Profile } from '../../types/database';
-
-const BORDER_PREMIUM = require('../../../assets/borders/Premium.svg');
-const BORDER_BUSINESS = require('../../../assets/borders/bsuiness-premium.svg');
 
 const Sun = getIcon('Sun');
 const Moon = getIcon('Moon');
@@ -221,12 +219,7 @@ export function ProfileHeaderComponent({
       ? 'premium'
       : 'free');
 
-  const borderSource =
-    tier === 'business_premium'
-      ? BORDER_BUSINESS
-      : tier === 'premium'
-      ? BORDER_PREMIUM
-      : null;
+  const hasSubscriptionBorder = tier === 'business_premium' || tier === 'premium';
 
   const borderScale = 1.38;
   const borderSize = Math.round(88 * borderScale);
@@ -249,7 +242,7 @@ export function ProfileHeaderComponent({
       styles.avatarContainer,
       {
         [isRTL ? 'right' : 'left']: 16,
-        borderWidth: borderSource ? 0 : 2.5,
+        borderWidth: hasSubscriptionBorder ? 0 : 2.5,
         borderColor: colors.glassBorderStrong,
         opacity: avatarEnterOpacity,
         transform: [
@@ -261,10 +254,10 @@ export function ProfileHeaderComponent({
     ],
     [
       avatarEnterOpacity,
-      borderSource,
       colors.glassBorderStrong,
       combinedScale,
       combinedTranslateY,
+      hasSubscriptionBorder,
       isRTL,
       translateX,
     ]
@@ -414,7 +407,7 @@ export function ProfileHeaderComponent({
         </View>
 
         {/* Subscription Border Frame Overlay */}
-        {borderSource && (
+        {hasSubscriptionBorder && (
           <View
             pointerEvents="none"
             style={{
@@ -426,11 +419,7 @@ export function ProfileHeaderComponent({
               zIndex: 10,
             }}
           >
-            <Image
-              source={borderSource}
-              style={{ width: '100%', height: '100%' }}
-              resizeMode="contain"
-            />
+            <SubscriptionBorder tier={tier} size={borderSize} />
           </View>
         )}
 

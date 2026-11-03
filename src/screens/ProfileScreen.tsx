@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassButton, GlassSegmented, GlassEmpty, GlassAvatar } from '../components/Glass';
-import { GlassSheet, Toast } from '../components/Overlays';
+import { GlassSheet } from '../components/Overlays';
 import { StatBox } from '../components/common/StatBox';
 import { ProfileHeaderCard } from '../components/profile/ProfileHeaderCard';
 import { ProfileXpCard } from '../components/profile/ProfileXpCard';
@@ -14,6 +14,7 @@ import { EkipCard } from '../components/EkipCard';
 import { ProfileScreenSkeleton } from '../components/skeleton';
 import { darkColors, lightColors, useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { useToast } from '../lib/ToastContext';
 import { getIcon, type IconName } from '../lib/icons';
 import type { Badge, Friendship, Group, Mission } from '../types/database';
 
@@ -99,24 +100,11 @@ export function ProfileScreenComponent({
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
+  const { showToast } = useToast();
   const [tab, setTab] = useState('activity');
   const [showActions, setShowActions] = useState(false);
-  const [toast, setToast] = useState('');
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const internalScrollY = useRef(new Animated.Value(0)).current;
   const scrollY = externalScrollY ?? internalScrollY;
-
-  const showToastMessage = useCallback((msg: string) => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToast(msg);
-    toastTimerRef.current = setTimeout(() => setToast(''), 2500);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    };
-  }, []);
 
   const profile = useMemo(
     () => profiles.find((p) => p.id === userId) ?? me,
@@ -333,16 +321,16 @@ export function ProfileScreenComponent({
 
   const onReportIncident = useCallback(() => {
     setShowActions(false);
-    showToastMessage(isRTL ? 'گزارش تخلف ثبت گردید' : 'Report transmitted to Command');
-  }, [isRTL, showToastMessage]);
+    showToast(isRTL ? 'گزارش تخلف ثبت گردید' : 'Report transmitted to Command');
+  }, [isRTL, showToast]);
 
   const handleAddFriend = useCallback(() => {
     if (existingFriend) {
       updateFriend(existingFriend.id, 'accepted');
-      showToastMessage(isRTL ? 'درخواست دوستی تایید شد' : 'Friend request accepted');
+      showToast(isRTL ? 'درخواست دوستی تایید شد' : 'Friend request accepted');
     } else {
       addFriend(profile.id);
-      showToastMessage(isRTL ? 'درخواست دوستی ارسال شد' : 'Friend request sent');
+      showToast(isRTL ? 'درخواست دوستی ارسال شد' : 'Friend request sent');
     }
     addNotification({
       type: 'friend_request',
@@ -361,7 +349,7 @@ export function ProfileScreenComponent({
     profile.id,
     profile.first_name,
     addNotification,
-    showToastMessage,
+    showToast,
   ]);
 
   const handleOpenActions = useCallback(() => setShowActions(true), []);
@@ -518,8 +506,6 @@ export function ProfileScreenComponent({
           </GlassButton>
         </View>
       </GlassSheet>
-
-      <Toast message={toast} visible={Boolean(toast)} />
     </View>
   );
 }

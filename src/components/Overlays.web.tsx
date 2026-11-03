@@ -292,59 +292,15 @@ export function GlassDialog({
 }
 
 // ============================================
-// TOAST (Transient Toast Message) — Web Platform
+// TOAST (Legacy wrapper for backward-compatibility)
 // ============================================
 export function Toast({
   message,
-  icon = 'CheckCircle2',
   visible,
 }: {
-  message: string;
+  message?: string;
   icon?: IconName;
   visible?: boolean;
 }) {
-  const isVisible = visible !== undefined ? visible : Boolean(message);
-  if (!isVisible || !message) return null;
-
-  const IconComp = getIcon(icon);
-  const content = (
-    <div
-      className="animate-pop"
-      style={{
-        position: 'absolute',
-        top: 24,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 100000,
-        pointerEvents: 'none',
-      }}
-    >
-      <div
-        className="glass-thick glass-specular glass-edge"
-        style={{
-          borderRadius: 16,
-          padding: '12px 18px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          maxWidth: 320,
-          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.45)',
-        }}
-      >
-        <IconComp size={20} color="#22c55e" strokeWidth={2.4} style={{ flexShrink: 0 }} />
-        <span
-          style={{
-            fontSize: 14,
-            fontWeight: 600,
-            color: '#ffffff',
-          }}
-        >
-          {message}
-        </span>
-      </div>
-    </div>
-  );
-
-  const target = getPortalTarget();
-  return target ? createPortal(content, target) : content;
+  return null;
 }

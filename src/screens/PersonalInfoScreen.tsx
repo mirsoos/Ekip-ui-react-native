@@ -14,10 +14,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassButton, GlassInput, GlassSegmented } from '../components/Glass';
-import { Toast } from '../components/Overlays';
 import { allInterests } from '../lib/demoData';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 import type { Gender } from '../types/database';
 
@@ -40,6 +40,7 @@ export function PersonalInfoScreenComponent({
   const { me, updateMe } = useAppData();
   const { colors } = useTheme();
   const { isRTL } = useI18n();
+  const { showToast } = useToast();
 
   const [firstName, setFirstName] = useState(me.first_name);
   const [lastName, setLastName] = useState(me.last_name);
@@ -51,7 +52,6 @@ export function PersonalInfoScreenComponent({
   const [gender, setGender] = useState<Gender>(me.gender ?? 'male');
   const [selectedAvatar, setSelectedAvatar] = useState(me.avatar_url ?? AVATAR_PRESETS[0]);
   const [interests, setInterests] = useState<string[]>(me.interests ?? ['بوردگیم', 'کافه‌گردی']);
-  const [toast, setToast] = useState('');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -85,12 +85,11 @@ export function PersonalInfoScreenComponent({
       avatar_url: selectedAvatar,
       interests,
     });
-    setToast(isRTL ? 'اطلاعات کاربری با موفقیت به‌روزرسانی شد' : 'Dossier updated successfully');
+    showToast(isRTL ? 'اطلاعات کاربری با موفقیت به‌روزرسانی شد' : 'Dossier updated successfully');
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      setToast('');
       onBack();
-    }, 1500);
+    }, 1200);
   }, [
     updateMe,
     firstName,
@@ -284,8 +283,6 @@ export function PersonalInfoScreenComponent({
           </View>
         </View>
       </ScrollView>
-
-      <Toast message={toast} visible={Boolean(toast)} />
     </View>
   );
 }

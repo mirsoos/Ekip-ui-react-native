@@ -51,6 +51,7 @@ import { SwipeNavigationContainer } from './src/components/common/SwipeNavigatio
 import { ScreenTransition } from './src/components/common/ScreenTransition';
 import { ErrorBoundary } from './src/components/common/ErrorBoundary';
 import { I18nProvider, useI18n } from './src/lib/i18n';
+import { ToastProvider } from './src/lib/ToastContext';
 
 export type Screen =
   | { name: 'auth' }
@@ -863,9 +864,11 @@ export default function App() {
       <I18nProvider>
         <ThemeProvider>
           <AppDataProvider>
-            <ErrorBoundary>
-              <MainContent />
-            </ErrorBoundary>
+            <ToastProvider>
+              <ErrorBoundary>
+                <MainContent />
+              </ErrorBoundary>
+            </ToastProvider>
           </AppDataProvider>
         </ThemeProvider>
       </I18nProvider>

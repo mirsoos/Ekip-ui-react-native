@@ -5,11 +5,12 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, BackHandler } fro
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassButton, GlassAvatar, GlassSegmented } from '../components/Glass';
-import { GlassSheet, Toast } from '../components/Overlays';
+import { GlassSheet } from '../components/Overlays';
 import { LiquidGlassToggle } from '../components/common/LiquidGlassToggle';
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 interface PrivacyScreenProps {
@@ -49,6 +50,7 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
   const { addNotification } = useAppData();
   const { colors } = useTheme();
   const { isRTL } = useI18n();
+  const { showToast } = useToast();
 
   const [ghostMode, setGhostMode] = useState(false);
   const [privateProfile, setPrivateProfile] = useState(false);
@@ -63,9 +65,6 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
 
   const [showBlockedSheet, setShowBlockedSheet] = useState(false);
   const [blockedList, setBlockedList] = useState<BlockedUser[]>(INITIAL_BLOCKED_USERS);
-
-  const [toastMessage, setToastMessage] = useState('');
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const Eye = getIcon('Eye');
   const EyeOff = getIcon('EyeOff');
@@ -83,15 +82,8 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
     });
     return () => {
       sub.remove();
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     };
   }, [onBack, showBlockedSheet]);
-
-  const showToast = useCallback((msg: string) => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToastMessage(msg);
-    toastTimerRef.current = setTimeout(() => setToastMessage(''), 2500);
-  }, []);
 
   const handleUnblockUser = (id: string, name: string) => {
     setBlockedList((prev) => prev.filter((u) => u.id !== id));
@@ -451,8 +443,6 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
           )}
         </View>
       </GlassSheet>
-
-      <Toast message={toastMessage} visible={Boolean(toastMessage)} />
     </View>
   );
 }

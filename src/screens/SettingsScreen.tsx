@@ -13,12 +13,13 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassListItem, GlassToggle, GlassButton, GlassAvatar } from '../components/Glass';
-import { GlassSheet, Toast } from '../components/Overlays';
+import { GlassSheet } from '../components/Overlays';
 import { SettingsSection } from '../components/settings/SettingsSection';
 import { SettingsDivider } from '../components/settings/SettingsDivider';
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n, LANGUAGES } from '../lib/i18n';
+import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 export function SettingsScreenComponent({
@@ -50,11 +51,10 @@ export function SettingsScreenComponent({
   const insets = useSafeAreaInsets();
   const { theme, toggle, colors } = useTheme();
   const { language, setLanguage, t, isRTL } = useI18n();
+  const { showToast } = useToast();
   const [showLanguageSheet, setShowLanguageSheet] = useState(false);
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
   const [crashTrigger, setCrashTrigger] = useState(false);
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   if (crashTrigger) {
     setTimeout(() => setCrashTrigger(false), 0);
@@ -76,15 +76,8 @@ export function SettingsScreenComponent({
     });
     return () => {
       sub.remove();
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     };
   }, [onBack, showLanguageSheet, showPremiumSheet]);
-
-  const showToast = useCallback((msg: string) => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToastMessage(msg);
-    toastTimerRef.current = setTimeout(() => setToastMessage(''), 2500);
-  }, []);
 
   const ChevronIcon = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
   const Moon = getIcon('Moon');
@@ -420,9 +413,6 @@ export function SettingsScreenComponent({
           </GlassButton>
         </View>
       </GlassSheet>
-
-      {/* Toast Notification */}
-      <Toast message={toastMessage} visible={Boolean(toastMessage)} />
     </View>
   );
 }

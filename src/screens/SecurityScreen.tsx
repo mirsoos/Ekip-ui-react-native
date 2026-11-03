@@ -12,10 +12,11 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassCard, GlassButton, LiquidGlassToggle } from '../components/Glass';
-import { GlassSheet, Toast } from '../components/Overlays';
+import { GlassSheet } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 interface SecurityScreenProps {
@@ -90,6 +91,7 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
+  const { showToast } = useToast();
 
   const [passkeyRegistered, setPasskeyRegistered] = useState(true);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
@@ -106,8 +108,6 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [showRecoverySheet, setShowRecoverySheet] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const ShieldCheck = getIcon('ShieldCheck');
   const Lock = getIcon('Lock');
@@ -133,15 +133,8 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
     });
     return () => {
       sub.remove();
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     };
   }, [onBack, showPasswordSheet, showRecoverySheet]);
-
-  const showToast = useCallback((msg: string) => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToastMessage(msg);
-    toastTimerRef.current = setTimeout(() => setToastMessage(''), 2600);
-  }, []);
 
   const handleRevokeDevice = (id: string, name: string) => {
     setDevices((prev) => prev.filter((d) => d.id !== id));
@@ -499,8 +492,6 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
           </View>
         </View>
       </GlassSheet>
-
-      <Toast message={toastMessage} visible={Boolean(toastMessage)} />
     </View>
   );
 }

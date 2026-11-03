@@ -368,53 +368,27 @@ export const GlassDialog = React.memo(function GlassDialog({
 });
 
 // ============================================
-// TOAST NOTIFICATION
+// TOAST NOTIFICATION (Legacy wrapper for backward-compatibility)
 // ============================================
 export const Toast = React.memo(function Toast({
   message,
-  icon = 'CheckCircle2',
   visible,
   open,
   onClose,
 }: {
-  message: string;
+  message?: string;
   icon?: IconName;
   visible?: boolean;
   open?: boolean;
   onClose?: () => void;
 }) {
-  const { colors } = useTheme();
-  const IconComp = getIcon(icon);
-
   const isVisible = open !== undefined ? open : visible !== undefined ? visible : Boolean(message);
-
   useEffect(() => {
     if (isVisible && onClose) {
-      const timer = setTimeout(() => onClose(), 2500);
-      return () => clearTimeout(timer);
+      onClose();
     }
   }, [isVisible, onClose]);
-
-  if (!isVisible || !message) return null;
-
-  return (
-    <View style={styles.toastContainer} pointerEvents="none">
-      <View
-        style={[
-          styles.toastBox,
-          {
-            backgroundColor: colors.glassThickBg,
-            borderColor: colors.glassBorderStrong,
-          },
-        ]}
-      >
-        <IconComp size={18} color="#22c55e" strokeWidth={2.4} style={{ marginRight: 8 }} />
-        <Text style={[styles.toastText, { color: colors.textPrimary }]}>
-          {message}
-        </Text>
-      </View>
-    </View>
-  );
+  return null;
 });
 
 const styles = StyleSheet.create({

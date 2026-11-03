@@ -14,7 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassButton } from '../components/Glass';
-import { GlassSheet, Toast } from '../components/Overlays';
+import { GlassSheet } from '../components/Overlays';
 import { getIcon, type IconName } from '../lib/icons';
 import { FloatingGlassHeader } from '../components/common/FloatingGlassHeader';
 import { FrostedGlass } from '../components/FrostedGlass';
@@ -28,6 +28,7 @@ import { EkipJoinModal } from '../components/ekip/EkipJoinModal';
 import { EkipShareSheet } from '../components/ekip/EkipShareSheet';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { useToast } from '../lib/ToastContext';
 import type { Group } from '../types/database';
 
 const categoryIcons: Record<string, IconName> = {
@@ -50,25 +51,12 @@ export function EkipDetailComponent({
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
+  const { showToast } = useToast();
 
   const [showJoinSheet, setShowJoinSheet] = useState(false);
   const [joinMessage, setJoinMessage] = useState('');
   const [showShare, setShowShare] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
-  const [toast, setToast] = useState('');
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const showToastMessage = useCallback((msg: string) => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToast(msg);
-    toastTimerRef.current = setTimeout(() => setToast(''), 2500);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    };
-  }, []);
 
   // پشتیبانی از دکمه Back فیزیکی اندروید
   useEffect(() => {
@@ -145,7 +133,7 @@ export function EkipDetailComponent({
           : `You joined ${group.title}!`,
         icon: 'Users',
       });
-      showToastMessage(isRTL ? 'عضویت در اکیپ با موفقیت انجام شد!' : 'Joined Ekip successfully!');
+      showToast(isRTL ? 'عضویت در اکیپ با موفقیت انجام شد!' : 'Joined Ekip successfully!');
     } else {
       addRequest({
         id: `r-${Date.now()}`,
@@ -157,18 +145,18 @@ export function EkipDetailComponent({
         group,
         profile: me,
       });
-      showToastMessage(isRTL ? 'درخواست عضویت برای میزبان اکیپ ارسال شد' : 'Join request sent to the host');
+      showToast(isRTL ? 'درخواست عضویت برای میزبان اکیپ ارسال شد' : 'Join request sent to the host');
     }
     setShowJoinSheet(false);
-  }, [group, joinMessage, me, isRTL, addRequest, addNotification, showToastMessage]);
+  }, [group, joinMessage, me, isRTL, addRequest, addNotification, showToast]);
 
   const handleCancelRequest = useCallback(() => {
     if (myRequest) {
       updateRequest(myRequest.id, 'rejected');
-      showToastMessage(isRTL ? 'درخواست عضویت لغو شد' : 'Join request cancelled');
+      showToast(isRTL ? 'درخواست عضویت لغو شد' : 'Join request cancelled');
       setShowCancel(false);
     }
-  }, [myRequest, updateRequest, isRTL, showToastMessage]);
+  }, [myRequest, updateRequest, isRTL, showToast]);
 
   const handleStartChat = useCallback(() => {
     const existing = conversations.find((c) => c.group_id === group.id);
@@ -350,7 +338,7 @@ export function EkipDetailComponent({
         groupId={group.id}
         onClose={() => setShowShare(false)}
         onCopy={() => {
-          showToastMessage(isRTL ? 'لینک اکیپ در کلیپ‌بورد کپی شد' : 'Coordinates copied to clipboard');
+          showToast(isRTL ? 'لینک اکیپ در کلیپ‌بورد کپی شد' : 'Coordinates copied to clipboard');
           setShowShare(false);
         }}
       />
@@ -382,8 +370,6 @@ export function EkipDetailComponent({
           </GlassButton>
         </View>
       </GlassSheet>
-
-      <Toast message={toast} visible={Boolean(toast)} />
     </View>
   );
 }

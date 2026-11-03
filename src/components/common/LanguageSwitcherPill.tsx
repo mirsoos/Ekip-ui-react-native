@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { FrostedGlass } from '../FrostedGlass';
-import { GlassSheet, Toast } from '../Overlays';
+import { GlassSheet } from '../Overlays';
 import { GlassCard } from '../Glass';
 import { useI18n, LANGUAGES } from '../../lib/i18n';
 import { useTheme } from '../../lib/theme';
+import { useToast } from '../../lib/ToastContext';
 import { getIcon } from '../../lib/icons';
 
 export interface LanguageSwitcherButtonProps {
@@ -14,8 +15,8 @@ export interface LanguageSwitcherButtonProps {
 export function LanguageSwitcherPillComponent({ style }: LanguageSwitcherButtonProps) {
   const { language, setLanguage, t, isRTL } = useI18n();
   const { colors, isDark } = useTheme();
+  const { showToast } = useToast();
   const [showLanguageSheet, setShowLanguageSheet] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
 
   const GlobeIcon = getIcon('Globe');
   const Check = getIcon('Check');
@@ -62,8 +63,7 @@ export function LanguageSwitcherPillComponent({ style }: LanguageSwitcherButtonP
                 onPress={() => {
                   setLanguage(lang.code);
                   setShowLanguageSheet(false);
-                  setToastMessage(t('settings.langChanged', { lang: lang.nativeName }));
-                  setTimeout(() => setToastMessage(''), 2200);
+                  showToast(t('settings.langChanged', { lang: lang.nativeName }));
                 }}
               >
                 <GlassCard
@@ -100,11 +100,6 @@ export function LanguageSwitcherPillComponent({ style }: LanguageSwitcherButtonP
           })}
         </View>
       </GlassSheet>
-
-      <Toast
-        visible={Boolean(toastMessage)}
-        message={toastMessage}
-      />
     </>
   );
 }

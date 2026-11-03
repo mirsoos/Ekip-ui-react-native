@@ -4,10 +4,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, BackHandler } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassCard, GlassButton } from '../components/Glass';
-import { Toast } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 interface PlansScreenProps {
@@ -18,12 +18,10 @@ export function PlansScreenComponent({ onBack }: PlansScreenProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { isRTL } = useI18n();
+  const { showToast } = useToast();
   const Crown = getIcon('Crown');
   const Check = getIcon('Check');
   const Sparkles = getIcon('Sparkles');
-
-  const [toastMessage, setToastMessage] = useState('');
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -32,15 +30,8 @@ export function PlansScreenComponent({ onBack }: PlansScreenProps) {
     });
     return () => {
       sub.remove();
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     };
   }, [onBack]);
-
-  const showToast = useCallback((msg: string) => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToastMessage(msg);
-    toastTimerRef.current = setTimeout(() => setToastMessage(''), 2500);
-  }, []);
 
   const plans = isRTL
     ? [
@@ -269,8 +260,6 @@ export function PlansScreenComponent({ onBack }: PlansScreenProps) {
           ))}
         </View>
       </ScrollView>
-
-      <Toast message={toastMessage} visible={Boolean(toastMessage)} />
     </View>
   );
 }

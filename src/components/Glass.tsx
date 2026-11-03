@@ -21,11 +21,9 @@ import { darkColors, lightColors, useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { FrostedGlass } from './FrostedGlass';
 import { LiquidGlassToggle, type LiquidGlassToggleProps } from './common/LiquidGlassToggle';
+import { SubscriptionBorder } from './common/SubscriptionBorder';
 import type { Profile, SubscriptionTier } from '../types/database';
 export { LiquidGlassToggle, type LiquidGlassToggleProps };
-
-const BORDER_PREMIUM = require('../../assets/borders/Premium.svg');
-const BORDER_BUSINESS = require('../../assets/borders/bsuiness-premium.svg');
 
 export function getUserTier(user?: Partial<Profile> | null): SubscriptionTier {
   if (!user) return 'free';
@@ -709,12 +707,7 @@ export function GlassAvatarComponent({
   const isVerified = verified !== undefined ? verified : (user?.is_verified ?? false);
   const isOnline = online === true;
 
-  const borderSource =
-    tier === 'business_premium'
-      ? BORDER_BUSINESS
-      : tier === 'premium'
-      ? BORDER_PREMIUM
-      : null;
+  const hasSubscriptionBorder = tier === 'business_premium' || tier === 'premium';
 
   const borderScale = 1.38;
   const borderSize = Math.round(size * borderScale);
@@ -734,7 +727,7 @@ export function GlassAvatarComponent({
             width: size,
             height: size,
             borderRadius: size / 2,
-            borderWidth: borderSource ? 0 : ring ? 1.5 : 0,
+            borderWidth: hasSubscriptionBorder ? 0 : ring ? 1.5 : 0,
             borderColor: colors.glassBorderStrong,
           },
         ]}
@@ -760,7 +753,7 @@ export function GlassAvatarComponent({
       </View>
 
       {/* Subscription Border Frame Overlay */}
-      {borderSource && (
+      {hasSubscriptionBorder && (
         <View
           pointerEvents="none"
           style={{
@@ -772,11 +765,7 @@ export function GlassAvatarComponent({
             zIndex: 10,
           }}
         >
-          <Image
-            source={borderSource}
-            style={{ width: '100%', height: '100%' }}
-            resizeMode="contain"
-          />
+          <SubscriptionBorder tier={tier} size={borderSize} />
         </View>
       )}
 

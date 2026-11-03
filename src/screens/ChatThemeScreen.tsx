@@ -5,9 +5,9 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, BackHandler } fro
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useChatTheme, useTheme, CHAT_THEMES, type ChatThemeId } from '../lib/theme';
 import { GlassCard, GlassAvatar } from '../components/Glass';
-import { Toast } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
 import { useI18n } from '../lib/i18n';
+import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 interface ChatThemeScreenProps {
@@ -19,8 +19,7 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
   const { colors, isDark } = useTheme();
   const { chatTheme, setChatTheme } = useChatTheme();
   const { isRTL } = useI18n();
-  const [toastMsg, setToastMsg] = useState('');
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { showToast } = useToast();
 
   const Check = getIcon('Check');
   const Palette = getIcon('Palette');
@@ -34,22 +33,19 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
     });
     return () => {
       sub.remove();
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     };
   }, [onBack]);
 
   const handleSelectTheme = useCallback(
     (id: ChatThemeId) => {
       setChatTheme(id);
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-      setToastMsg(
+      showToast(
         isRTL
           ? `تم چت به «${CHAT_THEMES[id].name}» تغییر یافت`
           : `Chat theme changed to ${CHAT_THEMES[id].name}`
       );
-      toastTimerRef.current = setTimeout(() => setToastMsg(''), 2400);
     },
-    [isRTL, setChatTheme]
+    [isRTL, setChatTheme, showToast]
   );
 
   const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);
@@ -199,8 +195,6 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
           })}
         </View>
       </ScrollView>
-
-      <Toast message={toastMsg} visible={Boolean(toastMsg)} />
     </View>
   );
 }

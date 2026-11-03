@@ -18,10 +18,11 @@ import {
   GlassBadgeIcon,
   GlassSegmented,
 } from '../components/Glass';
-import { GlassSheet, Toast } from '../components/Overlays';
+import { GlassSheet } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 interface VerificationScreenProps {
@@ -42,14 +43,13 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
   const { me, updateMe, addNotification } = useAppData();
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
+  const { showToast } = useToast();
 
   const [isVerified, setIsVerified] = useState(me.is_verified ?? true);
   const [isIdentityVerified, setIsIdentityVerified] = useState(me.is_identity_verified ?? true);
 
   const [showDocModal, setShowDocModal] = useState(false);
   const [showFaceModal, setShowFaceModal] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const [selectedDocType, setSelectedDocType] = useState<DocumentType>('national_id');
   const [docDetails, setDocDetails] = useState<DocumentDetails>({
@@ -61,6 +61,7 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
 
   const [faceScanStep, setFaceScanStep] = useState<'idle' | 'scanning' | 'smiling' | 'success'>('idle');
   const [docScanning, setDocScanning] = useState(false);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const Check = getIcon('Check');
   const Lock = getIcon('Lock');
@@ -89,12 +90,6 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
       timersRef.current.forEach((t) => clearTimeout(t));
     };
   }, [onBack, showDocModal, showFaceModal]);
-
-  const showToast = useCallback((msg: string) => {
-    setToastMessage(msg);
-    const t = setTimeout(() => setToastMessage(''), 3000);
-    timersRef.current.push(t);
-  }, []);
 
   const handleToggleVerification = () => {
     const newStatus = !isVerified;
@@ -549,8 +544,6 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
           )}
         </View>
       </GlassSheet>
-
-      <Toast message={toastMessage} visible={Boolean(toastMessage)} />
     </View>
   );
 }

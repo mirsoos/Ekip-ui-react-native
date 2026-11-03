@@ -6,13 +6,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassEmpty, GlassBadgeIcon, GlassButton } from '../components/Glass';
-import { Toast } from '../components/Overlays';
 import { StatBox } from '../components/common/StatBox';
 import { RequestsModal } from '../components/activity/RequestsModal';
 import { MembersSheet } from '../components/activity/MembersSheet';
 import { getIcon, Icons, type IconName } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
+import { useToast } from '../lib/ToastContext';
 import { getMultiRowContentPaddingTop } from '../lib/headerLayout';
 import type { Group, GroupMember, GroupRequest } from '../types/database';
 
@@ -46,6 +46,7 @@ export function ActivityScreenComponent({
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
+  const { showToast } = useToast();
 
   const [internalTab] = useState('created');
   const activeTab = onChangeTab ? tab : internalTab;
@@ -54,20 +55,6 @@ export function ActivityScreenComponent({
   const [requestsGroupId, setRequestsGroupId] = useState<string | null>(null);
   const [showMembers, setShowMembers] = useState(false);
   const [membersGroupId, setMembersGroupId] = useState<string | null>(null);
-  const [toast, setToast] = useState('');
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const showToastMessage = useCallback((msg: string) => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToast(msg);
-    toastTimerRef.current = setTimeout(() => setToast(''), 2500);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    };
-  }, []);
 
   const {
     groupsById,
@@ -124,17 +111,17 @@ export function ActivityScreenComponent({
           : `You accepted ${profileName} into ${groupTitle}.`,
         icon: 'CheckCircle2',
       });
-      showToastMessage(isRTL ? 'درخواست پذیرفته شد' : 'Request accepted');
+      showToast(isRTL ? 'درخواست پذیرفته شد' : 'Request accepted');
     },
-    [addNotification, isRTL, updateRequest, showToastMessage]
+    [addNotification, isRTL, updateRequest, showToast]
   );
 
   const handleReject = useCallback(
     (reqId: string) => {
       updateRequest(reqId, 'rejected');
-      showToastMessage(isRTL ? 'درخواست رد شد' : 'Request rejected');
+      showToast(isRTL ? 'درخواست رد شد' : 'Request rejected');
     },
-    [isRTL, updateRequest, showToastMessage]
+    [isRTL, updateRequest, showToast]
   );
 
   const openRequests = useCallback((groupId: string) => {
@@ -531,9 +518,6 @@ export function ActivityScreenComponent({
         members={activeGroupMembers}
         onOpenProfile={onOpenProfile}
       />
-
-      {/* Toast Notification */}
-      <Toast message={toast} visible={Boolean(toast)} />
     </View>
   );
 }
