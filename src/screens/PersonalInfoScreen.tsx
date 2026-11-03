@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
+// --- START OF FILE PersonalInfoScreen.tsx ---
+
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  BackHandler,
+  Keyboard,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
-import { GlassCard, GlassButton, GlassInput, GlassSegmented } from '../components/Glass';
-import { ScreenHeader } from '../components/common/ScreenHeader';
+import { GlassButton, GlassInput, GlassSegmented } from '../components/Glass';
 import { Toast } from '../components/Overlays';
 import { allInterests } from '../lib/demoData';
 import { useTheme } from '../lib/theme';
@@ -22,7 +32,6 @@ const AVATAR_PRESETS = [
 
 export function PersonalInfoScreenComponent({
   onBack,
-  onOpenVerification,
 }: {
   onBack: () => void;
   onOpenVerification?: () => void;
@@ -30,7 +39,7 @@ export function PersonalInfoScreenComponent({
   const insets = useSafeAreaInsets();
   const { me, updateMe } = useAppData();
   const { colors } = useTheme();
-  const { isRTL, t } = useI18n();
+  const { isRTL } = useI18n();
 
   const [firstName, setFirstName] = useState(me.first_name);
   const [lastName, setLastName] = useState(me.last_name);
@@ -43,14 +52,27 @@ export function PersonalInfoScreenComponent({
   const [selectedAvatar, setSelectedAvatar] = useState(me.avatar_url ?? AVATAR_PRESETS[0]);
   const [interests, setInterests] = useState<string[]>(me.interests ?? ['بوردگیم', 'کافه‌گردی']);
   const [toast, setToast] = useState('');
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const toggleInterest = (tag: string) => {
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onBack();
+      return true;
+    });
+    return () => {
+      sub.remove();
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [onBack]);
+
+  const toggleInterest = useCallback((tag: string) => {
     setInterests((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+      prev.includes(tag) ? prev.filter((item) => item !== tag) : [...prev, tag]
     );
-  };
+  }, []);
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
+    Keyboard.dismiss();
     updateMe({
       first_name: firstName,
       last_name: lastName,
@@ -58,22 +80,57 @@ export function PersonalInfoScreenComponent({
       job: job || null,
       city: city || null,
       bio: bio || null,
-      age: parseInt(age) || null,
+      age: parseInt(age, 10) || null,
       gender,
       avatar_url: selectedAvatar,
       interests,
     });
     setToast(isRTL ? 'اطلاعات کاربری با موفقیت به‌روزرسانی شد' : 'Dossier updated successfully');
-    setTimeout(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
       setToast('');
       onBack();
     }, 1500);
-  };
+  }, [
+    updateMe,
+    firstName,
+    lastName,
+    username,
+    job,
+    city,
+    bio,
+    age,
+    gender,
+    selectedAvatar,
+    interests,
+    isRTL,
+    onBack,
+  ]);
+
+  const genderOptions = useMemo(
+    () =>
+      isRTL
+        ? [
+            { label: 'سایر', value: 'other' },
+            { label: 'خانم', value: 'female' },
+            { label: 'آقا', value: 'male' },
+          ]
+        : [
+            { label: 'Male', value: 'male' },
+            { label: 'Female', value: 'female' },
+            { label: 'Other', value: 'other' },
+          ],
+    [isRTL]
+  );
+
+  const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);
+  const textAlign = isRTL ? ('right' as const) : ('left' as const);
 
   return (
     <View style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={[
           styles.scrollContent,
           {
@@ -84,13 +141,13 @@ export function PersonalInfoScreenComponent({
       >
         {/* Avatar Preset Selector */}
         <View style={{ gap: 8 }}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
+          <Text style={[styles.fieldLabel, { color: colors.textSecondary, textAlign }]}>
             {isRTL ? 'تصویر پروفایل' : 'Operator Avatar'}
           </Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 10, paddingVertical: 4 }}
+            contentContainerStyle={{ gap: 10, paddingVertical: 4, flexDirection: rowDir, flexGrow: 1 }}
           >
             {AVATAR_PRESETS.map((url) => {
               const isSelected = selectedAvatar === url;
@@ -113,7 +170,7 @@ export function PersonalInfoScreenComponent({
 
         {/* Inputs */}
         <View style={{ gap: 12, marginTop: 14 }}>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View style={{ flexDirection: rowDir, gap: 10 }}>
             <View style={{ flex: 1 }}>
               <GlassInput
                 placeholder={isRTL ? 'نام' : 'First Name'}
@@ -144,7 +201,7 @@ export function PersonalInfoScreenComponent({
             onChangeText={setJob}
           />
 
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View style={{ flexDirection: rowDir, gap: 10 }}>
             <View style={{ flex: 2 }}>
               <GlassInput
                 icon="MapPin"
@@ -165,7 +222,9 @@ export function PersonalInfoScreenComponent({
           </View>
 
           <GlassInput
-            placeholder={isRTL ? 'بیوگرافی و معرفی کوتاه...' : 'Operational Bio & Clearance Summary...'}
+            placeholder={
+              isRTL ? 'بیوگرافی و معرفی کوتاه...' : 'Operational Bio & Clearance Summary...'
+            }
             value={bio}
             onChangeText={setBio}
             multiline
@@ -173,15 +232,11 @@ export function PersonalInfoScreenComponent({
           />
 
           <View style={{ marginTop: 4 }}>
-            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary, textAlign }]}>
               {isRTL ? 'جنسیت' : 'Gender'}
             </Text>
             <GlassSegmented
-              options={[
-                { label: isRTL ? 'آقا' : 'Male', value: 'male' },
-                { label: isRTL ? 'خانم' : 'Female', value: 'female' },
-                { label: isRTL ? 'سایر' : 'Other', value: 'other' },
-              ]}
+              options={genderOptions}
               value={gender ?? 'male'}
               onChange={(v) => setGender(v as Gender)}
             />
@@ -189,10 +244,10 @@ export function PersonalInfoScreenComponent({
 
           {/* Interests */}
           <View style={{ marginTop: 10 }}>
-            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary, textAlign }]}>
               {isRTL ? 'مهارت‌ها و حوزه‌های فعالیت' : 'Operational Disciplines & Skills'}
             </Text>
-            <View style={styles.chipsWrap}>
+            <View style={[styles.chipsWrap, { flexDirection: rowDir }]}>
               {allInterests.map((interest) => {
                 const active = interests.includes(interest);
                 return (

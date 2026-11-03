@@ -1,12 +1,21 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+// --- START OF FILE SettingsScreen.tsx ---
+
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  BackHandler,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassCard, GlassListItem, GlassToggle, GlassButton, GlassAvatar } from '../components/Glass';
 import { GlassSheet, Toast } from '../components/Overlays';
 import { SettingsSection } from '../components/settings/SettingsSection';
 import { SettingsDivider } from '../components/settings/SettingsDivider';
-// ScreenHeader removed - rendered via SettingsHeader outside transition container
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n, LANGUAGES } from '../lib/i18n';
@@ -45,24 +54,56 @@ export function SettingsScreenComponent({
   const [showPremiumSheet, setShowPremiumSheet] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [crashTrigger, setCrashTrigger] = useState(false);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   if (crashTrigger) {
     setTimeout(() => setCrashTrigger(false), 0);
     throw new Error('Simulated test error for ErrorBoundary verification.');
   }
 
-  const ChevronRight = getIcon('ChevronRight');
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (showLanguageSheet) {
+        setShowLanguageSheet(false);
+        return true;
+      }
+      if (showPremiumSheet) {
+        setShowPremiumSheet(false);
+        return true;
+      }
+      onBack();
+      return true;
+    });
+    return () => {
+      sub.remove();
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, [onBack, showLanguageSheet, showPremiumSheet]);
+
+  const showToast = useCallback((msg: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToastMessage(msg);
+    toastTimerRef.current = setTimeout(() => setToastMessage(''), 2500);
+  }, []);
+
+  const ChevronIcon = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
   const Moon = getIcon('Moon');
   const Sun = getIcon('Sun');
   const Crown = getIcon('Crown');
   const Check = getIcon('Check');
 
+  const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);
+  const textAlign = isRTL ? ('right' as const) : ('left' as const);
+  const textSpacing = {
+    marginLeft: isRTL ? 0 : 12,
+    marginRight: isRTL ? 12 : 0,
+  };
+
   return (
     <View style={styles.container}>
-      
-
       <ScrollView
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews={Platform.OS === 'android'}
         contentContainerStyle={[
           styles.scrollContent,
           {
@@ -73,40 +114,47 @@ export function SettingsScreenComponent({
       >
         {/* Profile Card Shortcut */}
         <TouchableOpacity activeOpacity={0.8} onPress={onOpenPersonalInfo}>
-          <GlassCard style={styles.profileCard}>
+          <GlassCard style={[styles.profileCard, { flexDirection: rowDir }]}>
             <GlassAvatar
               user={me}
               src={me.avatar_url}
               name={`${me.first_name} ${me.last_name}`}
               size={54}
             />
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={[styles.profileName, { color: colors.textPrimary }]} numberOfLines={1}>
+            <View style={[{ flex: 1 }, textSpacing]}>
+              <Text
+                style={[styles.profileName, { color: colors.textPrimary, textAlign }]}
+                numberOfLines={1}
+              >
                 {me.first_name} {me.last_name}
               </Text>
-              <Text style={[styles.profileHandle, { color: colors.textTertiary }]}>
+              <Text style={[styles.profileHandle, { color: colors.textTertiary, textAlign }]}>
                 @{me.username} · {me.job}
               </Text>
             </View>
-            <ChevronRight size={18} color={colors.textTertiary} />
+            <ChevronIcon size={18} color={colors.textTertiary} />
           </GlassCard>
         </TouchableOpacity>
 
         {/* Tier-1 / Ekip Plus Banner */}
-        <TouchableOpacity activeOpacity={0.85} onPress={() => setShowPremiumSheet(true)} style={{ marginTop: 14 }}>
-          <GlassCard glow style={styles.plusCard}>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => setShowPremiumSheet(true)}
+          style={{ marginTop: 14 }}
+        >
+          <GlassCard glow style={[styles.plusCard, { flexDirection: rowDir }]}>
             <View style={styles.plusIconCircle}>
               <Crown size={22} color="#f59e0b" strokeWidth={2.4} />
             </View>
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={[styles.plusTitle, { color: colors.textPrimary }]}>
+            <View style={[{ flex: 1 }, textSpacing]}>
+              <Text style={[styles.plusTitle, { color: colors.textPrimary, textAlign }]}>
                 {t('settings.plusTitle')}
               </Text>
-              <Text style={[styles.plusSub, { color: colors.textSecondary }]}>
+              <Text style={[styles.plusSub, { color: colors.textSecondary, textAlign }]}>
                 {t('settings.plusSub')}
               </Text>
             </View>
-            <ChevronRight size={18} color={colors.textTertiary} />
+            <ChevronIcon size={18} color={colors.textTertiary} />
           </GlassCard>
         </TouchableOpacity>
 
@@ -132,7 +180,7 @@ export function SettingsScreenComponent({
                 right={
                   <View style={styles.verifiedBadge}>
                     <Text style={styles.verifiedText}>
-                      {me.is_verified ? t('common.verified') : 'Pending'}
+                      {me.is_verified ? t('common.verified') : isRTL ? 'در انتظار' : 'Pending'}
                     </Text>
                   </View>
                 }
@@ -151,8 +199,8 @@ export function SettingsScreenComponent({
               <GlassListItem
                 icon="Fingerprint"
                 iconBg="rgba(16, 185, 129, 0.2)"
-                title="Security & 2FA"
-                subtitle="Cryptographic passkeys & sessions"
+                title={isRTL ? 'امنیت و ورود دو مرحله‌ای' : 'Security & 2FA'}
+                subtitle={isRTL ? 'گذرواژه، کلیدهای امنیتی و نشست‌های فعال' : 'Cryptographic passkeys & sessions'}
                 onPress={onOpenSecurity}
                 showChevron
               />
@@ -203,8 +251,8 @@ export function SettingsScreenComponent({
               <SettingsDivider />
 
               {/* Dark mode toggle */}
-              <View style={styles.toggleRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+              <View style={[styles.toggleRow, { flexDirection: rowDir }]}>
+                <View style={{ flexDirection: rowDir, alignItems: 'center', flex: 1 }}>
                   <View style={[styles.iconBox, { backgroundColor: 'rgba(99, 102, 241, 0.2)' }]}>
                     {theme === 'dark' ? (
                       <Moon size={18} color="#ffffff" strokeWidth={2.2} />
@@ -212,11 +260,11 @@ export function SettingsScreenComponent({
                       <Sun size={18} color="#ffffff" strokeWidth={2.2} />
                     )}
                   </View>
-                  <View style={{ marginLeft: 12 }}>
-                    <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>
+                  <View style={[{ flex: 1 }, textSpacing]}>
+                    <Text style={[styles.rowTitle, { color: colors.textPrimary, textAlign }]}>
                       {t('settings.darkMode')}
                     </Text>
-                    <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
+                    <Text style={[styles.rowSub, { color: colors.textSecondary, textAlign }]}>
                       {t('settings.darkModeSub')}
                     </Text>
                   </View>
@@ -242,7 +290,9 @@ export function SettingsScreenComponent({
                     icon="Compass"
                     iconBg="rgba(244, 114, 182, 0.2)"
                     title={isRTL ? 'تور و راهنمای برنامه' : 'App Tour & Onboarding'}
-                    subtitle={isRTL ? 'مشاهده اسلایدهای راهنمای اکیپ' : 'View the 4 introductory slides'}
+                    subtitle={
+                      isRTL ? 'مشاهده اسلایدهای راهنمای اکیپ' : 'View the 4 introductory slides'
+                    }
                     onPress={onOpenOnboarding}
                     showChevron
                   />
@@ -287,7 +337,7 @@ export function SettingsScreenComponent({
                 activeOpacity={0.8}
                 onPress={() => {
                   setLanguage(lang.code);
-                  setToastMessage(t('settings.langChanged', { lang: lang.nativeName }));
+                  showToast(t('settings.langChanged', { lang: lang.nativeName }));
                   setShowLanguageSheet(false);
                 }}
               >
@@ -295,6 +345,7 @@ export function SettingsScreenComponent({
                   variant={isSelected ? 'thick' : 'thin'}
                   style={[
                     styles.langOptionCard,
+                    { flexDirection: rowDir },
                     isSelected && {
                       borderColor: '#f472b6',
                       borderWidth: 1.5,
@@ -302,7 +353,13 @@ export function SettingsScreenComponent({
                     },
                   ]}
                 >
-                  <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 12 }}>
+                  <View
+                    style={{
+                      flexDirection: rowDir,
+                      alignItems: 'center',
+                      gap: 12,
+                    }}
+                  >
                     <Text style={{ fontSize: 24 }}>{lang.flag}</Text>
                     <View style={{ alignItems: isRTL ? 'flex-end' : 'flex-start' }}>
                       <Text style={[styles.langOptionTitle, { color: colors.textPrimary }]}>
@@ -330,17 +387,36 @@ export function SettingsScreenComponent({
       <GlassSheet
         open={showPremiumSheet}
         onClose={() => setShowPremiumSheet(false)}
-        title="Manage Subscription"
+        title={isRTL ? 'مدیریت اشتراک ویژه' : 'Manage Subscription'}
       >
         <View style={{ gap: 14, paddingVertical: 10 }}>
-          <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20 }}>
-            Your Tier-1 Operational Plus clearance is active with unrestricted radar access, biometric prioritization, and custom holographic styles.
+          <Text
+            style={{
+              fontSize: 14,
+              color: colors.textSecondary,
+              lineHeight: 20,
+              textAlign,
+            }}
+          >
+            {isRTL
+              ? 'اشتراک ویژه اکیپ‌پلاس شما فعال است و به تمامی امکانات پیشرفته، اولویت نمایش و استایل‌های اختصاصی دسترسی دارید.'
+              : 'Your Tier-1 Operational Plus clearance is active with unrestricted radar access, biometric prioritization, and custom holographic styles.'}
           </Text>
-          <GlassButton fullWidth onPress={() => { setShowPremiumSheet(false); onOpenPlans(); }}>
-            View All Tiers & Plans
+          <GlassButton
+            fullWidth
+            onPress={() => {
+              setShowPremiumSheet(false);
+              onOpenPlans();
+            }}
+          >
+            {isRTL ? 'مشاهده پلن‌ها و اشتراک‌ها' : 'View All Tiers & Plans'}
           </GlassButton>
-          <GlassButton fullWidth variant="secondary" onPress={() => setShowPremiumSheet(false)}>
-            Close
+          <GlassButton
+            fullWidth
+            variant="secondary"
+            onPress={() => setShowPremiumSheet(false)}
+          >
+            {isRTL ? 'بستن' : 'Close'}
           </GlassButton>
         </View>
       </GlassSheet>
@@ -444,7 +520,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
-    marginRight: 2,
+    marginHorizontal: 2,
   },
   langText: {
     color: '#3b82f6',

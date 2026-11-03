@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+// --- START OF FILE PrivacyScreen.tsx ---
+
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, BackHandler } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
-import { GlassCard, GlassButton, GlassBackButton, GlassAvatar, GlassSegmented } from '../components/Glass';
+import { GlassCard, GlassButton, GlassAvatar, GlassSegmented } from '../components/Glass';
 import { GlassSheet, Toast } from '../components/Overlays';
 import { LiquidGlassToggle } from '../components/common/LiquidGlassToggle';
 import { getIcon } from '../lib/icons';
+import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
@@ -44,6 +47,7 @@ const INITIAL_BLOCKED_USERS: BlockedUser[] = [
 export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
   const insets = useSafeAreaInsets();
   const { addNotification } = useAppData();
+  const { colors } = useTheme();
   const { isRTL } = useI18n();
 
   const [ghostMode, setGhostMode] = useState(false);
@@ -61,16 +65,33 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
   const [blockedList, setBlockedList] = useState<BlockedUser[]>(INITIAL_BLOCKED_USERS);
 
   const [toastMessage, setToastMessage] = useState('');
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const Eye = getIcon('Eye');
   const EyeOff = getIcon('EyeOff');
   const Ban = getIcon('Ban');
   const ChevronRight = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
 
-  const showToast = (msg: string) => {
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (showBlockedSheet) {
+        setShowBlockedSheet(false);
+        return true;
+      }
+      onBack();
+      return true;
+    });
+    return () => {
+      sub.remove();
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, [onBack, showBlockedSheet]);
+
+  const showToast = useCallback((msg: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 2500);
-  };
+    toastTimerRef.current = setTimeout(() => setToastMessage(''), 2500);
+  }, []);
 
   const handleUnblockUser = (id: string, name: string) => {
     setBlockedList((prev) => prev.filter((u) => u.id !== id));
@@ -78,9 +99,50 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
     addNotification({
       type: 'system',
       title: isRTL ? 'رفع مسدودی کاربر' : 'Operator Unblocked',
-      body: isRTL ? `محدودیت دسترسی ${name} برداشته شد.` : `${name} was removed from your restriction blacklist.`,
+      body: isRTL
+        ? `محدودیت دسترسی ${name} برداشته شد.`
+        : `${name} was removed from your restriction blacklist.`,
       icon: 'UserCheck',
     });
+  };
+
+  const dmOptions = useMemo(
+    () =>
+      isRTL
+        ? [
+            { label: 'دوستان', value: 'friends', icon: 'Heart' as const },
+            { label: 'دوستانِ دوستان', value: 'friends_of_friends', icon: 'Users' as const },
+            { label: 'همه', value: 'everyone', icon: 'Globe' as const },
+          ]
+        : [
+            { label: 'Everyone', value: 'everyone', icon: 'Globe' as const },
+            { label: 'Mutuals', value: 'friends_of_friends', icon: 'Users' as const },
+            { label: 'Friends', value: 'friends', icon: 'Heart' as const },
+          ],
+    [isRTL]
+  );
+
+  const inviteOptions = useMemo(
+    () =>
+      isRTL
+        ? [
+            { label: 'دوستان', value: 'friends', icon: 'UserCheck' as const },
+            { label: 'تاییدشده‌ها', value: 'verified', icon: 'Award' as const },
+            { label: 'همه', value: 'everyone', icon: 'Globe' as const },
+          ]
+        : [
+            { label: 'Everyone', value: 'everyone', icon: 'Globe' as const },
+            { label: 'Verified', value: 'verified', icon: 'Award' as const },
+            { label: 'Friends', value: 'friends', icon: 'UserCheck' as const },
+          ],
+    [isRTL]
+  );
+
+  const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);
+  const textAlign = isRTL ? ('right' as const) : ('left' as const);
+  const textSpacing = {
+    marginLeft: isRTL ? 0 : 12,
+    marginRight: isRTL ? 12 : 0,
   };
 
   return (
@@ -95,15 +157,26 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
       >
         {/* Tactical Ghost Mode Hero */}
         <GlassCard variant="thick" style={styles.ghostCard}>
-          <View style={styles.ghostHeader}>
-            <View style={[styles.iconBox, { backgroundColor: ghostMode ? 'rgba(236,72,153,0.2)' : 'rgba(255,255,255,0.08)' }]}>
-              {ghostMode ? <EyeOff size={22} color="#ec4899" /> : <Eye size={22} color="#fff" />}
+          <View style={[styles.ghostHeader, { flexDirection: rowDir }]}>
+            <View
+              style={[
+                styles.iconBox,
+                {
+                  backgroundColor: ghostMode ? 'rgba(236,72,153,0.2)' : colors.glassThinBg,
+                },
+              ]}
+            >
+              {ghostMode ? (
+                <EyeOff size={22} color="#ec4899" />
+              ) : (
+                <Eye size={22} color={colors.textPrimary} />
+              )}
             </View>
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.ghostTitle}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.ghostTitle, { color: colors.textPrimary, textAlign }]}>
                 {isRTL ? 'حالت مخفی (Ghost Mode)' : 'Incognito Mode'}
               </Text>
-              <Text style={styles.ghostDesc}>
+              <Text style={[styles.ghostDesc, { color: colors.textSecondary, textAlign }]}>
                 {isRTL
                   ? 'مشاهده اکیپ‌ها بدون نمایش وضعیت آنلاین به سایر کاربران'
                   : 'Browse Ekips without showing your online presence'}
@@ -113,7 +186,15 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
               checked={ghostMode}
               onChange={(val) => {
                 setGhostMode(val);
-                showToast(val ? (isRTL ? 'حالت مخفی فعال شد' : 'Incognito activated') : (isRTL ? 'حالت مخفی غیرفعال شد' : 'Incognito deactivated'));
+                showToast(
+                  val
+                    ? isRTL
+                      ? 'حالت مخفی فعال شد'
+                      : 'Incognito activated'
+                    : isRTL
+                    ? 'حالت مخفی غیرفعال شد'
+                    : 'Incognito deactivated'
+                );
               }}
               size="sm"
             />
@@ -121,17 +202,19 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
         </GlassCard>
 
         {/* Visibility */}
-        <Text style={styles.sectionHeading}>
+        <Text style={[styles.sectionHeading, { color: colors.textTertiary, textAlign }]}>
           {isRTL ? 'قابلیت مشاهده و حریم خصوصی' : 'VISIBILITY & PRIVACY'}
         </Text>
         <GlassCard style={styles.cardSection}>
-          <View style={styles.settingRow}>
-            <View style={{ flex: 1, marginRight: isRTL ? 0 : 12, marginLeft: isRTL ? 12 : 0 }}>
-              <Text style={styles.settingTitle}>
+          <View style={[styles.settingRow, { flexDirection: rowDir }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary, textAlign }]}>
                 {isRTL ? 'پروفایل خصوصی' : 'Private Profile'}
               </Text>
-              <Text style={styles.settingDesc}>
-                {isRTL ? 'فقط دوستان و اعضای اکیپ مشترک اطلاعات شما را ببینند' : 'Only friends and shared Ekip members see full info'}
+              <Text style={[styles.settingDesc, { color: colors.textSecondary, textAlign }]}>
+                {isRTL
+                  ? 'فقط دوستان و اعضای اکیپ مشترک اطلاعات شما را ببینند'
+                  : 'Only friends and shared Ekip members see full info'}
               </Text>
             </View>
             <LiquidGlassToggle
@@ -141,15 +224,17 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
             />
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
-          <View style={styles.settingRow}>
-            <View style={{ flex: 1, marginRight: isRTL ? 0 : 12, marginLeft: isRTL ? 12 : 0 }}>
-              <Text style={styles.settingTitle}>
+          <View style={[styles.settingRow, { flexDirection: rowDir }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary, textAlign }]}>
                 {isRTL ? 'قابل جستجو در رادار عمومی' : 'Discoverable in Global Search'}
               </Text>
-              <Text style={styles.settingDesc}>
-                {isRTL ? 'به سایر کاربران اجازه یافتن شما با نام کاربری را می‌دهد' : 'Allow operators to locate you by handle'}
+              <Text style={[styles.settingDesc, { color: colors.textSecondary, textAlign }]}>
+                {isRTL
+                  ? 'به سایر کاربران اجازه یافتن شما با نام کاربری را می‌دهد'
+                  : 'Allow operators to locate you by handle'}
               </Text>
             </View>
             <LiquidGlassToggle
@@ -159,15 +244,17 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
             />
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
-          <View style={styles.settingRow}>
-            <View style={{ flex: 1, marginRight: isRTL ? 0 : 12, marginLeft: isRTL ? 12 : 0 }}>
-              <Text style={styles.settingTitle}>
+          <View style={[styles.settingRow, { flexDirection: rowDir }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary, textAlign }]}>
                 {isRTL ? 'نمایش وضعیت آنلاین بودن' : 'Show Live Online Status'}
               </Text>
-              <Text style={styles.settingDesc}>
-                {isRTL ? 'نمایش تیک سبز رنگ در هنگام حضور در برنامه' : 'Display green telemetry dot when active'}
+              <Text style={[styles.settingDesc, { color: colors.textSecondary, textAlign }]}>
+                {isRTL
+                  ? 'نمایش تیک سبز رنگ در هنگام حضور در برنامه'
+                  : 'Display green telemetry dot when active'}
               </Text>
             </View>
             <LiquidGlassToggle
@@ -177,15 +264,17 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
             />
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
-          <View style={styles.settingRow}>
-            <View style={{ flex: 1, marginRight: isRTL ? 0 : 12, marginLeft: isRTL ? 12 : 0 }}>
-              <Text style={styles.settingTitle}>
+          <View style={[styles.settingRow, { flexDirection: rowDir }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary, textAlign }]}>
                 {isRTL ? 'نمایش در اعضای اکیپ' : 'Display in Squad Attendees'}
               </Text>
-              <Text style={styles.settingDesc}>
-                {isRTL ? 'نمایش آواتار شما در اکیپ‌هایی که پیوسته‌اید' : 'List your avatar in squads you have joined'}
+              <Text style={[styles.settingDesc, { color: colors.textSecondary, textAlign }]}>
+                {isRTL
+                  ? 'نمایش آواتار شما در اکیپ‌هایی که پیوسته‌اید'
+                  : 'List your avatar in squads you have joined'}
               </Text>
             </View>
             <LiquidGlassToggle
@@ -197,17 +286,19 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
         </GlassCard>
 
         {/* Location Visibility */}
-        <Text style={styles.sectionHeading}>
+        <Text style={[styles.sectionHeading, { color: colors.textTertiary, textAlign }]}>
           {isRTL ? 'دقت موقعیت مکانی' : 'LOCATION PRECISION'}
         </Text>
         <GlassCard style={styles.cardSection}>
-          <View style={styles.settingRow}>
-            <View style={{ flex: 1, marginRight: isRTL ? 0 : 12, marginLeft: isRTL ? 12 : 0 }}>
-              <Text style={styles.settingTitle}>
+          <View style={[styles.settingRow, { flexDirection: rowDir }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary, textAlign }]}>
                 {isRTL ? 'موقعیت زنده با دقت بالا' : 'High-Precision GPS'}
               </Text>
-              <Text style={styles.settingDesc}>
-                {isRTL ? 'اشتراک مختصات دقیق (خطای زیر ۵۰ متر) با اکیپ' : 'Share exact coordinates (within 50m) with squads'}
+              <Text style={[styles.settingDesc, { color: colors.textSecondary, textAlign }]}>
+                {isRTL
+                  ? 'اشتراک مختصات دقیق (خطای زیر ۵۰ متر) با اکیپ'
+                  : 'Share exact coordinates (within 50m) with squads'}
               </Text>
             </View>
             <LiquidGlassToggle
@@ -217,15 +308,17 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
             />
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
-          <View style={styles.settingRow}>
-            <View style={{ flex: 1, marginRight: isRTL ? 0 : 12, marginLeft: isRTL ? 12 : 0 }}>
-              <Text style={styles.settingTitle}>
+          <View style={[styles.settingRow, { flexDirection: rowDir }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary, textAlign }]}>
                 {isRTL ? 'نمایش محله / بخش شهری' : 'Show Neighborhood / Sector'}
               </Text>
-              <Text style={styles.settingDesc}>
-                {isRTL ? 'محدوده تقریبی در پروفایل شما نشان داده شود' : 'Approximate zone visible on your profile card'}
+              <Text style={[styles.settingDesc, { color: colors.textSecondary, textAlign }]}>
+                {isRTL
+                  ? 'محدوده تقریبی در پروفایل شما نشان داده شود'
+                  : 'Approximate zone visible on your profile card'}
               </Text>
             </View>
             <LiquidGlassToggle
@@ -237,68 +330,73 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
         </GlassCard>
 
         {/* Direct Messages Audience */}
-        <Text style={styles.sectionHeading}>
+        <Text style={[styles.sectionHeading, { color: colors.textTertiary, textAlign }]}>
           {isRTL ? 'مجوزهای ارتباطی' : 'COMMUNICATION PERMISSIONS'}
         </Text>
         <GlassCard style={styles.cardSection}>
-          <Text style={styles.segmentedLabel}>
+          <Text style={[styles.segmentedLabel, { color: colors.textSecondary, textAlign }]}>
             {isRTL ? 'چه کسانی می‌توانند پیام خصوصی بفرستند' : 'WHO CAN DIRECT MESSAGE YOU'}
           </Text>
           <View style={{ marginTop: 8 }}>
             <GlassSegmented
-              options={[
-                { label: isRTL ? 'همه' : 'Everyone', value: 'everyone', icon: 'Globe' },
-                { label: isRTL ? 'دوستانِ دوستان' : 'Mutuals', value: 'friends_of_friends', icon: 'Users' },
-                { label: isRTL ? 'دوستان' : 'Friends', value: 'friends', icon: 'Heart' },
-              ]}
+              options={dmOptions}
               value={dmAudience}
               onChange={(v) => {
                 setDmAudience(v as Audience);
-                showToast(isRTL ? 'تنظیمات پیام خصوصی به‌روزرسانی شد' : `DMs set to ${v}`);
+                showToast(
+                  isRTL ? 'تنظیمات پیام خصوصی به‌روزرسانی شد' : `DMs set to ${v}`
+                );
               }}
             />
           </View>
 
-          <Text style={[styles.segmentedLabel, { marginTop: 18 }]}>
-            {isRTL ? 'چه کسانی می‌توانند شما را به اکیپ دعوت کنند' : 'WHO CAN INVITE YOU TO MISSIONS'}
+          <Text
+            style={[
+              styles.segmentedLabel,
+              { marginTop: 18, color: colors.textSecondary, textAlign },
+            ]}
+          >
+            {isRTL
+              ? 'چه کسانی می‌توانند شما را به اکیپ دعوت کنند'
+              : 'WHO CAN INVITE YOU TO MISSIONS'}
           </Text>
           <View style={{ marginTop: 8 }}>
             <GlassSegmented
-              options={[
-                { label: isRTL ? 'همه' : 'Everyone', value: 'everyone', icon: 'Globe' },
-                { label: isRTL ? 'تاییدشده‌ها' : 'Verified', value: 'verified', icon: 'Award' },
-                { label: isRTL ? 'دوستان' : 'Friends', value: 'friends', icon: 'UserCheck' },
-              ]}
+              options={inviteOptions}
               value={inviteAudience}
               onChange={(v) => {
                 setInviteAudience(v as InviteAudience);
-                showToast(isRTL ? 'تنظیمات دعوت به اکیپ به‌روزرسانی شد' : `Invites set to ${v}`);
+                showToast(
+                  isRTL ? 'تنظیمات دعوت به اکیپ به‌روزرسانی شد' : `Invites set to ${v}`
+                );
               }}
             />
           </View>
         </GlassCard>
 
         {/* Blocked Accounts */}
-        <Text style={styles.sectionHeading}>
+        <Text style={[styles.sectionHeading, { color: colors.textTertiary, textAlign }]}>
           {isRTL ? 'امنیت و محدودیت‌ها' : 'SAFETY & RESTRICTIONS'}
         </Text>
         <GlassCard style={styles.cardSection}>
           <TouchableOpacity
-            style={styles.blockedRow}
+            style={[styles.blockedRow, { flexDirection: rowDir }]}
             onPress={() => setShowBlockedSheet(true)}
           >
             <View style={[styles.iconBox, { backgroundColor: 'rgba(239,68,68,0.15)' }]}>
               <Ban size={18} color="#ef4444" />
             </View>
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.settingTitle}>
+            <View style={[{ flex: 1 }, textSpacing]}>
+              <Text style={[styles.settingTitle, { color: colors.textPrimary, textAlign }]}>
                 {isRTL ? 'کاربران مسدود شده' : 'Blocked Operators'}
               </Text>
-              <Text style={styles.settingDesc}>
-                {isRTL ? `${blockedList.length} کاربر در لیست مسدود` : `${blockedList.length} accounts restricted`}
+              <Text style={[styles.settingDesc, { color: colors.textSecondary, textAlign }]}>
+                {isRTL
+                  ? `${blockedList.length} کاربر در لیست مسدود`
+                  : `${blockedList.length} accounts restricted`}
               </Text>
             </View>
-            <ChevronRight size={18} color="rgba(255,255,255,0.4)" />
+            <ChevronRight size={18} color={colors.textTertiary} />
           </TouchableOpacity>
         </GlassCard>
       </ScrollView>
@@ -312,17 +410,34 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
         <View style={{ paddingVertical: 10 }}>
           {blockedList.length === 0 ? (
             <View style={{ paddingVertical: 24, alignItems: 'center' }}>
-              <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
                 {isRTL ? 'هیچ کاربری در لیست مسدودی نیست' : 'No blocked accounts'}
               </Text>
             </View>
           ) : (
             blockedList.map((user) => (
-              <View key={user.id} style={styles.blockedUserItem}>
+              <View
+                key={user.id}
+                style={[
+                  styles.blockedUserItem,
+                  { flexDirection: rowDir, borderBottomColor: colors.divider },
+                ]}
+              >
                 <GlassAvatar src={user.avatar} name={user.name} size={40} />
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>{user.name}</Text>
-                  <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>@{user.username}</Text>
+                <View style={[{ flex: 1 }, textSpacing]}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: colors.textPrimary,
+                      textAlign,
+                    }}
+                  >
+                    {user.name}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: colors.textTertiary, textAlign }}>
+                    @{user.username}
+                  </Text>
                 </View>
                 <GlassButton
                   variant="secondary"
@@ -359,7 +474,7 @@ const styles = StyleSheet.create({
   ghostHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
   },
   iconBox: {
     width: 44,
@@ -371,22 +486,19 @@ const styles = StyleSheet.create({
   ghostTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#fff',
   },
   ghostDesc: {
     fontSize: 11,
-    color: 'rgba(255,255,255,0.6)',
     marginTop: 2,
     lineHeight: 16,
   },
   sectionHeading: {
     fontSize: 11,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.4)',
     letterSpacing: 1,
     marginTop: 22,
     marginBottom: 8,
-    marginLeft: 4,
+    marginHorizontal: 4,
   },
   cardSection: {
     padding: 14,
@@ -397,27 +509,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 6,
-    gap: 18,
+    gap: 14,
   },
   settingTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#fff',
   },
   settingDesc: {
     fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
     marginTop: 2,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.08)',
     marginVertical: 12,
   },
   segmentedLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.4)',
     letterSpacing: 0.6,
   },
   blockedRow: {
@@ -429,6 +537,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
 });

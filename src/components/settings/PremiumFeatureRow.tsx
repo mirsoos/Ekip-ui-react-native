@@ -1,21 +1,39 @@
+// --- START OF FILE PremiumFeatureRow.tsx ---
+
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
-export function PremiumFeatureRow({ label }: { label: string }) {
+export const PremiumFeatureRow = React.memo(function PremiumFeatureRow({
+  label,
+}: {
+  label: string;
+}) {
   const { colors } = useTheme();
+  const { isRTL } = useI18n();
   const Check = getIcon('Check');
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
       <View style={styles.iconCircle}>
         <Check size={10} color="#f59e0b" strokeWidth={3} />
       </View>
-      <Text style={[styles.text, { color: colors.textSecondary }]}>{label}</Text>
+      <Text
+        style={[
+          styles.text,
+          {
+            color: colors.textSecondary,
+            textAlign: isRTL ? 'right' : 'left',
+          },
+        ]}
+      >
+        {label}
+      </Text>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {

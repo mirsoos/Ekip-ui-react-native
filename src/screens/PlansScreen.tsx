@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
+// --- START OF FILE PlansScreen.tsx ---
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, BackHandler } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassCard, GlassButton } from '../components/Glass';
 import { Toast } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
+import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
@@ -13,12 +16,31 @@ interface PlansScreenProps {
 
 export function PlansScreenComponent({ onBack }: PlansScreenProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const { isRTL } = useI18n();
   const Crown = getIcon('Crown');
   const Check = getIcon('Check');
   const Sparkles = getIcon('Sparkles');
 
   const [toastMessage, setToastMessage] = useState('');
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onBack();
+      return true;
+    });
+    return () => {
+      sub.remove();
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, [onBack]);
+
+  const showToast = useCallback((msg: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToastMessage(msg);
+    toastTimerRef.current = setTimeout(() => setToastMessage(''), 2500);
+  }, []);
 
   const plans = isRTL
     ? [
@@ -122,107 +144,134 @@ export function PlansScreenComponent({ onBack }: PlansScreenProps) {
         },
       ];
 
+  const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);
+  const textAlign = isRTL ? ('right' as const) : ('left' as const);
+
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        {
-          alignItems: 'center',
-          paddingTop: getSinglePillContentPaddingTop(insets.top),
-          paddingBottom: 40 + insets.bottom,
-        },
-      ]}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Header Info */}
-      <View style={styles.header}>
-        <View style={styles.iconCircle}>
-          <Crown size={32} color="#ec4899" strokeWidth={2.4} />
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.container,
+          {
+            alignItems: 'center',
+            paddingTop: getSinglePillContentPaddingTop(insets.top),
+            paddingBottom: 40 + insets.bottom,
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header Info */}
+        <View style={styles.header}>
+          <View style={styles.iconCircle}>
+            <Crown size={32} color="#ec4899" strokeWidth={2.4} />
+          </View>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            {isRTL ? 'ارتقای حساب کاربری' : 'Upgrade Membership'}
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            {isRTL
+              ? 'با پلن‌های ویژه اکیپ، دورهمی‌های پرطرفدارتری بسازید و از امکانات اختصاصی لذت ببرید.'
+              : 'Unlock premium perks, host unlimited hangouts, and stand out in your city.'}
+          </Text>
         </View>
-        <Text style={styles.title}>
-          {isRTL ? 'ارتقای حساب کاربری' : 'Upgrade Membership'}
-        </Text>
-        <Text style={styles.subtitle}>
-          {isRTL
-            ? 'با پلن‌های ویژه اکیپ، دورهمی‌های پرطرفدارتری بسازید و از امکانات اختصاصی لذت ببرید.'
-            : 'Unlock premium perks, host unlimited hangouts, and stand out in your city.'}
-        </Text>
-      </View>
 
-      {/* Plans List */}
-      <View style={styles.plansList}>
-        {plans.map((p) => (
-          <GlassCard
-            key={p.id}
-            glow={p.recommended}
-            style={[
-              styles.planCard,
-              p.recommended && styles.recommendedCard,
-            ]}
-          >
-            {p.recommended && (
-              <View style={styles.recommendedBadge}>
-                <Sparkles size={12} color="#ffffff" strokeWidth={2.5} />
-                <Text style={styles.recommendedBadgeText}>
-                  {isRTL ? 'پیشنهاد ویژه' : 'POPULAR'}
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.planHeader}>
-              <View>
-                <Text style={styles.planName}>{p.name}</Text>
-                <Text style={styles.planDesc}>{p.description}</Text>
-              </View>
-              <View style={styles.priceContainer}>
-                <Text style={[styles.priceText, { color: p.color }]}>
-                  {p.price}
-                </Text>
-                <Text style={styles.periodText}>/ {p.period}</Text>
-              </View>
-            </View>
-
-            <View style={styles.divider} />
-
-            {/* Perks */}
-            <View style={styles.perksList}>
-              {p.perks.map((perk, idx) => (
-                <View key={idx} style={styles.perkItem}>
-                  <View style={[styles.checkCircle, { backgroundColor: `${p.color}20` }]}>
-                    <Check size={12} color={p.color} strokeWidth={3} />
-                  </View>
-                  <Text style={styles.perkText}>{perk}</Text>
+        {/* Plans List */}
+        <View style={styles.plansList}>
+          {plans.map((p) => (
+            <GlassCard
+              key={p.id}
+              glow={p.recommended}
+              style={[
+                styles.planCard,
+                p.recommended && styles.recommendedCard,
+              ]}
+            >
+              {p.recommended && (
+                <View
+                  style={[
+                    styles.recommendedBadge,
+                    isRTL ? { left: 14 } : { right: 14 },
+                    { flexDirection: rowDir },
+                  ]}
+                >
+                  <Sparkles size={12} color="#ffffff" strokeWidth={2.5} />
+                  <Text style={styles.recommendedBadgeText}>
+                    {isRTL ? 'پیشنهاد ویژه' : 'POPULAR'}
+                  </Text>
                 </View>
-              ))}
-            </View>
+              )}
 
-            <View style={styles.actionContainer}>
-              <GlassButton
-                variant={p.current ? 'secondary' : p.recommended ? 'primary' : 'secondary'}
-                fullWidth
-                onPress={() => {
-                  if (p.current) {
-                    setToastMessage(isRTL ? 'این پلن در حال حاضر برای شما فعال است' : 'You are currently on this tier');
-                  } else {
-                    setToastMessage(isRTL ? `درخواست ارتقا به ${p.name} ثبت شد` : `Upgrade requested for ${p.name}`);
-                  }
-                }}
-              >
-                {p.current
-                  ? (isRTL ? 'پلن فعلی شما' : 'Current Tier')
-                  : (isRTL ? `انتخاب ${p.name}` : `Select ${p.name}`)}
-              </GlassButton>
-            </View>
-          </GlassCard>
-        ))}
-      </View>
+              <View style={[styles.planHeader, p.recommended && { marginTop: 18 }]}>
+                <View>
+                  <Text style={[styles.planName, { color: colors.textPrimary, textAlign }]}>
+                    {p.name}
+                  </Text>
+                  <Text style={[styles.planDesc, { color: colors.textSecondary, textAlign }]}>
+                    {p.description}
+                  </Text>
+                </View>
+                <View style={[styles.priceContainer, { flexDirection: rowDir }]}>
+                  <Text style={[styles.priceText, { color: p.color }]}>
+                    {p.price}
+                  </Text>
+                  <Text style={[styles.periodText, { color: colors.textTertiary }]}>
+                    / {p.period}
+                  </Text>
+                </View>
+              </View>
 
-      <Toast
-        open={Boolean(toastMessage)}
-        message={toastMessage}
-        onClose={() => setToastMessage('')}
-      />
-    </ScrollView>
+              <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+
+              {/* Perks */}
+              <View style={styles.perksList}>
+                {p.perks.map((perk, idx) => (
+                  <View key={idx} style={[styles.perkItem, { flexDirection: rowDir }]}>
+                    <View style={[styles.checkCircle, { backgroundColor: `${p.color}20` }]}>
+                      <Check size={12} color={p.color} strokeWidth={3} />
+                    </View>
+                    <Text style={[styles.perkText, { color: colors.textPrimary, textAlign }]}>
+                      {perk}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.actionContainer}>
+                <GlassButton
+                  variant={p.current ? 'secondary' : p.recommended ? 'primary' : 'secondary'}
+                  fullWidth
+                  onPress={() => {
+                    if (p.current) {
+                      showToast(
+                        isRTL
+                          ? 'این پلن در حال حاضر برای شما فعال است'
+                          : 'You are currently on this tier'
+                      );
+                    } else {
+                      showToast(
+                        isRTL
+                          ? `درخواست ارتقا به ${p.name} ثبت شد`
+                          : `Upgrade requested for ${p.name}`
+                      );
+                    }
+                  }}
+                >
+                  {p.current
+                    ? isRTL
+                      ? 'پلن فعلی شما'
+                      : 'Current Tier'
+                    : isRTL
+                    ? `انتخاب ${p.name}`
+                    : `Select ${p.name}`}
+                </GlassButton>
+              </View>
+            </GlassCard>
+          ))}
+        </View>
+      </ScrollView>
+
+      <Toast message={toastMessage} visible={Boolean(toastMessage)} />
+    </View>
   );
 }
 
@@ -250,13 +299,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#ffffff',
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.65)',
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -278,7 +325,6 @@ const styles = StyleSheet.create({
   recommendedBadge: {
     position: 'absolute',
     top: 14,
-    left: 14,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ec4899',
@@ -286,6 +332,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: 12,
     gap: 4,
+    zIndex: 10,
   },
   recommendedBadgeText: {
     color: '#ffffff',
@@ -294,18 +341,16 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   planHeader: {
-    marginTop: 10,
+    marginTop: 6,
     marginBottom: 14,
   },
   planName: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#ffffff',
     marginBottom: 4,
   },
   planDesc: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
     lineHeight: 16,
     marginBottom: 10,
   },
@@ -320,11 +365,9 @@ const styles = StyleSheet.create({
   },
   periodText: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.5)',
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     marginBottom: 14,
   },
   perksList: {
@@ -345,7 +388,6 @@ const styles = StyleSheet.create({
   },
   perkText: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.85)',
     flex: 1,
   },
   actionContainer: {
