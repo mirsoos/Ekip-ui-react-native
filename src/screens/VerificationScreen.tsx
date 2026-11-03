@@ -169,18 +169,11 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
   };
 
   const docOptions = useMemo(
-    () =>
-      isRTL
-        ? [
-            { label: 'گواهینامه', value: 'driver_license', icon: 'Award' as const },
-            { label: 'گذرنامه', value: 'passport', icon: 'Globe' as const },
-            { label: 'کارت ملی', value: 'national_id', icon: 'UserCheck' as const },
-          ]
-        : [
-            { label: 'National ID', value: 'national_id', icon: 'UserCheck' as const },
-            { label: 'Passport', value: 'passport', icon: 'Globe' as const },
-            { label: "Driver's License", value: 'driver_license', icon: 'Award' as const },
-          ],
+    () => [
+      { label: isRTL ? 'کارت ملی' : 'National ID', value: 'national_id', icon: 'UserCheck' as const },
+      { label: isRTL ? 'گذرنامه' : 'Passport', value: 'passport', icon: 'Globe' as const },
+      { label: isRTL ? 'گواهینامه' : "Driver's License", value: 'driver_license', icon: 'Award' as const },
+    ],
     [isRTL]
   );
 

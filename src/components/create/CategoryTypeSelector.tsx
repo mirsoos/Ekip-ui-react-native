@@ -57,19 +57,12 @@ export const CategoryTypeSelector = React.memo(function CategoryTypeSelector({
   });
 
   const formatOptions = useMemo(
-    () =>
-      isRTL
-        ? [
-            { label: t('ekip.typeGroup'), value: 'group', icon: 'Layers' as const },
-            { label: t('ekip.typeCouple'), value: 'couple', icon: 'Users' as const },
-            { label: t('ekip.typeSolo'), value: 'solo', icon: 'User' as const },
-          ]
-        : [
-            { label: t('ekip.typeSolo'), value: 'solo', icon: 'User' as const },
-            { label: t('ekip.typeCouple'), value: 'couple', icon: 'Users' as const },
-            { label: t('ekip.typeGroup'), value: 'group', icon: 'Layers' as const },
-          ],
-    [isRTL, t]
+    () => [
+      { label: t('ekip.typeSolo'), value: 'solo', icon: 'User' as const },
+      { label: t('ekip.typeCouple'), value: 'couple', icon: 'Users' as const },
+      { label: t('ekip.typeGroup'), value: 'group', icon: 'Layers' as const },
+    ],
+    [t]
   );
 
   const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { TactileSegmented } from '../common/TactileSegmented';
-import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
 
 export function NotificationFilterTabs({
   filter,
@@ -14,15 +14,19 @@ export function NotificationFilterTabs({
   unreadCount: number;
   onMarkAllRead: () => void;
 }) {
-  const { colors } = useTheme();
+  const { t, isRTL } = useI18n();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
       <View style={{ flex: 1 }}>
         <TactileSegmented
           options={[
-            { label: 'All', value: 'all' },
-            { label: `Unread (${unreadCount})`, value: 'unread' },
+            { label: t('common.all'), value: 'all' },
+            {
+              label: t('notifications.unread'),
+              value: 'unread',
+              badgeCount: unreadCount,
+            },
           ]}
           value={filter}
           onChange={(v) => onChangeFilter(v as 'all' | 'unread')}
@@ -35,7 +39,7 @@ export function NotificationFilterTabs({
           onPress={onMarkAllRead}
           style={styles.markBtn}
         >
-          <Text style={styles.markText}>Mark all read</Text>
+          <Text style={styles.markText}>{t('notifications.markAllRead')}</Text>
         </TouchableOpacity>
       )}
     </View>

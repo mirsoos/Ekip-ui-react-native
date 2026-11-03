@@ -296,19 +296,12 @@ export const CreateScreen = React.memo(
     }, []);
 
     const genderOptions = useMemo(
-      () =>
-        isRTL
-          ? [
-              { label: t('create.genderFemale'), value: 'female' },
-              { label: t('create.genderMale'), value: 'male' },
-              { label: t('create.genderAny'), value: 'any' },
-            ]
-          : [
-              { label: t('create.genderAny'), value: 'any' },
-              { label: t('create.genderMale'), value: 'male' },
-              { label: t('create.genderFemale'), value: 'female' },
-            ],
-      [isRTL, t]
+      () => [
+        { label: t('create.genderAny'), value: 'any' },
+        { label: t('create.genderMale'), value: 'male' },
+        { label: t('create.genderFemale'), value: 'female' },
+      ],
+      [t]
     );
 
     const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);

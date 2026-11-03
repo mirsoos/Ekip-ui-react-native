@@ -241,16 +241,10 @@ export function SelectMembersSheetComponent({
   }, [me.id, profiles, searchQuery]);
 
   const tabOptions = useMemo(
-    () =>
-      isRTL
-        ? [
-            { label: 'جستجو', value: 'search', icon: 'Search' as const },
-            { label: 'دوستان', value: 'friends', icon: 'Users' as const },
-          ]
-        : [
-            { label: 'Friends', value: 'friends', icon: 'Users' as const },
-            { label: 'Search', value: 'search', icon: 'Search' as const },
-          ],
+    () => [
+      { label: isRTL ? 'دوستان' : 'Friends', value: 'friends', icon: 'Users' as const },
+      { label: isRTL ? 'جستجو' : 'Search', value: 'search', icon: 'Search' as const },
+    ],
     [isRTL]
   );
 

@@ -78,8 +78,8 @@ export const translations = {
     'discover.membersCount': '{count} members',
     'discover.capacity': '{current}/{max} Capacity',
     'discover.cat.all': 'All',
-    'discover.cat.work': 'Work & Tech',
-    'discover.cat.entertainment': 'Hangouts & Fun',
+    'discover.cat.work': 'Work',
+    'discover.cat.entertainment': 'Fun',
     'discover.cat.tech': 'Tech & Code',
     'discover.cat.sports': 'Sports & Fitness',
     'discover.cat.art': 'Art & Culture',
@@ -216,6 +216,7 @@ export const translations = {
 
     // Notifications Sheet
     'notifications.title': 'Notifications',
+    'notifications.unread': 'Unread',
     'notifications.unreadTab': 'Unread ({count})',
     'notifications.markAllRead': 'Mark all read',
     'notifications.markedAllToast': 'All notifications marked as read',
@@ -392,7 +393,7 @@ export const translations = {
     'discover.capacity': '{current} از {max} ظرفیت',
     'discover.cat.all': 'همه',
     'discover.cat.work': 'کاری',
-    'discover.cat.entertainment': 'تفریح و سرگرمی',
+    'discover.cat.entertainment': 'سرگرمی',
     'discover.cat.tech': 'فناوری و برنامه‌نویسی',
     'discover.cat.sports': 'ورزش و طبیعت',
     'discover.cat.art': 'هنر و فرهنگ',
@@ -529,6 +530,7 @@ export const translations = {
 
     // Notifications Sheet
     'notifications.title': 'اعلان‌ها',
+    'notifications.unread': 'خوانده نشده',
     'notifications.unreadTab': 'خوانده نشده ({count})',
     'notifications.markAllRead': 'خواندن همه',
     'notifications.markedAllToast': 'تمامی اعلان‌ها خوانده شدند',

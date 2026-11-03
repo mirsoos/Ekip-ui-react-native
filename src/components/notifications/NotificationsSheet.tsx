@@ -7,7 +7,6 @@ import { GlassSheet } from '../Overlays';
 import { GlassEmpty } from '../Glass';
 import { TactileSegmented } from '../common/TactileSegmented';
 import { NotificationItem } from './NotificationItem';
-import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useToast } from '../../lib/ToastContext';
 import type { Group } from '../../types/database';
@@ -26,7 +25,6 @@ export function NotificationsSheetComponent({
   onOpenSettings?: () => void;
 }) {
   const { notifications, groups, markNotificationRead, markAllNotificationsRead } = useAppData();
-  const { colors } = useTheme();
   const { t, isRTL } = useI18n();
   const { showToast } = useToast();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
@@ -69,17 +67,14 @@ export function NotificationsSheetComponent({
           <View style={[styles.topControl, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <View style={{ flex: 1 }}>
               <TactileSegmented
-                options={
-                  isRTL
-                    ? [
-                        { label: t('notifications.unreadTab', { count: unreadCount }), value: 'unread' },
-                        { label: t('common.all'), value: 'all' },
-                      ]
-                    : [
-                        { label: t('common.all'), value: 'all' },
-                        { label: t('notifications.unreadTab', { count: unreadCount }), value: 'unread' },
-                      ]
-                }
+                options={[
+                  { label: t('common.all'), value: 'all' },
+                  {
+                    label: t('notifications.unread'),
+                    value: 'unread',
+                    badgeCount: unreadCount,
+                  },
+                ]}
                 value={filter}
                 onChange={(v) => setFilter(v as 'all' | 'unread')}
               />

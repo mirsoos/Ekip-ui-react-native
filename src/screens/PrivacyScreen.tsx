@@ -100,34 +100,20 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
   };
 
   const dmOptions = useMemo(
-    () =>
-      isRTL
-        ? [
-            { label: 'دوستان', value: 'friends', icon: 'Heart' as const },
-            { label: 'دوستانِ دوستان', value: 'friends_of_friends', icon: 'Users' as const },
-            { label: 'همه', value: 'everyone', icon: 'Globe' as const },
-          ]
-        : [
-            { label: 'Everyone', value: 'everyone', icon: 'Globe' as const },
-            { label: 'Mutuals', value: 'friends_of_friends', icon: 'Users' as const },
-            { label: 'Friends', value: 'friends', icon: 'Heart' as const },
-          ],
+    () => [
+      { label: isRTL ? 'همه' : 'Everyone', value: 'everyone', icon: 'Globe' as const },
+      { label: isRTL ? 'دوستانِ دوستان' : 'Mutuals', value: 'friends_of_friends', icon: 'Users' as const },
+      { label: isRTL ? 'دوستان' : 'Friends', value: 'friends', icon: 'Heart' as const },
+    ],
     [isRTL]
   );
 
   const inviteOptions = useMemo(
-    () =>
-      isRTL
-        ? [
-            { label: 'دوستان', value: 'friends', icon: 'UserCheck' as const },
-            { label: 'تاییدشده‌ها', value: 'verified', icon: 'Award' as const },
-            { label: 'همه', value: 'everyone', icon: 'Globe' as const },
-          ]
-        : [
-            { label: 'Everyone', value: 'everyone', icon: 'Globe' as const },
-            { label: 'Verified', value: 'verified', icon: 'Award' as const },
-            { label: 'Friends', value: 'friends', icon: 'UserCheck' as const },
-          ],
+    () => [
+      { label: isRTL ? 'همه' : 'Everyone', value: 'everyone', icon: 'Globe' as const },
+      { label: isRTL ? 'تاییدشده‌ها' : 'Verified', value: 'verified', icon: 'Award' as const },
+      { label: isRTL ? 'دوستان' : 'Friends', value: 'friends', icon: 'UserCheck' as const },
+    ],
     [isRTL]
   );
 

@@ -108,18 +108,11 @@ export function PersonalInfoScreenComponent({
   ]);
 
   const genderOptions = useMemo(
-    () =>
-      isRTL
-        ? [
-            { label: 'سایر', value: 'other' },
-            { label: 'خانم', value: 'female' },
-            { label: 'آقا', value: 'male' },
-          ]
-        : [
-            { label: 'Male', value: 'male' },
-            { label: 'Female', value: 'female' },
-            { label: 'Other', value: 'other' },
-          ],
+    () => [
+      { label: isRTL ? 'آقا' : 'Male', value: 'male' },
+      { label: isRTL ? 'خانم' : 'Female', value: 'female' },
+      { label: isRTL ? 'سایر' : 'Other', value: 'other' },
+    ],
     [isRTL]
   );
 

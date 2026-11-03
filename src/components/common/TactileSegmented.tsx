@@ -1,10 +1,10 @@
 // --- START OF FILE TactileSegmented.tsx ---
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   Animated,
   Platform,
@@ -34,10 +34,119 @@ export interface TactileSegmentedProps {
 }
 
 const SPRING_CONFIG = {
-  tension: 110,
-  friction: 10,
+  tension: 130,
+  friction: 12,
   useNativeDriver: Platform.OS !== 'web',
 };
+
+const iconCache = new Map<string, any>();
+function getCachedIcon(name: string) {
+  let icon = iconCache.get(name);
+  if (!icon) {
+    icon = getIcon(name);
+    iconCache.set(name, icon);
+  }
+  return icon;
+}
+
+interface TactileTabButtonProps {
+  option: TactileSegmentedOption;
+  isActive: boolean;
+  onPress: (val: string) => void;
+  size: 'sm' | 'md' | 'lg';
+  isDark: boolean;
+  activeTextColor: string;
+  inactiveTextColor: string;
+  activeIconColor: string;
+  inactiveIconColor: string;
+  accentPink: string;
+}
+
+const TactileTabButton = React.memo(function TactileTabButton({
+  option,
+  isActive,
+  onPress,
+  size,
+  isDark,
+  activeTextColor,
+  inactiveTextColor,
+  activeIconColor,
+  inactiveIconColor,
+  accentPink,
+}: TactileTabButtonProps) {
+  const IconComp = option.icon ? getCachedIcon(option.icon) : null;
+  const handlePress = useCallback(() => {
+    onPress(option.value);
+  }, [onPress, option.value]);
+
+  return (
+    <Pressable
+      onPress={handlePress}
+      style={styles.tabButton}
+    >
+      {IconComp && (
+        <View
+          style={[
+            styles.iconBox,
+            {
+              backgroundColor: isActive
+                ? isDark
+                  ? 'rgba(244, 114, 182, 0.16)'
+                  : 'rgba(219, 39, 119, 0.10)'
+                : 'transparent',
+            },
+          ]}
+        >
+          <IconComp
+            size={size === 'sm' ? 13 : 15}
+            color={isActive ? activeIconColor : inactiveIconColor}
+            strokeWidth={isActive ? 2.5 : 1.9}
+          />
+        </View>
+      )}
+
+      <Text
+        numberOfLines={1}
+        style={[
+          styles.tabText,
+          {
+            color: isActive ? activeTextColor : inactiveTextColor,
+            fontWeight: isActive ? '800' : '600',
+            fontSize: size === 'sm' ? 12 : 13.5,
+          },
+        ]}
+      >
+        {option.label}
+      </Text>
+
+      {option.badgeCount !== undefined && option.badgeCount > 0 && (
+        <View
+          style={[
+            styles.badge,
+            {
+              backgroundColor: isActive
+                ? accentPink
+                : isDark
+                ? '#273146'
+                : '#cbd5e1',
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.badgeText,
+              {
+                color: isActive ? '#ffffff' : isDark ? '#f1f5f9' : '#1e293b',
+              },
+            ]}
+          >
+            {option.badgeCount > 99 ? '99+' : option.badgeCount}
+          </Text>
+        </View>
+      )}
+    </Pressable>
+  );
+});
 
 export const TactileSegmented = React.memo(function TactileSegmented({
   options,
@@ -80,24 +189,29 @@ export const TactileSegmented = React.memo(function TactileSegmented({
   const getSlotX = useCallback(
     (idx: number, totalW: number) => {
       if (totalW <= 0) return 0;
-      const innerW = totalW - 10;
+      const innerW = totalW - 8;
       const itemW = innerW / countRef.current;
       const effectiveIndex = isRTLRef.current ? countRef.current - 1 - idx : idx;
-      return 5 + effectiveIndex * itemW;
+      return 4 + effectiveIndex * itemW;
     },
     []
   );
 
   const getSlotWidth = useCallback((totalW: number) => {
     if (totalW <= 0) return 0;
-    const innerW = totalW - 10;
+    const innerW = totalW - 8;
     return innerW / countRef.current;
   }, []);
 
   const triggerHaptic = useCallback(() => {
-    if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
+    if (
+      Platform.OS === 'web' &&
+      typeof window !== 'undefined' &&
+      'navigator' in window &&
+      typeof navigator.vibrate === 'function'
+    ) {
       try {
-        navigator.vibrate(8);
+        navigator.vibrate(6);
       } catch {
         // ignore
       }
@@ -106,10 +220,27 @@ export const TactileSegmented = React.memo(function TactileSegmented({
 
   const selectTab = useCallback(
     (newVal: string) => {
+      if (newVal === value) return;
       triggerHaptic();
-      onChange(newVal);
+
+      // ۱. استارت آنی انیمیشن روی لایه بومی/GPU قبل از درگیر شدن JS
+      const targetIdx = optionsRef.current.findIndex((opt) => opt.value === newVal);
+      const w = containerWidthRef.current;
+      if (targetIdx !== -1 && w > 0) {
+        const targetX = getSlotX(targetIdx, w);
+        currentPosRef.current = targetX;
+        Animated.spring(slideAnim, {
+          toValue: targetX,
+          ...SPRING_CONFIG,
+        }).start();
+      }
+
+      // ۲. موکول کردن آپدیت سنگین والد به فریم بعدی جهت حفظ ۱۲۰/۶۰ فریم پیوسته
+      requestAnimationFrame(() => {
+        onChange(newVal);
+      });
     },
-    [onChange, triggerHaptic]
+    [value, triggerHaptic, getSlotX, slideAnim, onChange]
   );
 
   const selectTabRef = useRef(selectTab);
@@ -131,12 +262,13 @@ export const TactileSegmented = React.memo(function TactileSegmented({
   useEffect(() => {
     if (containerWidth <= 0 || isDragging.current) return;
     const targetX = getSlotX(activeIndex, containerWidth);
-    currentPosRef.current = targetX;
-
-    Animated.spring(slideAnim, {
-      toValue: targetX,
-      ...SPRING_CONFIG,
-    }).start();
+    if (Math.abs(currentPosRef.current - targetX) > 0.5) {
+      currentPosRef.current = targetX;
+      Animated.spring(slideAnim, {
+        toValue: targetX,
+        ...SPRING_CONFIG,
+      }).start();
+    }
   }, [activeIndex, containerWidth, getSlotX, slideAnim]);
 
   // رویدادهای درگ و دراپ اختصاصی (Gesture Lock جهت جلوگیری از تداخل با اسکرول عمودی)
@@ -177,8 +309,8 @@ export const TactileSegmented = React.memo(function TactileSegmented({
         const w = containerWidthRef.current;
         if (w <= 0) return;
         const slotW = getSlotWidth(w);
-        const minX = 5;
-        const maxX = 5 + (countRef.current - 1) * slotW;
+        const minX = 4;
+        const maxX = 4 + (countRef.current - 1) * slotW;
 
         const nextX = Math.max(minX, Math.min(maxX, dragStartRef.current + gs.dx));
         slideAnim.setValue(nextX);
@@ -196,11 +328,11 @@ export const TactileSegmented = React.memo(function TactileSegmented({
         const w = containerWidthRef.current;
         if (w <= 0) return;
         const slotW = getSlotWidth(w);
-        const minX = 5;
-        const maxX = 5 + (countRef.current - 1) * slotW;
+        const minX = 4;
+        const maxX = 4 + (countRef.current - 1) * slotW;
         const finalX = Math.max(minX, Math.min(maxX, dragStartRef.current + gs.dx));
 
-        let visualIndex = Math.round((finalX - 5) / slotW);
+        let visualIndex = Math.round((finalX - 4) / slotW);
         visualIndex = Math.max(0, Math.min(countRef.current - 1, visualIndex));
 
         const chosenIndex = isRTLRef.current ? countRef.current - 1 - visualIndex : visualIndex;
@@ -282,7 +414,7 @@ export const TactileSegmented = React.memo(function TactileSegmented({
       ]}
       {...panResponder.panHandlers}
     >
-      {/* نشانگر زنده ۳ بعدی متحرک با گرادیان حجمی و لبه تراش خورده (3D Beveled Pill) */}
+      {/* نشانگر زنده ۳ بعدی متحرک با تفکیک لایه سایه (iOS Unclipped Shadow Layer) */}
       <Animated.View
         pointerEvents="none"
         style={[
@@ -291,15 +423,15 @@ export const TactileSegmented = React.memo(function TactileSegmented({
             height: thumbHeight,
             width: slotW,
             opacity: slotW > 0 ? 1 : 0,
-            borderColor: thumbBorder,
             borderRadius: thumbHeight / 2,
             transform: [{ translateX: slideAnim }, { scale: pressScaleAnim }],
             ...(Platform.OS === 'web'
-              ? {
+              ? ({
+                  willChange: 'transform',
                   boxShadow: isDark
                     ? '0 6px 16px rgba(0, 0, 0, 0.6), 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)'
                     : '0 4px 12px rgba(15, 23, 42, 0.15), 0 1px 3px rgba(15, 23, 42, 0.08), inset 0 1px 0 #ffffff',
-                }
+                } as any)
               : isDark
               ? {
                   shadowColor: '#000000',
@@ -318,22 +450,32 @@ export const TactileSegmented = React.memo(function TactileSegmented({
           },
         ]}
       >
-        <LinearGradient
-          colors={thumbGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        {/* لبه هایلایت ظریف فوقانی (Light Catch Reflection) */}
         <View
           style={[
-            styles.specularRim,
+            styles.thumbInner,
             {
-              backgroundColor: rimHighlight,
               borderRadius: thumbHeight / 2,
+              borderColor: thumbBorder,
             },
           ]}
-        />
+        >
+          <LinearGradient
+            colors={thumbGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          {/* لبه هایلایت ظریف فوقانی (Light Catch Reflection) */}
+          <View
+            style={[
+              styles.specularRim,
+              {
+                backgroundColor: rimHighlight,
+                borderRadius: thumbHeight / 2,
+              },
+            ]}
+          />
+        </View>
       </Animated.View>
 
       {/* خطوط جداکننده مینیمال بین تب‌های غیرفعال (Divider lines) */}
@@ -362,76 +504,28 @@ export const TactileSegmented = React.memo(function TactileSegmented({
         })}
       </View>
 
-      {/* لیست تب‌های تعاملی و قابل کلیک */}
+      {/* لیست تب‌های تعاملی و قابل کلیک (کامپوننت‌های کاملاً مِموشده جهت پرفورمنس ۱۲۰ فریم) */}
       <View
         style={[
           styles.tabsRow,
           { flexDirection: isRTL ? 'row-reverse' : 'row' },
         ]}
       >
-        {options.map((opt) => {
-          const isActive = opt.value === value;
-          const IconComp = opt.icon ? getIcon(opt.icon) : null;
-
-          return (
-            <TouchableOpacity
-              key={opt.value}
-              activeOpacity={0.7}
-              onPress={() => selectTab(opt.value)}
-              style={styles.tabButton}
-            >
-              {IconComp && (
-                <View
-                  style={[
-                    styles.iconBox,
-                    {
-                      backgroundColor: isActive
-                        ? isDark
-                          ? 'rgba(244, 114, 182, 0.16)'
-                          : 'rgba(219, 39, 119, 0.10)'
-                        : 'transparent',
-                    },
-                  ]}
-                >
-                  <IconComp
-                    size={size === 'sm' ? 14 : 16}
-                    color={isActive ? activeIconColor : inactiveIconColor}
-                    strokeWidth={isActive ? 2.5 : 1.9}
-                  />
-                </View>
-              )}
-
-              <Text
-                numberOfLines={1}
-                style={[
-                  styles.tabText,
-                  {
-                    color: isActive ? activeTextColor : inactiveTextColor,
-                    fontWeight: isActive ? '800' : '600',
-                    fontSize: size === 'sm' ? 12 : 13.5,
-                  },
-                ]}
-              >
-                {opt.label}
-              </Text>
-
-              {opt.badgeCount !== undefined && opt.badgeCount > 0 && (
-                <View
-                  style={[
-                    styles.badge,
-                    {
-                      backgroundColor: isActive ? colors.accentPink : (isDark ? '#273146' : '#cbd5e1'),
-                    },
-                  ]}
-                >
-                  <Text style={styles.badgeText}>
-                    {opt.badgeCount > 99 ? '99+' : opt.badgeCount}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          );
-        })}
+        {options.map((opt) => (
+          <TactileTabButton
+            key={opt.value}
+            option={opt}
+            isActive={opt.value === value}
+            onPress={selectTab}
+            size={size}
+            isDark={isDark}
+            activeTextColor={activeTextColor}
+            inactiveTextColor={inactiveTextColor}
+            activeIconColor={activeIconColor}
+            inactiveIconColor={inactiveIconColor}
+            accentPink={colors.accentPink}
+          />
+        ))}
       </View>
     </View>
   );
@@ -445,13 +539,24 @@ const styles = StyleSheet.create({
     position: 'relative',
     justifyContent: 'center',
     overflow: 'hidden',
+    ...(Platform.OS === 'web'
+      ? ({
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          cursor: 'pointer',
+        } as any)
+      : {}),
   },
   thumb: {
     position: 'absolute',
     top: 4,
+    left: 0,
+    zIndex: 2,
+  },
+  thumbInner: {
+    ...StyleSheet.absoluteFill,
     borderWidth: 1,
     overflow: 'hidden',
-    zIndex: 2,
   },
   specularRim: {
     position: 'absolute',
@@ -488,18 +593,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 8,
-    gap: 7,
+    paddingHorizontal: 6,
+    gap: 6,
+    overflow: 'hidden',
+    ...(Platform.OS === 'web'
+      ? ({
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+        } as any)
+      : {}),
   },
   iconBox: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   tabText: {
     letterSpacing: -0.2,
+    flexShrink: 1,
+    ...(Platform.OS === 'web'
+      ? ({
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+        } as any)
+      : {}),
   },
   badge: {
     paddingHorizontal: 6,
@@ -510,7 +630,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badgeText: {
-    color: '#ffffff',
     fontSize: 10,
     fontWeight: '700',
   },

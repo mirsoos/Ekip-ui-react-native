@@ -37,19 +37,12 @@ export function DiscoverFilterSheetComponent({
   const { t, isRTL } = useI18n();
 
   const categoryOptions = useMemo(
-    () =>
-      isRTL
-        ? [
-            { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' as const },
-            { label: t('discover.cat.entertainment'), value: 'entertainment', icon: 'PartyPopper' as const },
-            { label: t('discover.cat.all'), value: 'all' },
-          ]
-        : [
-            { label: t('discover.cat.all'), value: 'all' },
-            { label: t('discover.cat.entertainment'), value: 'entertainment', icon: 'PartyPopper' as const },
-            { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' as const },
-          ],
-    [isRTL, t]
+    () => [
+      { label: t('discover.cat.all'), value: 'all', icon: 'Compass' as const },
+      { label: t('discover.cat.entertainment'), value: 'entertainment', icon: 'PartyPopper' as const },
+      { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' as const },
+    ],
+    [t]
   );
 
   const handleSegmentChange = useCallback(
