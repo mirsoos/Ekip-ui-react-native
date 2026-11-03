@@ -5,7 +5,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Animated } f
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppData } from '../lib/appData';
-import { GlassCard, GlassButton, GlassSegmented, GlassEmpty, GlassAvatar } from '../components/Glass';
+import { GlassCard, GlassButton, GlassEmpty, GlassAvatar } from '../components/Glass';
+import { TactileSegmented } from '../components/common/TactileSegmented';
 import { GlassSheet } from '../components/Overlays';
 import { StatBox } from '../components/common/StatBox';
 import { ProfileHeaderCard } from '../components/profile/ProfileHeaderCard';
@@ -380,7 +381,7 @@ export function ProfileScreenComponent({
           <ProfileXpCard profile={profile} />
         </View>
         <View style={styles.tabsWrap}>
-          <GlassSegmented options={profileTabs} value={tab} onChange={setTab} />
+          <TactileSegmented options={profileTabs} value={tab} onChange={setTab} />
         </View>
         <View style={styles.headerBottomSpacer} />
       </View>

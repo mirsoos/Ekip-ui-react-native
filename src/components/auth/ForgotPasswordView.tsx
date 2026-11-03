@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GlassInput, GlassBackButton, GlassSegmented } from '../Glass';
+import { GlassInput, GlassBackButton } from '../Glass';
+import { TactileSegmented } from '../common/TactileSegmented';
 import { FrostedGlass } from '../FrostedGlass';
 import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { Icons } from '../../lib/icons';
@@ -124,7 +125,7 @@ export function ForgotPasswordView({
 
           {/* Recovery Methods */}
           <View style={{ marginTop: 20 }}>
-            <GlassSegmented
+            <TactileSegmented
               options={[
                 { label: t('auth.tabUsername'), value: 'username' },
                 { label: t('auth.tabEmail'), value: 'email' },

@@ -4,7 +4,8 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useAppData } from '../../lib/appData';
 import { GlassSheet } from '../Overlays';
-import { GlassEmpty, GlassSegmented } from '../Glass';
+import { GlassEmpty } from '../Glass';
+import { TactileSegmented } from '../common/TactileSegmented';
 import { NotificationItem } from './NotificationItem';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
@@ -67,7 +68,7 @@ export function NotificationsSheetComponent({
         headerContent={
           <View style={[styles.topControl, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <View style={{ flex: 1 }}>
-              <GlassSegmented
+              <TactileSegmented
                 options={
                   isRTL
                     ? [

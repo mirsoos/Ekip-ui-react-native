@@ -3,7 +3,8 @@
 import React, { useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { GlassSheet } from '../Overlays';
-import { GlassSegmented, GlassChip, GlassToggle, GlassButton } from '../Glass';
+import { GlassChip, GlassToggle, GlassButton } from '../Glass';
+import { TactileSegmented } from '../common/TactileSegmented';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 
@@ -70,7 +71,7 @@ export function DiscoverFilterSheetComponent({
           <Text style={[styles.sectionLabel, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
             {t('discover.filterCategory')}
           </Text>
-          <GlassSegmented
+          <TactileSegmented
             options={categoryOptions}
             value={categoryFilter}
             onChange={handleSegmentChange}

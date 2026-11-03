@@ -4,7 +4,8 @@ import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, BackHandler } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
-import { GlassCard, GlassButton, GlassAvatar, GlassSegmented } from '../components/Glass';
+import { GlassCard, GlassButton, GlassAvatar } from '../components/Glass';
+import { TactileSegmented } from '../components/common/TactileSegmented';
 import { GlassSheet } from '../components/Overlays';
 import { LiquidGlassToggle } from '../components/common/LiquidGlassToggle';
 import { getIcon } from '../lib/icons';
@@ -330,7 +331,7 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
             {isRTL ? 'چه کسانی می‌توانند پیام خصوصی بفرستند' : 'WHO CAN DIRECT MESSAGE YOU'}
           </Text>
           <View style={{ marginTop: 8 }}>
-            <GlassSegmented
+            <TactileSegmented
               options={dmOptions}
               value={dmAudience}
               onChange={(v) => {
@@ -353,7 +354,7 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
               : 'WHO CAN INVITE YOU TO MISSIONS'}
           </Text>
           <View style={{ marginTop: 8 }}>
-            <GlassSegmented
+            <TactileSegmented
               options={inviteOptions}
               value={inviteAudience}
               onChange={(v) => {

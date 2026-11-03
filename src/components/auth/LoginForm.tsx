@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GlassInput, GlassBackButton, GlassSegmented } from '../Glass';
+import { GlassInput, GlassBackButton } from '../Glass';
+import { TactileSegmented } from '../common/TactileSegmented';
 import { FrostedGlass } from '../FrostedGlass';
 import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { SocialAuthRow } from './SocialAuthRow';
@@ -56,7 +57,7 @@ export function LoginForm({
 
       {/* Tabs */}
       <View style={{ marginTop: 20 }}>
-        <GlassSegmented
+        <TactileSegmented
           options={[
             { label: t('auth.tabUsername'), value: 'username' },
             { label: t('auth.tabEmail'), value: 'email' },

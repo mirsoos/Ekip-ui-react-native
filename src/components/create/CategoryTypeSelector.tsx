@@ -3,7 +3,8 @@
 import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GlassCard, GlassSegmented, GlassButton, GlassAvatar } from '../Glass';
+import { GlassCard, GlassButton, GlassAvatar } from '../Glass';
+import { TactileSegmented } from '../common/TactileSegmented';
 import { getIcon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
@@ -161,7 +162,7 @@ export const CategoryTypeSelector = React.memo(function CategoryTypeSelector({
         <Text style={[styles.label, { color: colors.textSecondary, textAlign }]}>
           {t('create.squadFormat')}
         </Text>
-        <GlassSegmented
+        <TactileSegmented
           options={formatOptions}
           value={groupType}
           onChange={(v) => onChangeGroupType(v as GroupType)}

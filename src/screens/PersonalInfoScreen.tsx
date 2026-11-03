@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
-import { GlassButton, GlassInput, GlassSegmented } from '../components/Glass';
+import { GlassButton, GlassInput } from '../components/Glass';
+import { TactileSegmented } from '../components/common/TactileSegmented';
 import { allInterests } from '../lib/demoData';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
@@ -234,7 +235,7 @@ export function PersonalInfoScreenComponent({
             <Text style={[styles.fieldLabel, { color: colors.textSecondary, textAlign }]}>
               {isRTL ? 'جنسیت' : 'Gender'}
             </Text>
-            <GlassSegmented
+            <TactileSegmented
               options={genderOptions}
               value={gender ?? 'male'}
               onChange={(v) => setGender(v as Gender)}

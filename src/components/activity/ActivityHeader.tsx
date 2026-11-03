@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GlassSegmented, GlassAvatar } from '../Glass';
+import { GlassAvatar } from '../Glass';
+import { TactileSegmented } from '../common/TactileSegmented';
 import { NotificationButton } from '../NotificationButton';
 import { FrostedGlass } from '../FrostedGlass';
 import { useTheme } from '../../lib/theme';
@@ -94,7 +95,7 @@ export function ActivityHeaderComponent({
         </View>
 
         <View style={{ zIndex: 10 }}>
-          <GlassSegmented
+          <TactileSegmented
             options={[
               { label: t('activity.created'), value: 'created', icon: 'Crown' },
               { label: t('activity.joined'), value: 'joined', icon: 'Users' },

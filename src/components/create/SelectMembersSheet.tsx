@@ -2,7 +2,8 @@
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Platform } from 'react-native';
-import { GlassCard, GlassAvatar, GlassButton, GlassEmpty, GlassSegmented, GlassInput } from '../Glass';
+import { GlassCard, GlassAvatar, GlassButton, GlassEmpty, GlassInput } from '../Glass';
+import { TactileSegmented } from '../common/TactileSegmented';
 import { GlassSheet } from '../Overlays';
 import { useAppData } from '../../lib/appData';
 import { useTheme } from '../../lib/theme';
@@ -271,7 +272,7 @@ export function SelectMembersSheetComponent({
       }
       headerContent={
         <View style={{ gap: 10 }}>
-          <GlassSegmented
+          <TactileSegmented
             options={tabOptions}
             value={activeTab}
             onChange={(v) => setActiveTab(v as 'friends' | 'search')}

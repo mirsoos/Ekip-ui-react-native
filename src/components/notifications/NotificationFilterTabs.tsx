@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { GlassSegmented } from '../Glass';
+import { TactileSegmented } from '../common/TactileSegmented';
 import { useTheme } from '../../lib/theme';
 
 export function NotificationFilterTabs({
@@ -19,7 +19,7 @@ export function NotificationFilterTabs({
   return (
     <View style={styles.container}>
       <View style={{ flex: 1 }}>
-        <GlassSegmented
+        <TactileSegmented
           options={[
             { label: 'All', value: 'all' },
             { label: `Unread (${unreadCount})`, value: 'unread' },

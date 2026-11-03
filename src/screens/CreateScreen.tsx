@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
-import { GlassInput, GlassToggle, GlassSegmented } from '../components/Glass';
+import { GlassInput, GlassToggle } from '../components/Glass';
+import { TactileSegmented } from '../components/common/TactileSegmented';
 import { CoverPicker } from '../components/create/CoverPicker';
 import { CategoryTypeSelector } from '../components/create/CategoryTypeSelector';
 import { TagSelector } from '../components/create/TagSelector';
@@ -468,7 +469,7 @@ export const CreateScreen = React.memo(
                   <Text style={[styles.fieldLabel, { color: colors.textSecondary, textAlign }]}>
                     {t('create.genderPref')}
                   </Text>
-                  <GlassSegmented
+                  <TactileSegmented
                     options={genderOptions}
                     value={genderPref}
                     onChange={setGenderPref}

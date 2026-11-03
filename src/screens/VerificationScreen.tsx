@@ -16,8 +16,8 @@ import {
   GlassButton,
   GlassAvatar,
   GlassBadgeIcon,
-  GlassSegmented,
 } from '../components/Glass';
+import { TactileSegmented } from '../components/common/TactileSegmented';
 import { GlassSheet } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
@@ -429,7 +429,7 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
             {isRTL ? 'نوع مدرک' : 'DOCUMENT TYPE'}
           </Text>
           <View style={{ marginTop: 8 }}>
-            <GlassSegmented
+            <TactileSegmented
               options={docOptions}
               value={selectedDocType}
               onChange={(v) => setSelectedDocType(v as DocumentType)}
