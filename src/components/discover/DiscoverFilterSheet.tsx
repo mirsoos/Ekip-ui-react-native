@@ -1,4 +1,6 @@
-import React from 'react';
+// --- START OF FILE DiscoverFilterSheet.tsx ---
+
+import React, { useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { GlassSheet } from '../Overlays';
 import { GlassSegmented, GlassChip, GlassToggle, GlassButton } from '../Glass';
@@ -33,6 +35,33 @@ export function DiscoverFilterSheetComponent({
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
 
+  const categoryOptions = useMemo(
+    () =>
+      isRTL
+        ? [
+            { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' as const },
+            { label: t('discover.cat.entertainment'), value: 'entertainment', icon: 'PartyPopper' as const },
+            { label: t('discover.cat.all'), value: 'all' },
+          ]
+        : [
+            { label: t('discover.cat.all'), value: 'all' },
+            { label: t('discover.cat.entertainment'), value: 'entertainment', icon: 'PartyPopper' as const },
+            { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' as const },
+          ],
+    [isRTL, t]
+  );
+
+  const handleSegmentChange = useCallback(
+    (v: string) => {
+      onChangeCategory(v as 'all' | 'work' | 'entertainment');
+    },
+    [onChangeCategory]
+  );
+
+  const handleSelectAllCities = useCallback(() => {
+    onChangeCity('all');
+  }, [onChangeCity]);
+
   return (
     <GlassSheet open={open} onClose={onClose} title={t('discover.filterTitle')}>
       <View style={{ gap: 18 }}>
@@ -42,17 +71,9 @@ export function DiscoverFilterSheetComponent({
             {t('discover.filterCategory')}
           </Text>
           <GlassSegmented
-            options={isRTL ? [
-              { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' },
-              { label: t('discover.cat.entertainment'), value: 'entertainment', icon: 'PartyPopper' },
-              { label: t('discover.cat.all'), value: 'all' },
-            ] : [
-              { label: t('discover.cat.all'), value: 'all' },
-              { label: t('discover.cat.entertainment'), value: 'entertainment', icon: 'PartyPopper' },
-              { label: t('discover.cat.work'), value: 'work', icon: 'Briefcase' },
-            ]}
+            options={categoryOptions}
             value={categoryFilter}
-            onChange={(v) => onChangeCategory(v as any)}
+            onChange={handleSegmentChange}
           />
         </View>
 
@@ -64,7 +85,7 @@ export function DiscoverFilterSheetComponent({
           <View style={[styles.chipsWrap, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <GlassChip
               active={cityFilter === 'all'}
-              onPress={() => onChangeCity('all')}
+              onPress={handleSelectAllCities}
             >
               {t('discover.filterAllSectors')}
             </GlassChip>

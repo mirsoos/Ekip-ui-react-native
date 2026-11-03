@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from 'react';
+// --- START OF FILE Loading.tsx ---
+
+import React, { useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   Animated,
@@ -15,57 +17,9 @@ import Svg, {
   Stop,
   Rect,
   Circle,
-  SvgXml,
+  Path,
 } from 'react-native-svg';
 import { useTheme } from '../lib/theme';
-
-const TOP_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 270" width="100%" height="100%" preserveAspectRatio="xMinYMid meet">
-  <defs>
-    <linearGradient id="blueGrad" x1="0%" y1="50%" x2="100%" y2="50%">
-      <stop offset="0%" stop-color="#006cdb"/>
-      <stop offset="35%" stop-color="#007fe8"/>
-      <stop offset="70%" stop-color="#0096f5"/>
-      <stop offset="100%" stop-color="#00a6ff"/>
-    </linearGradient>
-    <linearGradient id="blueBorder" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.45)"/>
-      <stop offset="100%" stop-color="rgba(0,60,150,0.5)"/>
-    </linearGradient>
-  </defs>
-  <path d="M 165 4 H 885 A 110 110 0 0 1 885 224 H 165 C 80 224, 30 248, 2 266 L 2 110 C 2 50, 75 4, 165 4 Z" fill="url(#blueGrad)" stroke="url(#blueBorder)" stroke-width="1.5" />
-</svg>`;
-
-const MID_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 270" width="100%" height="100%" preserveAspectRatio="xMinYMid meet">
-  <defs>
-    <linearGradient id="orangeGrad" x1="0%" y1="50%" x2="100%" y2="50%">
-      <stop offset="0%" stop-color="#e64600"/>
-      <stop offset="35%" stop-color="#f55a00"/>
-      <stop offset="70%" stop-color="#ff7b00"/>
-      <stop offset="100%" stop-color="#ffa600"/>
-    </linearGradient>
-    <linearGradient id="orangeBorder" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.45)"/>
-      <stop offset="100%" stop-color="rgba(150,35,0,0.5)"/>
-    </linearGradient>
-  </defs>
-  <path d="M 165 4 H 785 A 110 110 0 0 1 785 224 H 165 C 80 224, 30 248, 2 266 L 2 110 C 2 50, 75 4, 165 4 Z" fill="url(#orangeGrad)" stroke="url(#orangeBorder)" stroke-width="1.5" />
-</svg>`;
-
-const BOT_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 240" width="100%" height="100%" preserveAspectRatio="xMinYMid meet">
-  <defs>
-    <linearGradient id="greenGrad" x1="0%" y1="50%" x2="100%" y2="50%">
-      <stop offset="0%" stop-color="#1b9338"/>
-      <stop offset="40%" stop-color="#3ea935"/>
-      <stop offset="85%" stop-color="#80c33a"/>
-      <stop offset="100%" stop-color="#91cc3b"/>
-    </linearGradient>
-    <linearGradient id="greenBorder" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.45)"/>
-      <stop offset="100%" stop-color="rgba(15,90,30,0.45)"/>
-    </linearGradient>
-  </defs>
-  <rect x="2" y="6" width="996" height="228" rx="114" fill="url(#greenGrad)" stroke="url(#greenBorder)" stroke-width="1.5" />
-</svg>`;
 
 export interface LoadingProps {
   onFinish?: () => void;
@@ -74,33 +28,110 @@ export interface LoadingProps {
 }
 
 const BRAND_TEXT_WIDTH = 130;
+const USE_NATIVE_DRIVER = Platform.OS !== 'web';
+
+// ============================================================================
+// قطعات برداری نیتیو لوگوی ۳ تکه (بدون سربار پارس کردن XML و ۱۰۰٪ سازگار با Android/iOS/Web)
+// ============================================================================
+const TopBluePiece = React.memo(({ width, height }: { width: number; height: number }) => (
+  <Svg width={width} height={height} viewBox="0 0 1000 270" preserveAspectRatio="xMinYMid meet">
+    <Defs>
+      <SvgLinearGradient id="blueGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+        <Stop offset="0%" stopColor="#006cdb" />
+        <Stop offset="35%" stopColor="#007fe8" />
+        <Stop offset="70%" stopColor="#0096f5" />
+        <Stop offset="100%" stopColor="#00a6ff" />
+      </SvgLinearGradient>
+      <SvgLinearGradient id="blueBorder" x1="0%" y1="0%" x2="0%" y2="100%">
+        <Stop offset="0%" stopColor="#ffffff" stopOpacity={0.45} />
+        <Stop offset="100%" stopColor="#003c96" stopOpacity={0.5} />
+      </SvgLinearGradient>
+    </Defs>
+    <Path
+      d="M 165 4 H 885 A 110 110 0 0 1 885 224 H 165 C 80 224, 30 248, 2 266 L 2 110 C 2 50, 75 4, 165 4 Z"
+      fill="url(#blueGrad)"
+      stroke="url(#blueBorder)"
+      strokeWidth={1.5}
+    />
+  </Svg>
+));
+
+const MidOrangePiece = React.memo(({ width, height }: { width: number; height: number }) => (
+  <Svg width={width} height={height} viewBox="0 0 900 270" preserveAspectRatio="xMinYMid meet">
+    <Defs>
+      <SvgLinearGradient id="orangeGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+        <Stop offset="0%" stopColor="#e64600" />
+        <Stop offset="35%" stopColor="#f55a00" />
+        <Stop offset="70%" stopColor="#ff7b00" />
+        <Stop offset="100%" stopColor="#ffa600" />
+      </SvgLinearGradient>
+      <SvgLinearGradient id="orangeBorder" x1="0%" y1="0%" x2="0%" y2="100%">
+        <Stop offset="0%" stopColor="#ffffff" stopOpacity={0.45} />
+        <Stop offset="100%" stopColor="#962300" stopOpacity={0.5} />
+      </SvgLinearGradient>
+    </Defs>
+    <Path
+      d="M 165 4 H 785 A 110 110 0 0 1 785 224 H 165 C 80 224, 30 248, 2 266 L 2 110 C 2 50, 75 4, 165 4 Z"
+      fill="url(#orangeGrad)"
+      stroke="url(#orangeBorder)"
+      strokeWidth={1.5}
+    />
+  </Svg>
+));
+
+const BotGreenPiece = React.memo(({ width, height }: { width: number; height: number }) => (
+  <Svg width={width} height={height} viewBox="0 0 1000 240" preserveAspectRatio="xMinYMid meet">
+    <Defs>
+      <SvgLinearGradient id="greenGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+        <Stop offset="0%" stopColor="#1b9338" />
+        <Stop offset="40%" stopColor="#3ea935" />
+        <Stop offset="85%" stopColor="#80c33a" />
+        <Stop offset="100%" stopColor="#91cc3b" />
+      </SvgLinearGradient>
+      <SvgLinearGradient id="greenBorder" x1="0%" y1="0%" x2="0%" y2="100%">
+        <Stop offset="0%" stopColor="#ffffff" stopOpacity={0.45} />
+        <Stop offset="100%" stopColor="#0f5a1e" stopOpacity={0.45} />
+      </SvgLinearGradient>
+    </Defs>
+    <Rect
+      x={2}
+      y={6}
+      width={996}
+      height={228}
+      rx={114}
+      fill="url(#greenGrad)"
+      stroke="url(#greenBorder)"
+      strokeWidth={1.5}
+    />
+  </Svg>
+));
 
 export function Loading({ onFinish, minDuration = 2000, canFinish = true }: LoadingProps) {
   const { isDark } = useTheme();
-  const [startedAt] = useState(() => Date.now());
+  const startedAt = useRef(Date.now()).current;
 
   // Screen level transitions
-  const [containerOpacity] = useState(() => new Animated.Value(1));
-  const [sceneScale] = useState(() => new Animated.Value(0.92));
-  const [contentOpacity] = useState(() => new Animated.Value(0));
+  const containerOpacity = useRef(new Animated.Value(1)).current;
+  const sceneScale = useRef(new Animated.Value(0.92)).current;
+  const contentOpacity = useRef(new Animated.Value(0)).current;
   const [isFadingOut, setIsFadingOut] = useState(false);
 
   // Twinkling stars anims (Group A & Group B alternating)
-  const [twinkleA] = useState(() => new Animated.Value(0.2));
-  const [twinkleB] = useState(() => new Animated.Value(0.7));
+  const twinkleA = useRef(new Animated.Value(0.2)).current;
+  const twinkleB = useRef(new Animated.Value(0.7)).current;
 
-  // Ekip 3-Piece SVG Logo kinetic animations (BottomNav style)
-  const [logoScaleAnim] = useState(() => new Animated.Value(0.9));
-  const [pieceSeparationAnim] = useState(() => new Animated.Value(0));
-  const [floatAnim] = useState(() => new Animated.Value(0));
+  // Ekip 3-Piece SVG Logo kinetic animations
+  const logoScaleAnim = useRef(new Animated.Value(0.9)).current;
+  const pieceSeparationAnim = useRef(new Animated.Value(0)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
 
   // 3 Sequential Pulse Rings (Blue -> Orange -> Green)
-  const [pulseBlueAnim] = useState(() => new Animated.Value(0));
-  const [pulseOrangeAnim] = useState(() => new Animated.Value(0));
-  const [pulseGreenAnim] = useState(() => new Animated.Value(0));
+  const pulseBlueAnim = useRef(new Animated.Value(0)).current;
+  const pulseOrangeAnim = useRef(new Animated.Value(0)).current;
+  const pulseGreenAnim = useRef(new Animated.Value(0)).current;
 
-  // Typographic Progress fill (0 to BRAND_TEXT_WIDTH)
-  const [textFillWidth] = useState(() => new Animated.Value(0));
+  // Typographic Progress (0 to 1 — 100% GPU Native Driver!)
+  const textFillProgress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // 1. Scene entrance
@@ -109,13 +140,13 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
         toValue: 1,
         duration: 380,
         easing: Easing.bezier(0.2, 0.9, 0.3, 1),
-        useNativeDriver: Platform.OS !== 'web',
+        useNativeDriver: USE_NATIVE_DRIVER,
       }),
       Animated.spring(sceneScale, {
         toValue: 1,
         tension: 65,
         friction: 8,
-        useNativeDriver: Platform.OS !== 'web',
+        useNativeDriver: USE_NATIVE_DRIVER,
       }),
     ]).start();
 
@@ -126,13 +157,13 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
           toValue: 1,
           duration: 700,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
         Animated.timing(twinkleA, {
           toValue: 0.15,
           duration: 700,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
       ])
     );
@@ -142,25 +173,25 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
           toValue: 0.15,
           duration: 900,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
         Animated.timing(twinkleB, {
           toValue: 1,
           duration: 900,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
       ])
     );
     twinkleLoopA.start();
     twinkleLoopB.start();
 
-    // 3. Typographic Progress Fill (Filling 'EKIP' from 0 to full width over 2s)
-    Animated.timing(textFillWidth, {
-      toValue: BRAND_TEXT_WIDTH,
+    // 3. Typographic Progress Fill (100% GPU Driven via Counter-Translate!)
+    Animated.timing(textFillProgress, {
+      toValue: 1,
       duration: Math.max(100, minDuration - 200),
       easing: Easing.bezier(0.2, 0.8, 0.25, 1),
-      useNativeDriver: false,
+      useNativeDriver: USE_NATIVE_DRIVER,
     }).start();
 
     // 4. Logo entrance squash & burst shock
@@ -170,13 +201,13 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
           toValue: 0.85,
           duration: 130,
           easing: Easing.bezier(0.4, 0, 0.2, 1),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
         Animated.timing(pieceSeparationAnim, {
           toValue: -1,
           duration: 130,
           easing: Easing.in(Easing.quad),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
       ]),
       Animated.parallel([
@@ -184,13 +215,13 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
           toValue: 1.15,
           duration: 200,
           easing: Easing.out(Easing.cubic),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
         Animated.timing(pieceSeparationAnim, {
           toValue: 1.3,
           duration: 200,
           easing: Easing.out(Easing.back(1.8)),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
       ]),
       Animated.parallel([
@@ -198,13 +229,13 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
           toValue: 1.0,
           tension: 120,
           friction: 6.5,
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
         Animated.spring(pieceSeparationAnim, {
           toValue: 0,
           tension: 130,
           friction: 7,
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
       ]),
     ]).start();
@@ -216,59 +247,55 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
           toValue: 1,
           duration: 1100,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
         Animated.timing(floatAnim, {
           toValue: 0,
           duration: 1100,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
       ])
     );
     floatLoop.start();
 
-    // 6. Continuous Tri-Color Pulse Rhythm (Blue -> Orange -> Green)
-    const runPulse = (anim: Animated.Value, delay: number) => {
-      const cycle = () => {
-        anim.setValue(0);
-        Animated.timing(anim, {
-          toValue: 1,
-          duration: 1800,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: Platform.OS !== 'web',
-        }).start(() => cycle());
-      };
-      return setTimeout(cycle, delay);
-    };
+    // 6. Continuous Tri-Color Pulse Rhythm (Clean Animated.loop without memory leak)
+    const createPulseLoop = (anim: Animated.Value) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: 1800,
+            easing: Easing.out(Easing.quad),
+            useNativeDriver: USE_NATIVE_DRIVER,
+          }),
+          Animated.timing(anim, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: USE_NATIVE_DRIVER,
+          }),
+        ])
+      );
 
-    const t1 = runPulse(pulseBlueAnim, 0);
-    const t2 = runPulse(pulseOrangeAnim, 550);
-    const t3 = runPulse(pulseGreenAnim, 1100);
+    const loopBlue = createPulseLoop(pulseBlueAnim);
+    const loopOrange = createPulseLoop(pulseOrangeAnim);
+    const loopGreen = createPulseLoop(pulseGreenAnim);
+
+    loopBlue.start();
+    const t2 = setTimeout(() => loopOrange.start(), 550);
+    const t3 = setTimeout(() => loopGreen.start(), 1100);
 
     return () => {
-      clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
+      loopBlue.stop();
+      loopOrange.stop();
+      loopGreen.stop();
       twinkleLoopA.stop();
       twinkleLoopB.stop();
       floatLoop.stop();
     };
-  }, [
-    minDuration,
-    contentOpacity,
-    sceneScale,
-    logoScaleAnim,
-    pieceSeparationAnim,
-    floatAnim,
-    pulseBlueAnim,
-    pulseOrangeAnim,
-    pulseGreenAnim,
-    containerOpacity,
-    twinkleA,
-    twinkleB,
-    textFillWidth,
-  ]);
+  }, [minDuration]);
 
   useEffect(() => {
     if (!canFinish) return;
@@ -281,13 +308,13 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
           toValue: 0,
           duration: 480,
           easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
         Animated.timing(sceneScale, {
           toValue: 1.05,
           duration: 480,
           easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
       ]).start(({ finished }) => {
         if (finished) onFinish?.();
@@ -331,6 +358,16 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
     })
   );
 
+  // GPU Counter-Translation for left-to-right text fill without layout recalculation
+  const clipTranslateX = textFillProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-BRAND_TEXT_WIDTH, 0],
+  });
+  const innerTextTranslateX = textFillProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [BRAND_TEXT_WIDTH, 0],
+  });
+
   const getPulseStyle = (anim: Animated.Value) => {
     const scale = anim.interpolate({
       inputRange: [0, 1],
@@ -370,20 +407,25 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
       <StatusBar style={isDark ? 'light' : 'dark'} />
 
       {/* Atmospheric Multi-Layer Glow Canvas */}
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <View
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+        renderToHardwareTextureAndroid={true}
+        shouldRasterizeIOS={true}
+      >
         <Svg width="100%" height="100%">
           <Defs>
-            <RadialGradient id="meshCyan" cx={isDark ? "18%" : "25%"} cy={isDark ? "20%" : "15%"} r={isDark ? "55%" : "65%"}>
+            <RadialGradient id="meshCyan" cx={isDark ? '18%' : '25%'} cy={isDark ? '20%' : '15%'} r={isDark ? '55%' : '65%'}>
               <Stop offset="0%" stopColor="#38bdf8" stopOpacity={isDark ? 0.24 : 0.20} />
               <Stop offset="55%" stopColor="#38bdf8" stopOpacity={isDark ? 0.08 : 0.06} />
               <Stop offset="100%" stopColor="#38bdf8" stopOpacity={0} />
             </RadialGradient>
-            <RadialGradient id="meshRose" cx={isDark ? "50%" : "60%"} cy={isDark ? "48%" : "52%"} r={isDark ? "48%" : "60%"}>
+            <RadialGradient id="meshRose" cx={isDark ? '50%' : '60%'} cy={isDark ? '48%' : '52%'} r={isDark ? '48%' : '60%'}>
               <Stop offset="0%" stopColor="#ec4899" stopOpacity={isDark ? 0.28 : 0.16} />
               <Stop offset="60%" stopColor="#ec4899" stopOpacity={isDark ? 0.07 : 0.04} />
               <Stop offset="100%" stopColor="#ec4899" stopOpacity={0} />
             </RadialGradient>
-            <RadialGradient id="meshIndigo" cx={isDark ? "80%" : "30%"} cy={isDark ? "82%" : "85%"} r={isDark ? "55%" : "65%"}>
+            <RadialGradient id="meshIndigo" cx={isDark ? '80%' : '30%'} cy={isDark ? '82%' : '85%'} r={isDark ? '55%' : '65%'}>
               <Stop offset="0%" stopColor="#6366f1" stopOpacity={isDark ? 0.26 : 0.18} />
               <Stop offset="60%" stopColor="#6366f1" stopOpacity={isDark ? 0.06 : 0.05} />
               <Stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
@@ -408,7 +450,7 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
           )}
         </Svg>
 
-        {/* Twinkling Stars (Dark mode only - Option B for light mode is pure clean frosted light) */}
+        {/* Twinkling Stars (Dark mode only) */}
         {isDark && (
           <>
             <Animated.View
@@ -494,7 +536,7 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
             />
           </View>
 
-          {/* 3-Piece SVG Logo Stack */}
+          {/* 3-Piece SVG Logo Stack (LTR locked so pieces always align left-to-right identically in FA & EN) */}
           <Animated.View
             style={[
               styles.logoStack,
@@ -506,6 +548,8 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
           >
             {/* TOP PIECE (Blue Speech Arc) */}
             <Animated.View
+              renderToHardwareTextureAndroid={true}
+              shouldRasterizeIOS={true}
               style={{
                 width: logoSize,
                 height: pieceHeight,
@@ -516,11 +560,13 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
                 zIndex: 3,
               }}
             >
-              <SvgXml xml={TOP_XML} width={logoSize} height={pieceHeight} />
+              <TopBluePiece width={logoSize} height={pieceHeight} />
             </Animated.View>
 
             {/* MID PIECE (Orange Speech Arc) */}
             <Animated.View
+              renderToHardwareTextureAndroid={true}
+              shouldRasterizeIOS={true}
               style={{
                 width: midWidth,
                 height: pieceHeight,
@@ -531,11 +577,13 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
                 zIndex: 2,
               }}
             >
-              <SvgXml xml={MID_XML} width={midWidth} height={pieceHeight} />
+              <MidOrangePiece width={midWidth} height={pieceHeight} />
             </Animated.View>
 
             {/* BOT PIECE (Green Capsule Foundation) */}
             <Animated.View
+              renderToHardwareTextureAndroid={true}
+              shouldRasterizeIOS={true}
               style={{
                 width: logoSize,
                 height: botHeight,
@@ -545,12 +593,12 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
                 zIndex: 1,
               }}
             >
-              <SvgXml xml={BOT_XML} width={logoSize} height={botHeight} />
+              <BotGreenPiece width={logoSize} height={botHeight} />
             </Animated.View>
           </Animated.View>
         </View>
 
-        {/* Brand Typography with Fill Progress */}
+        {/* Brand Typography with 100% Native-Driver GPU Fill Progress */}
         <View style={styles.telemetrySection}>
           <View style={styles.progressTextContainer}>
             {/* Background Muted Track Text */}
@@ -563,27 +611,36 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
               EKIP
             </Text>
 
-            {/* Glowing Active Progress Text Filling from Left to Right */}
-            <Animated.View
-              style={[
-                styles.progressTextClip,
-                { width: textFillWidth },
-              ]}
-            >
-              <Text
+            {/* Glowing Active Progress Text Filling from Left to Right on GPU */}
+            <View style={styles.progressOuterClip}>
+              <Animated.View
                 style={[
-                  styles.brandTitle,
-                  {
-                    color: isDark ? '#ffffff' : '#0f172a',
-                    textShadowColor: isDark ? 'rgba(56, 189, 248, 0.75)' : 'rgba(15, 23, 42, 0.25)',
-                    textShadowOffset: { width: 0, height: 1 },
-                    textShadowRadius: isDark ? 10 : 4,
-                  },
+                  styles.progressInnerSlider,
+                  { transform: [{ translateX: clipTranslateX }] },
                 ]}
               >
-                EKIP
-              </Text>
-            </Animated.View>
+                <Animated.View
+                  style={[
+                    styles.progressCounterSlider,
+                    { transform: [{ translateX: innerTextTranslateX }] },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.brandTitle,
+                      {
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        textShadowColor: isDark ? 'rgba(56, 189, 248, 0.75)' : 'rgba(15, 23, 42, 0.25)',
+                        textShadowOffset: { width: 0, height: 1 },
+                        textShadowRadius: isDark ? 10 : 4,
+                      },
+                    ]}
+                  >
+                    EKIP
+                  </Text>
+                </Animated.View>
+              </Animated.View>
+            </View>
           </View>
 
           <Text
@@ -602,7 +659,7 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
 
 const styles = StyleSheet.create({
   container: {
-    ...(StyleSheet.absoluteFill as any),
+    ...StyleSheet.absoluteFill,
     zIndex: 99999,
     justifyContent: 'center',
     alignItems: 'center',
@@ -636,6 +693,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 2,
     position: 'relative',
+    direction: 'ltr',
   },
   pulseRing: {
     position: 'absolute',
@@ -662,6 +720,7 @@ const styles = StyleSheet.create({
   telemetrySection: {
     alignItems: 'center',
     marginTop: 32,
+    direction: 'ltr',
   },
   progressTextContainer: {
     width: BRAND_TEXT_WIDTH,
@@ -671,12 +730,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 4,
   },
-  progressTextClip: {
+  progressOuterClip: {
     position: 'absolute',
     top: 0,
     left: 0,
-    height: '100%',
+    width: BRAND_TEXT_WIDTH,
+    height: 36,
     overflow: 'hidden',
+  },
+  progressInnerSlider: {
+    width: BRAND_TEXT_WIDTH,
+    height: 36,
+    overflow: 'hidden',
+  },
+  progressCounterSlider: {
+    width: BRAND_TEXT_WIDTH,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   brandTitle: {
     width: BRAND_TEXT_WIDTH,

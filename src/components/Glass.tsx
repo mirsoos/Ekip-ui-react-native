@@ -1,3 +1,5 @@
+// --- START OF FILE Glass.tsx ---
+
 import React, { useState, useRef, useEffect, type ReactNode } from 'react';
 import {
   View,
@@ -48,10 +50,6 @@ const LIGHT_CARD_GRADIENT_COLORS = [
 ] as const;
 const CARD_GRADIENT_START = { x: 0, y: 0 };
 const CARD_GRADIENT_END = { x: 1, y: 1 };
-const CARD_GRADIENT_STYLE: StyleProp<ViewStyle> = [
-  StyleSheet.absoluteFill,
-  { pointerEvents: 'none' },
-];
 const GRADIENT_START = { x: 0, y: 0 };
 const GRADIENT_END = { x: 1, y: 1 };
 const GRADIENT_TOP_START = { x: 0, y: 0 };
@@ -67,6 +65,7 @@ const BUTTON_ICON_LEFT_STYLE = { marginRight: 6 };
 const BUTTON_ICON_RIGHT_STYLE = { marginLeft: 6 };
 const SMALL_CHIP_ICON_STYLE = { marginRight: 5 };
 const SEGMENTED_ICON_STYLE = { marginRight: 5 };
+
 const GLASS_THEME_STYLES = {
   light: StyleSheet.create({
     buttonSecondary: {
@@ -159,6 +158,7 @@ const GLASS_THEME_STYLES = {
     emptySubtitle: { color: darkColors.textSecondary },
   }),
 };
+
 const GLASS_THEME_GRADIENTS = {
   light: {
     segmentedSheen: [
@@ -175,6 +175,7 @@ const GLASS_THEME_GRADIENTS = {
     ] as const,
   },
 } as const;
+
 const LIST_ROW_STYLES: Record<'ltr' | 'rtl', ViewStyle> = {
   ltr: { flexDirection: 'row' },
   rtl: { flexDirection: 'row-reverse' },
@@ -283,13 +284,14 @@ export function GlassCardComponent({
 
   const content = (
     <>
-      {/* Specular subtle gradient highlight */}
-      <LinearGradient
-        colors={gradientColors}
-        start={CARD_GRADIENT_START}
-        end={CARD_GRADIENT_END}
-        style={CARD_GRADIENT_STYLE}
-      />
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <LinearGradient
+          colors={gradientColors}
+          start={CARD_GRADIENT_START}
+          end={CARD_GRADIENT_END}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
       {children}
     </>
   );
@@ -572,7 +574,7 @@ export function GlassInputComponent({
       styles.inputWrapper,
       themeStyles.input,
       {
-        flexDirection: isRTL ? 'row-reverse' as const : 'row' as const,
+        flexDirection: isRTL ? ('row-reverse' as const) : ('row' as const),
         minHeight: multiline ? numberOfLines * 24 + 20 : 48,
       },
       style,
@@ -584,18 +586,16 @@ export function GlassInputComponent({
       styles.inputText,
       {
         color: colors.textPrimary,
-        textAlign: isRTL ? 'right' as const : 'left' as const,
-        writingDirection: isRTL ? 'rtl' as const : 'ltr' as const,
-        textAlignVertical: multiline ? 'top' as const : 'center' as const,
+        textAlign: isRTL ? ('right' as const) : ('left' as const),
+        writingDirection: isRTL ? ('rtl' as const) : ('ltr' as const),
+        textAlignVertical: multiline ? ('top' as const) : ('center' as const),
       },
     ],
     [colors.textPrimary, isRTL, multiline]
   );
 
   return (
-    <View
-      style={inputStyle}
-    >
+    <View style={inputStyle}>
       {IconComp && (
         <IconComp
           size={18}
@@ -716,7 +716,7 @@ export function GlassAvatarComponent({
       ? BORDER_PREMIUM
       : null;
 
-  const borderScale = tier === 'business_premium' ? 1.20 : 1.14;
+  const borderScale = tier === 'business_premium' ? 1.2 : 1.14;
   const borderSize = Math.round(size * borderScale);
   const borderOffset = Math.round((size - borderSize) / 2);
 
@@ -851,7 +851,7 @@ export function GlassBackButtonComponent({
         marginWidth={8}
         scale={20}
         blurDeviation={1.6}
-        overlayOpacity={isDark ? 0.10 : 0.22}
+        overlayOpacity={isDark ? 0.1 : 0.22}
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.backButtonIconWrap}>
@@ -901,7 +901,7 @@ export function GlassCloseButtonComponent({
         marginWidth={Math.max(6, Math.round(size * 0.22))}
         scale={Math.max(14, Math.round(size * 0.55))}
         blurDeviation={1.5}
-        overlayOpacity={isDark ? 0.10 : 0.22}
+        overlayOpacity={isDark ? 0.1 : 0.22}
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.backButtonIconWrap}>
@@ -934,36 +934,57 @@ export function GlassSegmentedComponent({
 
   const [containerWidth, setContainerWidth] = useState(0);
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const hasMeasuredRef = useRef(false);
+  const prevIndexRef = useRef(activeIndex);
 
   useEffect(() => {
-    if (Platform.OS === 'web') return;
+    if (Platform.OS === 'web' || containerWidth <= 0) return;
     const padding = 8; // 4px on each side
-    const innerW = containerWidth > 0 ? containerWidth - padding : 320;
+    const innerW = containerWidth - padding;
     const itemW = innerW / count;
     const targetX = activeIndex * itemW;
 
-    Animated.spring(slideAnim, {
-      toValue: targetX,
-      tension: 70,
-      friction: 10,
-      useNativeDriver: true,
-    }).start();
-  }, [activeIndex, containerWidth, count]);
-
-  const handleSelect = React.useCallback((v: string) => {
-    if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
-      try {
-        navigator.vibrate(6);
-      } catch {
-        // ignore
-      }
+    // در اولین اندازه‌گیری عرض کانتینر (مثلاً لحظه باز شدن شیت)، بدون پرش مستقیم در جای خودش قرار می‌گیرد
+    if (!hasMeasuredRef.current) {
+      hasMeasuredRef.current = true;
+      prevIndexRef.current = activeIndex;
+      slideAnim.setValue(targetX);
+      return;
     }
-    onChange(v);
-  }, [onChange]);
+
+    // وقتی کاربر واقعاً تب را تغییر داد، انیمیشن فنری اجرا می‌شود
+    if (prevIndexRef.current !== activeIndex) {
+      prevIndexRef.current = activeIndex;
+      Animated.spring(slideAnim, {
+        toValue: targetX,
+        tension: 70,
+        friction: 10,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      slideAnim.setValue(targetX);
+    }
+  }, [activeIndex, containerWidth, count, slideAnim]);
+
+  const handleSelect = React.useCallback(
+    (v: string) => {
+      if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate(6);
+        } catch {
+          // ignore
+        }
+      }
+      onChange(v);
+    },
+    [onChange]
+  );
+
   const selectHandlers = React.useMemo(
     () => new Map(options.map((option) => [option.value, () => handleSelect(option.value)])),
     [handleSelect, options]
   );
+
   const webLensStyle = React.useMemo(
     () => ({
       position: 'absolute' as const,
@@ -981,18 +1002,20 @@ export function GlassSegmentedComponent({
       shadowRadius: 8,
       elevation: 4,
       overflow: 'hidden' as const,
-      pointerEvents: 'none' as const,
       zIndex: 1,
     }),
     [activeIndex, count, isDark, themeStyles.segmentedLens]
   );
+
   const segmentedSheen = GLASS_THEME_GRADIENTS[isDark ? 'dark' : 'light'].segmentedSheen;
-  const nativeLensStyle = React.useMemo(
+
+  const nativeLensStyle = React.useMemo<StyleProp<ViewStyle>>(
     () => [
       styles.segmentedLens,
       themeStyles.segmentedLens,
       {
-        width: containerWidth > 0 ? (containerWidth - 8) / count : `${100 / count}%`,
+        width: containerWidth > 0 ? (containerWidth - 8) / count : 0,
+        opacity: containerWidth > 0 ? 1 : 0,
         transform: [{ translateX: slideAnim }],
         borderWidth: 1,
         overflow: 'hidden' as const,
@@ -1000,6 +1023,7 @@ export function GlassSegmentedComponent({
     ],
     [containerWidth, count, slideAnim, themeStyles.segmentedLens]
   );
+
   const segmentedContainerStyle = React.useMemo(
     () => [styles.segmentedContainer, themeStyles.segmented, { position: 'relative' as const }, style],
     [style, themeStyles.segmented]
@@ -1009,17 +1033,15 @@ export function GlassSegmentedComponent({
     <View
       onLayout={(e) => {
         const w = e.nativeEvent.layout.width;
-        if (w > 0) setContainerWidth(w);
+        if (w > 0 && Math.abs(w - containerWidth) > 0.5) {
+          setContainerWidth(w);
+        }
       }}
       style={segmentedContainerStyle}
     >
       {/* Sliding Liquid Glass Lens */}
       {Platform.OS === 'web' ? (
-        <View
-          pointerEvents="none"
-          style={webLensStyle as any}
-        >
-          {/* Top specular highlight sheen */}
+        <View pointerEvents="none" style={webLensStyle as any}>
           <LinearGradient
             colors={segmentedSheen}
             start={GRADIENT_TOP_START}
@@ -1028,9 +1050,7 @@ export function GlassSegmentedComponent({
           />
         </View>
       ) : (
-        <Animated.View
-          style={nativeLensStyle}
-        >
+        <Animated.View pointerEvents="none" style={nativeLensStyle}>
           <LinearGradient
             colors={segmentedSheen}
             start={GRADIENT_TOP_START}
@@ -1345,7 +1365,6 @@ export function GlassEmptyComponent({
 }) {
   const { colors, isDark } = useTheme();
   const themeStyles = GLASS_THEME_STYLES[isDark ? 'dark' : 'light'];
-  const { isRTL } = useI18n();
   const IconComp = getIcon(icon);
 
   return (
@@ -1538,7 +1557,6 @@ const styles = StyleSheet.create({
           shadowRadius: 8,
           elevation: 4,
         }),
-    pointerEvents: 'none',
     zIndex: 1,
   },
   segmentedItem: {

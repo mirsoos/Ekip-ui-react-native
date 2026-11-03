@@ -1,3 +1,5 @@
+// --- START OF FILE DiscoverHeader.tsx ---
+
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,6 +48,7 @@ export function DiscoverHeaderComponent({
       pointerEvents="box-none"
     >
       <View
+        renderToHardwareTextureAndroid={true}
         style={[
           styles.container,
           {
@@ -166,20 +169,20 @@ export function DiscoverHeaderComponent({
                 hasActiveFilters
                   ? 0.25
                   : isDark
-                  ? 0.10
+                  ? 0.1
                   : 0.22
               }
               style={StyleSheet.absoluteFill}
             />
             {hasActiveFilters && (
               <View
+                pointerEvents="none"
                 style={[
                   StyleSheet.absoluteFill,
                   {
                     backgroundColor: 'rgba(244, 114, 182, 0.20)',
                     borderRadius: 20,
                     zIndex: 1,
-                    pointerEvents: 'none',
                   },
                 ]}
               />

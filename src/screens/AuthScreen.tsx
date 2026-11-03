@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+// --- START OF FILE AuthScreen.tsx ---
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, StyleSheet, BackHandler, Keyboard } from 'react-native';
 import { WelcomeView } from '../components/auth/WelcomeView';
 import { LoginForm } from '../components/auth/LoginForm';
 import { TwoFactorView } from '../components/auth/TwoFactorView';
@@ -15,73 +17,112 @@ export function AuthScreen({ onComplete }: { onComplete: () => void }) {
   const [otp, setOtp] = useState('');
   const [forgotStep, setForgotStep] = useState<'request' | 'otp' | 'new-password' | 'success'>('request');
 
-  if (mode === 'welcome') {
-    return (
-      <View style={styles.container}>
-        <ScreenTransition screenKey={`auth-welcome-${language}`}>
-          <WelcomeView
-            onLogin={() => setMode('login')}
-            onRegister={() => setMode('register')}
-            onOAuth={onComplete}
-          />
-        </ScreenTransition>
-      </View>
-    );
-  }
+  // بستن کیبورد قبل از شروع ترنزیشن صفحه برای جلوگیری از پرش ارتفاع در موبایل
+  const switchToWelcome = useCallback(() => {
+    Keyboard.dismiss();
+    setShow2FA(false);
+    setMode('welcome');
+  }, []);
 
-  if (mode === 'forgot') {
-    return (
-      <View style={styles.container}>
-        <ScreenTransition screenKey={`auth-forgot-${forgotStep}-${language}`}>
-          <ForgotPasswordView
-            onBack={() => setMode('login')}
-            onComplete={() => setMode('login')}
-            onStepChange={setForgotStep}
-          />
-        </ScreenTransition>
-      </View>
-    );
-  }
+  const switchToLogin = useCallback(() => {
+    Keyboard.dismiss();
+    setShow2FA(false);
+    setMode('login');
+  }, []);
 
-  if (mode === 'login') {
-    if (show2FA) {
-      return (
-        <View style={styles.container}>
-          <ScreenTransition screenKey={`auth-2fa-${language}`}>
-            <TwoFactorView
-              otp={otp}
-              setOtp={setOtp}
-              onBack={() => setShow2FA(false)}
-              onComplete={onComplete}
-            />
-          </ScreenTransition>
-        </View>
-      );
-    }
-    return (
-      <View style={styles.container}>
-        <ScreenTransition screenKey={`auth-login-${language}`}>
-          <LoginForm
-            onBack={() => setMode('welcome')}
-            onSubmit={() => setShow2FA(true)}
-            onOAuth={onComplete}
-            onForgotPassword={() => {
-              setForgotStep('request');
-              setMode('forgot');
-            }}
-          />
-        </ScreenTransition>
-      </View>
-    );
-  }
+  const switchToRegister = useCallback(() => {
+    Keyboard.dismiss();
+    setMode('register');
+  }, []);
+
+  const switchToForgot = useCallback(() => {
+    Keyboard.dismiss();
+    setForgotStep('request');
+    setMode('forgot');
+  }, []);
+
+  const handleLoginSubmit = useCallback(() => {
+    Keyboard.dismiss();
+    setOtp('');
+    setShow2FA(true);
+  }, []);
+
+  const handleBackFrom2FA = useCallback(() => {
+    Keyboard.dismiss();
+    setShow2FA(false);
+  }, []);
+
+  // مدیریت دکمه Back فیزیکی و ژست برگشت در اندروید
+  useEffect(() => {
+    const onHardwareBack = () => {
+      if (mode === 'login' && show2FA) {
+        handleBackFrom2FA();
+        return true;
+      }
+      if (mode === 'forgot') {
+        switchToLogin();
+        return true;
+      }
+      if (mode === 'login' || mode === 'register') {
+        switchToWelcome();
+        return true;
+      }
+      return false;
+    };
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
+    return () => sub.remove();
+  }, [mode, show2FA, handleBackFrom2FA, switchToLogin, switchToWelcome]);
+
+  // کلید یکتا برای کامپوننت واحد ScreenTransition
+  const activeScreenKey =
+    mode === 'welcome'
+      ? `auth-welcome-${language}`
+      : mode === 'forgot'
+      ? `auth-forgot-${forgotStep}-${language}`
+      : mode === 'login'
+      ? show2FA
+        ? `auth-2fa-${language}`
+        : `auth-login-${language}`
+      : `auth-register-${language}`;
 
   return (
     <View style={styles.container}>
-      <ScreenTransition screenKey={`auth-register-${language}`}>
-        <RegisterWizard
-          onBack={() => setMode('welcome')}
-          onComplete={onComplete}
-        />
+      <ScreenTransition screenKey={activeScreenKey}>
+        {mode === 'welcome' ? (
+          <WelcomeView
+            onLogin={switchToLogin}
+            onRegister={switchToRegister}
+            onOAuth={onComplete}
+          />
+        ) : mode === 'forgot' ? (
+          <ForgotPasswordView
+            onBack={switchToLogin}
+            onComplete={switchToLogin}
+            onStepChange={setForgotStep}
+          />
+        ) : mode === 'login' ? (
+          show2FA ? (
+            <TwoFactorView
+              otp={otp}
+              setOtp={setOtp}
+              onBack={handleBackFrom2FA}
+              onComplete={onComplete}
+            />
+          ) : (
+            <LoginForm
+              onBack={switchToWelcome}
+              onSubmit={handleLoginSubmit}
+              onOAuth={onComplete}
+              onForgotPassword={switchToForgot}
+            />
+          )
+        ) : (
+          <RegisterWizard
+            onBack={switchToWelcome}
+            onComplete={onComplete}
+          />
+        )}
       </ScreenTransition>
     </View>
   );

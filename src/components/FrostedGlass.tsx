@@ -1,3 +1,5 @@
+// --- START OF FILE FrostedGlass.tsx ---
+
 import React, { type ReactNode } from 'react';
 import {
   View,
@@ -52,6 +54,16 @@ export const FrostedGlass = React.memo(function FrostedGlass({
   if (Platform.OS === 'android') {
     return (
       <View pointerEvents={pointerEvents} style={containerStyle}>
+        <View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              borderRadius,
+              backgroundColor: `rgba(255, 255, 255, ${overlayOpacity})`,
+            },
+          ]}
+        />
         {children}
       </View>
     );

@@ -1,4 +1,6 @@
-import React, { useRef, useEffect } from 'react';
+// --- START OF FILE EkipActionBar.tsx ---
+
+import React, { useRef, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassButton } from '../Glass';
@@ -38,17 +40,28 @@ export function EkipActionBarComponent({
       speed: 14,
       useNativeDriver: Platform.OS !== 'web',
     }).start();
-  }, []);
+  }, [enterAnim]);
 
   const enterTranslateY = enterAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [95, 0],
   });
 
-  const groupMembers = members.filter((m) => m.group_id === group.id && m.status === 'active');
-  const myRequest = requests.find((r) => r.group_id === group.id && r.user_id === 'me');
+  const groupMembers = useMemo(
+    () => members.filter((m) => m.group_id === group.id && m.status === 'active'),
+    [members, group.id]
+  );
+
+  const myRequest = useMemo(
+    () => requests.find((r) => r.group_id === group.id && r.user_id === 'me'),
+    [requests, group.id]
+  );
+
   const isOwner = group.owner_id === 'me';
-  const isMember = groupMembers.some((m) => m.user_id === 'me');
+  const isMember = useMemo(
+    () => groupMembers.some((m) => m.user_id === 'me'),
+    [groupMembers]
+  );
 
   const levelOk = !group.required_level || me.level >= group.required_level;
   const honorOk = !group.required_honor || me.honor_score >= group.required_honor;
@@ -64,12 +77,14 @@ export function EkipActionBarComponent({
   const spotsLeft = group.max_members ? group.max_members - group.member_count : null;
   const full = spotsLeft !== null && spotsLeft <= 0;
 
-  const handleStartChat = () => {
+  const handleStartChat = useCallback(() => {
     if (!onOpenChat) return;
     const existing = conversations.find((c) => c.group_id === group.id);
     if (existing) onOpenChat(existing.id);
     else onOpenChat('c2');
-  };
+  }, [conversations, group.id, onOpenChat]);
+
+  const rowDirStyle = { flexDirection: (isRTL ? 'row-reverse' : 'row') as 'row' | 'row-reverse' };
 
   return (
     <View
@@ -82,6 +97,7 @@ export function EkipActionBarComponent({
       pointerEvents="box-none"
     >
       <Animated.View
+        renderToHardwareTextureAndroid={true}
         style={[
           styles.dockContainer,
           {
@@ -101,7 +117,7 @@ export function EkipActionBarComponent({
         />
 
         {isOwner ? (
-          <View style={styles.row}>
+          <View style={[styles.row, rowDirStyle]}>
             <View style={{ flex: 1, zIndex: 10 }}>
               <GlassButton variant="secondary" icon="Edit" fullWidth>
                 {t('common.edit')}
@@ -114,7 +130,7 @@ export function EkipActionBarComponent({
             </View>
           </View>
         ) : isMember || myRequest?.status === 'accepted' ? (
-          <View style={styles.row}>
+          <View style={[styles.row, rowDirStyle]}>
             <View style={{ flex: 1, zIndex: 10 }}>
               <GlassButton
                 variant="secondary"
@@ -132,9 +148,13 @@ export function EkipActionBarComponent({
             </View>
           </View>
         ) : myRequest?.status === 'pending' ? (
-          <View style={styles.row}>
-            <View style={styles.pendingIndicator}>
-              <ClockIcon size={16} color={colors.textSecondary} style={{ marginRight: 6 }} />
+          <View style={[styles.row, rowDirStyle]}>
+            <View style={[styles.pendingIndicator, rowDirStyle]}>
+              <ClockIcon
+                size={16}
+                color={colors.textSecondary}
+                style={{ marginRight: isRTL ? 0 : 6, marginLeft: isRTL ? 6 : 0 }}
+              />
               <Text style={[styles.pendingText, { color: colors.textSecondary }]}>
                 {t('ekip.pendingClearance')}
               </Text>

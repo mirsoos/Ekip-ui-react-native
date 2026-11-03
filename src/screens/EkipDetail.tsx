@@ -1,5 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Platform, Image, TouchableOpacity } from 'react-native';
+// --- START OF FILE EkipDetail.tsx ---
+
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Platform,
+  Image,
+  TouchableOpacity,
+  BackHandler,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassButton } from '../components/Glass';
@@ -8,7 +19,6 @@ import { getIcon, type IconName } from '../lib/icons';
 import { FloatingGlassHeader } from '../components/common/FloatingGlassHeader';
 import { FrostedGlass } from '../components/FrostedGlass';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
-import { EkipDetailHeader } from '../components/ekip/EkipDetailHeader';
 import { EkipEventInfoCard } from '../components/ekip/EkipEventInfoCard';
 import { EkipHostCard } from '../components/ekip/EkipHostCard';
 import { EkipMembersSection } from '../components/ekip/EkipMembersSection';
@@ -46,13 +56,59 @@ export function EkipDetailComponent({
   const [showShare, setShowShare] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
   const [toast, setToast] = useState('');
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showToastMessage = useCallback((msg: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast(msg);
+    toastTimerRef.current = setTimeout(() => setToast(''), 2500);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
+
+  // پشتیبانی از دکمه Back فیزیکی اندروید
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (showJoinSheet) {
+        setShowJoinSheet(false);
+        return true;
+      }
+      if (showShare) {
+        setShowShare(false);
+        return true;
+      }
+      if (showCancel) {
+        setShowCancel(false);
+        return true;
+      }
+      onBack();
+      return true;
+    });
+    return () => sub.remove();
+  }, [onBack, showJoinSheet, showShare, showCancel]);
 
   const CatIcon = getIcon(categoryIcons[group.category] ?? 'PartyPopper');
   const ShareIcon = getIcon('Share');
-  const groupMembers = members.filter((m) => m.group_id === group.id && m.status === 'active');
-  const myRequest = requests.find((r) => r.group_id === group.id && r.user_id === 'me');
+
+  const groupMembers = useMemo(
+    () => members.filter((m) => m.group_id === group.id && m.status === 'active'),
+    [members, group.id]
+  );
+
+  const myRequest = useMemo(
+    () => requests.find((r) => r.group_id === group.id && r.user_id === 'me'),
+    [requests, group.id]
+  );
+
   const isOwner = group.owner_id === 'me';
-  const isMember = groupMembers.some((m) => m.user_id === 'me');
+  const isMember = useMemo(
+    () => groupMembers.some((m) => m.user_id === 'me'),
+    [groupMembers]
+  );
 
   // Eligibility check
   const levelOk = !group.required_level || me.level >= group.required_level;
@@ -69,7 +125,7 @@ export function EkipDetailComponent({
   const spotsLeft = group.max_members ? group.max_members - group.member_count : null;
   const full = spotsLeft !== null && spotsLeft <= 0;
 
-  const handleJoin = () => {
+  const handleJoin = useCallback(() => {
     if (group.auto_accept) {
       addRequest({
         id: `r-${Date.now()}`,
@@ -89,7 +145,7 @@ export function EkipDetailComponent({
           : `You joined ${group.title}!`,
         icon: 'Users',
       });
-      setToast(isRTL ? 'عضویت در اکیپ با موفقیت انجام شد!' : 'Joined Ekip successfully!');
+      showToastMessage(isRTL ? 'عضویت در اکیپ با موفقیت انجام شد!' : 'Joined Ekip successfully!');
     } else {
       addRequest({
         id: `r-${Date.now()}`,
@@ -101,33 +157,43 @@ export function EkipDetailComponent({
         group,
         profile: me,
       });
-      setToast(isRTL ? 'درخواست عضویت برای میزبان اکیپ ارسال شد' : 'Join request sent to the host');
+      showToastMessage(isRTL ? 'درخواست عضویت برای میزبان اکیپ ارسال شد' : 'Join request sent to the host');
     }
     setShowJoinSheet(false);
-    setTimeout(() => setToast(''), 2500);
-  };
+  }, [group, joinMessage, me, isRTL, addRequest, addNotification, showToastMessage]);
 
-  const handleCancelRequest = () => {
+  const handleCancelRequest = useCallback(() => {
     if (myRequest) {
       updateRequest(myRequest.id, 'rejected');
-      setToast(isRTL ? 'درخواست عضویت لغو شد' : 'Join request cancelled');
+      showToastMessage(isRTL ? 'درخواست عضویت لغو شد' : 'Join request cancelled');
       setShowCancel(false);
-      setTimeout(() => setToast(''), 2500);
     }
-  };
+  }, [myRequest, updateRequest, isRTL, showToastMessage]);
 
-  const handleStartChat = () => {
+  const handleStartChat = useCallback(() => {
     const existing = conversations.find((c) => c.group_id === group.id);
     if (existing) onOpenChat(existing.id);
     else onOpenChat('c2');
-  };
+  }, [conversations, group.id, onOpenChat]);
+
+  const handleOpenHostProfile = useCallback(() => {
+    if (group.owner) {
+      onOpenProfile(group.owner.id);
+    }
+  }, [group.owner, onOpenProfile]);
 
   return (
     <View style={styles.container}>
       <FloatingGlassHeader
         onBack={onBack}
         title={group.title}
-        subtitle={isOwner ? t('ekip.manage') : (group.category === 'work' ? t('discover.cat.work') : t('discover.cat.entertainment'))}
+        subtitle={
+          isOwner
+            ? t('ekip.manage')
+            : group.category === 'work'
+            ? t('discover.cat.work')
+            : t('discover.cat.entertainment')
+        }
         trailing={
           <TouchableOpacity
             activeOpacity={0.75}
@@ -142,7 +208,7 @@ export function EkipDetailComponent({
               marginWidth={8}
               scale={20}
               blurDeviation={1.6}
-              overlayOpacity={isDark ? 0.10 : 0.22}
+              overlayOpacity={isDark ? 0.1 : 0.22}
               style={StyleSheet.absoluteFill}
             />
             <View style={styles.headerIconWrap}>
@@ -154,6 +220,7 @@ export function EkipDetailComponent({
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews={Platform.OS === 'android'}
         contentContainerStyle={[
           styles.scrollContent,
           {
@@ -165,15 +232,34 @@ export function EkipDetailComponent({
         ]}
       >
         {group.cover_url ? (
-          <View style={[styles.ownerCoverCard, { borderColor: colors.glassBorderStrong }]}>
-            <Image source={{ uri: group.cover_url }} style={styles.ownerCoverImage} resizeMode="cover" />
+          <View style={styles.ownerCoverShadow}>
+            <View style={[styles.ownerCoverCard, { borderColor: colors.glassBorderStrong }]}>
+              <Image
+                source={{ uri: group.cover_url }}
+                style={styles.ownerCoverImage}
+                resizeMode="cover"
+              />
+            </View>
           </View>
         ) : null}
 
         <View style={styles.bodyWrap}>
           {/* Category Chip */}
-          <View style={[styles.categoryBadge, { alignSelf: isRTL ? 'flex-end' : 'flex-start', flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-            <CatIcon size={12} color="#ffffff" strokeWidth={2.4} style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }} />
+          <View
+            style={[
+              styles.categoryBadge,
+              {
+                alignSelf: isRTL ? 'flex-end' : 'flex-start',
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+              },
+            ]}
+          >
+            <CatIcon
+              size={12}
+              color="#ffffff"
+              strokeWidth={2.4}
+              style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }}
+            />
             <Text style={styles.categoryText}>
               {group.category === 'work' ? t('discover.cat.work') : t('discover.cat.entertainment')}
             </Text>
@@ -216,7 +302,7 @@ export function EkipDetailComponent({
             <View style={{ marginTop: 2 }}>
               <EkipHostCard
                 host={group.owner}
-                onOpenProfile={() => onOpenProfile(group.owner!.id)}
+                onOpenProfile={handleOpenHostProfile}
               />
             </View>
           )}
@@ -238,6 +324,15 @@ export function EkipDetailComponent({
         </View>
       </ScrollView>
 
+      {/* Bottom Action Bar */}
+      <EkipActionBar
+        group={group}
+        onOpenProfile={onOpenProfile}
+        onOpenChat={onOpenChat}
+        onOpenJoinSheet={() => setShowJoinSheet(true)}
+        onCancelRequest={() => setShowCancel(true)}
+      />
+
       {/* Join Sheet */}
       <EkipJoinModal
         open={showJoinSheet}
@@ -255,9 +350,8 @@ export function EkipDetailComponent({
         groupId={group.id}
         onClose={() => setShowShare(false)}
         onCopy={() => {
-          setToast('Coordinates copied to clipboard');
+          showToastMessage(isRTL ? 'لینک اکیپ در کلیپ‌بورد کپی شد' : 'Coordinates copied to clipboard');
           setShowShare(false);
-          setTimeout(() => setToast(''), 2500);
         }}
       />
 
@@ -265,17 +359,26 @@ export function EkipDetailComponent({
       <GlassSheet
         open={showCancel}
         onClose={() => setShowCancel(false)}
-        title="Revoke Clearance Request?"
+        title={isRTL ? 'لغو درخواست عضویت؟' : 'Revoke Clearance Request?'}
       >
         <View style={{ gap: 14, paddingVertical: 10 }}>
-          <Text style={{ fontSize: 14, color: colors.textSecondary, lineHeight: 20 }}>
-            Are you sure you want to cancel your deployment request for this operation?
+          <Text
+            style={{
+              fontSize: 14,
+              color: colors.textSecondary,
+              lineHeight: 20,
+              textAlign: isRTL ? 'right' : 'left',
+            }}
+          >
+            {isRTL
+              ? 'آیا مطمئن هستید که می‌خواهید درخواست عضویت خود در این اکیپ را لغو کنید؟'
+              : 'Are you sure you want to cancel your deployment request for this operation?'}
           </Text>
           <GlassButton variant="danger" fullWidth onPress={handleCancelRequest}>
-            Revoke Request
+            {isRTL ? 'لغو درخواست' : 'Revoke Request'}
           </GlassButton>
           <GlassButton variant="secondary" fullWidth onPress={() => setShowCancel(false)}>
-            Keep Active
+            {isRTL ? 'نگه داشتن درخواست' : 'Keep Active'}
           </GlassButton>
         </View>
       </GlassSheet>
@@ -341,18 +444,25 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
-  ownerCoverCard: {
+  ownerCoverShadow: {
     marginHorizontal: 16,
     marginBottom: 8,
+    borderRadius: 24,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.25,
+          shadowRadius: 16,
+        }
+      : {}),
+  },
+  ownerCoverCard: {
     height: 180,
     borderRadius: 24,
     overflow: 'hidden',
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 6,
+    ...(Platform.OS === 'android' ? { elevation: 6 } : {}),
   },
   ownerCoverImage: {
     width: '100%',

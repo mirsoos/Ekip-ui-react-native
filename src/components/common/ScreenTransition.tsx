@@ -1,3 +1,5 @@
+// --- START OF FILE ScreenTransition.tsx ---
+
 import React, { useEffect, useRef, type ReactNode } from 'react';
 import { View, Platform, Animated, Easing, type StyleProp, type ViewStyle } from 'react-native';
 
@@ -23,6 +25,7 @@ export const ScreenTransition = React.memo(function ScreenTransition({
         webDivRef.current.classList.add('screen-enter-items');
       }
     } else {
+      anim.stopAnimation();
       anim.setValue(0);
       Animated.timing(anim, {
         toValue: 1,
