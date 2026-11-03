@@ -1,3 +1,5 @@
+// --- START OF FILE SwipeNavigationContainer.tsx ---
+
 import React, { useRef, type ReactNode } from 'react';
 import {
   PanResponder,
@@ -6,6 +8,8 @@ import {
   type StyleProp,
   type ViewStyle,
   Platform,
+  type GestureResponderEvent,
+  type PanResponderGestureState,
 } from 'react-native';
 
 interface SwipeNavigationContainerProps {
@@ -19,6 +23,10 @@ interface SwipeNavigationContainerProps {
   style?: StyleProp<ViewStyle>;
 }
 
+const SWIPE_VELOCITY_THRESHOLD = 0.65;
+const SWIPE_DISTANCE_THRESHOLD = 110;
+const SWIPE_ACTIVATION_THRESHOLD = 45;
+
 export const SwipeNavigationContainer = React.memo(function SwipeNavigationContainer({
   children,
   canGoBack,
@@ -31,9 +39,7 @@ export const SwipeNavigationContainer = React.memo(function SwipeNavigationConta
 }: SwipeNavigationContainerProps) {
   const panX = useRef(new Animated.Value(0)).current;
   const isSwiping = useRef(false);
-  const lastDampenedRef = useRef(0);
 
-  // Keep a ref of latest props so PanResponder always has fresh state without recreation
   const propsRef = useRef({
     canGoBack,
     onGoBack,
@@ -54,72 +60,90 @@ export const SwipeNavigationContainer = React.memo(function SwipeNavigationConta
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponderCapture: () => false,
+      // هرگز تاچ را در فاز شروع تسخیر نکن تا کلیک‌ها و شروع اسکرول دکمه‌ها و تب‌ها کاملاً آزاد باشند
       onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponderCapture: () => false,
+
+      // در فاز Move، هیچوقت به صورت تصادفی مانع تاچ تب‌ها یا فیلدها نشو
       onMoveShouldSetPanResponderCapture: () => false,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        const { dx, dy } = gestureState;
+      onMoveShouldSetPanResponder: (_, gs: PanResponderGestureState) => {
+        const { dx, dy } = gs;
         const currentProps = propsRef.current;
-        // Require horizontal swipe to clearly dominate vertical (2.5x) and exceed 28px threshold
-        // Never steal taps or vertical scroll gestures from children
-        if (Math.abs(dx) > 28 && Math.abs(dx) > Math.abs(dy) * 2.5) {
-          if (currentProps.canGoBack && dx > 0) return true;
-          if (currentProps.canSwipeLeftTab && dx < 0) return true;
-          if (currentProps.canSwipeRightTab && dx > 0) return true;
+
+        const hasAnyNavigationAction =
+          currentProps.canGoBack ||
+          currentProps.canSwipeLeftTab ||
+          currentProps.canSwipeRightTab;
+
+        if (!hasAnyNavigationAction) return false;
+
+        // نیاز به حرکت صریح‌تر و مسافت بیشتر برای شروع جابجایی صفحه
+        const isHorizontalIntent =
+          Math.abs(dx) > SWIPE_ACTIVATION_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 3;
+
+        if (!isHorizontalIntent) return false;
+
+        if (dx > 0 && (currentProps.canGoBack || currentProps.canSwipeRightTab)) {
+          return true;
         }
+
+        if (dx < 0 && currentProps.canSwipeLeftTab) {
+          return true;
+        }
+
         return false;
       },
+
       onPanResponderGrant: () => {
         isSwiping.current = true;
-        lastDampenedRef.current = 0;
       },
-      onPanResponderMove: (_, gestureState) => {
-        const { dx } = gestureState;
-        // Damped rubber-band resistance
-        const dampened = dx * 0.45;
-        // Throttle sub-pixel jitter to prevent JS bridge message saturation
-        if (Math.abs(dampened - lastDampenedRef.current) >= 1) {
-          lastDampenedRef.current = dampened;
-          panX.setValue(dampened);
-        }
+
+      onPanResponderMove: (_, gs: PanResponderGestureState) => {
+        if (!isSwiping.current) return;
+        const { dx } = gs;
+        // مقاومت فیزیکی مهار شده
+        panX.setValue(dx * 0.4);
       },
-      onPanResponderRelease: (_, gestureState) => {
-        const { dx, vx } = gestureState;
+
+      onPanResponderRelease: (_, gs: PanResponderGestureState) => {
+        if (!isSwiping.current) return;
         isSwiping.current = false;
-        lastDampenedRef.current = 0;
+
+        const { dx, vx } = gs;
         const currentProps = propsRef.current;
 
-        const threshold = 50;
-        const speedThreshold = 0.25;
+        const isQuickFlick = Math.abs(vx) > SWIPE_VELOCITY_THRESHOLD;
+        const isDeepSwipe = Math.abs(dx) > SWIPE_DISTANCE_THRESHOLD;
 
-        // Swiping right (dx > 0): back or prev tab
-        if (dx > threshold || (dx > 25 && vx > speedThreshold)) {
+        // کشیدن به سمت راست
+        if (dx > 0 && (isDeepSwipe || (dx > 65 && isQuickFlick))) {
           if (currentProps.canGoBack) {
             currentProps.onGoBack();
           } else if (currentProps.canSwipeRightTab && currentProps.onSwipePrevTab) {
             currentProps.onSwipePrevTab();
           }
         }
-        // Swiping left (dx < 0): next tab
-        else if (dx < -threshold || (dx < -25 && vx < -speedThreshold)) {
+        // کشیدن به سمت چپ
+        else if (dx < 0 && (isDeepSwipe || (dx < -65 && isQuickFlick))) {
           if (currentProps.canSwipeLeftTab && currentProps.onSwipeNextTab) {
             currentProps.onSwipeNextTab();
           }
         }
 
-        // Snap back to 0
         Animated.spring(panX, {
           toValue: 0,
+          tension: 110,
+          friction: 10,
           useNativeDriver: Platform.OS !== 'web',
-          tension: 65,
-          friction: 9,
         }).start();
       },
+
       onPanResponderTerminate: () => {
         isSwiping.current = false;
-        lastDampenedRef.current = 0;
         Animated.spring(panX, {
           toValue: 0,
+          tension: 110,
+          friction: 10,
           useNativeDriver: Platform.OS !== 'web',
         }).start();
       },

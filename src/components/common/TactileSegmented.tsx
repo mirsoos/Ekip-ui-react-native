@@ -115,6 +115,18 @@ export const TactileSegmented = React.memo(function TactileSegmented({
   const selectTabRef = useRef(selectTab);
   selectTabRef.current = selectTab;
 
+  // ری‌ست و پرش به مکان صحیح تب فعلی
+  const snapToActive = useCallback(() => {
+    const w = containerWidthRef.current;
+    if (w <= 0) return;
+    const targetX = getSlotX(activeIndexRef.current, w);
+    currentPosRef.current = targetX;
+    Animated.spring(slideAnim, {
+      toValue: targetX,
+      ...SPRING_CONFIG,
+    }).start();
+  }, [getSlotX, slideAnim]);
+
   // همگام‌سازی جابجایی تب هنگام تغییر props
   useEffect(() => {
     if (containerWidth <= 0 || isDragging.current) return;
@@ -127,12 +139,26 @@ export const TactileSegmented = React.memo(function TactileSegmented({
     }).start();
   }, [activeIndex, containerWidth, getSlotX, slideAnim]);
 
-  // رویدادهای درگ و دراپ (Swipe / Drag & Drop Gesture روی هر ۳ پلتفرم)
+  // رویدادهای درگ و دراپ اختصاصی (Gesture Lock جهت جلوگیری از تداخل با اسکرول عمودی)
   const panResponder = useRef(
     PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
       onStartShouldSetPanResponderCapture: () => false,
-      onMoveShouldSetPanResponderCapture: (_, gs) =>
-        Math.abs(gs.dx) > 6 && Math.abs(gs.dx) > Math.abs(gs.dy),
+
+      // قفل کردن انحصاری حرکت افقی و تسلیم کردن تاچ در صورت اسکرول عمودی
+      onMoveShouldSetPanResponder: (_, gs) => {
+        const { dx, dy } = gs;
+        // فقط اگر قصد کاربر حرکت افقی باشد تصاحب کن
+        return Math.abs(dx) > 7 && Math.abs(dx) > Math.abs(dy) * 2;
+      },
+      onMoveShouldSetPanResponderCapture: (_, gs) => {
+        const { dx, dy } = gs;
+        return Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 2.5;
+      },
+
+      // جلوگیری از اسکرول خوردن صفحه زیرین به محض تصاحب درگ تب
+      onPanResponderTerminationRequest: () => false,
+
       onPanResponderGrant: () => {
         const w = containerWidthRef.current;
         if (w <= 0) return;
@@ -140,12 +166,13 @@ export const TactileSegmented = React.memo(function TactileSegmented({
         dragStartRef.current = currentPosRef.current;
 
         Animated.spring(pressScaleAnim, {
-          toValue: 1.04,
+          toValue: 1.03,
           tension: 140,
           friction: 8,
           useNativeDriver: Platform.OS !== 'web',
         }).start();
       },
+
       onPanResponderMove: (_, gs) => {
         const w = containerWidthRef.current;
         if (w <= 0) return;
@@ -156,6 +183,7 @@ export const TactileSegmented = React.memo(function TactileSegmented({
         const nextX = Math.max(minX, Math.min(maxX, dragStartRef.current + gs.dx));
         slideAnim.setValue(nextX);
       },
+
       onPanResponderRelease: (_, gs) => {
         isDragging.current = false;
         Animated.spring(pressScaleAnim, {
@@ -189,12 +217,15 @@ export const TactileSegmented = React.memo(function TactileSegmented({
           ...SPRING_CONFIG,
         }).start();
       },
+
+      // در صورت لغو یا مداخله ناگهانی (مثلاً خروج لمس یا اسکرول)، کپسول دقیقاً به تب فعال بازمی‌گردد و گیر نمی‌کند!
       onPanResponderTerminate: () => {
         isDragging.current = false;
         Animated.spring(pressScaleAnim, {
           toValue: 1,
           ...SPRING_CONFIG,
         }).start();
+        snapToActive();
       },
     })
   ).current;
@@ -338,7 +369,7 @@ export const TactileSegmented = React.memo(function TactileSegmented({
           { flexDirection: isRTL ? 'row-reverse' : 'row' },
         ]}
       >
-        {options.map((opt, idx) => {
+        {options.map((opt) => {
           const isActive = opt.value === value;
           const IconComp = opt.icon ? getIcon(opt.icon) : null;
 
