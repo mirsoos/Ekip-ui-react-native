@@ -1,10 +1,26 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+// --- START OF FILE VerificationScreen.tsx ---
+
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  BackHandler,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
-import { GlassCard, GlassButton, GlassBackButton, GlassAvatar, GlassBadgeIcon, GlassSegmented } from '../components/Glass';
+import {
+  GlassCard,
+  GlassButton,
+  GlassAvatar,
+  GlassBadgeIcon,
+  GlassSegmented,
+} from '../components/Glass';
 import { GlassSheet, Toast } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
+import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
@@ -24,6 +40,7 @@ interface DocumentDetails {
 export function VerificationScreen({ onBack }: VerificationScreenProps) {
   const insets = useSafeAreaInsets();
   const { me, updateMe, addNotification } = useAppData();
+  const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
 
   const [isVerified, setIsVerified] = useState(me.is_verified ?? true);
@@ -32,6 +49,7 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
   const [showDocModal, setShowDocModal] = useState(false);
   const [showFaceModal, setShowFaceModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const [selectedDocType, setSelectedDocType] = useState<DocumentType>('national_id');
   const [docDetails, setDocDetails] = useState<DocumentDetails>({
@@ -44,7 +62,6 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
   const [faceScanStep, setFaceScanStep] = useState<'idle' | 'scanning' | 'smiling' | 'success'>('idle');
   const [docScanning, setDocScanning] = useState(false);
 
-  const ShieldCheck = getIcon('ShieldCheck');
   const Check = getIcon('Check');
   const Lock = getIcon('Lock');
   const Camera = getIcon('Camera');
@@ -54,23 +71,55 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
   const Smartphone = getIcon('Smartphone');
   const Mail = getIcon('Mail');
 
-  const showToast = (msg: string) => {
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (showDocModal) {
+        setShowDocModal(false);
+        return true;
+      }
+      if (showFaceModal) {
+        setShowFaceModal(false);
+        return true;
+      }
+      onBack();
+      return true;
+    });
+    return () => {
+      sub.remove();
+      timersRef.current.forEach((t) => clearTimeout(t));
+    };
+  }, [onBack, showDocModal, showFaceModal]);
+
+  const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 3000);
-  };
+    const t = setTimeout(() => setToastMessage(''), 3000);
+    timersRef.current.push(t);
+  }, []);
 
   const handleToggleVerification = () => {
     const newStatus = !isVerified;
     setIsVerified(newStatus);
     setIsIdentityVerified(newStatus);
     updateMe({ is_verified: newStatus, is_identity_verified: newStatus });
-    showToast(newStatus ? (isRTL ? 'نشان تایید هویت فعال شد' : 'Verified badge activated') : (isRTL ? 'نشان تایید هویت غیرفعال شد' : 'Verified badge deactivated'));
+    showToast(
+      newStatus
+        ? isRTL
+          ? 'نشان تایید هویت فعال شد'
+          : 'Verified badge activated'
+        : isRTL
+        ? 'نشان تایید هویت غیرفعال شد'
+        : 'Verified badge deactivated'
+    );
     addNotification({
       type: 'system',
       title: isRTL ? 'وضعیت تایید هویت' : 'Verification Status Changed',
       body: newStatus
-        ? (isRTL ? 'پروفایل شما با موفقیت تایید هویت شد.' : 'Your profile is now verified.')
-        : (isRTL ? 'نشان تایید هویت از حساب شما حذف شد.' : 'Your verified status was removed.'),
+        ? isRTL
+          ? 'پروفایل شما با موفقیت تایید هویت شد.'
+          : 'Your profile is now verified.'
+        : isRTL
+        ? 'نشان تایید هویت از حساب شما حذف شد.'
+        : 'Your verified status was removed.',
       icon: 'Shield',
     });
   };
@@ -79,34 +128,72 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
     setShowFaceModal(true);
     setFaceScanStep('scanning');
 
-    setTimeout(() => {
+    const t1 = setTimeout(() => {
       setFaceScanStep('smiling');
     }, 1800);
 
-    setTimeout(() => {
+    const t2 = setTimeout(() => {
       setFaceScanStep('success');
       setIsIdentityVerified(true);
       setIsVerified(true);
       updateMe({ is_verified: true, is_identity_verified: true });
     }, 3600);
+
+    timersRef.current.push(t1, t2);
   };
 
   const handleScanDocument = () => {
     setDocScanning(true);
-    setTimeout(() => {
+    const t = setTimeout(() => {
       setDocScanning(false);
       setShowDocModal(false);
       setIsIdentityVerified(true);
       setIsVerified(true);
       updateMe({ is_verified: true, is_identity_verified: true });
-      showToast(isRTL ? 'مدرک هویتی با موفقیت اسکن و رمزنگاری شد!' : 'ID document successfully scanned and encrypted!');
+      showToast(
+        isRTL
+          ? 'مدرک هویتی با موفقیت اسکن و رمزنگاری شد!'
+          : 'ID document successfully scanned and encrypted!'
+      );
       addNotification({
         type: 'system',
         title: isRTL ? 'مدرک تایید شد' : 'Document Approved',
-        body: isRTL ? 'مدرک شناسایی با موفقیت احراز گردید.' : `${selectedDocType === 'driver_license' ? "Driver's License" : selectedDocType === 'passport' ? 'Passport' : 'National ID'} verified.`,
+        body: isRTL
+          ? 'مدرک شناسایی با موفقیت احراز گردید.'
+          : `${
+              selectedDocType === 'driver_license'
+                ? "Driver's License"
+                : selectedDocType === 'passport'
+                ? 'Passport'
+                : 'National ID'
+            } verified.`,
         icon: 'BadgeCheck',
       });
     }, 2000);
+    timersRef.current.push(t);
+  };
+
+  const docOptions = useMemo(
+    () =>
+      isRTL
+        ? [
+            { label: 'گواهینامه', value: 'driver_license', icon: 'Award' as const },
+            { label: 'گذرنامه', value: 'passport', icon: 'Globe' as const },
+            { label: 'کارت ملی', value: 'national_id', icon: 'UserCheck' as const },
+          ]
+        : [
+            { label: 'National ID', value: 'national_id', icon: 'UserCheck' as const },
+            { label: 'Passport', value: 'passport', icon: 'Globe' as const },
+            { label: "Driver's License", value: 'driver_license', icon: 'Award' as const },
+          ],
+    [isRTL]
+  );
+
+  const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);
+  const textAlign = isRTL ? ('right' as const) : ('left' as const);
+  const textSpacing = {
+    marginLeft: isRTL ? 0 : 12,
+    marginRight: isRTL ? 12 : 0,
   };
 
   return (
@@ -130,52 +217,87 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
             />
           </View>
 
-          <View style={styles.nameRow}>
-            <Text style={styles.heroName}>{me.first_name} {me.last_name}</Text>
-            {isVerified && <GlassBadgeIcon icon="Verified" label={isRTL ? 'تایید شده' : 'Verified'} color="pink" />}
+          <View style={[styles.nameRow, { flexDirection: rowDir }]}>
+            <Text style={[styles.heroName, { color: colors.textPrimary }]}>
+              {me.first_name} {me.last_name}
+            </Text>
+            {isVerified && (
+              <GlassBadgeIcon
+                icon="Verified"
+                label={isRTL ? 'تایید شده' : 'Verified'}
+                color="pink"
+              />
+            )}
           </View>
-          <Text style={styles.heroHandle}>@{me.username}</Text>
+          <Text style={[styles.heroHandle, { color: colors.textSecondary }]}>
+            @{me.username}
+          </Text>
 
-          <View style={styles.statusPill}>
+          <View style={[styles.statusPill, { flexDirection: rowDir }]}>
             <View style={styles.dot} />
             <Text style={styles.statusText}>
               {isVerified
-                ? (isRTL ? 'حساب کاربری تایید شده • هویت معتبر' : 'Verified Account • Trusted Profile')
-                : (isRTL ? 'در حال بررسی احراز هویت' : 'Verification Under Review')}
+                ? isRTL
+                  ? 'حساب کاربری تایید شده • هویت معتبر'
+                  : 'Verified Account • Trusted Profile'
+                : isRTL
+                ? 'در حال بررسی احراز هویت'
+                : 'Verification Under Review'}
             </Text>
           </View>
 
-          <View style={styles.heroStatsRow}>
+          <View
+            style={[
+              styles.heroStatsRow,
+              { flexDirection: rowDir, borderTopColor: colors.divider },
+            ]}
+          >
             <View style={styles.statBox}>
-              <Text style={styles.statVal}>۹۹٪</Text>
-              <Text style={styles.statLbl}>{isRTL ? 'اعتبار هویت' : 'Trust Score'}</Text>
+              <Text style={[styles.statVal, { color: colors.textPrimary }]}>
+                {isRTL ? '۹۹٪' : '99%'}
+              </Text>
+              <Text style={[styles.statLbl, { color: colors.textTertiary }]}>
+                {isRTL ? 'اعتبار هویت' : 'Trust Score'}
+              </Text>
             </View>
-            <View style={[styles.statBox, styles.statBoxBorder]}>
-              <Text style={styles.statVal}>{isRTL ? 'سطح ۲' : 'Tier 2'}</Text>
-              <Text style={styles.statLbl}>{isRTL ? 'سطح کاربری' : 'Trust Tier'}</Text>
+            <View
+              style={[
+                styles.statBox,
+                styles.statBoxBorder,
+                { borderColor: colors.divider },
+              ]}
+            >
+              <Text style={[styles.statVal, { color: colors.textPrimary }]}>
+                {isRTL ? 'سطح ۲' : 'Tier 2'}
+              </Text>
+              <Text style={[styles.statLbl, { color: colors.textTertiary }]}>
+                {isRTL ? 'سطح کاربری' : 'Trust Tier'}
+              </Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statVal}>AES-256</Text>
-              <Text style={styles.statLbl}>{isRTL ? 'رمزنگاری شده' : 'Encrypted'}</Text>
+              <Text style={[styles.statVal, { color: colors.textPrimary }]}>AES-256</Text>
+              <Text style={[styles.statLbl, { color: colors.textTertiary }]}>
+                {isRTL ? 'رمزنگاری شده' : 'Encrypted'}
+              </Text>
             </View>
           </View>
         </GlassCard>
 
         {/* Verification Checkpoints */}
-        <Text style={styles.sectionHeading}>
+        <Text style={[styles.sectionHeading, { color: colors.textTertiary, textAlign }]}>
           {isRTL ? 'مراحل احراز هویت' : 'VERIFICATION MILESTONES'}
         </Text>
 
         <GlassCard style={styles.cardItem}>
-          <View style={styles.itemRow}>
+          <View style={[styles.itemRow, { flexDirection: rowDir }]}>
             <View style={[styles.iconBox, { backgroundColor: 'rgba(236,72,153,0.15)' }]}>
               <Camera size={20} color="#ec4899" />
             </View>
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.itemTitle}>
+            <View style={[{ flex: 1 }, textSpacing]}>
+              <Text style={[styles.itemTitle, { color: colors.textPrimary, textAlign }]}>
                 {isRTL ? 'اسکن بیومتریک چهره' : 'Biometric Face Scan'}
               </Text>
-              <Text style={styles.itemDesc}>
+              <Text style={[styles.itemDesc, { color: colors.textSecondary, textAlign }]}>
                 {isRTL ? 'تشخیص زنده بودن سه‌بعدی' : '3D dynamic liveness detection'}
               </Text>
             </View>
@@ -184,21 +306,27 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
               size="sm"
               onPress={startFaceScan}
             >
-              {isIdentityVerified ? (isRTL ? 'اسکن دوباره' : 'Re-scan') : (isRTL ? 'اسکن' : 'Scan')}
+              {isIdentityVerified
+                ? isRTL
+                  ? 'اسکن دوباره'
+                  : 'Re-scan'
+                : isRTL
+                ? 'اسکن'
+                : 'Scan'}
             </GlassButton>
           </View>
         </GlassCard>
 
         <GlassCard style={styles.cardItem}>
-          <View style={styles.itemRow}>
+          <View style={[styles.itemRow, { flexDirection: rowDir }]}>
             <View style={[styles.iconBox, { backgroundColor: 'rgba(59,130,246,0.15)' }]}>
               <Lock size={20} color="#3b82f6" />
             </View>
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.itemTitle}>
+            <View style={[{ flex: 1 }, textSpacing]}>
+              <Text style={[styles.itemTitle, { color: colors.textPrimary, textAlign }]}>
                 {isRTL ? 'کارت شناسایی معتبر' : 'Government Photo ID'}
               </Text>
-              <Text style={styles.itemDesc}>
+              <Text style={[styles.itemDesc, { color: colors.textSecondary, textAlign }]}>
                 {isRTL ? 'کارت ملی یا گذرنامه' : "Passport or Driver's License"}
               </Text>
             </View>
@@ -213,56 +341,66 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
         </GlassCard>
 
         <GlassCard style={styles.cardItem}>
-          <View style={styles.itemRow}>
+          <View style={[styles.itemRow, { flexDirection: rowDir }]}>
             <View style={[styles.iconBox, { backgroundColor: 'rgba(16,185,129,0.15)' }]}>
               <Smartphone size={20} color="#10b981" />
             </View>
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.itemTitle}>
+            <View style={[{ flex: 1 }, textSpacing]}>
+              <Text style={[styles.itemTitle, { color: colors.textPrimary, textAlign }]}>
                 {isRTL ? 'احراز شماره موبایل' : 'Phone Authentication'}
               </Text>
-              <Text style={styles.itemDesc}>+98 912 ••• 0199 · {isRTL ? 'تایید شده' : 'Verified'}</Text>
+              <Text style={[styles.itemDesc, { color: colors.textSecondary, textAlign }]}>
+                +98 912 ••• 0199 · {isRTL ? 'تایید شده' : 'Verified'}
+              </Text>
             </View>
             <Check size={18} color="#10b981" />
           </View>
         </GlassCard>
 
         <GlassCard style={styles.cardItem}>
-          <View style={styles.itemRow}>
+          <View style={[styles.itemRow, { flexDirection: rowDir }]}>
             <View style={[styles.iconBox, { backgroundColor: 'rgba(245,158,11,0.15)' }]}>
               <Mail size={20} color="#f59e0b" />
             </View>
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.itemTitle}>
+            <View style={[{ flex: 1 }, textSpacing]}>
+              <Text style={[styles.itemTitle, { color: colors.textPrimary, textAlign }]}>
                 {isRTL ? 'ایمیل سازمانی' : 'Institutional Email'}
               </Text>
-              <Text style={styles.itemDesc}>vance@ekip-command.mil · {isRTL ? 'تایید شده' : 'Verified'}</Text>
+              <Text style={[styles.itemDesc, { color: colors.textSecondary, textAlign }]}>
+                vance@ekip-command.mil · {isRTL ? 'تایید شده' : 'Verified'}
+              </Text>
             </View>
             <Check size={18} color="#10b981" />
           </View>
         </GlassCard>
 
         {/* Benefits Section */}
-        <Text style={styles.sectionHeading}>
+        <Text style={[styles.sectionHeading, { color: colors.textTertiary, textAlign }]}>
           {isRTL ? 'مزایای کاربر تایید شده' : 'VERIFIED OPERATOR PERKS'}
         </Text>
         <GlassCard style={styles.cardItem}>
-          <View style={styles.perkRow}>
+          <View style={[styles.perkRow, { flexDirection: rowDir }]}>
             <Award size={18} color="#ec4899" />
-            <Text style={styles.perkText}>
-              {isRTL ? 'اولویت بالا در ساخت و میزبانی اکیپ‌ها' : 'High-priority squad creation and hosting'}
+            <Text style={[styles.perkText, { color: colors.textPrimary, textAlign }]}>
+              {isRTL
+                ? 'اولویت بالا در ساخت و میزبانی اکیپ‌ها'
+                : 'High-priority squad creation and hosting'}
             </Text>
           </View>
-          <View style={[styles.perkRow, { marginTop: 12 }]}>
+          <View style={[styles.perkRow, { marginTop: 12, flexDirection: rowDir }]}>
             <Zap size={18} color="#ec4899" />
-            <Text style={styles.perkText}>
-              {isRTL ? 'عضویت بدون معطلی در مأموریت‌های خصوصی' : 'Instant admission to private tactical missions'}
+            <Text style={[styles.perkText, { color: colors.textPrimary, textAlign }]}>
+              {isRTL
+                ? 'عضویت بدون معطلی در مأموریت‌های خصوصی'
+                : 'Instant admission to private tactical missions'}
             </Text>
           </View>
-          <View style={[styles.perkRow, { marginTop: 12 }]}>
+          <View style={[styles.perkRow, { marginTop: 12, flexDirection: rowDir }]}>
             <Sparkles size={18} color="#ec4899" />
-            <Text style={styles.perkText}>
-              {isRTL ? 'نشان شیشه‌ای متمایز تایید هویت' : 'Distinguished pink liquid glass identity badge'}
+            <Text style={[styles.perkText, { color: colors.textPrimary, textAlign }]}>
+              {isRTL
+                ? 'نشان شیشه‌ای متمایز تایید هویت'
+                : 'Distinguished pink liquid glass identity badge'}
             </Text>
           </View>
         </GlassCard>
@@ -271,11 +409,16 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
         <View style={{ marginTop: 20 }}>
           <GlassButton
             variant={isVerified ? 'secondary' : 'primary'}
+            fullWidth
             onPress={handleToggleVerification}
           >
             {isVerified
-              ? (isRTL ? 'غیرفعال‌سازی موقت نشان تایید' : 'Disable Verified Badge')
-              : (isRTL ? 'درخواست تایید دستی مدارک' : 'Request Manual Verification')}
+              ? isRTL
+                ? 'غیرفعال‌سازی موقت نشان تایید'
+                : 'Disable Verified Badge'
+              : isRTL
+              ? 'درخواست تایید دستی مدارک'
+              : 'Request Manual Verification'}
           </GlassButton>
         </View>
       </ScrollView>
@@ -287,44 +430,77 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
         title={isRTL ? 'تایید مدرک شناسایی' : 'Document Verification'}
       >
         <View style={{ paddingVertical: 10 }}>
-          <Text style={styles.label}>{isRTL ? 'نوع مدرک' : 'DOCUMENT TYPE'}</Text>
+          <Text style={[styles.label, { color: colors.textSecondary, textAlign }]}>
+            {isRTL ? 'نوع مدرک' : 'DOCUMENT TYPE'}
+          </Text>
           <View style={{ marginTop: 8 }}>
             <GlassSegmented
-              options={[
-                { label: isRTL ? 'کارت ملی' : 'National ID', value: 'national_id', icon: 'UserCheck' },
-                { label: isRTL ? 'گذرنامه' : 'Passport', value: 'passport', icon: 'Globe' },
-                { label: isRTL ? 'گواهینامه' : "Driver's License", value: 'driver_license', icon: 'Award' },
-              ]}
+              options={docOptions}
               value={selectedDocType}
               onChange={(v) => setSelectedDocType(v as DocumentType)}
             />
           </View>
 
-          <Text style={[styles.label, { marginTop: 16 }]}>{isRTL ? 'شماره مدرک' : 'DOCUMENT NUMBER'}</Text>
+          <Text
+            style={[
+              styles.label,
+              { marginTop: 16, color: colors.textSecondary, textAlign },
+            ]}
+          >
+            {isRTL ? 'شماره مدرک' : 'DOCUMENT NUMBER'}
+          </Text>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)',
+                borderColor: colors.glassBorder,
+                color: colors.textPrimary,
+                textAlign,
+              },
+            ]}
             value={docDetails.docNumber}
             onChangeText={(txt) => setDocDetails((prev) => ({ ...prev, docNumber: txt }))}
-            placeholderTextColor="rgba(255,255,255,0.4)"
+            placeholderTextColor={colors.textTertiary}
           />
 
-          <Text style={[styles.label, { marginTop: 16 }]}>{isRTL ? 'کشور صادرکننده' : 'ISSUING JURISDICTION'}</Text>
+          <Text
+            style={[
+              styles.label,
+              { marginTop: 16, color: colors.textSecondary, textAlign },
+            ]}
+          >
+            {isRTL ? 'کشور صادرکننده' : 'ISSUING JURISDICTION'}
+          </Text>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)',
+                borderColor: colors.glassBorder,
+                color: colors.textPrimary,
+                textAlign,
+              },
+            ]}
             value={docDetails.country}
             onChangeText={(txt) => setDocDetails((prev) => ({ ...prev, country: txt }))}
-            placeholderTextColor="rgba(255,255,255,0.4)"
+            placeholderTextColor={colors.textTertiary}
           />
 
           <View style={{ marginTop: 24 }}>
             <GlassButton
               variant="primary"
+              fullWidth
               onPress={handleScanDocument}
               disabled={docScanning}
             >
               {docScanning
-                ? (isRTL ? 'در حال اعتبارسنجی و رمزنگاری...' : 'Encrypting & Validating...')
-                : (isRTL ? 'ثبت و ارسال مدرک شناسایی' : 'Submit ID Document')}
+                ? isRTL
+                  ? 'در حال اعتبارسنجی و رمزنگاری...'
+                  : 'Encrypting & Validating...'
+                : isRTL
+                ? 'ثبت و ارسال مدرک شناسایی'
+                : 'Submit ID Document'}
             </GlassButton>
           </View>
         </View>
@@ -341,21 +517,32 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
             <Camera size={40} color="#ec4899" />
           </View>
 
-          <Text style={styles.scanStatusText}>
-            {faceScanStep === 'scanning' && (isRTL ? 'در حال اسکن نقاط بیومتریک چهره...' : 'Scanning biometric points...')}
-            {faceScanStep === 'smiling' && (isRTL ? 'لطفاً پلک بزنید یا لبخند بزنید...' : 'Please blink or smile naturally...')}
-            {faceScanStep === 'success' && (isRTL ? '✓ تطابق بیومتریک ۹۹.۷٪ با موفقیت تایید شد!' : '✓ 99.7% Biometric Match Confirmed!')}
+          <Text style={[styles.scanStatusText, { color: colors.textPrimary }]}>
+            {faceScanStep === 'scanning' &&
+              (isRTL ? 'در حال اسکن نقاط بیومتریک چهره...' : 'Scanning biometric points...')}
+            {faceScanStep === 'smiling' &&
+              (isRTL
+                ? 'لطفاً پلک بزنید یا لبخند بزنید...'
+                : 'Please blink or smile naturally...')}
+            {faceScanStep === 'success' &&
+              (isRTL
+                ? '✓ تطابق بیومتریک ۹۹.۷٪ با موفقیت تایید شد!'
+                : '✓ 99.7% Biometric Match Confirmed!')}
           </Text>
 
-          <Text style={styles.scanDesc}>
+          <Text style={[styles.scanDesc, { color: colors.textSecondary }]}>
             {faceScanStep === 'success'
-              ? (isRTL ? 'نمایه رمزنگاری شده چهره شما در سامانه ثبت گردید.' : 'Your cryptographic face profile has been anchored.')
-              : (isRTL ? 'چهره خود را درون کادر نگه داشته و از نور مناسب مطمئن شوید.' : 'Keep your face inside the focal area and ensure good lighting.')}
+              ? isRTL
+                ? 'نمایه رمزنگاری شده چهره شما در سامانه ثبت گردید.'
+                : 'Your cryptographic face profile has been anchored.'
+              : isRTL
+              ? 'چهره خود را درون کادر نگه داشته و از نور مناسب مطمئن شوید.'
+              : 'Keep your face inside the focal area and ensure good lighting.'}
           </Text>
 
           {faceScanStep === 'success' && (
             <View style={{ marginTop: 20, width: '100%' }}>
-              <GlassButton variant="primary" onPress={() => setShowFaceModal(false)}>
+              <GlassButton variant="primary" fullWidth onPress={() => setShowFaceModal(false)}>
                 {isRTL ? 'تکمیل' : 'Done'}
               </GlassButton>
             </View>
@@ -387,19 +574,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginBottom: 8,
   },
-  avatarShield: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#ec4899',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#0f172a',
-  },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -409,11 +583,9 @@ const styles = StyleSheet.create({
   heroName: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#fff',
   },
   heroHandle: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.6)',
     marginTop: 2,
   },
   statusPill: {
@@ -445,7 +617,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingTop: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.1)',
   },
   statBox: {
     flex: 1,
@@ -454,26 +625,22 @@ const styles = StyleSheet.create({
   statBoxBorder: {
     borderLeftWidth: StyleSheet.hairlineWidth,
     borderRightWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.1)',
   },
   statVal: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#fff',
   },
   statLbl: {
     fontSize: 10,
-    color: 'rgba(255,255,255,0.4)',
     marginTop: 2,
   },
   sectionHeading: {
     fontSize: 11,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.4)',
     letterSpacing: 1,
     marginTop: 24,
     marginBottom: 10,
-    marginLeft: 4,
+    marginHorizontal: 4,
   },
   cardItem: {
     padding: 14,
@@ -494,11 +661,9 @@ const styles = StyleSheet.create({
   itemTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#fff',
   },
   itemDesc: {
     fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
     marginTop: 2,
   },
   perkRow: {
@@ -508,24 +673,19 @@ const styles = StyleSheet.create({
   },
   perkText: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.8)',
     flex: 1,
   },
   label: {
     fontSize: 11,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.5)',
     letterSpacing: 0.8,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    color: '#fff',
     fontSize: 14,
   },
   scannerCircle: {
@@ -542,12 +702,11 @@ const styles = StyleSheet.create({
   scanStatusText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#fff',
     marginBottom: 6,
+    textAlign: 'center',
   },
   scanDesc: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.6)',
     textAlign: 'center',
     paddingHorizontal: 20,
   },
