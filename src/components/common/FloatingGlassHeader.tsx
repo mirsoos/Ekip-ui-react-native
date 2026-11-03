@@ -1,3 +1,5 @@
+// --- START OF FILE FloatingGlassHeader.tsx ---
+
 import React, { type ReactNode } from 'react';
 import { View, Text, StyleSheet, Platform, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,6 +54,7 @@ export function FloatingGlassHeaderComponent({
       pointerEvents="box-none"
     >
       <View
+        renderToHardwareTextureAndroid={true}
         style={[
           styles.container,
           {

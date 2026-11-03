@@ -11,8 +11,8 @@ import { useI18n } from '../../lib/i18n';
 import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
 import type { Profile } from '../../types/database';
 
-const BORDER_PREMIUM = require('../../../assets/borders/premium.png');
-const BORDER_BUSINESS = require('../../../assets/borders/bsuiness-premium.png');
+const BORDER_PREMIUM = require('../../../assets/borders/Premium.svg');
+const BORDER_BUSINESS = require('../../../assets/borders/bsuiness-premium.svg');
 
 const Sun = getIcon('Sun');
 const Moon = getIcon('Moon');
@@ -228,7 +228,7 @@ export function ProfileHeaderComponent({
       ? BORDER_PREMIUM
       : null;
 
-  const borderScale = tier === 'business_premium' ? 1.20 : 1.14;
+  const borderScale = 1.38;
   const borderSize = Math.round(88 * borderScale);
   const borderOffset = Math.round((88 - borderSize) / 2);
 

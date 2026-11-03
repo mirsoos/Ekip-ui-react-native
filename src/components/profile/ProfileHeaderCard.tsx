@@ -1,4 +1,6 @@
-import React from 'react';
+// --- START OF FILE ProfileHeaderCard.tsx ---
+
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { GlassAvatar, GlassBadgeIcon, GlassButton } from '../Glass';
 import { InfoPill } from '../common/InfoPill';
@@ -29,14 +31,20 @@ export const ProfileHeaderCard = React.memo(function ProfileHeaderCard({
   const MoreHorizontal = getIcon('MoreHorizontal');
   const Smile = getIcon('Smile');
 
-  const genderLabels: Record<string, string> = {
-    male: t('create.genderMale'),
-    female: t('create.genderFemale'),
-  };
+  const genderLabels = useMemo<Record<string, string>>(
+    () => ({
+      male: t('create.genderMale'),
+      female: t('create.genderFemale'),
+    }),
+    [t]
+  );
+
+  const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);
+  const textAlign = isRTL ? ('right' as const) : ('left' as const);
 
   return (
     <View style={styles.container}>
-      <View style={[styles.topRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+      <View style={[styles.topRow, { flexDirection: rowDir }]}>
         <View style={styles.avatarWrap}>
           {hideAvatar ? (
             <View style={{ width: 88, height: 88 }} />
@@ -50,7 +58,7 @@ export const ProfileHeaderCard = React.memo(function ProfileHeaderCard({
         </View>
 
         {!isOwnProfile && (
-          <View style={[styles.actionsGroup, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+          <View style={[styles.actionsGroup, { flexDirection: rowDir }]}>
             {onOpenActions && (
               <TouchableOpacity
                 activeOpacity={0.75}
@@ -74,8 +82,8 @@ export const ProfileHeaderCard = React.memo(function ProfileHeaderCard({
       </View>
 
       <View style={{ marginTop: 12, alignItems: isRTL ? 'flex-end' : 'flex-start' }}>
-        <View style={[styles.nameRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-          <Text style={[styles.name, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
+        <View style={[styles.nameRow, { flexDirection: rowDir }]}>
+          <Text style={[styles.name, { color: colors.textPrimary, textAlign }]}>
             {profile.first_name} {profile.last_name}
           </Text>
           {profile.is_verified && (
@@ -88,18 +96,18 @@ export const ProfileHeaderCard = React.memo(function ProfileHeaderCard({
           )}
         </View>
 
-        <Text style={[styles.handle, { color: colors.textTertiary, textAlign: isRTL ? 'right' : 'left' }]}>
+        <Text style={[styles.handle, { color: colors.textTertiary, textAlign }]}>
           @{profile.username}
         </Text>
 
         {profile.bio && (
-          <Text style={[styles.bio, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
+          <Text style={[styles.bio, { color: colors.textSecondary, textAlign }]}>
             {profile.bio}
           </Text>
         )}
 
         {/* Quick info pills */}
-        <View style={[styles.pillsRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <View style={[styles.pillsRow, { flexDirection: rowDir }]}>
           {profile.age && <InfoPill icon="Calendar" label={t('profile.yearsOld', { age: profile.age })} />}
           {profile.gender && <InfoPill icon="User" label={genderLabels[profile.gender] ?? profile.gender} />}
           {profile.city && <InfoPill icon="MapPin" label={profile.city} />}
@@ -114,12 +122,36 @@ export const ProfileHeaderCard = React.memo(function ProfileHeaderCard({
           <View
             style={[
               styles.moodBox,
-              { backgroundColor: colors.glassThinBg, borderColor: colors.glassBorder },
+              {
+                flexDirection: rowDir,
+                backgroundColor: colors.glassThinBg,
+                borderColor: colors.glassBorder,
+              },
             ]}
           >
-            <Smile size={16} color="#f472b6" style={{ marginRight: 6 }} />
-            <Text style={[styles.moodLabel, { color: colors.textTertiary }]}>{isRTL ? 'وضعیت:' : 'Status:'}</Text>
-            <Text style={[styles.moodVal, { color: colors.textPrimary }]}>{profile.mood}</Text>
+            <Smile
+              size={16}
+              color="#f472b6"
+              style={{
+                marginRight: isRTL ? 0 : 6,
+                marginLeft: isRTL ? 6 : 0,
+              }}
+            />
+            <Text
+              style={[
+                styles.moodLabel,
+                {
+                  color: colors.textTertiary,
+                  marginRight: isRTL ? 0 : 4,
+                  marginLeft: isRTL ? 4 : 0,
+                },
+              ]}
+            >
+              {isRTL ? 'وضعیت:' : 'Status:'}
+            </Text>
+            <Text style={[styles.moodVal, { color: colors.textPrimary }]}>
+              {profile.mood}
+            </Text>
           </View>
         )}
       </View>
@@ -143,7 +175,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
-    elevation: 8,
+    elevation: 4,
     overflow: 'visible',
   },
   actionsGroup: {
@@ -196,7 +228,6 @@ const styles = StyleSheet.create({
   },
   moodLabel: {
     fontSize: 12,
-    marginRight: 4,
   },
   moodVal: {
     fontSize: 12,

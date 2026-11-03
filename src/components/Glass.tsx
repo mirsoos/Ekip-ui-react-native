@@ -24,8 +24,8 @@ import { LiquidGlassToggle, type LiquidGlassToggleProps } from './common/LiquidG
 import type { Profile, SubscriptionTier } from '../types/database';
 export { LiquidGlassToggle, type LiquidGlassToggleProps };
 
-const BORDER_PREMIUM = require('../../assets/borders/premium.png');
-const BORDER_BUSINESS = require('../../assets/borders/bsuiness-premium.png');
+const BORDER_PREMIUM = require('../../assets/borders/Premium.svg');
+const BORDER_BUSINESS = require('../../assets/borders/bsuiness-premium.svg');
 
 export function getUserTier(user?: Partial<Profile> | null): SubscriptionTier {
   if (!user) return 'free';
@@ -716,7 +716,7 @@ export function GlassAvatarComponent({
       ? BORDER_PREMIUM
       : null;
 
-  const borderScale = tier === 'business_premium' ? 1.2 : 1.14;
+  const borderScale = 1.38;
   const borderSize = Math.round(size * borderScale);
   const borderOffset = Math.round((size - borderSize) / 2);
 
