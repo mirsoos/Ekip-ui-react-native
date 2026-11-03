@@ -34,8 +34,9 @@ export interface TactileSegmentedProps {
 }
 
 const SPRING_CONFIG = {
-  tension: 130,
-  friction: 12,
+  stiffness: 220,
+  damping: 24,
+  mass: 0.85,
   useNativeDriver: Platform.OS !== 'web',
 };
 
@@ -299,8 +300,8 @@ export const TactileSegmented = React.memo(function TactileSegmented({
 
         Animated.spring(pressScaleAnim, {
           toValue: 1.03,
-          tension: 140,
-          friction: 8,
+          stiffness: 240,
+          damping: 20,
           useNativeDriver: Platform.OS !== 'web',
         }).start();
       },
@@ -320,8 +321,8 @@ export const TactileSegmented = React.memo(function TactileSegmented({
         isDragging.current = false;
         Animated.spring(pressScaleAnim, {
           toValue: 1,
-          tension: 140,
-          friction: 8,
+          stiffness: 240,
+          damping: 20,
           useNativeDriver: Platform.OS !== 'web',
         }).start();
 

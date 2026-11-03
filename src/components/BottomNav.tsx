@@ -13,6 +13,7 @@ import {
   Easing,
   type LayoutChangeEvent,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getIcon, type IconName } from '../lib/icons';
 import { useAppData } from '../lib/appData';
@@ -37,9 +38,21 @@ const tabs: { key: TabKey; label: string; icon: IconName }[] = [
   { key: 'profile', label: 'Profile', icon: 'User' },
 ];
 
-const NAV_ANIM_DURATION = 260;
-const NAV_EASING = Easing.bezier(0.25, 0.1, 0.25, 1.0);
 const USE_NATIVE_DRIVER = Platform.OS !== 'web';
+
+const NAV_SPRING_CONFIG = {
+  stiffness: 220,
+  damping: 24,
+  mass: 0.85,
+  useNativeDriver: USE_NATIVE_DRIVER,
+};
+
+const NAV_SCALE_SPRING_CONFIG = {
+  stiffness: 260,
+  damping: 26,
+  mass: 0.9,
+  useNativeDriver: USE_NATIVE_DRIVER,
+};
 
 interface BottomNavTabItemProps {
   tabKey: TabKey;
@@ -126,6 +139,14 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
 
+  // پالت رنگ‌های تاکتایل ۳ بعدی منطبق دقیق با TactileSegmented
+  const thumbGradient = isDark
+    ? (['#28344d', '#1b2334'] as const)
+    : (['#ffffff', '#f1f5f9'] as const);
+
+  const thumbBorder = isDark ? 'rgba(255, 255, 255, 0.16)' : '#ffffff';
+  const rimHighlight = isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.85)';
+
   const tabLabels: Record<TabKey, string> = useMemo(
     () => ({
       discover: t('nav.discover'),
@@ -182,8 +203,8 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
     enterAnim.setValue(0);
     Animated.timing(enterAnim, {
       toValue: 1,
-      duration: 220,
-      easing: NAV_EASING,
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: USE_NATIVE_DRIVER,
     }).start();
   }, [enterAnim]);
@@ -212,79 +233,103 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
     [lensScale, lensX]
   );
 
-  // 1. Unified Tab Transition Animation
+  // 1. Unified Tab Transition Animation (همگام‌سازی جابجایی تب با فیزیک فنری لوکس)
   useEffect(() => {
     if (dockWidth <= 0 || isDragging.current) return;
 
     const innerWidth = dockWidth - 12;
     const slotW = innerWidth / 5;
-    const prev = prevActiveTab.current;
-    prevActiveTab.current = active;
-
     const targetX = 6 + activeIndex * slotW;
-    currentLensX.current = targetX;
 
-    Animated.timing(createRotate, {
-      toValue: active === 'create' ? 1 : 0,
-      duration: NAV_ANIM_DURATION,
-      easing: NAV_EASING,
-      useNativeDriver: USE_NATIVE_DRIVER,
-    }).start();
+    if (Math.abs(currentLensX.current - targetX) > 0.5) {
+      currentLensX.current = targetX;
 
-    if (active === 'create') {
-      Animated.parallel([
-        Animated.timing(lensX, {
-          toValue: targetX,
-          duration: NAV_ANIM_DURATION,
-          easing: NAV_EASING,
-          useNativeDriver: USE_NATIVE_DRIVER,
-        }),
-        Animated.timing(lensScale, {
-          toValue: 0,
-          duration: NAV_ANIM_DURATION,
-          easing: NAV_EASING,
-          useNativeDriver: USE_NATIVE_DRIVER,
-        }),
-      ]).start();
-    } else if (prev === 'create') {
-      lensX.setValue(6 + 2 * slotW);
-      Animated.parallel([
-        Animated.timing(lensScale, {
-          toValue: 1,
-          duration: NAV_ANIM_DURATION,
-          easing: NAV_EASING,
-          useNativeDriver: USE_NATIVE_DRIVER,
-        }),
-        Animated.timing(lensX, {
-          toValue: targetX,
-          duration: NAV_ANIM_DURATION,
-          easing: NAV_EASING,
-          useNativeDriver: USE_NATIVE_DRIVER,
-        }),
-      ]).start();
-    } else {
-      lensScale.setValue(1);
-      Animated.timing(lensX, {
-        toValue: targetX,
-        duration: NAV_ANIM_DURATION,
-        easing: NAV_EASING,
-        useNativeDriver: USE_NATIVE_DRIVER,
+      Animated.spring(createRotate, {
+        toValue: active === 'create' ? 1 : 0,
+        ...NAV_SPRING_CONFIG,
       }).start();
+
+      if (active === 'create') {
+        Animated.parallel([
+          Animated.spring(lensX, {
+            toValue: targetX,
+            ...NAV_SPRING_CONFIG,
+          }),
+          Animated.spring(lensScale, {
+            toValue: 0,
+            ...NAV_SCALE_SPRING_CONFIG,
+          }),
+        ]).start();
+      } else {
+        Animated.parallel([
+          Animated.spring(lensScale, {
+            toValue: 1,
+            ...NAV_SCALE_SPRING_CONFIG,
+          }),
+          Animated.spring(lensX, {
+            toValue: targetX,
+            ...NAV_SPRING_CONFIG,
+          }),
+        ]).start();
+      }
     }
   }, [active, activeIndex, dockWidth, createRotate, lensScale, lensX]);
 
   const handleSelectTab = useCallback(
     (key: TabKey) => {
+      if (key === activeRef.current) return;
       if (typeof window !== 'undefined' && 'navigator' in window && 'vibrate' in navigator) {
         try {
-          navigator.vibrate(8);
+          navigator.vibrate(6);
         } catch {
           // ignore
         }
       }
-      onChange(key);
+
+      // ۱. استارت آنی انیمیشن کپسول روی ترد نیتیو
+      const targetIndex = tabs.findIndex((item) => item.key === key);
+      const w = dockWidthRef.current;
+      if (w > 0 && targetIndex !== -1) {
+        const slotW = (w - 12) / 5;
+        const targetX = 6 + targetIndex * slotW;
+        currentLensX.current = targetX;
+
+        Animated.spring(createRotate, {
+          toValue: key === 'create' ? 1 : 0,
+          ...NAV_SPRING_CONFIG,
+        }).start();
+
+        if (key === 'create') {
+          Animated.parallel([
+            Animated.spring(lensX, {
+              toValue: targetX,
+              ...NAV_SPRING_CONFIG,
+            }),
+            Animated.spring(lensScale, {
+              toValue: 0,
+              ...NAV_SCALE_SPRING_CONFIG,
+            }),
+          ]).start();
+        } else {
+          Animated.parallel([
+            Animated.spring(lensScale, {
+              toValue: 1,
+              ...NAV_SCALE_SPRING_CONFIG,
+            }),
+            Animated.spring(lensX, {
+              toValue: targetX,
+              ...NAV_SPRING_CONFIG,
+            }),
+          ]).start();
+        }
+      }
+
+      // ۲. اجرای تغییر سنگین صفحه در فریم بعدی جهت تضمین روانی ۱۲۰ فریم
+      requestAnimationFrame(() => {
+        onChange(key);
+      });
     },
-    [onChange]
+    [onChange, createRotate, lensScale, lensX]
   );
 
   const handleSelectTabRef = useRef(handleSelectTab);
@@ -310,11 +355,9 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         if (activeRef.current === 'create') {
           dragStartRef.current = 6 + 2 * slotW;
           lensX.setValue(dragStartRef.current);
-          Animated.timing(lensScale, {
+          Animated.spring(lensScale, {
             toValue: 1,
-            duration: NAV_ANIM_DURATION,
-            easing: NAV_EASING,
-            useNativeDriver: USE_NATIVE_DRIVER,
+            ...NAV_SCALE_SPRING_CONFIG,
           }).start();
         } else {
           dragStartRef.current = currentLensX.current;
@@ -351,26 +394,26 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
 
         if (chosenTab === 'create') {
           Animated.parallel([
-            Animated.timing(lensX, {
+            Animated.spring(lensX, {
               toValue: 6 + 2 * slotW,
-              duration: NAV_ANIM_DURATION,
-              easing: NAV_EASING,
-              useNativeDriver: USE_NATIVE_DRIVER,
+              ...NAV_SPRING_CONFIG,
             }),
-            Animated.timing(lensScale, {
+            Animated.spring(lensScale, {
               toValue: 0,
-              duration: NAV_ANIM_DURATION,
-              easing: NAV_EASING,
-              useNativeDriver: USE_NATIVE_DRIVER,
+              ...NAV_SCALE_SPRING_CONFIG,
             }),
           ]).start();
         } else {
-          Animated.timing(lensX, {
-            toValue: targetX,
-            duration: NAV_ANIM_DURATION,
-            easing: NAV_EASING,
-            useNativeDriver: USE_NATIVE_DRIVER,
-          }).start();
+          Animated.parallel([
+            Animated.spring(lensScale, {
+              toValue: 1,
+              ...NAV_SCALE_SPRING_CONFIG,
+            }),
+            Animated.spring(lensX, {
+              toValue: targetX,
+              ...NAV_SPRING_CONFIG,
+            }),
+          ]).start();
         }
       },
       onPanResponderTerminate: () => {
@@ -379,11 +422,9 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         if (w > 0) {
           const slotW = (w - 12) / 5;
           const targetX = 6 + activeIndexRef.current * slotW;
-          Animated.timing(lensX, {
+          Animated.spring(lensX, {
             toValue: targetX,
-            duration: NAV_ANIM_DURATION,
-            easing: NAV_EASING,
-            useNativeDriver: USE_NATIVE_DRIVER,
+            ...NAV_SPRING_CONFIG,
           }).start();
         }
       },
@@ -409,11 +450,9 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
         isDragging.current = true;
         if (active === 'create') {
           lensX.setValue(6 + 2 * slotW);
-          Animated.timing(lensScale, {
+          Animated.spring(lensScale, {
             toValue: 1,
-            duration: NAV_ANIM_DURATION,
-            easing: NAV_EASING,
-            useNativeDriver: USE_NATIVE_DRIVER,
+            ...NAV_SCALE_SPRING_CONFIG,
           }).start();
         }
       }
@@ -443,26 +482,26 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
 
         if (chosenTab === 'create') {
           Animated.parallel([
-            Animated.timing(lensX, {
+            Animated.spring(lensX, {
               toValue: 6 + 2 * slotW,
-              duration: NAV_ANIM_DURATION,
-              easing: NAV_EASING,
-              useNativeDriver: USE_NATIVE_DRIVER,
+              ...NAV_SPRING_CONFIG,
             }),
-            Animated.timing(lensScale, {
+            Animated.spring(lensScale, {
               toValue: 0,
-              duration: NAV_ANIM_DURATION,
-              easing: NAV_EASING,
-              useNativeDriver: USE_NATIVE_DRIVER,
+              ...NAV_SCALE_SPRING_CONFIG,
             }),
           ]).start();
         } else {
-          Animated.timing(lensX, {
-            toValue: 6 + droppedIndex * slotW,
-            duration: NAV_ANIM_DURATION,
-            easing: NAV_EASING,
-            useNativeDriver: USE_NATIVE_DRIVER,
-          }).start();
+          Animated.parallel([
+            Animated.spring(lensScale, {
+              toValue: 1,
+              ...NAV_SCALE_SPRING_CONFIG,
+            }),
+            Animated.spring(lensX, {
+              toValue: 6 + droppedIndex * slotW,
+              ...NAV_SPRING_CONFIG,
+            }),
+          ]).start();
         }
       }
     };
@@ -505,7 +544,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
           style={StyleSheet.absoluteFill}
         />
 
-        {/* Active Tab Sliding Pill Indicator */}
+        {/* Active Tab Sliding Pill Indicator (3D Tactile Pill منطبق با TactileSegmented) */}
         {dockWidth > 0 && (
           <Animated.View
             pointerEvents="none"
@@ -515,15 +554,63 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
               {
                 width: slotWidth,
                 opacity: lensScale,
+                borderRadius: 22,
                 transform: [
                   { translateX: lensX },
                   { scale: lensScale },
                 ],
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.52)',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(255, 255, 255, 0.72)',
+                ...(Platform.OS === 'web'
+                  ? ({
+                      willChange: 'transform',
+                      boxShadow: isDark
+                        ? '0 6px 16px rgba(0, 0, 0, 0.6), 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)'
+                        : '0 4px 12px rgba(15, 23, 42, 0.15), 0 1px 3px rgba(15, 23, 42, 0.08), inset 0 1px 0 #ffffff',
+                    } as any)
+                  : isDark
+                  ? {
+                      shadowColor: '#000000',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.55,
+                      shadowRadius: 6,
+                      elevation: 7,
+                    }
+                  : {
+                      shadowColor: '#0f172a',
+                      shadowOffset: { width: 0, height: 3 },
+                      shadowOpacity: 0.14,
+                      shadowRadius: 5,
+                      elevation: 4,
+                    }),
               },
             ]}
-          />
+          >
+            <View
+              style={[
+                styles.indicatorInner,
+                {
+                  borderRadius: 22,
+                  borderColor: thumbBorder,
+                },
+              ]}
+            >
+              <LinearGradient
+                colors={thumbGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+              {/* لبه هایلایت ظریف فوقانی (Light Catch Reflection) */}
+              <View
+                style={[
+                  styles.specularRim,
+                  {
+                    backgroundColor: rimHighlight,
+                    borderRadius: 22,
+                  },
+                ]}
+              />
+            </View>
+          </Animated.View>
         )}
 
         {/* Tab Buttons */}
@@ -597,29 +684,20 @@ const styles = StyleSheet.create({
     left: 0,
     top: 6,
     bottom: 6,
-    borderRadius: 22,
-    borderWidth: 1,
     zIndex: 1,
-    ...(Platform.OS === 'ios'
-      ? {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.12,
-          shadowRadius: 8,
-        }
-      : Platform.OS === 'android'
-      ? { elevation: 0 }
-      : {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.12,
-          shadowRadius: 8,
-        }),
-    ...(Platform.OS === 'web'
-      ? ({
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.6)',
-        } as any)
-      : {}),
+  },
+  indicatorInner: {
+    ...StyleSheet.absoluteFill,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  specularRim: {
+    position: 'absolute',
+    top: 0,
+    left: 4,
+    right: 4,
+    height: 1.5,
+    opacity: 0.9,
   },
   tabItem: {
     flex: 1,
