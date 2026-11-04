@@ -26,13 +26,13 @@ export const HEADER_METRICS = {
   // Horizontal padding inside the pill / card
   paddingHorizontal: 8,
   // Vertical padding inside standard pill
-  paddingVertical: 7,
-  // Standard single-row floating pill height: 7 (top) + 38 (button) + 7 (bottom) + 2 (borders) = 54px
+  paddingVertical: 5,
+  // Standard single-row floating pill height: 64px (clean 6px clearance for 52px avatars and action buttons)
   pillHeight: HEADER_BAR_HEIGHT,
   // Standard multi-row card height (Discover, Activity, ChatList)
   multiRowCardHeight: MULTI_ROW_HEADER_HEIGHT,
-  // Standard action button diameter
-  actionButtonSize: 38,
+  // Standard action button diameter (standardized 48px)
+  actionButtonSize: 48,
   // Exact horizontal coordinate from screen edge to button edge:
   // 12 (margin) + 1 (border) + 8 (padding) = 21px
   buttonOffset: 21,

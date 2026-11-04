@@ -80,6 +80,8 @@ export function ChatListHeaderComponent({
             value={search}
             onChangeText={onChangeSearch}
             style={{
+              minHeight: 44,
+              height: 44,
               backgroundColor: isDark ? '#101625' : '#f0f4fa',
               borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
             }}
@@ -106,7 +108,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 1,
     paddingHorizontal: HEADER_METRICS.paddingHorizontal,
-    paddingTop: HEADER_METRICS.paddingVertical,
+    paddingTop: 10,
     paddingBottom: 10,
     ...(Platform.OS === 'ios'
       ? {
@@ -130,11 +132,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: HEADER_METRICS.actionButtonSize,
+    minHeight: 52,
+    paddingHorizontal: 8,
     zIndex: 10,
   },
   heading: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '800',
     letterSpacing: -0.5,
   },

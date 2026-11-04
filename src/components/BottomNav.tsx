@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getIcon, type IconName } from '../lib/icons';
+import { Icons, type IconName } from '../lib/icons';
 import { useAppData } from '../lib/appData';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
@@ -87,7 +87,7 @@ const BottomNavTabItem = React.memo(function BottomNavTabItem({
     );
   }
 
-  const IconComp = getIcon(icon);
+  const IconComp = (Icons as Record<string, typeof Icons.Compass>)[icon] ?? Icons.Compass;
   return (
     <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.tabItem}>
       <View style={[styles.iconContainer, { transform: [{ translateY: active ? -2 : 0 }] }]}>
@@ -183,21 +183,25 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
   const activeRef = useRef<TabKey>(active);
   const activeIndexRef = useRef(activeIndex);
 
-  dockWidthRef.current = dockWidth;
-  activeRef.current = active;
-  activeIndexRef.current = activeIndex;
+  useEffect(() => {
+    dockWidthRef.current = dockWidth;
+  }, [dockWidth]);
 
-  const lensX = useRef(new Animated.Value(0)).current;
-  const lensScale = useRef(new Animated.Value(active === 'create' ? 0 : 1)).current;
-  const createRotate = useRef(new Animated.Value(active === 'create' ? 1 : 0)).current;
+  useEffect(() => {
+    activeRef.current = active;
+    activeIndexRef.current = activeIndex;
+  }, [active, activeIndex]);
+
+  const [lensX] = useState(() => new Animated.Value(0));
+  const [lensScale] = useState(() => new Animated.Value(active === 'create' ? 0 : 1));
+  const [createRotate] = useState(() => new Animated.Value(active === 'create' ? 1 : 0));
 
   const isDragging = useRef(false);
   const currentLensX = useRef(0);
   const lastLensXRef = useRef(0);
-  const prevActiveTab = useRef(active);
 
   // Entrance animation
-  const enterAnim = useRef(new Animated.Value(0)).current;
+  const [enterAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     enterAnim.setValue(0);
@@ -220,7 +224,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
       const w = e.nativeEvent.layout.width;
       if (w > 0) {
         if (dockWidthRef.current === 0) {
-          const slotW = (w - 12) / 5;
+          const slotW = (w - 14) / 5;
           const initialX = 6 + activeIndexRef.current * slotW;
           lensX.setValue(initialX);
           currentLensX.current = initialX;
@@ -237,7 +241,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
   useEffect(() => {
     if (dockWidth <= 0 || isDragging.current) return;
 
-    const innerWidth = dockWidth - 12;
+    const innerWidth = dockWidth - 14;
     const slotW = innerWidth / 5;
     const targetX = 6 + activeIndex * slotW;
 
@@ -290,7 +294,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
       const targetIndex = tabs.findIndex((item) => item.key === key);
       const w = dockWidthRef.current;
       if (w > 0 && targetIndex !== -1) {
-        const slotW = (w - 12) / 5;
+        const slotW = (w - 14) / 5;
         const targetX = 6 + targetIndex * slotW;
         currentLensX.current = targetX;
 
@@ -333,7 +337,9 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
   );
 
   const handleSelectTabRef = useRef(handleSelectTab);
-  handleSelectTabRef.current = handleSelectTab;
+  useEffect(() => {
+    handleSelectTabRef.current = handleSelectTab;
+  }, [handleSelectTab]);
 
   const tabPressHandlers = useMemo(
     () => new Map(tabs.map((tab) => [tab.key, () => handleSelectTab(tab.key)])),
@@ -343,100 +349,104 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
   // 2. Unified PanResponder for Drag & Drop (Touch on Mobile — Fixed Stale Closure!)
   const dragStartRef = useRef(0);
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponderCapture: () => false,
-      onMoveShouldSetPanResponderCapture: (_, gs) => Math.abs(gs.dx) > 6 && Math.abs(gs.dx) > Math.abs(gs.dy),
-      onPanResponderGrant: () => {
-        const w = dockWidthRef.current;
-        if (w <= 0) return;
-        isDragging.current = true;
-        const slotW = (w - 12) / 5;
-        if (activeRef.current === 'create') {
-          dragStartRef.current = 6 + 2 * slotW;
-          lensX.setValue(dragStartRef.current);
-          Animated.spring(lensScale, {
-            toValue: 1,
-            ...NAV_SCALE_SPRING_CONFIG,
-          }).start();
-        } else {
-          dragStartRef.current = currentLensX.current;
-        }
-      },
-      onPanResponderMove: (_, gs) => {
-        const w = dockWidthRef.current;
-        if (w <= 0) return;
-        const slotW = (w - 12) / 5;
-        const minX = 6;
-        const maxX = 6 + 4 * slotW;
-        const nextX = Math.max(minX, Math.min(maxX, dragStartRef.current + gs.dx));
-        if (Math.abs(nextX - lastLensXRef.current) >= 1) {
-          lastLensXRef.current = nextX;
-          lensX.setValue(nextX);
-        }
-      },
-      onPanResponderRelease: (_, gs) => {
-        isDragging.current = false;
-        const w = dockWidthRef.current;
-        if (w <= 0) return;
-        const slotW = (w - 12) / 5;
-        const minX = 6;
-        const maxX = 6 + 4 * slotW;
-        const finalX = Math.max(minX, Math.min(maxX, dragStartRef.current + gs.dx));
+  const [panResponder, setPanResponder] = useState<ReturnType<typeof PanResponder.create> | null>(null);
 
-        let droppedIndex = Math.round((finalX - 6) / slotW);
-        droppedIndex = Math.max(0, Math.min(4, droppedIndex));
-
-        const chosenTab = tabs[droppedIndex].key;
-        const targetX = 6 + droppedIndex * slotW;
-        currentLensX.current = targetX;
-        handleSelectTabRef.current(chosenTab);
-
-        if (chosenTab === 'create') {
-          Animated.parallel([
-            Animated.spring(lensX, {
-              toValue: 6 + 2 * slotW,
-              ...NAV_SPRING_CONFIG,
-            }),
-            Animated.spring(lensScale, {
-              toValue: 0,
-              ...NAV_SCALE_SPRING_CONFIG,
-            }),
-          ]).start();
-        } else {
-          Animated.parallel([
+  useEffect(() => {
+    setPanResponder(
+      PanResponder.create({
+        onStartShouldSetPanResponderCapture: () => false,
+        onMoveShouldSetPanResponderCapture: (_, gs) => Math.abs(gs.dx) > 6 && Math.abs(gs.dx) > Math.abs(gs.dy),
+        onPanResponderGrant: () => {
+          const w = dockWidthRef.current;
+          if (w <= 0) return;
+          isDragging.current = true;
+          const slotW = (w - 14) / 5;
+          if (activeRef.current === 'create') {
+            dragStartRef.current = 6 + 2 * slotW;
+            lensX.setValue(dragStartRef.current);
             Animated.spring(lensScale, {
               toValue: 1,
               ...NAV_SCALE_SPRING_CONFIG,
-            }),
+            }).start();
+          } else {
+            dragStartRef.current = currentLensX.current;
+          }
+        },
+        onPanResponderMove: (_, gs) => {
+          const w = dockWidthRef.current;
+          if (w <= 0) return;
+          const slotW = (w - 14) / 5;
+          const minX = 6;
+          const maxX = 6 + 4 * slotW;
+          const nextX = Math.max(minX, Math.min(maxX, dragStartRef.current + gs.dx));
+          if (Math.abs(nextX - lastLensXRef.current) >= 1) {
+            lastLensXRef.current = nextX;
+            lensX.setValue(nextX);
+          }
+        },
+        onPanResponderRelease: (_, gs) => {
+          isDragging.current = false;
+          const w = dockWidthRef.current;
+          if (w <= 0) return;
+          const slotW = (w - 14) / 5;
+          const minX = 6;
+          const maxX = 6 + 4 * slotW;
+          const finalX = Math.max(minX, Math.min(maxX, dragStartRef.current + gs.dx));
+
+          let droppedIndex = Math.round((finalX - 6) / slotW);
+          droppedIndex = Math.max(0, Math.min(4, droppedIndex));
+
+          const chosenTab = tabs[droppedIndex].key;
+          const targetX = 6 + droppedIndex * slotW;
+          currentLensX.current = targetX;
+          handleSelectTabRef.current(chosenTab);
+
+          if (chosenTab === 'create') {
+            Animated.parallel([
+              Animated.spring(lensX, {
+                toValue: 6 + 2 * slotW,
+                ...NAV_SPRING_CONFIG,
+              }),
+              Animated.spring(lensScale, {
+                toValue: 0,
+                ...NAV_SCALE_SPRING_CONFIG,
+              }),
+            ]).start();
+          } else {
+            Animated.parallel([
+              Animated.spring(lensScale, {
+                toValue: 1,
+                ...NAV_SCALE_SPRING_CONFIG,
+              }),
+              Animated.spring(lensX, {
+                toValue: targetX,
+                ...NAV_SPRING_CONFIG,
+              }),
+            ]).start();
+          }
+        },
+        onPanResponderTerminate: () => {
+          isDragging.current = false;
+          const w = dockWidthRef.current;
+          if (w > 0) {
+            const slotW = (w - 14) / 5;
+            const targetX = 6 + activeIndexRef.current * slotW;
             Animated.spring(lensX, {
               toValue: targetX,
               ...NAV_SPRING_CONFIG,
-            }),
-          ]).start();
-        }
-      },
-      onPanResponderTerminate: () => {
-        isDragging.current = false;
-        const w = dockWidthRef.current;
-        if (w > 0) {
-          const slotW = (w - 12) / 5;
-          const targetX = 6 + activeIndexRef.current * slotW;
-          Animated.spring(lensX, {
-            toValue: targetX,
-            ...NAV_SPRING_CONFIG,
-          }).start();
-        }
-      },
-    })
-  ).current;
+            }).start();
+          }
+        },
+      })
+    );
+  }, [lensScale, lensX]);
 
   // 3. Unified Mouse Drag & Drop on Web
   const handleWebMouseDown = (e: React.MouseEvent) => {
     if (Platform.OS !== 'web' || dockWidth <= 0 || e.button !== 0) return;
 
     const startMouseX = e.clientX;
-    const slotW = (dockWidth - 12) / 5;
+    const slotW = (dockWidth - 14) / 5;
     const initialDragX = active === 'create' ? 6 + 2 * slotW : currentLensX.current;
     let hasMoved = false;
 
@@ -510,7 +520,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
     window.addEventListener('mouseup', onMouseUp);
   };
 
-  const slotWidth = dockWidth > 0 ? (dockWidth - 12) / 5 : '20%';
+  const slotWidth = dockWidth > 0 ? (dockWidth - 14) / 5 : '20%';
 
   return (
     <View
@@ -524,7 +534,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
     >
       <Animated.View
         onLayout={handleDockLayout}
-        {...panResponder.panHandlers}
+        {...(panResponder ? panResponder.panHandlers : {})}
         {...(Platform.OS === 'web' ? { onMouseDown: handleWebMouseDown } : {})}
         style={[
           styles.dockContainer,

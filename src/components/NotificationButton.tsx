@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { getIcon } from '../lib/icons';
+import { Icons } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { FrostedGlass } from './FrostedGlass';
 
@@ -11,7 +11,6 @@ export interface NotificationButtonProps {
 
 export function NotificationButtonComponent({ unreadCount, onPress }: NotificationButtonProps) {
   const { colors, isDark } = useTheme();
-  const BellIcon = getIcon('Bell');
 
   return (
     <View style={styles.container}>
@@ -26,15 +25,15 @@ export function NotificationButtonComponent({ unreadCount, onPress }: Notificati
         ]}
       >
         <FrostedGlass
-          borderRadius={19}
-          marginWidth={8}
-          scale={20}
+          borderRadius={24}
+          marginWidth={10}
+          scale={24}
           blurDeviation={1.6}
           overlayOpacity={isDark ? 0.10 : 0.22}
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.iconWrap}>
-          <BellIcon size={18} color={colors.textPrimary} strokeWidth={2.4} />
+          <Icons.Bell size={20} color={colors.textPrimary} strokeWidth={2.4} />
         </View>
       </TouchableOpacity>
 
@@ -54,9 +53,9 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   button: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

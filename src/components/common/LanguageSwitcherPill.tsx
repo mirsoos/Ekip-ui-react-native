@@ -6,7 +6,7 @@ import { GlassCard } from '../Glass';
 import { useI18n, LANGUAGES } from '../../lib/i18n';
 import { useTheme } from '../../lib/theme';
 import { useToast } from '../../lib/ToastContext';
-import { getIcon } from '../../lib/icons';
+import { Icons } from '../../lib/icons';
 
 export interface LanguageSwitcherButtonProps {
   style?: any;
@@ -17,9 +17,6 @@ export function LanguageSwitcherPillComponent({ style }: LanguageSwitcherButtonP
   const { colors, isDark } = useTheme();
   const { showToast } = useToast();
   const [showLanguageSheet, setShowLanguageSheet] = useState(false);
-
-  const GlobeIcon = getIcon('Globe');
-  const Check = getIcon('Check');
 
   return (
     <>
@@ -35,15 +32,15 @@ export function LanguageSwitcherPillComponent({ style }: LanguageSwitcherButtonP
         ]}
       >
         <FrostedGlass
-          borderRadius={19}
-          marginWidth={8}
-          scale={20}
+          borderRadius={24}
+          marginWidth={10}
+          scale={24}
           blurDeviation={1.6}
           overlayOpacity={isDark ? 0.10 : 0.22}
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.iconWrap}>
-          <GlobeIcon size={18} color={colors.textPrimary} strokeWidth={2.3} />
+          <Icons.Globe size={20} color={colors.textPrimary} strokeWidth={2.3} />
         </View>
       </TouchableOpacity>
 
@@ -91,7 +88,7 @@ export function LanguageSwitcherPillComponent({ style }: LanguageSwitcherButtonP
 
                   {isSelected && (
                     <View style={styles.checkCircle}>
-                      <Check size={16} color="#ffffff" strokeWidth={3} />
+                      <Icons.Check size={16} color="#ffffff" strokeWidth={3} />
                     </View>
                   )}
                 </GlassCard>
@@ -106,9 +103,9 @@ export function LanguageSwitcherPillComponent({ style }: LanguageSwitcherButtonP
 
 const styles = StyleSheet.create({
   button: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

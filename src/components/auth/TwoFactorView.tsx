@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GlassBackButton } from '../Glass';
 import { FrostedGlass } from '../FrostedGlass';
 import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
-import { getIcon } from '../../lib/icons';
+import { FloatingGlassHeader } from '../common/FloatingGlassHeader';
+import { Icons } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
-import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
+import { getSinglePillContentPaddingTop } from '../../lib/headerLayout';
 
 export function TwoFactorView({
   otp,
@@ -23,24 +23,23 @@ export function TwoFactorView({
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
-  const Shield = getIcon('ShieldCheck');
 
   return (
-    <View style={styles.container} className="animate-raise">
-      <View
-        style={[
-          styles.topBar,
-          {
-            top: getHeaderTopInset(insets.top) + HEADER_METRICS.buttonTopOffset,
-            left: HEADER_METRICS.buttonOffset,
-            right: HEADER_METRICS.buttonOffset,
-            flexDirection: isRTL ? 'row-reverse' : 'row',
-          },
-        ]}
-      >
-        <GlassBackButton onPress={onBack} />
-        <LanguageSwitcherPill />
-      </View>
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: getSinglePillContentPaddingTop(insets.top),
+        },
+      ]}
+      className="animate-raise"
+    >
+      <FloatingGlassHeader
+        animated
+        onBack={onBack}
+        title={isRTL ? 'تأیید دو مرحله‌ای' : 'Two-Factor Auth'}
+        trailing={<LanguageSwitcherPill />}
+      />
 
       <View
         style={[
@@ -48,7 +47,7 @@ export function TwoFactorView({
           { backgroundColor: colors.glassThickBg, borderColor: colors.glassBorder },
         ]}
       >
-        <Shield size={38} color="#22c55e" strokeWidth={1.8} />
+        <Icons.ShieldCheck size={38} color="#22c55e" strokeWidth={1.8} />
       </View>
 
       <Text style={[styles.title, { color: colors.textPrimary, textAlign: 'center' }]}>
@@ -125,14 +124,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 28,
-  },
-  topBar: {
-    position: 'absolute',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: HEADER_METRICS.actionButtonSize,
-    zIndex: 10,
   },
   iconCircle: {
     width: 80,

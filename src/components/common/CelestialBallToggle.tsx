@@ -1,8 +1,7 @@
 // --- START OF FILE CelestialBallToggle.tsx ---
 
-import React, { useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View,
   TouchableOpacity,
   StyleSheet,
   Platform,
@@ -36,11 +35,11 @@ export interface CelestialBallToggleProps {
 export function CelestialBallToggleComponent({
   isDark,
   onToggle,
-  size = 38,
+  size = 46,
   style,
 }: CelestialBallToggleProps) {
   // 0 = Dark (Moon), 1 = Light (Sun)
-  const anim = useRef(new Animated.Value(isDark ? 0 : 1)).current;
+  const [anim] = useState(() => new Animated.Value(isDark ? 0 : 1));
 
   useEffect(() => {
     Animated.timing(anim, {

@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
-import { getIcon, type IconName } from '../lib/icons';
+import { Icons, getIcon, type IconName } from '../lib/icons';
 import { darkColors, lightColors, useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { FrostedGlass } from './FrostedGlass';
@@ -625,6 +625,34 @@ export function GlassInputComponent({
 // ============================================
 // GLASS AVATAR
 // ============================================
+export const AVATAR_BORDER_SCALE = 1.38;
+
+export interface AvatarMetrics {
+  avatarSize: number;
+  borderSize: number;
+  borderPadding: number;
+  containerSize: number;
+}
+
+export function getAvatarMetrics(
+  size: number = 44,
+  includeBorderPadding: boolean = true
+): AvatarMetrics {
+  const avatarSize = size;
+  const borderSize = Math.round(size * AVATAR_BORDER_SCALE);
+  const borderPadding = Math.round((borderSize - size) / 2);
+  // Both bordered and non-bordered avatars share the exact same outer layout footprint
+  // to prevent any layout jumping, uneven indentation, or misalignment ("ناترازی") across all screens.
+  const containerSize = includeBorderPadding ? borderSize : size;
+
+  return {
+    avatarSize,
+    borderSize,
+    borderPadding,
+    containerSize,
+  };
+}
+
 export interface GlassAvatarProps {
   src?: string | null;
   name?: string;
@@ -637,6 +665,8 @@ export interface GlassAvatarProps {
   isBusiness?: boolean;
   user?: Partial<Profile> | null;
   style?: StyleProp<ViewStyle>;
+  includeBorderPadding?: boolean;
+  pointerEvents?: 'box-none' | 'none' | 'box-only' | 'auto';
 }
 
 export function VerifiedBadge({
@@ -684,6 +714,8 @@ export function GlassAvatarComponent({
   isBusiness,
   user,
   style,
+  includeBorderPadding = true,
+  pointerEvents,
 }: GlassAvatarProps) {
   const { colors } = useTheme();
   const avatarSrc = src !== undefined ? src : user?.avatar_url;
@@ -709,24 +741,42 @@ export function GlassAvatarComponent({
 
   const hasSubscriptionBorder = tier === 'business_premium' || tier === 'premium';
 
-  const borderScale = 1.38;
-  const borderSize = Math.round(size * borderScale);
-  const borderOffset = Math.round((size - borderSize) / 2);
+  const { avatarSize, borderSize, containerSize } = getAvatarMetrics(
+    size,
+    includeBorderPadding
+  );
 
-  const badgeSize = Math.max(14, Math.round(size * 0.36));
+  const badgeSize = Math.max(14, Math.round(avatarSize * 0.36));
   const badgeOffset = Math.max(0, Math.round(badgeSize * 0.08));
 
-  const onlineSize = Math.max(9, Math.round(size * 0.26));
+  const onlineSize = Math.max(9, Math.round(avatarSize * 0.26));
+
+  const avatarOffset = (containerSize - avatarSize) / 2;
+  const borderOffset = (containerSize - borderSize) / 2;
 
   return (
-    <View style={[{ width: size, height: size, overflow: 'visible' }, style]}>
+    <View
+      pointerEvents={pointerEvents}
+      style={[
+        {
+          width: containerSize,
+          height: containerSize,
+          position: 'relative',
+          overflow: 'visible',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        style,
+      ]}
+    >
+      {/* Inner Avatar Circle (strictly size x size - never shrinks!) */}
       <View
         style={[
           styles.avatarContainer,
           {
-            width: size,
-            height: size,
-            borderRadius: size / 2,
+            width: avatarSize,
+            height: avatarSize,
+            borderRadius: avatarSize / 2,
             borderWidth: hasSubscriptionBorder ? 0 : ring ? 1.5 : 0,
             borderColor: colors.glassBorderStrong,
           },
@@ -735,17 +785,17 @@ export function GlassAvatarComponent({
         {avatarSrc ? (
           <Image
             source={{ uri: avatarSrc }}
-            style={{ width: size, height: size, borderRadius: size / 2 }}
+            style={{ width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }}
           />
         ) : (
           <LinearGradient
             colors={['#f472b6', '#3b82f6']}
             style={[
               styles.avatarFallback,
-              { width: size, height: size, borderRadius: size / 2 },
+              { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 },
             ]}
           >
-            <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: size * 0.38 }}>
+            <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: avatarSize * 0.38 }}>
               {initials}
             </Text>
           </LinearGradient>
@@ -769,15 +819,15 @@ export function GlassAvatarComponent({
         </View>
       )}
 
-      {/* Verified Badge (South-West / Bottom-Left) */}
+      {/* Verified Badge (South-West / Bottom-Left anchored to avatar circle) */}
       {isVerified && (
         <View
           pointerEvents="none"
           style={[
             styles.verifiedBadge,
             {
-              bottom: -badgeOffset,
-              left: -badgeOffset,
+              bottom: avatarOffset - badgeOffset,
+              left: avatarOffset - badgeOffset,
               zIndex: 15,
             },
           ]}
@@ -786,7 +836,7 @@ export function GlassAvatarComponent({
         </View>
       )}
 
-      {/* Online Indicator Badge (South-East / Bottom-Right) */}
+      {/* Online Indicator Badge (South-East / Bottom-Right anchored to avatar circle) */}
       {isOnline && (
         <View
           pointerEvents="none"
@@ -796,8 +846,8 @@ export function GlassAvatarComponent({
               width: onlineSize,
               height: onlineSize,
               borderRadius: onlineSize / 2,
-              bottom: 0,
-              right: 0,
+              bottom: avatarOffset,
+              right: avatarOffset,
               zIndex: 15,
             },
           ]}
@@ -822,7 +872,6 @@ export function GlassBackButtonComponent({
   const { colors, isDark } = useTheme();
   const themeStyles = GLASS_THEME_STYLES[isDark ? 'dark' : 'light'];
   const { isRTL } = useI18n();
-  const IconComp = getIcon(isRTL ? 'ArrowRight' : 'ArrowLeft');
   const handlePress = onPress ?? onClick;
 
   return (
@@ -836,15 +885,19 @@ export function GlassBackButtonComponent({
       ]}
     >
       <FrostedGlass
-        borderRadius={19}
-        marginWidth={8}
-        scale={20}
+        borderRadius={24}
+        marginWidth={10}
+        scale={24}
         blurDeviation={1.6}
         overlayOpacity={isDark ? 0.1 : 0.22}
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.backButtonIconWrap}>
-        <IconComp size={18} color={colors.textPrimary} strokeWidth={2.4} />
+        {isRTL ? (
+          <Icons.ArrowRight size={20} color={colors.textPrimary} strokeWidth={2.4} />
+        ) : (
+          <Icons.ArrowLeft size={20} color={colors.textPrimary} strokeWidth={2.4} />
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -866,7 +919,6 @@ export function GlassCloseButtonComponent({
 }) {
   const { colors, isDark } = useTheme();
   const themeStyles = GLASS_THEME_STYLES[isDark ? 'dark' : 'light'];
-  const CloseIcon = getIcon('X');
   const handlePress = onPress ?? onClick;
   const radius = size / 2;
 
@@ -894,7 +946,7 @@ export function GlassCloseButtonComponent({
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.backButtonIconWrap}>
-        <CloseIcon size={Math.round(size * 0.5)} color={colors.textPrimary} strokeWidth={2.4} />
+        <Icons.X size={Math.round(size * 0.5)} color={colors.textPrimary} strokeWidth={2.4} />
       </View>
     </TouchableOpacity>
   );
@@ -1264,9 +1316,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

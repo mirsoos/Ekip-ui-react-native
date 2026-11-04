@@ -44,7 +44,7 @@ export const ChatHeader = React.memo(function ChatHeader({
             { backgroundColor: colors.glassThinBg, borderColor: colors.glassBorder },
           ]}
         >
-          <MoreIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+          <MoreIcon size={20} color={colors.textPrimary} strokeWidth={2.2} />
         </TouchableOpacity>
       }
     />
@@ -53,9 +53,9 @@ export const ChatHeader = React.memo(function ChatHeader({
 
 const styles = StyleSheet.create({
   moreBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,

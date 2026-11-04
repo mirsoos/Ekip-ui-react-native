@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassButton } from '../components/Glass';
 import { GlassSheet } from '../components/Overlays';
-import { getIcon, type IconName } from '../lib/icons';
+import { Icons, type IconName } from '../lib/icons';
 import { FloatingGlassHeader } from '../components/common/FloatingGlassHeader';
 import { FrostedGlass } from '../components/FrostedGlass';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
@@ -79,8 +79,7 @@ export function EkipDetailComponent({
     return () => sub.remove();
   }, [onBack, showJoinSheet, showShare, showCancel]);
 
-  const CatIcon = getIcon(categoryIcons[group.category] ?? 'PartyPopper');
-  const ShareIcon = getIcon('Share');
+  const CatIcon = (Icons as Record<string, typeof Icons.Sparkles>)[categoryIcons[group.category] ?? 'PartyPopper'] ?? Icons.PartyPopper;
 
   const groupMembers = useMemo(
     () => members.filter((m) => m.group_id === group.id && m.status === 'active'),
@@ -192,15 +191,15 @@ export function EkipDetailComponent({
             ]}
           >
             <FrostedGlass
-              borderRadius={19}
-              marginWidth={8}
-              scale={20}
+              borderRadius={24}
+              marginWidth={10}
+              scale={24}
               blurDeviation={1.6}
               overlayOpacity={isDark ? 0.1 : 0.22}
               style={StyleSheet.absoluteFill}
             />
             <View style={styles.headerIconWrap}>
-              <ShareIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+              <Icons.Share size={20} color={colors.textPrimary} strokeWidth={2.2} />
             </View>
           </TouchableOpacity>
         }
@@ -455,9 +454,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   headerActionBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

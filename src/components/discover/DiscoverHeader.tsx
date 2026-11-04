@@ -104,15 +104,15 @@ export function DiscoverHeaderComponent({
                 style={[styles.locationButton, { borderColor: colors.glassBorderStrong }]}
               >
                 <FrostedGlass
-                  borderRadius={19}
-                  marginWidth={8}
-                  scale={20}
+                  borderRadius={24}
+                  marginWidth={10}
+                  scale={24}
                   blurDeviation={1.6}
                   overlayOpacity={isDark ? 0.1 : 0.22}
                   style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.locationIconWrap}>
-                  <Icons.MapPin size={18} color={colors.textPrimary} strokeWidth={2.4} />
+                  <Icons.MapPin size={20} color={colors.textPrimary} strokeWidth={2.4} />
                 </View>
               </TouchableOpacity>
             </View>
@@ -142,6 +142,8 @@ export function DiscoverHeaderComponent({
               value={search}
               onChangeText={onChangeSearch}
               style={{
+                minHeight: 44,
+                height: 44,
                 backgroundColor: isDark ? '#101625' : '#f0f4fa',
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
               }}
@@ -217,7 +219,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 1,
     paddingHorizontal: HEADER_METRICS.paddingHorizontal,
-    paddingTop: HEADER_METRICS.paddingVertical,
+    paddingTop: 10,
     paddingBottom: 10,
     ...(Platform.OS === 'ios'
       ? {
@@ -241,7 +243,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: HEADER_METRICS.actionButtonSize,
+    minHeight: 52,
+    paddingHorizontal: 8,
     marginBottom: 10,
     zIndex: 10,
   },
@@ -257,9 +260,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   locationButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

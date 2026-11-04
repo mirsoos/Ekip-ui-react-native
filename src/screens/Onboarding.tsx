@@ -6,10 +6,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FrostedGlass } from '../components/FrostedGlass';
 import { OnboardingSlide, type SlideData } from '../components/onboarding/OnboardingSlide';
 import { LanguageSwitcherPill } from '../components/common/LanguageSwitcherPill';
-import { getIcon } from '../lib/icons';
+import { FloatingGlassHeader } from '../components/common/FloatingGlassHeader';
+import { Icons } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
-import { HEADER_METRICS, getHeaderTopInset } from '../lib/headerLayout';
+import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 export function Onboarding({ onComplete }: { onComplete: () => void }) {
   const insets = useSafeAreaInsets();
@@ -61,8 +62,6 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
 
   const slide = slides[step];
   const isLast = step === slides.length - 1;
-  const ArrowIcon = getIcon(isRTL ? 'ArrowLeft' : 'ArrowRight');
-  const Sparkles = getIcon('Sparkles');
 
   const handleNext = useCallback(() => {
     if (isLast) {
@@ -72,37 +71,32 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
     }
   }, [isLast, onComplete]);
 
-  const topHeaderOffset = getHeaderTopInset(insets.top) + HEADER_METRICS.buttonTopOffset;
   const bottomSafeOffset = Platform.OS === 'web' ? 36 : Math.max(32, insets.bottom + 20);
 
   return (
     <View style={styles.container}>
-      {/* ۱. هدر بالا (ثابت در سقف صفحه) */}
-      <View
-        style={[
-          styles.topHeader,
-          {
-            top: topHeaderOffset,
-            left: HEADER_METRICS.buttonOffset,
-            right: HEADER_METRICS.buttonOffset,
-            flexDirection: isRTL ? 'row-reverse' : 'row',
-          },
-        ]}
-      >
-        <LanguageSwitcherPill />
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={onComplete}
-          style={styles.skipBtn}
-        >
-          <Text style={[styles.skipText, { color: colors.textSecondary }]}>
-            {t('onboarding.skip')}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* 360° Liquid Glass Header with Drop Entrance Animation */}
+      <FloatingGlassHeader
+        animated
+        onBack={step > 0 ? () => setStep((prev) => prev - 1) : undefined}
+        trailing={
+          <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 8, zIndex: 10 }}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={onComplete}
+              style={styles.skipBtn}
+            >
+              <Text style={[styles.skipText, { color: colors.textSecondary }]}>
+                {t('onboarding.skip')}
+              </Text>
+            </TouchableOpacity>
+            <LanguageSwitcherPill style={{ zIndex: 10 }} />
+          </View>
+        }
+      />
 
       {/* ۲. صحنه وسط مخصوص اسلاید (مستقل از دکمه پایین؛ هر چقدر متن کم/زیاد شود به فوتر فشار نمی‌آورد) */}
-      <View style={[styles.slideStage, { paddingTop: topHeaderOffset + 48 }]}>
+      <View style={[styles.slideStage, { paddingTop: getSinglePillContentPaddingTop(insets.top) }]}>
         <OnboardingSlide slide={slide} step={step} />
       </View>
 
@@ -153,7 +147,7 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
                 {isLast ? t('onboarding.getStarted') : t('onboarding.next')}
               </Text>
               {isLast ? (
-                <Sparkles
+                <Icons.Sparkles
                   size={18}
                   color={colors.textPrimary}
                   strokeWidth={2.4}
@@ -162,14 +156,24 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
                     ...(isRTL ? { left: 22 } : { right: 22 }),
                   }}
                 />
-              ) : (
-                <ArrowIcon
+              ) : isRTL ? (
+                <Icons.ArrowLeft
                   size={18}
                   color={colors.textPrimary}
                   strokeWidth={2.4}
                   style={{
                     position: 'absolute',
-                    ...(isRTL ? { left: 22 } : { right: 22 }),
+                    left: 22,
+                  }}
+                />
+              ) : (
+                <Icons.ArrowRight
+                  size={18}
+                  color={colors.textPrimary}
+                  strokeWidth={2.4}
+                  style={{
+                    position: 'absolute',
+                    right: 22,
                   }}
                 />
               )}
@@ -186,14 +190,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     justifyContent: 'space-between',
-  },
-  topHeader: {
-    position: 'absolute',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: HEADER_METRICS.actionButtonSize,
-    zIndex: 100,
   },
   skipBtn: {
     paddingVertical: 6,

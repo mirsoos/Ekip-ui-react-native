@@ -3,7 +3,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GlassAvatar } from '../Glass';
+import { GlassAvatar, getAvatarMetrics } from '../Glass';
 import { useChatTheme, useTheme, CHAT_THEMES } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Message } from '../../types/database';
@@ -22,6 +22,8 @@ export function ChatMessageBubbleComponent({
   const { isRTL } = useI18n();
   const themeConfig = CHAT_THEMES[chatTheme] ?? CHAT_THEMES.default;
 
+  const avatarSlotWidth = getAvatarMetrics(28).containerSize;
+
   const time = new Date(message.created_at).toLocaleTimeString(isRTL ? 'fa-IR' : 'en-US', {
     hour: 'numeric',
     minute: '2-digit',
@@ -39,7 +41,7 @@ export function ChatMessageBubbleComponent({
       ]}
     >
       {!isMe && (
-        <View style={{ width: 28, marginRight: 8, alignSelf: 'flex-end' }}>
+        <View style={{ width: avatarSlotWidth, marginRight: 8, alignSelf: 'flex-end', alignItems: 'center' }}>
           {showAvatar && (
             <GlassAvatar
               user={message.sender}

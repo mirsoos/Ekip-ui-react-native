@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FrostedGlass } from '../FrostedGlass';
-import { getIcon } from '../../lib/icons';
+import { Icons } from '../../lib/icons';
 import { SocialAuthRow } from './SocialAuthRow';
 import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { useTheme } from '../../lib/theme';
@@ -21,7 +21,7 @@ export function WelcomeViewComponent({
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
-  const ArrowIcon = getIcon(isRTL ? 'ArrowLeft' : 'ArrowRight');
+  const ArrowIcon = isRTL ? Icons.ArrowLeft : Icons.ArrowRight;
 
   return (
     <View style={styles.container}>

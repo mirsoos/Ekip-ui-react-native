@@ -1,7 +1,7 @@
 // --- START OF FILE FloatingGlassHeader.tsx ---
 
-import React, { type ReactNode } from 'react';
-import { View, Text, StyleSheet, Platform, type StyleProp, type ViewStyle } from 'react-native';
+import React, { useRef, useEffect, useState, type ReactNode } from 'react';
+import { View, Text, StyleSheet, Platform, Animated, Easing, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassBackButton } from '../Glass';
 import { FrostedGlass } from '../FrostedGlass';
@@ -26,6 +26,8 @@ export interface FloatingGlassHeaderProps {
   style?: StyleProp<ViewStyle>;
   /** Floating pill bar style override */
   pillStyle?: StyleProp<ViewStyle>;
+  /** Enables smooth drop-in entrance animation (default: false when wrapped by ActiveHeaderTransition, or true standalone) */
+  animated?: boolean;
 }
 
 export function FloatingGlassHeaderComponent({
@@ -37,13 +39,173 @@ export function FloatingGlassHeaderComponent({
   trailing,
   style,
   pillStyle,
+  animated = false,
 }: FloatingGlassHeaderProps) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
 
+  const [anim] = useState(() => new Animated.Value(0));
+  const webDivRef = useRef<HTMLDivElement>(null);
+  const hasMounted = useRef(false);
+
+  useEffect(() => {
+    if (!animated) return;
+    if (Platform.OS === 'web') {
+      if (!hasMounted.current) {
+        hasMounted.current = true;
+        return;
+      }
+      if (webDivRef.current) {
+        webDivRef.current.classList.remove('header-enter-items');
+        void webDivRef.current.offsetWidth;
+        webDivRef.current.classList.add('header-enter-items');
+      }
+    } else {
+      anim.setValue(0);
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 260,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [animated, anim]);
+
+  const translateY = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-50, 0],
+  });
+
+  const headerContent = (
+    <View
+      renderToHardwareTextureAndroid={true}
+      style={[
+        styles.container,
+        {
+          flexDirection: isRTL ? 'row-reverse' : 'row',
+          borderColor: colors.glassBorderStrong,
+          ...(Platform.OS === 'web' ? ({ pointerEvents: 'auto' } as any) : {}),
+        },
+        pillStyle,
+      ]}
+    >
+      {/* 360° Frosted Glass */}
+      <FrostedGlass
+        borderRadius={36}
+        marginWidth={16}
+        scale={36}
+        blurDeviation={2.0}
+        overlayOpacity={isDark ? 0.08 : 0.15}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {onBack && (
+        <GlassBackButton onPress={onBack} style={{ zIndex: 10 }} />
+      )}
+
+      {leading && (
+        <View style={{ zIndex: 10 }}>
+          {leading}
+        </View>
+      )}
+
+      {children ? (
+        <View style={{ flex: 1, zIndex: 10 }}>
+          {children}
+        </View>
+      ) : (title !== undefined || subtitle !== undefined) ? (
+        <View style={{ flex: 1, zIndex: 10 }}>
+          {title ? (
+            <Text
+              style={[
+                styles.title,
+                {
+                  color: colors.textPrimary,
+                  textAlign: isRTL ? 'right' : 'left',
+                },
+              ]}
+              numberOfLines={1}
+            >
+              {title}
+            </Text>
+          ) : null}
+          {subtitle ? (
+            <Text
+              style={[
+                styles.status,
+                {
+                  color: colors.textTertiary,
+                  textAlign: isRTL ? 'right' : 'left',
+                },
+              ]}
+              numberOfLines={1}
+            >
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
+      ) : (
+        <View style={{ flex: 1 }} />
+      )}
+
+      {trailing && (
+        <View style={{ zIndex: 10 }}>
+          {trailing}
+        </View>
+      )}
+    </View>
+  );
+
+  if (Platform.OS === 'web' && animated) {
+    return (
+      <View
+        pointerEvents="box-none"
+        style={[
+          styles.outerContainer,
+          {
+            paddingTop: getHeaderTopInset(insets.top),
+          },
+          style,
+        ]}
+      >
+        <div
+          ref={webDivRef}
+          className="header-enter-items"
+          style={{
+            width: '100%',
+            pointerEvents: 'none',
+          }}
+        >
+          {headerContent}
+        </div>
+      </View>
+    );
+  }
+
+  if (animated) {
+    return (
+      <Animated.View
+        pointerEvents="box-none"
+        renderToHardwareTextureAndroid
+        style={[
+          styles.outerContainer,
+          {
+            paddingTop: getHeaderTopInset(insets.top),
+            opacity: anim,
+            transform: [{ translateY }],
+          },
+          style,
+        ]}
+      >
+        {headerContent}
+      </Animated.View>
+    );
+  }
+
   return (
     <View
+      pointerEvents="box-none"
       style={[
         styles.outerContainer,
         {
@@ -51,84 +213,8 @@ export function FloatingGlassHeaderComponent({
         },
         style,
       ]}
-      pointerEvents="box-none"
     >
-      <View
-        renderToHardwareTextureAndroid={true}
-        style={[
-          styles.container,
-          {
-            flexDirection: isRTL ? 'row-reverse' : 'row',
-            borderColor: colors.glassBorderStrong,
-          },
-          pillStyle,
-        ]}
-      >
-        {/* 360° Frosted Glass */}
-        <FrostedGlass
-          borderRadius={36}
-          marginWidth={16}
-          scale={36}
-          blurDeviation={2.0}
-          overlayOpacity={isDark ? 0.08 : 0.15}
-          style={StyleSheet.absoluteFill}
-        />
-
-        {onBack && (
-          <GlassBackButton onPress={onBack} style={{ zIndex: 10 }} />
-        )}
-
-        {leading && (
-          <View style={{ zIndex: 10 }}>
-            {leading}
-          </View>
-        )}
-
-        {children ? (
-          <View style={{ flex: 1, zIndex: 10 }}>
-            {children}
-          </View>
-        ) : (
-          (title !== undefined || subtitle !== undefined) && (
-            <View style={{ flex: 1, zIndex: 10 }}>
-              {title ? (
-                <Text
-                  style={[
-                    styles.title,
-                    {
-                      color: colors.textPrimary,
-                      textAlign: isRTL ? 'right' : 'left',
-                    },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {title}
-                </Text>
-              ) : null}
-              {subtitle ? (
-                <Text
-                  style={[
-                    styles.status,
-                    {
-                      color: colors.textTertiary,
-                      textAlign: isRTL ? 'right' : 'left',
-                    },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {subtitle}
-                </Text>
-              ) : null}
-            </View>
-          )
-        )}
-
-        {trailing && (
-          <View style={{ zIndex: 10 }}>
-            {trailing}
-          </View>
-        )}
-      </View>
+      {headerContent}
     </View>
   );
 }

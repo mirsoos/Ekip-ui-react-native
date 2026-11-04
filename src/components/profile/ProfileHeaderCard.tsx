@@ -47,7 +47,12 @@ export const ProfileHeaderCard = React.memo(function ProfileHeaderCard({
       <View style={[styles.topRow, { flexDirection: rowDir }]}>
         <View style={styles.avatarWrap}>
           {hideAvatar ? (
-            <View style={{ width: 88, height: 88 }} />
+            <GlassAvatar
+              user={profile}
+              size={88}
+              style={{ opacity: 0 }}
+              pointerEvents="none"
+            />
           ) : (
             <GlassAvatar
               user={profile}
@@ -185,9 +190,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   moreBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

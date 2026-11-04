@@ -1,11 +1,11 @@
 // --- START OF FILE ChatInputBar.tsx ---
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FrostedGlass } from '../FrostedGlass';
-import { getIcon } from '../../lib/icons';
+import { Icons } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 
@@ -47,9 +47,8 @@ export function ChatInputBarComponent({
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
-  const SendIcon = getIcon('Send');
 
-  const enterAnim = useRef(new Animated.Value(0)).current;
+  const [enterAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     enterAnim.setValue(0);
@@ -138,7 +137,7 @@ export function ChatInputBarComponent({
             end={{ x: 1, y: 1 }}
             style={styles.sendGrad}
           >
-            <SendIcon size={16} color="#ffffff" strokeWidth={2.6} />
+            <Icons.Send size={20} color="#ffffff" strokeWidth={2.4} />
           </LinearGradient>
         </TouchableOpacity>
       </Animated.View>
@@ -197,14 +196,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   sendBtn: {
-    borderRadius: 19,
+    borderRadius: 24,
     overflow: 'hidden',
     zIndex: 10,
   },
   sendGrad: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },

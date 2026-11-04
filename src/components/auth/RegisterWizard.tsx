@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image }
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
-import { GlassInput, GlassBackButton, GlassCard } from '../Glass';
+import { GlassInput, GlassCard } from '../Glass';
 import { StepProgressBar } from '../common/StepProgressBar';
+import { FloatingGlassHeader } from '../common/FloatingGlassHeader';
 import { FrostedGlass } from '../FrostedGlass';
 import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
 import { Icons } from '../../lib/icons';
@@ -12,7 +13,7 @@ import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { useAppData } from '../../lib/appData';
 import { allInterests } from '../../lib/demoData';
-import { HEADER_METRICS, getHeaderTopInset, getSinglePillContentPaddingTop } from '../../lib/headerLayout';
+import { HEADER_METRICS, getSinglePillContentPaddingTop } from '../../lib/headerLayout';
 
 const totalSteps = 4;
 
@@ -138,37 +139,15 @@ export function RegisterWizardComponent({
 
   return (
     <View style={styles.root}>
-      {/* 360° Liquid Glass Header with Language Switcher */}
-      <View
-        style={[
-          styles.headerOuter,
-          {
-            paddingTop: getHeaderTopInset(insets.top),
-          },
-        ]}
-        pointerEvents="box-none"
+      <FloatingGlassHeader
+        animated
+        onBack={handlePrev}
+        trailing={<LanguageSwitcherPill style={{ zIndex: 10 }} />}
       >
-        <View
-          style={[
-            styles.headerContainer,
-            { flexDirection: isRTL ? 'row-reverse' : 'row', borderColor: colors.glassBorderStrong },
-          ]}
-        >
-          <FrostedGlass
-            borderRadius={36}
-            marginWidth={16}
-            scale={36}
-            blurDeviation={2.0}
-            overlayOpacity={isDark ? 0.08 : 0.15}
-            style={StyleSheet.absoluteFill}
-          />
-          <GlassBackButton onPress={handlePrev} style={{ zIndex: 10 }} />
-          <View style={{ flex: 1, marginHorizontal: 8, zIndex: 10 }}>
-            <StepProgressBar currentStep={step} totalSteps={totalSteps} />
-          </View>
-          <LanguageSwitcherPill style={{ zIndex: 10 }} />
+        <View style={{ marginHorizontal: 8 }}>
+          <StepProgressBar currentStep={step} totalSteps={totalSteps} />
         </View>
-      </View>
+      </FloatingGlassHeader>
 
       <ScrollView
         showsVerticalScrollIndicator={false}

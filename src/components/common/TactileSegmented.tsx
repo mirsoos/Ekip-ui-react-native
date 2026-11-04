@@ -187,10 +187,11 @@ export const TactileSegmented = React.memo(function TactileSegmented({
   const currentPosRef = useRef(0);
 
   // محاسبه موقعیت افقی تب فعال با احتساب جهت LTR/RTL
+  // کسر 2px بابت borderWidth=1 در طرفین و 8px بابت مارجین 4px در چپ و راست
   const getSlotX = useCallback(
     (idx: number, totalW: number) => {
       if (totalW <= 0) return 0;
-      const innerW = totalW - 8;
+      const innerW = totalW - 10;
       const itemW = innerW / countRef.current;
       const effectiveIndex = isRTLRef.current ? countRef.current - 1 - idx : idx;
       return 4 + effectiveIndex * itemW;
@@ -200,7 +201,7 @@ export const TactileSegmented = React.memo(function TactileSegmented({
 
   const getSlotWidth = useCallback((totalW: number) => {
     if (totalW <= 0) return 0;
-    const innerW = totalW - 8;
+    const innerW = totalW - 10;
     return innerW / countRef.current;
   }, []);
 
@@ -583,7 +584,11 @@ const styles = StyleSheet.create({
     borderRadius: 1,
   },
   tabsRow: {
-    flex: 1,
+    position: 'absolute',
+    left: 4,
+    right: 4,
+    top: 0,
+    bottom: 0,
     flexDirection: 'row',
     alignItems: 'center',
     zIndex: 3,

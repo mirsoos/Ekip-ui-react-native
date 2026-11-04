@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 1,
     paddingHorizontal: HEADER_METRICS.paddingHorizontal,
-    paddingTop: HEADER_METRICS.paddingVertical,
+    paddingTop: 10,
     paddingBottom: 10,
     ...(Platform.OS === 'ios'
       ? {
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: HEADER_METRICS.actionButtonSize,
+    minHeight: 52,
     paddingHorizontal: 8,
     marginBottom: 10,
     zIndex: 10,

@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GlassInput, GlassBackButton } from '../Glass';
+import { GlassInput } from '../Glass';
 import { TactileSegmented } from '../common/TactileSegmented';
 import { FrostedGlass } from '../FrostedGlass';
 import { LanguageSwitcherPill } from '../common/LanguageSwitcherPill';
+import { FloatingGlassHeader } from '../common/FloatingGlassHeader';
 import { SocialAuthRow } from './SocialAuthRow';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
-import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
+import { HEADER_METRICS, getSinglePillContentPaddingTop } from '../../lib/headerLayout';
 
 export function LoginForm({
   onBack,
@@ -32,25 +33,27 @@ export function LoginForm({
   const [password, setPassword] = useState('');
 
   return (
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={[
-        styles.container,
-        {
-          paddingTop: getHeaderTopInset(insets.top) + HEADER_METRICS.buttonTopOffset,
-          paddingHorizontal: HEADER_METRICS.buttonOffset,
-        },
-      ]}
-    >
-      {/* Top Header Row with Back Button and Language Switcher */}
-      <View style={[styles.topBar, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-        <GlassBackButton onPress={onBack} />
-        <LanguageSwitcherPill />
-      </View>
+    <View style={styles.root}>
+      <FloatingGlassHeader
+        animated
+        onBack={onBack}
+        title={t('auth.loginTitle')}
+        trailing={<LanguageSwitcherPill />}
+      />
 
-      <Text style={[styles.heading, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
-        {t('auth.loginTitle')}
-      </Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.container,
+          {
+            paddingTop: getSinglePillContentPaddingTop(insets.top),
+            paddingHorizontal: HEADER_METRICS.buttonOffset,
+          },
+        ]}
+      >
+        <Text style={[styles.heading, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
+          {t('auth.loginTitle')}
+        </Text>
       <Text style={[styles.subheading, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
         {t('auth.loginSubtitle')}
       </Text>
@@ -154,22 +157,19 @@ export function LoginForm({
       </View>
 
       <SocialAuthRow onSelect={onOAuth} />
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   container: {
     paddingHorizontal: 24,
-    paddingTop: 40,
+    paddingTop: 16,
     paddingBottom: 40,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: HEADER_METRICS.actionButtonSize,
-    marginBottom: 20,
   },
   heading: {
     fontSize: 28,

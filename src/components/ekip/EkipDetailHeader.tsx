@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassBackButton } from '../Glass';
 import { FrostedGlass } from '../FrostedGlass';
-import { getIcon } from '../../lib/icons';
+import { Icons } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
@@ -25,8 +25,6 @@ export function EkipDetailHeader({
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
-  const ShareIcon = getIcon('Share');
-  const BookmarkIcon = getIcon('Bookmark');
   const buttonTop = getHeaderTopInset(insets.top) + HEADER_METRICS.buttonTopOffset;
 
   return (
@@ -75,15 +73,15 @@ export function EkipDetailHeader({
           ]}
         >
           <FrostedGlass
-            borderRadius={19}
-            marginWidth={8}
-            scale={20}
+            borderRadius={24}
+            marginWidth={10}
+            scale={24}
             blurDeviation={1.6}
             overlayOpacity={isDark ? 0.10 : 0.22}
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.iconWrap}>
-            <ShareIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+            <Icons.Share size={20} color={colors.textPrimary} strokeWidth={2.2} />
           </View>
         </TouchableOpacity>
 
@@ -97,15 +95,15 @@ export function EkipDetailHeader({
             ]}
           >
             <FrostedGlass
-              borderRadius={19}
-              marginWidth={8}
-              scale={20}
+              borderRadius={24}
+              marginWidth={10}
+              scale={24}
               blurDeviation={1.6}
               overlayOpacity={isDark ? 0.10 : 0.22}
               style={StyleSheet.absoluteFill}
             />
             <View style={styles.iconWrap}>
-              <BookmarkIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+              <Icons.Bookmark size={20} color={colors.textPrimary} strokeWidth={2.2} />
             </View>
           </TouchableOpacity>
         )}
@@ -132,9 +130,9 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   actionBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

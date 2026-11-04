@@ -5,6 +5,8 @@ import { Platform, Image } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import type { SubscriptionTier } from '../../types/database';
 
+export const AVATAR_BORDER_SCALE = 1.38;
+
 export const BORDER_PREMIUM_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
   <defs>
     <linearGradient id="greenBlueGradRotated40" x1="0%" y1="0%" x2="50%" y2="100%" gradientTransform="rotate(-40 0.5 0.5)">

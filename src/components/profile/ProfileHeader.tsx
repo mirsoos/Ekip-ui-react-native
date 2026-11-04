@@ -1,19 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Animated, Easing, type LayoutChangeEvent } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, Easing, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { GlassBackButton, VerifiedBadge } from '../Glass';
+import { GlassBackButton, GlassAvatar, getAvatarMetrics } from '../Glass';
 import { FrostedGlass } from '../FrostedGlass';
 import { CelestialBallToggle } from '../common/CelestialBallToggle';
-import { SubscriptionBorder } from '../common/SubscriptionBorder';
 import { getIcon } from '../../lib/icons';
 import { darkColors, lightColors, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
 import type { Profile } from '../../types/database';
 
-const Sun = getIcon('Sun');
-const Moon = getIcon('Moon');
 const SettingsIcon = getIcon('Settings');
 
 const actionButtonStyles = {
@@ -71,11 +67,11 @@ export function ProfileHeaderComponent({
   const [capsuleLayout, setCapsuleLayout] = useState<HeaderLayout | null>(null);
   const [avatarSlotLayout, setAvatarSlotLayout] = useState<HeaderLayout | null>(null);
   const topPad = getHeaderTopInset(insets.top);
-  const fallbackTranslateY = topPad + 28 - 180;
+  const fallbackTranslateY = topPad + 32 - 180;
   const initialDocked = initialScrollOffset >= 60;
   const [isDocked, setIsDocked] = useState(initialDocked);
   const [isMounted, setIsMounted] = useState(initialDocked);
-  const capsuleAnim = useRef(new Animated.Value(initialDocked ? 1 : 0)).current;
+  const [capsuleAnim] = useState(() => new Animated.Value(initialDocked ? 1 : 0));
   const isDockedRef = useRef(initialDocked);
   const onAvatarLayout = useCallback(
     (event: LayoutChangeEvent) => updateHeaderLayout(setAvatarLayout, event),
@@ -91,7 +87,7 @@ export function ProfileHeaderComponent({
   );
 
   // Avatar entrance animation when navigating into Profile screen
-  const avatarEnterAnim = useRef(new Animated.Value(0)).current;
+  const [avatarEnterAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     avatarEnterAnim.setValue(0);
@@ -101,7 +97,7 @@ export function ProfileHeaderComponent({
       speed: 12,
       useNativeDriver: Platform.OS !== 'web',
     }).start();
-  }, [profile.id]);
+  }, [avatarEnterAnim, profile.id]);
 
   useEffect(() => {
     const id = scrollY.addListener(({ value }) => {
@@ -211,19 +207,7 @@ export function ProfileHeaderComponent({
     [avatarEnterScale, scale]
   );
 
-  const tier =
-    profile.subscription_tier ??
-    (profile.is_business && profile.is_premium
-      ? 'business_premium'
-      : profile.is_premium
-      ? 'premium'
-      : 'free');
-
-  const hasSubscriptionBorder = tier === 'business_premium' || tier === 'premium';
-
-  const borderScale = 1.38;
-  const borderSize = Math.round(88 * borderScale);
-  const borderOffset = Math.round((88 - borderSize) / 2);
+  const dockedSlotWidth = getAvatarMetrics(38).containerSize;
 
   const capsuleStyle = React.useMemo(
     () => [
@@ -242,8 +226,6 @@ export function ProfileHeaderComponent({
       styles.avatarContainer,
       {
         [isRTL ? 'right' : 'left']: 16,
-        borderWidth: hasSubscriptionBorder ? 0 : 2.5,
-        borderColor: colors.glassBorderStrong,
         opacity: avatarEnterOpacity,
         transform: [
           { translateY: combinedTranslateY },
@@ -254,10 +236,8 @@ export function ProfileHeaderComponent({
     ],
     [
       avatarEnterOpacity,
-      colors.glassBorderStrong,
       combinedScale,
       combinedTranslateY,
-      hasSubscriptionBorder,
       isRTL,
       translateX,
     ]
@@ -287,7 +267,7 @@ export function ProfileHeaderComponent({
           ) : null}
 
           {/* Reserved slot for docked avatar */}
-          <View onLayout={onAvatarSlotLayout} style={{ width: 40 }} />
+          <View onLayout={onAvatarSlotLayout} style={{ width: dockedSlotWidth }} />
 
           {/* Title that appears when docked */}
           <View style={styles.titleWrap}>
@@ -304,7 +284,7 @@ export function ProfileHeaderComponent({
             <CelestialBallToggle
               isDark={theme === 'dark'}
               onToggle={toggle}
-              size={38}
+              size={46}
             />
 
             {isOwnProfile && (
@@ -314,15 +294,15 @@ export function ProfileHeaderComponent({
                 style={actionButtonStyle}
               >
                 <FrostedGlass
-                  borderRadius={19}
-                  marginWidth={8}
-                  scale={20}
+                  borderRadius={24}
+                  marginWidth={10}
+                  scale={24}
                   blurDeviation={1.6}
                   overlayOpacity={isDark ? 0.10 : 0.22}
                   style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.iconWrap}>
-                  <SettingsIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+                  <SettingsIcon size={20} color={colors.textPrimary} strokeWidth={2.2} />
                 </View>
               </TouchableOpacity>
             )}
@@ -354,7 +334,7 @@ export function ProfileHeaderComponent({
               <CelestialBallToggle
                 isDark={theme === 'dark'}
                 onToggle={toggle}
-                size={38}
+                size={46}
               />
 
               {isOwnProfile && (
@@ -364,15 +344,15 @@ export function ProfileHeaderComponent({
                   style={actionButtonStyle}
                 >
                   <FrostedGlass
-                    borderRadius={19}
-                    marginWidth={8}
-                    scale={20}
+                    borderRadius={24}
+                    marginWidth={10}
+                    scale={24}
                     blurDeviation={1.6}
                     overlayOpacity={isDark ? 0.10 : 0.22}
                     style={StyleSheet.absoluteFill}
                   />
                   <View style={styles.iconWrap}>
-                    <SettingsIcon size={18} color={colors.textPrimary} strokeWidth={2.2} />
+                    <SettingsIcon size={20} color={colors.textPrimary} strokeWidth={2.2} />
                   </View>
                 </TouchableOpacity>
               )}
@@ -387,53 +367,11 @@ export function ProfileHeaderComponent({
         style={avatarStyle}
         pointerEvents="none"
       >
-        <View style={styles.avatarInnerWrap}>
-          {profile.avatar_url ? (
-            <Image
-              source={{ uri: profile.avatar_url }}
-              style={styles.avatarImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <LinearGradient
-              colors={['#f472b6', '#3b82f6']}
-              style={styles.avatarFallback}
-            >
-              <Text style={styles.avatarInitials}>
-                {profile.first_name?.[0] ?? ''}{profile.last_name?.[0] ?? ''}
-              </Text>
-            </LinearGradient>
-          )}
-        </View>
-
-        {/* Subscription Border Frame Overlay */}
-        {hasSubscriptionBorder && (
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              width: borderSize,
-              height: borderSize,
-              top: borderOffset,
-              left: borderOffset,
-              zIndex: 10,
-            }}
-          >
-            <SubscriptionBorder tier={tier} size={borderSize} />
-          </View>
-        )}
-
-        {/* Verified Badge (South-West) */}
-        {profile.is_verified && (
-          <View style={styles.verifiedBadgeContainer}>
-            <VerifiedBadge size={26} color="#3b82f6" checkColor="#ffffff" />
-          </View>
-        )}
-
-        {/* Online Indicator Badge (South-East) - only for other users, never own profile */}
-        {!isOwnProfile && profile.is_online && (
-          <View style={styles.onlineBadgeContainer} />
-        )}
+        <GlassAvatar
+          user={profile}
+          size={88}
+          online={!isOwnProfile && !!profile.is_online}
+        />
       </Animated.View>
     </View>
   );
@@ -513,9 +451,9 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   actionBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -551,10 +489,6 @@ const styles = StyleSheet.create({
   avatarContainer: {
     position: 'absolute',
     top: 136,
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    borderWidth: 2.5,
     overflow: 'visible',
     ...(Platform.OS === 'ios'
       ? {
@@ -573,46 +507,5 @@ const styles = StyleSheet.create({
           elevation: 12,
         }),
     zIndex: 950,
-  },
-  avatarInnerWrap: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 44,
-    overflow: 'hidden',
-  },
-  verifiedBadgeContainer: {
-    position: 'absolute',
-    bottom: -2,
-    left: -2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 15,
-  },
-  onlineBadgeContainer: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#22c55e',
-    borderWidth: 2,
-    borderColor: '#ffffff',
-    zIndex: 15,
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-  avatarFallback: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarInitials: {
-    color: '#ffffff',
-    fontWeight: '800',
-    fontSize: 30,
   },
 });
