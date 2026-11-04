@@ -26,8 +26,8 @@ export const HEADER_METRICS = {
   // Horizontal padding inside the pill / card
   paddingHorizontal: 8,
   // Vertical padding inside standard pill
-  paddingVertical: 5,
-  // Standard single-row floating pill height: 64px (clean 6px clearance for 52px avatars and action buttons)
+  paddingVertical: 6,
+  // Standard single-row floating pill height: 56px (clean 6px clearance for 42px action buttons)
   pillHeight: HEADER_BAR_HEIGHT,
   // Standard multi-row card height (Discover, Activity, ChatList)
   multiRowCardHeight: MULTI_ROW_HEADER_HEIGHT,
@@ -36,9 +36,9 @@ export const HEADER_METRICS = {
   // Exact horizontal coordinate from screen edge to button edge:
   // 12 (margin) + 1 (border) + 8 (padding) = 21px
   buttonOffset: 21,
-  // Exact vertical offset from topInset to top edge of 38px button:
-  // 1 (border) + 7 (paddingTop) = 8px
-  buttonTopOffset: 8,
+  // Exact vertical offset from topInset to top edge of 42px button:
+  // 1 (border) + 6 (paddingTop) = 7px
+  buttonTopOffset: 7,
   // Gap between bottom of header and first scrollable content item
   contentTopGap: CONTENT_TOP_GAP,
   // Bottom navigation dock clearance

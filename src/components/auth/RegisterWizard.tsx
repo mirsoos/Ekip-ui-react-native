@@ -669,7 +669,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     position: 'relative',
     height: HEADER_METRICS.pillHeight,
-    borderRadius: 36,
+    borderRadius: 28,
     borderWidth: 1,
     paddingVertical: HEADER_METRICS.paddingVertical,
     paddingHorizontal: HEADER_METRICS.paddingHorizontal,

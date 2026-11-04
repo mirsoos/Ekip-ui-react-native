@@ -71,13 +71,11 @@ export const FrostedGlass = React.memo(function FrostedGlass({
 
   if (Platform.OS === 'web') {
     const flattened = StyleSheet.flatten(style);
-    const bg =
-      flattened?.backgroundColor ??
-      (isDark ? 'rgba(15, 23, 42, 0.65)' : 'rgba(255, 255, 255, 0.7)');
+    const bg = flattened?.backgroundColor ?? colors.glassBg;
 
     const webBlurStyle: ViewStyle = {
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
       backgroundColor: bg,
     } as any;
 
@@ -88,12 +86,22 @@ export const FrostedGlass = React.memo(function FrostedGlass({
           styles.container,
           {
             borderRadius,
-            borderColor: isDark ? colors.glassBorder : colors.glassBorderStrong,
+            borderColor: colors.glassBorderStrong,
           },
           style,
           webBlurStyle,
         ]}
       >
+        <View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              borderRadius,
+              backgroundColor: `rgba(255, 255, 255, ${overlayOpacity})`,
+            },
+          ]}
+        />
         {children}
       </View>
     );
@@ -132,7 +140,7 @@ const styles = StyleSheet.create({
   },
   dark: {
     backgroundColor: darkColors.glassBg,
-    borderColor: darkColors.glassBorder,
+    borderColor: darkColors.glassBorderStrong,
   },
   light: {
     backgroundColor: lightColors.glassBg,

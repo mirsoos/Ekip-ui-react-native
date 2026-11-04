@@ -92,9 +92,9 @@ export function FloatingGlassHeaderComponent({
     >
       {/* 360° Frosted Glass */}
       <FrostedGlass
-        borderRadius={36}
-        marginWidth={16}
-        scale={36}
+        borderRadius={28}
+        marginWidth={14}
+        scale={28}
         blurDeviation={2.0}
         overlayOpacity={isDark ? 0.08 : 0.15}
         style={StyleSheet.absoluteFill}
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     height: HEADER_METRICS.pillHeight,
-    borderRadius: 36,
+    borderRadius: 28,
     borderWidth: 1,
     paddingVertical: HEADER_METRICS.paddingVertical,
     paddingHorizontal: HEADER_METRICS.paddingHorizontal,
@@ -244,17 +244,21 @@ const styles = StyleSheet.create({
       ? {
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 16 },
-          shadowOpacity: 0.35,
+          shadowOpacity: 0.38,
           shadowRadius: 28,
         }
       : Platform.OS === 'android'
-      ? { elevation: 0 }
+      ? {
+          elevation: 10,
+          shadowColor: '#000',
+        }
       : {
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 16 },
-          shadowOpacity: 0.35,
+          shadowOpacity: 0.38,
           shadowRadius: 28,
           elevation: 14,
+          boxShadow: '0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 4px 16px rgba(0, 0, 0, 0.40)',
         }),
     overflow: 'visible',
   },

@@ -119,9 +119,9 @@ export const darkColors: ThemeColors = {
   isDark: true,
   bgCanvas: '#04060c',
   bgCanvasGrad: ['#04060c', '#080a14', '#080e1a', '#060a12'],
-  glassBg: 'rgba(14, 17, 27, 0.85)',
-  glassThickBg: 'rgba(11, 14, 23, 0.94)',
-  glassThinBg: 'rgba(255, 255, 255, 0.05)',
+  glassBg: 'rgba(13, 16, 26, 0.94)',
+  glassThickBg: 'rgba(11, 14, 23, 0.96)',
+  glassThinBg: 'rgba(255, 255, 255, 0.06)',
   glassBorder: 'rgba(255, 255, 255, 0.10)',
   glassBorderStrong: 'rgba(255, 255, 255, 0.20)',
   textPrimary: '#ffffff',
@@ -141,9 +141,9 @@ export const lightColors: ThemeColors = {
   isDark: false,
   bgCanvas: '#ebf0fa',
   bgCanvasGrad: ['#ebf0fa', '#dbeafe', '#e0e7ff', '#dbeafe'],
-  glassBg: 'rgba(255, 255, 255, 0.65)',
-  glassThickBg: 'rgba(255, 255, 255, 0.88)',
-  glassThinBg: 'rgba(255, 255, 255, 0.45)',
+  glassBg: 'rgba(255, 255, 255, 0.92)',
+  glassThickBg: 'rgba(255, 255, 255, 0.96)',
+  glassThinBg: 'rgba(255, 255, 255, 0.50)',
   glassBorder: 'rgba(255, 255, 255, 0.60)',
   glassBorderStrong: 'rgba(255, 255, 255, 0.90)',
   textPrimary: '#0f172a',
@@ -198,7 +198,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         if (saved === 'light' || saved === 'dark') return saved;
       } catch {}
     }
-    return systemColorScheme === 'light' ? 'light' : 'dark';
+    return 'dark';
   });
   const [chatTheme, setChatThemeState] = useState<ChatThemeId>('default');
 

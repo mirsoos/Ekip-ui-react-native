@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export const HEADER_BAR_HEIGHT = 64;
+export const HEADER_BAR_HEIGHT = 56;
 export const MULTI_ROW_HEADER_HEIGHT = 126;
 export const CONTENT_TOP_GAP = 16;
 export const BOTTOM_NAV_CLEARANCE = 100;
@@ -44,15 +44,15 @@ export function getContentTopInset(
   }
 
   // Single-row pill header (Settings, PersonalInfo, Notifications, Plans, AI, etc.):
-  // Pill is 64px tall (accommodating 52px bordered avatars with clean 6px vertical margin).
-  // On web: 96px ensures clean 20px clearance below 76px pill bottom.
-  // On mobile: insetsTop + 96px ensures clean 26px clearance below insetsTop + 70px pill bottom.
-  return Platform.OS === 'web' ? 96 : insetsTop + 96;
+  // Pill is 56px tall (accommodating 42px circular buttons with clean 6px vertical padding).
+  // On web: 88px ensures clean 20px clearance below 68px pill bottom.
+  // On mobile: insetsTop + 88px ensures clean 26px clearance below insetsTop + 62px pill bottom.
+  return Platform.OS === 'web' ? 88 : insetsTop + 88;
 }
 
 /**
  * React hook returning the standardized content paddingTop below headers.
- * - 'single': for 64px pill headers (Settings, Create, Chat Conversation, AI, Notifications, etc.)
+ * - 'single': for 56px pill headers (Settings, Create, Chat Conversation, AI, Notifications, etc.)
  * - 'multi': for multi-row cards (Discover, Activity, Chat List)
  */
 export function useContentTopInset(
