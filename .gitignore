@@ -43,4 +43,7 @@ yarn-error.*
 # IDE & temporary
 .idea/
 *.tmp
+*.apk
+*.idsig
+
 

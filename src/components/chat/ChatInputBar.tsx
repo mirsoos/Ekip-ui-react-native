@@ -196,14 +196,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   sendBtn: {
-    borderRadius: 24,
+    borderRadius: 21,
     overflow: 'hidden',
     zIndex: 10,
   },
   sendGrad: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
   },

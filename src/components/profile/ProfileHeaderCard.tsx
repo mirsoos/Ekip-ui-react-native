@@ -190,9 +190,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   moreBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

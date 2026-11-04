@@ -30,7 +30,7 @@ export const CreateHeader = React.memo(function CreateHeader({
             { backgroundColor: colors.glassThinBg, borderColor: colors.glassBorder },
           ]}
         >
-          <AiEkipLogo size={30} />
+          <AiEkipLogo size={26} />
         </TouchableOpacity>
       }
     >
@@ -41,9 +41,9 @@ export const CreateHeader = React.memo(function CreateHeader({
 
 const styles = StyleSheet.create({
   aiBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

@@ -22,7 +22,7 @@ export const AIHeader = React.memo(function AIHeader({
       onBack={onBack}
       leading={
         <View style={[styles.aiAvatar, { borderColor: colors.glassBorderStrong, backgroundColor: colors.glassThinBg }]}>
-          <AiEkipLogo size={30} />
+          <AiEkipLogo size={26} />
         </View>
       }
       title={isRTL ? 'دستیار هوشمند اکیپ' : 'Ekip AI Assistant'}
@@ -45,9 +45,9 @@ export const AIHeader = React.memo(function AIHeader({
 
 const styles = StyleSheet.create({
   aiAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     overflow: 'hidden',
     borderWidth: 1,
     zIndex: 10,
@@ -61,9 +61,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   moreBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,

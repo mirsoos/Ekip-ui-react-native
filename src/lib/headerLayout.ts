@@ -31,8 +31,8 @@ export const HEADER_METRICS = {
   pillHeight: HEADER_BAR_HEIGHT,
   // Standard multi-row card height (Discover, Activity, ChatList)
   multiRowCardHeight: MULTI_ROW_HEADER_HEIGHT,
-  // Standard action button diameter (standardized 48px)
-  actionButtonSize: 48,
+  // Standard action button diameter (standardized 42px)
+  actionButtonSize: 42,
   // Exact horizontal coordinate from screen edge to button edge:
   // 12 (margin) + 1 (border) + 8 (padding) = 21px
   buttonOffset: 21,

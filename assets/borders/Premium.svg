@@ -6,8 +6,5 @@
       <stop offset="100%" stop-color="#056CF2" />
     </linearGradient>
   </defs>
-  
-  <circle cx="100" cy="100" r="93" fill="none" stroke="url(#greenBlueGradRotated40)" stroke-width="9" />
-  
   <circle cx="100" cy="100" r="78" fill="none" stroke="url(#greenBlueGradRotated40)" stroke-width="9" />
 </svg>

@@ -35,7 +35,7 @@ export interface CelestialBallToggleProps {
 export function CelestialBallToggleComponent({
   isDark,
   onToggle,
-  size = 46,
+  size = 40,
   style,
 }: CelestialBallToggleProps) {
   // 0 = Dark (Moon), 1 = Light (Sun)

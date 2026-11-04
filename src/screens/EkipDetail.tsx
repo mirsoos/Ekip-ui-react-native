@@ -191,9 +191,9 @@ export function EkipDetailComponent({
             ]}
           >
             <FrostedGlass
-              borderRadius={24}
-              marginWidth={10}
-              scale={24}
+              borderRadius={21}
+              marginWidth={9}
+              scale={21}
               blurDeviation={1.6}
               overlayOpacity={isDark ? 0.1 : 0.22}
               style={StyleSheet.absoluteFill}
@@ -454,9 +454,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   headerActionBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

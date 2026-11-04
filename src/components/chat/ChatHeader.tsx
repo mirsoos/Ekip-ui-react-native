@@ -53,9 +53,9 @@ export const ChatHeader = React.memo(function ChatHeader({
 
 const styles = StyleSheet.create({
   moreBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
