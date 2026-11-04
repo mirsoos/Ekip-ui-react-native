@@ -335,7 +335,7 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
         renderToHardwareTextureAndroid={true}
         shouldRasterizeIOS={true}
       >
-        <Svg width="100%" height="100%">
+        <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
           <Defs>
             <RadialGradient id="meshCyan" cx={isDark ? '18%' : '25%'} cy={isDark ? '20%' : '15%'} r={isDark ? '55%' : '65%'}>
               <Stop offset="0%" stopColor="#38bdf8" stopOpacity={isDark ? 0.24 : 0.20} />

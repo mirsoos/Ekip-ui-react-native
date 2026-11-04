@@ -145,51 +145,7 @@
         flex: 1;
       }
 
-      /* Hardware Accelerated Aurora Blobs */
-      @keyframes ek-blob {
-        0%, 100% { transform: translate3d(0, 0, 0); }
-        33% { transform: translate3d(35px, -45px, 0) scale(1.12); }
-        66% { transform: translate3d(-25px, 25px, 0) scale(0.94); }
-      }
-      @keyframes ek-blob-rev {
-        0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-        33% { transform: translate3d(-45px, 35px, 0) scale(1.1); }
-        66% { transform: translate3d(35px, -15px, 0) scale(0.95); }
-      }
 
-      .aurora-blob-1 {
-        position: absolute;
-        top: -60px;
-        left: -60px;
-        width: 440px;
-        height: 440px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(56, 189, 248, 0.40) 0%, rgba(59, 130, 246, 0.20) 50%, transparent 70%);
-                transform: translateZ(0);
-        pointer-events: none;
-      }
-      .aurora-blob-2 {
-        position: absolute;
-        top: 25%;
-        right: -80px;
-        width: 420px;
-        height: 420px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(244, 114, 182, 0.35) 0%, rgba(59, 130, 246, 0.20) 50%, transparent 70%);
-                transform: translateZ(0);
-        pointer-events: none;
-      }
-      .aurora-blob-3 {
-        position: absolute;
-        bottom: -100px;
-        left: 15%;
-        width: 480px;
-        height: 480px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(99, 102, 241, 0.30) 0%, rgba(56, 189, 248, 0.15) 50%, transparent 70%);
-                transform: translateZ(0);
-        pointer-events: none;
-      }
 
       /* ============================================
          LIQUID GLASS LENS (iOS 26 Signature Lens)

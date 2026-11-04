@@ -107,17 +107,46 @@ const AppChrome = React.memo(function AppChrome({
   return (
     <SafeAreaView
       edges={Platform.OS === 'web' ? undefined : ['left', 'right']}
-      style={[styles.safeArea, { backgroundColor: isDark ? '#04060c' : '#ebf0fa' }]}
+      style={[
+        styles.safeArea,
+        { backgroundColor: isDark ? '#020306' : '#dde2ec' },
+      ]}
     >
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      <AuroraBackground isDark={isDark} />
+      {Platform.OS === 'web' && (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: isDark ? '#020306' : '#dde2ec',
+              backgroundImage: isDark
+                ? 'radial-gradient(ellipse at 50% 50%, rgba(15, 23, 42, 0.6) 0%, rgba(2, 3, 6, 0.98) 100%)'
+                : 'radial-gradient(ellipse at 50% 50%, rgba(241, 245, 249, 0.6) 0%, rgba(220, 226, 238, 0.98) 100%)',
+            } as any,
+          ]}
+          pointerEvents="none"
+        >
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                backdropFilter: 'blur(30px)',
+                WebkitBackdropFilter: 'blur(30px)',
+                backgroundImage: isDark
+                  ? 'linear-gradient(to right, rgba(2, 3, 6, 0.85) 0%, rgba(2, 3, 6, 0.35) 30%, transparent 45%, transparent 55%, rgba(2, 3, 6, 0.35) 70%, rgba(2, 3, 6, 0.85) 100%)'
+                  : 'linear-gradient(to right, rgba(200, 210, 225, 0.85) 0%, rgba(200, 210, 225, 0.35) 30%, transparent 45%, transparent 55%, rgba(200, 210, 225, 0.35) 70%, rgba(200, 210, 225, 0.85) 100%)',
+              } as any,
+            ]}
+          />
+        </View>
+      )}
       {children}
       <Animated.View
         pointerEvents="none"
         style={[
           styles.themeCurtain,
           {
-            backgroundColor: isDark ? '#04060c' : '#ebf0fa',
+            backgroundColor: isDark ? '#060814' : '#edf1fa',
             opacity: curtainOpacity,
           },
         ]}
@@ -292,6 +321,7 @@ const NotificationsSheetHost = React.memo(
 
 function MainContent() {
   const { t } = useI18n();
+  const { isDark } = useTheme();
   const { me, profiles, conversations, notifications, addMessage } = useAppData();
 
   const [fontsLoaded] = useFonts({
@@ -580,7 +610,18 @@ function MainContent() {
   }-${history.length}`;
   return (
     <AppChrome>
-      <View nativeID="phone-container" style={styles.phoneContainer}>
+      <View
+        nativeID="phone-container"
+        style={[
+          styles.phoneContainer,
+          Platform.OS === 'web' && {
+            boxShadow: isDark
+              ? '0 0 60px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.08)'
+              : '0 0 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.06)',
+          },
+        ]}
+      >
+        <AuroraBackground isDark={isDark} />
         {!authed ? (
           <View style={styles.screenContainer}>
             <ScreenTransition screenKey="auth">
