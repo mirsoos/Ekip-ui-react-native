@@ -359,6 +359,14 @@ function MainContent() {
     profileScrollOffsets.current.set(activeProfileId, offset);
   }, [activeProfileId]);
 
+  const screenScrollOffsets = React.useRef(new Map<string, number>());
+  const getScrollOffset = React.useCallback((key: string) => {
+    return screenScrollOffsets.current.get(key) ?? 0;
+  }, []);
+  const saveScrollOffset = React.useCallback((key: string, offset: number) => {
+    screenScrollOffsets.current.set(key, offset);
+  }, []);
+
   const notificationsSheetRef = React.useRef<NotificationsSheetController>(null);
 
   const unreadNotificationsCount = React.useMemo(
@@ -392,7 +400,14 @@ function MainContent() {
 
   const pop = React.useCallback(() => {
     const currentHistory = historyRef.current;
-    if (currentHistory.length === 0) return;
+    if (currentHistory.length === 0) {
+      if (tab === 'chat') setScreen({ name: 'chatList' });
+      else if (tab === 'profile') setScreen({ name: 'profile', userId: 'me' });
+      else if (tab === 'activity') setScreen({ name: 'activity' });
+      else if (tab === 'create') setScreen({ name: 'create' });
+      else setScreen({ name: 'discover' });
+      return;
+    }
     const nextHistory = currentHistory.slice(0, -1);
     const previousScreen = currentHistory[currentHistory.length - 1];
     if (previousScreen.name === 'profile') {
@@ -401,7 +416,7 @@ function MainContent() {
     historyRef.current = nextHistory;
     setHistory(nextHistory);
     setScreen(previousScreen);
-  }, [profileScrollY]);
+  }, [profileScrollY, tab]);
 
   const switchTab = React.useCallback((t: TabKey) => {
     const currentScreen = screenRef.current;
@@ -506,11 +521,6 @@ function MainContent() {
     discoverRef.current?.openFilters();
   }, []);
 
-  const handleBackToActivity = React.useCallback(() => {
-    setTab('activity');
-    clearHistory();
-    setScreen({ name: 'activity' });
-  }, [clearHistory]);
 
   const handleBackFromCreate = React.useCallback(() => {
     const currentHistory = historyRef.current;
@@ -658,6 +668,8 @@ function MainContent() {
                     onOpenOwnProfile={handleOpenOwnProfile}
                     onOpenAI={handleOpenAI}
                     onOpenNotifications={handleOpenNotifications}
+                    initialScrollOffset={getScrollOffset('discover')}
+                    onScrollOffsetChange={(offset) => saveScrollOffset('discover', offset)}
                   />
                 )}
                 {isActivityActive && (
@@ -667,6 +679,8 @@ function MainContent() {
                     onOpenGroup={handleOpenGroup}
                     onOpenProfile={handleOpenProfile}
                     onOpenNotifications={handleOpenNotifications}
+                    initialScrollOffset={getScrollOffset(`activity:${activityTab}`)}
+                    onScrollOffsetChange={(offset) => saveScrollOffset(`activity:${activityTab}`, offset)}
                   />
                 )}
                 {isCreateActive && (
@@ -682,6 +696,8 @@ function MainContent() {
                     search={chatSearch}
                     onOpenConversation={handleOpenConversation}
                     onOpenNotifications={handleOpenNotifications}
+                    initialScrollOffset={getScrollOffset('chatList')}
+                    onScrollOffsetChange={(offset) => saveScrollOffset('chatList', offset)}
                   />
                 )}
                 {isOwnProfileActive && (
@@ -714,9 +730,11 @@ function MainContent() {
                 {screen.name === 'group' && (
                   <EkipDetail
                     group={screen.group}
-                    onBack={handleBackToActivity}
+                    onBack={pop}
                     onOpenProfile={handleOpenProfile}
                     onOpenChat={handleOpenConversation}
+                    initialScrollOffset={getScrollOffset(`group:${screen.group.id}`)}
+                    onScrollOffsetChange={(offset) => saveScrollOffset(`group:${screen.group.id}`, offset)}
                   />
                 )}
                 {screen.name === 'conversation' && (
@@ -726,6 +744,8 @@ function MainContent() {
                   <NotificationsScreen
                     onBack={pop}
                     onOpenConversation={handleOpenConversation}
+                    initialScrollOffset={getScrollOffset('notifications')}
+                    onScrollOffsetChange={(offset) => saveScrollOffset('notifications', offset)}
                   />
                 )}
                 {screen.name === 'ai' && <AIAssistant ref={aiRef} onBack={pop} />}

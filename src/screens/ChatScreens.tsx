@@ -9,6 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   BackHandler,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
@@ -27,15 +29,41 @@ export function ChatListScreenComponent({
   onOpenNotifications,
   search = '',
   isLoading = false,
+  initialScrollOffset = 0,
+  onScrollOffsetChange,
 }: {
   onOpenConversation: (id: string) => void;
   onOpenNotifications: () => void;
   search?: string;
   isLoading?: boolean;
+  initialScrollOffset?: number;
+  onScrollOffsetChange?: (offset: number) => void;
 }) {
   const insets = useSafeAreaInsets();
   const { conversations } = useAppData();
   const { t } = useI18n();
+
+  const flatListRef = useRef<FlatList<Conversation>>(null);
+  const initialOffset = useMemo(
+    () => (initialScrollOffset > 0 ? { x: 0, y: initialScrollOffset } : undefined),
+    [initialScrollOffset]
+  );
+
+  const handleScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      onScrollOffsetChange?.(e.nativeEvent.contentOffset.y);
+    },
+    [onScrollOffsetChange]
+  );
+
+  useEffect(() => {
+    if (initialScrollOffset > 0) {
+      const timer = setTimeout(() => {
+        flatListRef.current?.scrollToOffset({ offset: initialScrollOffset, animated: false });
+      }, 20);
+      return () => clearTimeout(timer);
+    }
+  }, [initialScrollOffset]);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -98,6 +126,10 @@ export function ChatListScreenComponent({
   return (
     <View style={styles.container}>
       <FlatList
+        ref={flatListRef}
+        contentOffset={initialOffset}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         data={isLoading ? [] : filtered}
         keyExtractor={extractConversationKey}
         renderItem={renderItem}

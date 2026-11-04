@@ -1,7 +1,17 @@
 // --- START OF FILE ActivityScreen.tsx ---
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Platform,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
@@ -35,18 +45,44 @@ export function ActivityScreenComponent({
   onOpenGroup,
   onOpenProfile,
   onOpenNotifications,
+  initialScrollOffset = 0,
+  onScrollOffsetChange,
 }: {
   tab?: string;
   onChangeTab?: (tab: string) => void;
   onOpenGroup: (group: Group) => void;
   onOpenProfile: (userId: string) => void;
   onOpenNotifications: () => void;
+  initialScrollOffset?: number;
+  onScrollOffsetChange?: (offset: number) => void;
 }) {
   const { groups, members, requests, updateRequest, addNotification } = useAppData();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
   const { showToast } = useToast();
+
+  const flatListRef = useRef<FlatList<Group | GroupRequest>>(null);
+  const initialOffset = useMemo(
+    () => (initialScrollOffset > 0 ? { x: 0, y: initialScrollOffset } : undefined),
+    [initialScrollOffset]
+  );
+
+  const handleScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      onScrollOffsetChange?.(e.nativeEvent.contentOffset.y);
+    },
+    [onScrollOffsetChange]
+  );
+
+  useEffect(() => {
+    if (initialScrollOffset > 0) {
+      const timer = setTimeout(() => {
+        flatListRef.current?.scrollToOffset({ offset: initialScrollOffset, animated: false });
+      }, 20);
+      return () => clearTimeout(timer);
+    }
+  }, [initialScrollOffset]);
 
   const [internalTab] = useState('created');
   const activeTab = onChangeTab ? tab : internalTab;
@@ -488,6 +524,10 @@ export function ActivityScreenComponent({
   return (
     <View style={styles.container}>
       <FlatList<Group | GroupRequest>
+        ref={flatListRef}
+        contentOffset={initialOffset}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         data={listData}
         renderItem={renderItem}
         keyExtractor={keyExtractor}

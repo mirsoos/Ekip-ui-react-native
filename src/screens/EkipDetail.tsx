@@ -10,6 +10,8 @@ import {
   Image,
   TouchableOpacity,
   BackHandler,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
@@ -41,17 +43,43 @@ export function EkipDetailComponent({
   onBack,
   onOpenProfile,
   onOpenChat,
+  initialScrollOffset = 0,
+  onScrollOffsetChange,
 }: {
   group: Group;
   onBack: () => void;
   onOpenProfile: (userId: string) => void;
   onOpenChat: (conversationId: string) => void;
+  initialScrollOffset?: number;
+  onScrollOffsetChange?: (offset: number) => void;
 }) {
   const { me, members, requests, addRequest, updateRequest, addNotification, conversations } = useAppData();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
   const { showToast } = useToast();
+
+  const scrollRef = useRef<any>(null);
+  const initialOffset = useMemo(
+    () => (initialScrollOffset > 0 ? { x: 0, y: initialScrollOffset } : undefined),
+    [initialScrollOffset]
+  );
+
+  const handleScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      onScrollOffsetChange?.(e.nativeEvent.contentOffset.y);
+    },
+    [onScrollOffsetChange]
+  );
+
+  useEffect(() => {
+    if (initialScrollOffset > 0) {
+      const timer = setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: initialScrollOffset, animated: false });
+      }, 20);
+      return () => clearTimeout(timer);
+    }
+  }, [initialScrollOffset]);
 
   const [showJoinSheet, setShowJoinSheet] = useState(false);
   const [joinMessage, setJoinMessage] = useState('');
@@ -206,6 +234,10 @@ export function EkipDetailComponent({
       />
 
       <ScrollView
+        ref={scrollRef}
+        contentOffset={initialOffset}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         removeClippedSubviews={Platform.OS === 'android'}
         contentContainerStyle={[

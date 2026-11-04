@@ -1,7 +1,16 @@
 // --- START OF FILE DiscoverScreen.tsx ---
 
-import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, Platform, type ListRenderItem } from 'react-native';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Platform,
+  type ListRenderItem,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { EkipCard } from '../components/EkipCard';
@@ -57,6 +66,8 @@ export const DiscoverScreen = React.memo(
       onOpenAI: () => void;
       onOpenNotifications: () => void;
       isLoading?: boolean;
+      initialScrollOffset?: number;
+      onScrollOffsetChange?: (offset: number) => void;
     }
   >(function DiscoverScreen(
     {
@@ -66,6 +77,8 @@ export const DiscoverScreen = React.memo(
       onOpenProfile,
       onOpenAI,
       isLoading = false,
+      initialScrollOffset = 0,
+      onScrollOffsetChange,
     },
     ref
   ) {
@@ -73,6 +86,28 @@ export const DiscoverScreen = React.memo(
     const insets = useSafeAreaInsets();
     const { colors } = useTheme();
     const { t, isRTL } = useI18n();
+
+    const flatListRef = useRef<FlatList<Group>>(null);
+    const initialOffset = useMemo(
+      () => (initialScrollOffset > 0 ? { x: 0, y: initialScrollOffset } : undefined),
+      [initialScrollOffset]
+    );
+
+    const handleScroll = useCallback(
+      (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+        onScrollOffsetChange?.(e.nativeEvent.contentOffset.y);
+      },
+      [onScrollOffsetChange]
+    );
+
+    useEffect(() => {
+      if (initialScrollOffset > 0) {
+        const timer = setTimeout(() => {
+          flatListRef.current?.scrollToOffset({ offset: initialScrollOffset, animated: false });
+        }, 20);
+        return () => clearTimeout(timer);
+      }
+    }, [initialScrollOffset]);
 
     const [showFilters, setShowFilters] = useState(false);
     const [categoryFilter, setCategoryFilter] = useState<'all' | 'work' | 'entertainment'>('all');
@@ -273,6 +308,10 @@ export const DiscoverScreen = React.memo(
     return (
       <View style={styles.container}>
         <FlatList<Group>
+          ref={flatListRef}
+          contentOffset={initialOffset}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           data={isLoading ? [] : remaining}
           renderItem={renderGroup}
           ItemSeparatorComponent={GroupCardSeparator}
