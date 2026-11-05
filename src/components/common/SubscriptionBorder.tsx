@@ -15,7 +15,6 @@ export const BORDER_PREMIUM_XML = `<svg xmlns="http://www.w3.org/2000/svg" viewB
       <stop offset="100%" stop-color="#056CF2" />
     </linearGradient>
   </defs>
-  <circle cx="100" cy="100" r="93" fill="none" stroke="url(#greenBlueGradRotated40)" stroke-width="9" />
   <circle cx="100" cy="100" r="78" fill="none" stroke="url(#greenBlueGradRotated40)" stroke-width="9" />
 </svg>`;
 
@@ -27,7 +26,6 @@ export const BORDER_BUSINESS_XML = `<svg xmlns="http://www.w3.org/2000/svg" view
       <stop offset="100%" stop-color="#F71C68" />
     </linearGradient>
   </defs>
-  <circle cx="100" cy="100" r="93" fill="none" stroke="url(#orangePinkGrad)" stroke-width="9" />
   <circle cx="100" cy="100" r="78" fill="none" stroke="url(#orangePinkGrad)" stroke-width="9" />
 </svg>`;
 

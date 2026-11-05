@@ -384,23 +384,22 @@ export const TactileSegmented = React.memo(function TactileSegmented({
   const thumbHeight = baseHeight - 10;
   const slotW = containerWidth > 0 ? getSlotWidth(containerWidth) : 0;
 
-  // پالت رنگ‌های تاکتایل ۳ بعدی و باظرافت (Crafted Tactile Industrial)
-  const trackBg = isDark ? '#0b0f19' : '#e2e8f0';
-  const trackBorder = isDark ? '#161d2e' : '#cbd5e1';
+  // پالت رنگ تب‌ها متناسب با دیزاین سیستم GlassCard دکمه AI Assist در DiscoverScreen
+  const trackBorder = colors.glassBorder;
 
-  // گرادیان ملایم بدنه کپسول برای حجم‌دهی متالیک/ارگونومیک
+  // گرادیان ملایم بدنه کپسول متناسب با استایل گلس شیشه‌ای
   const thumbGradient = isDark
-    ? (['#28344d', '#1b2334'] as const)
+    ? (['rgba(255, 255, 255, 0.14)', 'rgba(255, 255, 255, 0.05)'] as const)
     : (['#ffffff', '#f1f5f9'] as const);
 
-  const thumbBorder = isDark ? 'rgba(255, 255, 255, 0.16)' : '#ffffff';
-  const rimHighlight = isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.85)';
+  const thumbBorder = isDark ? 'rgba(255, 255, 255, 0.18)' : '#ffffff';
+  const rimHighlight = isDark ? 'rgba(255, 255, 255, 0.28)' : 'rgba(255, 255, 255, 0.90)';
 
-  const activeTextColor = isDark ? '#ffffff' : '#0f172a';
-  const inactiveTextColor = isDark ? '#7f90ab' : '#64748b';
+  const activeTextColor = colors.textPrimary;
+  const inactiveTextColor = colors.textSecondary;
 
-  const activeIconColor = isDark ? '#f472b6' : '#db2777';
-  const inactiveIconColor = isDark ? '#60708b' : '#6b7a94';
+  const activeIconColor = colors.accentPink;
+  const inactiveIconColor = colors.textTertiary;
 
   return (
     <View
@@ -409,13 +408,46 @@ export const TactileSegmented = React.memo(function TactileSegmented({
         styles.track,
         {
           height: baseHeight,
-          backgroundColor: trackBg,
           borderColor: trackBorder,
+          ...(Platform.OS === 'web'
+            ? ({
+                boxShadow: isDark
+                  ? '0 6px 16px rgba(0, 0, 0, 0.35)'
+                  : '0 4px 12px rgba(15, 23, 42, 0.08)',
+              } as any)
+            : isDark
+            ? {
+                shadowColor: colors.cardShadow,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.35,
+                shadowRadius: 12,
+                elevation: 6,
+              }
+            : {
+                shadowColor: colors.cardShadow,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 6,
+                elevation: 2,
+              }),
         },
         style,
       ]}
       {...panResponder.panHandlers}
     >
+      {/* گلس شین و بافت درخشان یکپارچه با GlassCard دکمه AI Assist */}
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <LinearGradient
+          colors={
+            isDark
+              ? ['rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0.02)', 'transparent']
+              : ['rgba(255, 255, 255, 0.60)', 'rgba(255, 255, 255, 0.15)', 'transparent']
+          }
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
       {/* نشانگر زنده ۳ بعدی متحرک با تفکیک لایه سایه (iOS Unclipped Shadow Layer) */}
       <Animated.View
         pointerEvents="none"
