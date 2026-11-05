@@ -71,7 +71,7 @@ export const FrostedGlass = React.memo(function FrostedGlass({
 
   if (Platform.OS === 'web') {
     const flattened = StyleSheet.flatten(style);
-    const bg = flattened?.backgroundColor ?? colors.glassBg;
+    const bg = flattened?.backgroundColor ?? colors.glassHeaderBg;
 
     const webBlurStyle: ViewStyle = {
       backdropFilter: 'blur(20px)',
@@ -139,11 +139,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   dark: {
-    backgroundColor: darkColors.glassBg,
+    backgroundColor: darkColors.glassHeaderBg,
     borderColor: darkColors.glassBorderStrong,
   },
   light: {
-    backgroundColor: lightColors.glassBg,
+    backgroundColor: lightColors.glassHeaderBg,
     borderColor: lightColors.glassBorderStrong,
   },
   webBlur: {

@@ -29,7 +29,7 @@ export function ChatListItemComponent({
   return (
     <TouchableOpacity activeOpacity={0.75} onPress={handlePress} style={{ marginBottom: 8 }}>
       <GlassCard
-        variant={conversation.unread_count > 0 ? 'default' : 'thin'}
+        variant="thin"
         style={[styles.card, { flexDirection: rowDir }]}
       >
         <GlassAvatar

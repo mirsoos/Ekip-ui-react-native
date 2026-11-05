@@ -98,6 +98,8 @@ export interface ThemeColors {
   bgCanvas: string;
   bgCanvasGrad: [string, string, ...string[]];
   glassBg: string;
+  glassHeaderBg: string;
+  glassCardBg: string;
   glassThickBg: string;
   glassThinBg: string;
   glassBorder: string;
@@ -120,6 +122,8 @@ export const darkColors: ThemeColors = {
   bgCanvas: '#04060c',
   bgCanvasGrad: ['#04060c', '#080a14', '#080e1a', '#060a12'],
   glassBg: 'rgba(13, 16, 26, 0.94)',
+  glassHeaderBg: 'rgba(13, 16, 26, 0.94)',
+  glassCardBg: 'rgba(255, 255, 255, 0.06)',
   glassThickBg: 'rgba(11, 14, 23, 0.96)',
   glassThinBg: 'rgba(255, 255, 255, 0.06)',
   glassBorder: 'rgba(255, 255, 255, 0.10)',
@@ -142,6 +146,8 @@ export const lightColors: ThemeColors = {
   bgCanvas: '#ebf0fa',
   bgCanvasGrad: ['#ebf0fa', '#dbeafe', '#e0e7ff', '#dbeafe'],
   glassBg: 'rgba(255, 255, 255, 0.92)',
+  glassHeaderBg: 'rgba(255, 255, 255, 0.92)',
+  glassCardBg: 'rgba(255, 255, 255, 0.92)',
   glassThickBg: 'rgba(255, 255, 255, 0.96)',
   glassThinBg: 'rgba(255, 255, 255, 0.50)',
   glassBorder: 'rgba(255, 255, 255, 0.60)',

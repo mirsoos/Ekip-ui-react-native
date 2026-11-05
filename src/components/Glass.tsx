@@ -245,7 +245,7 @@ export function GlassCardComponent({
       ? colors.glassThickBg
       : variant === 'thin'
       ? colors.glassThinBg
-      : colors.glassBg;
+      : colors.glassCardBg;
 
   const cardStyle = React.useMemo<ViewStyle>(
     () => ({

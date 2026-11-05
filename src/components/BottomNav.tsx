@@ -139,13 +139,13 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
 
-  // پالت رنگ‌های تاکتایل ۳ بعدی منطبق دقیق با TactileSegmented
+  // پالت رنگ‌های نشانگر فعال منطبق دقیق با TactileSegmented
   const thumbGradient = isDark
-    ? (['#28344d', '#1b2334'] as const)
+    ? (['rgba(255, 255, 255, 0.14)', 'rgba(255, 255, 255, 0.05)'] as const)
     : (['#ffffff', '#f1f5f9'] as const);
 
-  const thumbBorder = isDark ? 'rgba(255, 255, 255, 0.16)' : '#ffffff';
-  const rimHighlight = isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.85)';
+  const thumbBorder = isDark ? 'rgba(255, 255, 255, 0.18)' : '#ffffff';
+  const rimHighlight = isDark ? 'rgba(255, 255, 255, 0.28)' : 'rgba(255, 255, 255, 0.90)';
 
   const tabLabels: Record<TabKey, string> = useMemo(
     () => ({
@@ -635,7 +635,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
             avatarUrl={tab.key === 'profile' ? me?.avatar_url : undefined}
             accentColor={colors.accentPink}
             activeTextColor={colors.textPrimary}
-            inactiveColor={isDark ? 'rgba(255, 255, 255, 0.7)' : colors.textSecondary}
+            inactiveColor={colors.textSecondary}
             onPress={tabPressHandlers.get(tab.key)!}
           />
         ))}
