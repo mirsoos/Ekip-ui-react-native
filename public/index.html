@@ -134,6 +134,13 @@
         font-family: 'Iranian Sans', 'IRANSans', 'IRANSansX', -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif !important;
       }
 
+      /* Synchronized 0.5s theme transition matching HorizonThemeToggle */
+      html, body, #root, #root * {
+        transition-property: background-color, border-color, color, fill, stroke;
+        transition-duration: 0.5s;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
       /* Monospace exception for security & verification codes */
       .monospace, [style*="monospace"], code, pre, kbd, samp {
         font-family: monospace !important;
@@ -882,6 +889,41 @@
         opacity: 1;
         stroke-dasharray: 45.16 0 45.16 54.19;
         transition-timing-function: steps(1, start), var(--trans-timing);
+      }
+
+      /* Light Mode Variations */
+      .switch.switch--light .switch__base-outer {
+        background-color: #e2e8f0;
+        box-shadow:
+          -0.125em -0.125em 0.25em #ffffff,
+          0.125em 0.125em 0.125em #ffffff inset,
+          0.125em 0.125em 0.25em rgba(15, 23, 42, 0.18),
+          -0.125em -0.125em 0.125em rgba(15, 23, 42, 0.08) inset;
+      }
+
+      .switch.switch--light .switch__base-inner {
+        background-color: #cbd5e1;
+        box-shadow:
+          -0.25em -0.25em 0.25em #ffffff inset,
+          0.0625em 0.0625em 0.125em rgba(255, 255, 255, 0.8),
+          0.125em 0.25em 0.25em rgba(15, 23, 42, 0.22) inset,
+          -0.0625em -0.0625em 0.125em rgba(15, 23, 42, 0.08);
+      }
+
+      .switch.switch--light .switch__knob {
+        background-color: #ffffff;
+        background-image:
+          radial-gradient(88% 88% at 50% 50%, #ffffff 47%, rgba(255, 255, 255, 0) 50%),
+          radial-gradient(88% 88% at 47% 47%, #ffffff 45%, rgba(255, 255, 255, 0) 50%),
+          radial-gradient(65% 70% at 40% 60%, #e2e8f0 46%, rgba(226, 232, 240, 0) 50%);
+        box-shadow:
+          -0.0625em -0.0625em 0.0625em #ffffff inset,
+          -0.125em -0.125em 0.0625em #cbd5e1 inset,
+          0.75em 0.25em 0.125em rgba(15, 23, 42, 0.18);
+      }
+
+      .switch.switch--light .switch__knob-shadow {
+        box-shadow: 0.125em 0.125em 0.125em rgba(15, 23, 42, 0.25);
       }
     </style>
   </head>

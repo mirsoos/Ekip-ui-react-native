@@ -20,6 +20,7 @@ import Svg, {
   Path,
   Circle,
 } from 'react-native-svg';
+import { useTheme } from '../../lib/theme';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -49,8 +50,12 @@ export function LiquidGlassToggleComponent({
   style,
   label,
   labelStyle,
+  theme: themeProp,
   testID,
 }: LiquidGlassToggleProps) {
+  const { isDark: themeIsDark, colors } = useTheme();
+  const isDark = themeProp !== undefined ? themeProp === 'dark' : themeIsDark;
+
   const rawId = useId();
   const uniqueId = useMemo(
     () => rawId.replace(/[^a-zA-Z0-9_-]/g, '') || 'sw',
@@ -67,7 +72,17 @@ export function LiquidGlassToggleComponent({
   if (Platform.OS === 'web') {
     return (
       <View style={[styles.outerWrapper, style]} testID={testID}>
-        {label && <Text style={[styles.labelText, labelStyle as any]}>{label}</Text>}
+        {label && (
+          <Text
+            style={[
+              styles.labelText,
+              { color: isDark ? '#ffffff' : colors.textPrimary },
+              labelStyle as any,
+            ]}
+          >
+            {label}
+          </Text>
+        )}
 
         <div
           dir="ltr"
@@ -82,9 +97,41 @@ export function LiquidGlassToggleComponent({
           }}
         >
           <label
-            className={`switch ${disabled ? 'switch--disabled' : ''}`}
+            className={`switch ${isDark ? 'switch--dark' : 'switch--light'} ${disabled ? 'switch--disabled' : ''}`}
             style={{ fontSize: `${scale}px` }}
           >
+            <style>{`
+              .switch.switch--light .switch__base-outer {
+                background-color: #e2e8f0;
+                box-shadow:
+                  -0.125em -0.125em 0.25em #ffffff,
+                  0.125em 0.125em 0.125em #ffffff inset,
+                  0.125em 0.125em 0.25em rgba(15, 23, 42, 0.18),
+                  -0.125em -0.125em 0.125em rgba(15, 23, 42, 0.08) inset;
+              }
+              .switch.switch--light .switch__base-inner {
+                background-color: #cbd5e1;
+                box-shadow:
+                  -0.25em -0.25em 0.25em #ffffff inset,
+                  0.0625em 0.0625em 0.125em rgba(255, 255, 255, 0.8),
+                  0.125em 0.25em 0.25em rgba(15, 23, 42, 0.22) inset,
+                  -0.0625em -0.0625em 0.125em rgba(15, 23, 42, 0.08);
+              }
+              .switch.switch--light .switch__knob {
+                background-color: #ffffff;
+                background-image:
+                  radial-gradient(88% 88% at 50% 50%, #ffffff 47%, rgba(255, 255, 255, 0) 50%),
+                  radial-gradient(88% 88% at 47% 47%, #ffffff 45%, rgba(255, 255, 255, 0) 50%),
+                  radial-gradient(65% 70% at 40% 60%, #e2e8f0 46%, rgba(226, 232, 240, 0) 50%);
+                box-shadow:
+                  -0.0625em -0.0625em 0.0625em #ffffff inset,
+                  -0.125em -0.125em 0.0625em #cbd5e1 inset,
+                  0.75em 0.25em 0.125em rgba(15, 23, 42, 0.18);
+              }
+              .switch.switch--light .switch__knob-shadow {
+                box-shadow: 0.125em 0.125em 0.125em rgba(15, 23, 42, 0.25);
+              }
+            `}</style>
             <input
               className="switch__input"
               type="checkbox"
@@ -313,7 +360,17 @@ export function LiquidGlassToggleComponent({
 
   return (
     <View style={[styles.outerWrapper, style]} testID={testID}>
-      {label && <Text style={[styles.labelText, labelStyle as any]}>{label}</Text>}
+      {label && (
+        <Text
+          style={[
+            styles.labelText,
+            { color: isDark ? '#ffffff' : colors.textPrimary },
+            labelStyle as any,
+          ]}
+        >
+          {label}
+        </Text>
+      )}
 
       <Pressable
         disabled={disabled}
@@ -340,6 +397,11 @@ export function LiquidGlassToggleComponent({
               width: outerWidth,
               height: outerHeight,
               borderRadius: outerRadius,
+              backgroundColor: isDark ? '#1b1d22' : '#e2e8f0',
+              borderTopColor: isDark ? '#4c505b' : '#ffffff',
+              borderLeftColor: isDark ? '#4c505b' : '#ffffff',
+              borderBottomColor: isDark ? '#090a0d' : '#cbd5e1',
+              borderRightColor: isDark ? '#090a0d' : '#cbd5e1',
             },
           ]}
         />
@@ -354,6 +416,11 @@ export function LiquidGlassToggleComponent({
               width: innerWidth,
               height: innerHeight,
               borderRadius: innerRadius,
+              backgroundColor: isDark ? '#111215' : '#cbd5e1',
+              borderTopColor: isDark ? '#07080a' : '#94a3b8',
+              borderLeftColor: isDark ? '#07080a' : '#94a3b8',
+              borderBottomColor: isDark ? '#383b44' : '#f1f5f9',
+              borderRightColor: isDark ? '#383b44' : '#f1f5f9',
             },
           ]}
         />
@@ -436,6 +503,7 @@ export function LiquidGlassToggleComponent({
               width: knobSize,
               height: knobSize,
               borderRadius: knobRadius,
+              backgroundColor: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(15, 23, 42, 0.22)',
               transform: [{ translateX }],
             },
           ]}
@@ -463,13 +531,21 @@ export function LiquidGlassToggleComponent({
                 width: knobSize,
                 height: knobSize,
                 borderRadius: knobRadius,
+                borderTopColor: isDark ? '#4e525d' : '#ffffff',
+                borderLeftColor: isDark ? '#4e525d' : '#ffffff',
+                borderBottomColor: isDark ? '#101114' : '#cbd5e1',
+                borderRightColor: isDark ? '#101114' : '#cbd5e1',
                 transform: [{ translateX }],
               },
             ]}
           >
             {/* Base Metallic Curvature Gradient */}
             <LinearGradient
-              colors={['#2c2f35', '#222428', '#16171a']}
+              colors={
+                isDark
+                  ? ['#2c2f35', '#222428', '#16171a']
+                  : ['#ffffff', '#f8fafc', '#e2e8f0']
+              }
               start={{ x: 0.2, y: 0.2 }}
               end={{ x: 0.85, y: 0.85 }}
               style={[StyleSheet.absoluteFill, { borderRadius: knobRadius }]}
@@ -477,11 +553,11 @@ export function LiquidGlassToggleComponent({
 
             {/* Specular Shiny Dome Catchlight (Matches CSS radial-gradient 47% 47% hsl(85%)) */}
             <LinearGradient
-              colors={[
-                'rgba(255, 255, 255, 0.45)',
-                'rgba(255, 255, 255, 0.1)',
-                'rgba(0, 0, 0, 0.25)',
-              ]}
+              colors={
+                isDark
+                  ? ['rgba(255, 255, 255, 0.45)', 'rgba(255, 255, 255, 0.1)', 'rgba(0, 0, 0, 0.25)']
+                  : ['rgba(255, 255, 255, 0.9)', 'rgba(255, 255, 255, 0.35)', 'rgba(15, 23, 42, 0.08)']
+              }
               start={{ x: 0.1, y: 0.1 }}
               end={{ x: 0.8, y: 0.85 }}
               style={[
@@ -489,7 +565,7 @@ export function LiquidGlassToggleComponent({
                 {
                   borderRadius: knobRadius,
                   borderWidth: 0.5,
-                  borderColor: 'rgba(255, 255, 255, 0.15)',
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.85)',
                 },
               ]}
             />

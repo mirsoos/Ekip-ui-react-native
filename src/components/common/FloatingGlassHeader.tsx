@@ -244,21 +244,17 @@ const styles = StyleSheet.create({
       ? {
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 16 },
-          shadowOpacity: 0.38,
+          shadowOpacity: 0.35,
           shadowRadius: 28,
         }
       : Platform.OS === 'android'
-      ? {
-          elevation: 10,
-          shadowColor: '#000',
-        }
+      ? { elevation: 0 }
       : {
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 16 },
-          shadowOpacity: 0.38,
+          shadowOpacity: 0.35,
           shadowRadius: 28,
           elevation: 14,
-          boxShadow: '0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 4px 16px rgba(0, 0, 0, 0.40)',
         }),
     overflow: 'visible',
   },

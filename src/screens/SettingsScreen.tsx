@@ -16,6 +16,7 @@ import { GlassCard, GlassListItem, GlassToggle, GlassButton, GlassAvatar } from 
 import { GlassSheet } from '../components/Overlays';
 import { SettingsSection } from '../components/settings/SettingsSection';
 import { SettingsDivider } from '../components/settings/SettingsDivider';
+import { HorizonThemeToggle } from '../components/common/HorizonThemeToggle';
 import { getIcon } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n, LANGUAGES } from '../lib/i18n';
@@ -244,13 +245,17 @@ export function SettingsScreenComponent({
               <SettingsDivider />
 
               {/* Dark mode toggle */}
-              <View style={[styles.toggleRow, { flexDirection: rowDir }]}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={toggle}
+                style={[styles.toggleRow, { flexDirection: rowDir }]}
+              >
                 <View style={{ flexDirection: rowDir, alignItems: 'center', flex: 1 }}>
                   <View style={[styles.iconBox, { backgroundColor: 'rgba(99, 102, 241, 0.2)' }]}>
                     {theme === 'dark' ? (
                       <Moon size={18} color="#ffffff" strokeWidth={2.2} />
                     ) : (
-                      <Sun size={18} color="#ffffff" strokeWidth={2.2} />
+                      <Sun size={18} color="#4f46e5" strokeWidth={2.2} />
                     )}
                   </View>
                   <View style={[{ flex: 1 }, textSpacing]}>
@@ -262,8 +267,8 @@ export function SettingsScreenComponent({
                     </Text>
                   </View>
                 </View>
-                <GlassToggle checked={theme === 'dark'} onChange={toggle} />
-              </View>
+                <HorizonThemeToggle isDark={theme === 'dark'} onToggle={toggle} size={36} />
+              </TouchableOpacity>
               <SettingsDivider />
 
               {/* Notification protocols */}

@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, Easing, t
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassBackButton, GlassAvatar, getAvatarMetrics } from '../Glass';
 import { FrostedGlass } from '../FrostedGlass';
-import { CelestialBallToggle } from '../common/CelestialBallToggle';
 import { getIcon } from '../../lib/icons';
 import { darkColors, lightColors, useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
@@ -281,12 +280,6 @@ export function ProfileHeaderComponent({
 
           {/* Right Action Buttons */}
           <View style={styles.rightActions}>
-            <CelestialBallToggle
-              isDark={theme === 'dark'}
-              onToggle={toggle}
-              size={40}
-            />
-
             {isOwnProfile && (
               <TouchableOpacity
                 activeOpacity={0.75}
@@ -331,12 +324,6 @@ export function ProfileHeaderComponent({
             )}
 
             <View style={styles.rightActions}>
-              <CelestialBallToggle
-                isDark={theme === 'dark'}
-                onToggle={toggle}
-                size={40}
-              />
-
               {isOwnProfile && (
                 <TouchableOpacity
                   activeOpacity={0.75}

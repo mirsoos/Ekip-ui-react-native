@@ -80,28 +80,30 @@ const AppChrome = React.memo(function AppChrome({
   children: React.ReactNode;
 }) {
   const { isDark } = useTheme();
-  const curtainOpacity = useRef(new Animated.Value(0)).current;
+  const [curtainOpacity] = useState(() => new Animated.Value(0));
   const previousTheme = useRef(isDark);
+  const [curtainBg, setCurtainBg] = useState(isDark ? '#020306' : '#dde2ec');
 
   useLayoutEffect(() => {
     if (previousTheme.current === isDark) return;
+    const prevWasDark = previousTheme.current;
     previousTheme.current = isDark;
+
+    if (Platform.OS === 'web') {
+      // روی وب ترنزیشن 0.5 ثانیه‌ای با CSS در index.html به صورت یکپارچه اجرا می‌شود
+      return;
+    }
+
+    // روی موبایل (iOS و Android) ترنزیشن ۵۰۰ میلی‌ثانیه‌ای نرم Dissolve با Native Driver
+    setCurtainBg(prevWasDark ? '#04060c' : '#dde2ec');
     curtainOpacity.stopAnimation();
-    curtainOpacity.setValue(0);
-    Animated.sequence([
-      Animated.timing(curtainOpacity, {
-        toValue: 0.16,
-        duration: 90,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-        useNativeDriver: Platform.OS !== 'web',
-      }),
-      Animated.timing(curtainOpacity, {
-        toValue: 0,
-        duration: 260,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-        useNativeDriver: Platform.OS !== 'web',
-      }),
-    ]).start();
+    curtainOpacity.setValue(0.9);
+    Animated.timing(curtainOpacity, {
+      toValue: 0,
+      duration: 500,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
+      useNativeDriver: true,
+    }).start();
   }, [curtainOpacity, isDark]);
 
   return (
@@ -141,16 +143,18 @@ const AppChrome = React.memo(function AppChrome({
         </View>
       )}
       {children}
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.themeCurtain,
-          {
-            backgroundColor: isDark ? '#060814' : '#edf1fa',
-            opacity: curtainOpacity,
-          },
-        ]}
-      />
+      {Platform.OS !== 'web' && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.themeCurtain,
+            {
+              backgroundColor: curtainBg,
+              opacity: curtainOpacity,
+            },
+          ]}
+        />
+      )}
     </SafeAreaView>
   );
 });
