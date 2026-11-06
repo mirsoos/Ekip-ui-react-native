@@ -1,6 +1,6 @@
 // --- START OF FILE LiquidGlassToggle.tsx ---
 
-import React, { useRef, useEffect, useId, useCallback, useMemo } from 'react';
+import React, { useRef, useEffect, useId, useCallback, useMemo, useState } from 'react';
 import {
   View,
   Pressable,
@@ -66,167 +66,7 @@ export function LiquidGlassToggleComponent({
   const em = size === 'lg' ? 15 : size === 'md' ? 12 : 10;
   const scale = widthProp ? widthProp / 5 : heightProp ? heightProp / 2.875 : em;
 
-  // ==========================================================
-  // WEB: 100% Untouched Original HTML/CSS Markup
-  // ==========================================================
-  if (Platform.OS === 'web') {
-    return (
-      <View style={[styles.outerWrapper, style]} testID={testID}>
-        {label && (
-          <Text
-            style={[
-              styles.labelText,
-              { color: isDark ? '#ffffff' : colors.textPrimary },
-              labelStyle as any,
-            ]}
-          >
-            {label}
-          </Text>
-        )}
-
-        <div
-          dir="ltr"
-          style={{
-            position: 'relative',
-            display: 'inline-flex',
-            alignItems: 'center',
-            userSelect: 'none',
-            WebkitUserSelect: 'none',
-            flexShrink: 0,
-            direction: 'ltr',
-          }}
-        >
-          <label
-            className={`switch ${isDark ? 'switch--dark' : 'switch--light'} ${disabled ? 'switch--disabled' : ''}`}
-            style={{ fontSize: `${scale}px` }}
-          >
-            <style>{`
-              .switch.switch--light .switch__base-outer {
-                background-color: #e2e8f0;
-                box-shadow:
-                  -0.125em -0.125em 0.25em #ffffff,
-                  0.125em 0.125em 0.125em #ffffff inset,
-                  0.125em 0.125em 0.25em rgba(15, 23, 42, 0.18),
-                  -0.125em -0.125em 0.125em rgba(15, 23, 42, 0.08) inset;
-              }
-              .switch.switch--light .switch__base-inner {
-                background-color: #cbd5e1;
-                box-shadow:
-                  -0.25em -0.25em 0.25em #ffffff inset,
-                  0.0625em 0.0625em 0.125em rgba(255, 255, 255, 0.8),
-                  0.125em 0.25em 0.25em rgba(15, 23, 42, 0.22) inset,
-                  -0.0625em -0.0625em 0.125em rgba(15, 23, 42, 0.08);
-              }
-              .switch.switch--light .switch__knob {
-                background-color: #ffffff;
-                background-image:
-                  radial-gradient(88% 88% at 50% 50%, #ffffff 47%, rgba(255, 255, 255, 0) 50%),
-                  radial-gradient(88% 88% at 47% 47%, #ffffff 45%, rgba(255, 255, 255, 0) 50%),
-                  radial-gradient(65% 70% at 40% 60%, #e2e8f0 46%, rgba(226, 232, 240, 0) 50%);
-                box-shadow:
-                  -0.0625em -0.0625em 0.0625em #ffffff inset,
-                  -0.125em -0.125em 0.0625em #cbd5e1 inset,
-                  0.75em 0.25em 0.125em rgba(15, 23, 42, 0.18);
-              }
-              .switch.switch--light .switch__knob-shadow {
-                box-shadow: 0.125em 0.125em 0.125em rgba(15, 23, 42, 0.25);
-              }
-            `}</style>
-            <input
-              className="switch__input"
-              type="checkbox"
-              role="switch"
-              checked={checked}
-              disabled={disabled}
-              onChange={(e) => {
-                if (!disabled) {
-                  onChange(e.target.checked);
-                }
-              }}
-            />
-            <span className="switch__base-outer" />
-            <span className="switch__base-inner" />
-            <svg
-              className="switch__base-neon"
-              viewBox="0 0 40 24"
-              width="40px"
-              height="24px"
-            >
-              <defs>
-                <filter id={`switch-glow-${uniqueId}`} x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur result="coloredBlur" stdDeviation="1" />
-                  <feMerge>
-                    <feMergeNode in="coloredBlur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-                <linearGradient
-                  id={`switch-gradient1-${uniqueId}`}
-                  x1="0"
-                  y1="0"
-                  x2="1"
-                  y2="0"
-                >
-                  <stop offset="0%" stopColor="#6cf873" />
-                  <stop offset="100%" stopColor="#6cf8cf" />
-                </linearGradient>
-                <linearGradient
-                  id={`switch-gradient2-${uniqueId}`}
-                  x1="0.7"
-                  y1="0"
-                  x2="0.3"
-                  y2="1"
-                >
-                  <stop offset="25%" stopColor="#6cf873" stopOpacity={0} />
-                  <stop offset="50%" stopColor="#6cf873" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#6cf8cf" stopOpacity={0.3} />
-                </linearGradient>
-              </defs>
-              <path
-                fill="none"
-                filter={`url(#switch-glow-${uniqueId})`}
-                stroke={`url(#switch-gradient1-${uniqueId})`}
-                strokeWidth="1"
-                strokeDasharray="0 104.26 0"
-                strokeDashoffset="0.01"
-                strokeLinecap="round"
-                d="m.5,12C.5,5.649,5.649.5,12,.5h16c6.351,0,11.5,5.149,11.5,11.5s-5.149,11.5-11.5,11.5H12C5.649,23.5.5,18.351.5,12Z"
-              />
-            </svg>
-            <span className="switch__knob-shadow" />
-            <span className="switch__knob-container">
-              <span className="switch__knob">
-                <svg
-                  className="switch__knob-neon"
-                  viewBox="0 0 48 48"
-                  width="48px"
-                  height="48px"
-                >
-                  <circle
-                    fill="none"
-                    stroke={`url(#switch-gradient2-${uniqueId})`}
-                    strokeDasharray="0 90.32 0 54.19"
-                    strokeLinecap="round"
-                    strokeWidth="1"
-                    r="23"
-                    cx="24"
-                    cy="24"
-                    transform="rotate(-112.5,24,24)"
-                  />
-                </svg>
-              </span>
-            </span>
-            <span className="switch__led" />
-            <span className="switch__text">Power</span>
-          </label>
-        </div>
-      </View>
-    );
-  }
-
-  // ==========================================================
-  // NATIVE (iOS & Android): 100% True Neumorphic + Symmetrical Neon Fill
-  // ==========================================================
+  // Native Driver interpolations (iOS, Android & Web)
   const totalWidth = 5.0 * scale;
   const totalHeight = 2.875 * scale;
 
@@ -260,10 +100,23 @@ export function LiquidGlassToggleComponent({
   const ledSize = 0.32 * scale;
 
   // Native hardware driver for transforms & opacity
-  const nativeAnim = useRef(new Animated.Value(checked ? 1 : 0)).current;
+  const [nativeAnim] = useState(() => new Animated.Value(checked ? 1 : 0));
   // SVG driver for animated path stroke dashoffset
-  const svgAnim = useRef(new Animated.Value(checked ? 1 : 0)).current;
+  const [svgAnim] = useState(() => new Animated.Value(checked ? 1 : 0));
   const currentTarget = useRef(checked ? 1 : 0);
+
+  // On Web: force a re-render tick during SVG stroke animations to ensure frame-by-frame updates in all browsers
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const id = svgAnim.addListener(() => {
+        setTick((t) => (t + 1) % 100000);
+      });
+      return () => {
+        svgAnim.removeListener(id);
+      };
+    }
+  }, [svgAnim]);
 
   const startAnimation = useCallback((target: number) => {
     currentTarget.current = target;
@@ -272,7 +125,7 @@ export function LiquidGlassToggleComponent({
         toValue: target,
         duration: 450,
         easing: Easing.bezier(0.65, 0, 0.35, 1),
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
       Animated.timing(svgAnim, {
         toValue: target,
@@ -692,6 +545,7 @@ const styles = StyleSheet.create({
   nativeSwitchContainer: {
     position: 'relative',
     direction: 'ltr',
+    ...(Platform.OS === 'web' ? ({ cursor: 'pointer', userSelect: 'none' } as any) : {}),
   },
   nativeBaseOuter: {
     position: 'absolute',
@@ -710,6 +564,9 @@ const styles = StyleSheet.create({
       },
       android: {
         elevation: 2,
+      },
+      web: {
+        boxShadow: '0 2px 5px rgba(0, 0, 0, 0.45)',
       },
     }),
   },
@@ -738,6 +595,9 @@ const styles = StyleSheet.create({
       },
       android: {
         elevation: 3,
+      },
+      web: {
+        boxShadow: '3px 1.5px 5px rgba(0, 0, 0, 0.5)',
       },
     }),
   },
