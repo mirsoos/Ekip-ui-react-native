@@ -1,29 +1,36 @@
 // --- START OF FILE Overlays.tsx ---
 
-import React, { type ReactNode, useEffect, useRef, useState } from 'react';
+import React, { type ReactNode, useEffect, useRef, useMemo, useCallback, useState } from 'react';
 import {
   View,
   Text,
   TouchableWithoutFeedback,
   StyleSheet,
-  ScrollView,
-  Animated,
   Platform,
   BackHandler,
   Dimensions,
+  Animated,
   Easing,
   Modal,
 } from 'react-native';
-import { getIcon, type IconName } from '../lib/icons';
+import {
+  BottomSheetModal,
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+  BottomSheetScrollView,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { IconName } from '../lib/icons';
 import { GlassButton, GlassCloseButton } from './Glass';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const DISMISS_DISTANCE = Math.max(SCREEN_HEIGHT, 900);
+const MAX_SHEET_HEIGHT = Math.round(SCREEN_HEIGHT * 0.9);
 
 // ============================================
-// GLASS SHEET (Bottom Sheet Modal - Pre-cached & 60FPS)
+// GLASS SHEET (Bottom Sheet Modal powered by @gorhom/bottom-sheet)
 // ============================================
 export interface GlassSheetProps {
   open: boolean;
@@ -31,6 +38,7 @@ export interface GlassSheetProps {
   children: ReactNode;
   title?: string;
   fullHeight?: boolean;
+  contentClassName?: string;
   headerContent?: ReactNode;
   footerContent?: ReactNode;
 }
@@ -46,172 +54,216 @@ export const GlassSheet = React.memo(function GlassSheet({
 }: GlassSheetProps) {
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
+  const insets = useSafeAreaInsets();
 
-  const [modalVisible, setModalVisible] = useState(open);
+  const modalRef = useRef<BottomSheetModal>(null);
+  const isPresentedRef = useRef(false);
 
-  const backdropAnim = useRef(new Animated.Value(open ? 1 : 0)).current;
-  const slideAnim = useRef(new Animated.Value(open ? 0 : DISMISS_DISTANCE)).current;
-
-  useEffect(() => {
-    if (!open) return;
-    const backAction = () => {
-      onClose();
-      return true;
-    };
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-    return () => backHandler.remove();
-  }, [open, onClose]);
+  const fullHeightSnapPoints = useMemo(() => ['90%'], []);
 
   useEffect(() => {
+    let timer: any;
     if (open) {
-      setModalVisible(true);
-      Animated.parallel([
-        Animated.timing(backdropAnim, {
-          toValue: 1,
-          duration: 380,
-          easing: Easing.bezier(0.16, 1, 0.3, 1),
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 420,
-          easing: Easing.bezier(0.16, 1, 0.3, 1),
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(backdropAnim, {
-          toValue: 0,
-          duration: 260,
-          easing: Easing.bezier(0.4, 0, 1, 1),
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: DISMISS_DISTANCE,
-          duration: 300,
-          easing: Easing.bezier(0.4, 0, 0.2, 1),
-          useNativeDriver: true,
-        }),
-      ]).start(({ finished }) => {
-        if (finished) setModalVisible(false);
-      });
+      if (modalRef.current) {
+        modalRef.current.present();
+        isPresentedRef.current = true;
+      } else {
+        timer = setTimeout(() => {
+          modalRef.current?.present();
+          isPresentedRef.current = true;
+        }, 0);
+      }
+    } else if (isPresentedRef.current) {
+      modalRef.current?.dismiss();
+      isPresentedRef.current = false;
     }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [open]);
 
-  if (!open && !modalVisible) return null;
+  useEffect(() => {
+    const currentModal = modalRef.current;
+    return () => {
+      if (isPresentedRef.current) {
+        currentModal?.dismiss();
+      }
+    };
+  }, []);
+
+  const handleDismiss = useCallback(() => {
+    if (isPresentedRef.current) {
+      isPresentedRef.current = false;
+      onClose();
+    }
+  }, [onClose]);
+
+  const handleCloseButton = useCallback(() => {
+    if (modalRef.current) {
+      modalRef.current.dismiss();
+    } else {
+      onClose();
+    }
+  }, [onClose]);
+
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        pressBehavior="close"
+        opacity={isDark ? 0.72 : 0.45}
+      />
+    ),
+    [isDark]
+  );
 
   return (
-    <Modal
-      transparent={true}
-      visible={open || modalVisible}
-      animationType="none"
-      onRequestClose={onClose}
-      statusBarTranslucent={true}
+    <BottomSheetModal
+      ref={modalRef}
+      snapPoints={fullHeight ? fullHeightSnapPoints : undefined}
+      enableDynamicSizing={!fullHeight}
+      maxDynamicContentSize={MAX_SHEET_HEIGHT}
+      topInset={insets.top}
+      enablePanDownToClose={true}
+      onDismiss={handleDismiss}
+      backdropComponent={renderBackdrop}
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustResize"
+      style={styles.sheetModalContainer}
+      backgroundStyle={[
+        styles.sheetBackground,
+        {
+          backgroundColor: isDark ? 'rgba(18, 24, 38, 0.96)' : 'rgba(255, 255, 255, 0.96)',
+          borderColor: colors.glassBorderStrong,
+        },
+      ]}
+      handleIndicatorStyle={{
+        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(0, 0, 0, 0.25)',
+        width: 44,
+        height: 5,
+        borderRadius: 2.5,
+      }}
+      handleStyle={styles.sheetHandle}
     >
-      <View
-        style={[
-          styles.fullscreenOverlay,
-          {
-            zIndex: 999999,
-          },
-        ]}
-        pointerEvents="box-none"
-      >
-        <TouchableWithoutFeedback onPress={onClose}>
-          <Animated.View
-            style={[
-              StyleSheet.absoluteFill,
-              styles.backdropBase,
-              {
-                backgroundColor: isDark ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.22)',
-                opacity: backdropAnim,
-                ...(Platform.OS === 'web'
-                  ? ({
-                      backdropFilter: 'blur(2px)',
-                      WebkitBackdropFilter: 'blur(2px)',
-                    } as any)
-                  : {}),
-              },
-            ]}
-          />
-        </TouchableWithoutFeedback>
-
-        <Animated.View
-          style={[
-            styles.sheetContainer,
-            {
-              backgroundColor: isDark ? 'rgba(18, 24, 38, 0.94)' : 'rgba(255, 255, 255, 0.94)',
-              borderColor: colors.glassBorderStrong,
-              height: fullHeight ? '88%' : undefined,
-              maxHeight: '92%',
-              transform: [{ translateY: slideAnim }],
-              ...(Platform.OS === 'web'
-                ? ({
-                    backdropFilter: 'blur(32px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(32px) saturate(180%)',
-                  } as any)
-                : {}),
-            },
-          ]}
-        >
-          <View style={styles.sheetHandleBar} />
-
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: '12%',
-              right: '12%',
-              height: 1.5,
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.95)',
-              borderRadius: 9999,
-            }}
-          />
-
-          <View
-            style={[
-              styles.sheetHeader,
-              { flexDirection: isRTL ? 'row-reverse' : 'row' },
-            ]}
-          >
-            <Text
+      {fullHeight ? (
+        <View style={styles.fullHeightContainer}>
+          {/* Header with Title and Close Button */}
+          {title !== undefined && (
+            <View
               style={[
-                styles.sheetTitle,
-                {
-                  color: colors.textPrimary,
-                  textAlign: isRTL ? 'right' : 'left',
-                },
+                styles.sheetHeader,
+                { flexDirection: isRTL ? 'row-reverse' : 'row' },
               ]}
             >
-              {title ?? ''}
-            </Text>
-            <GlassCloseButton onPress={onClose} />
-          </View>
+              <Text
+                style={[
+                  styles.sheetTitle,
+                  {
+                    color: colors.textPrimary,
+                    textAlign: isRTL ? 'right' : 'left',
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {title}
+              </Text>
+              <GlassCloseButton onPress={handleCloseButton} />
+            </View>
+          )}
 
+          {/* Additional Header Content */}
           {headerContent && (
-            <View style={{ paddingHorizontal: 20, paddingTop: 4, paddingBottom: 6 }}>
+            <View style={styles.sheetHeaderContent}>
               {headerContent}
             </View>
           )}
 
-          {/* Keep children mounted in RAM so opening/closing has ZERO mount/unmount spike! */}
-          <ScrollView
+          {/* Scrollable Children with Native 60/120fps Reanimated Gestures */}
+          <BottomSheetScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24, paddingTop: 10 }}
+            contentContainerStyle={[
+              styles.sheetScrollContent,
+              {
+                paddingBottom: footerContent ? 16 : Math.max(insets.bottom + 16, 28),
+              },
+            ]}
+            keyboardShouldPersistTaps="handled"
           >
             {children}
-          </ScrollView>
+          </BottomSheetScrollView>
 
+          {/* Sticky Bottom Footer Content (e.g. Action Buttons) */}
           {footerContent && (
-            <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 24 }}>
+            <View
+              style={[
+                styles.sheetFooter,
+                {
+                  paddingBottom: Math.max(insets.bottom + 8, 20),
+                },
+              ]}
+            >
               {footerContent}
             </View>
           )}
-        </Animated.View>
-      </View>
-    </Modal>
+        </View>
+      ) : (
+        <BottomSheetView
+          style={[
+            styles.sheetViewContent,
+            {
+              paddingBottom: Math.max(insets.bottom + 14, 26),
+            },
+          ]}
+        >
+          {/* Header with Title and Close Button */}
+          {title !== undefined && (
+            <View
+              style={[
+                styles.sheetHeader,
+                { flexDirection: isRTL ? 'row-reverse' : 'row' },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.sheetTitle,
+                  {
+                    color: colors.textPrimary,
+                    textAlign: isRTL ? 'right' : 'left',
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {title}
+              </Text>
+              <GlassCloseButton onPress={handleCloseButton} />
+            </View>
+          )}
+
+          {/* Additional Header Content */}
+          {headerContent && (
+            <View style={styles.sheetHeaderContent}>
+              {headerContent}
+            </View>
+          )}
+
+          {/* Responsive Body Content: Sized accurately to the exact required height */}
+          <View style={styles.sheetBody}>
+            {children}
+          </View>
+
+          {/* Footer Content */}
+          {footerContent && (
+            <View style={styles.sheetFooter}>
+              {footerContent}
+            </View>
+          )}
+        </BottomSheetView>
+      )}
+    </BottomSheetModal>
   );
 });
 
@@ -392,17 +444,13 @@ export const Toast = React.memo(function Toast({
 });
 
 const styles = StyleSheet.create({
-  fullscreenOverlay: {
-    ...StyleSheet.absoluteFill,
-    justifyContent: 'flex-end',
-  },
-  backdropBase: {
-    ...StyleSheet.absoluteFill,
-  },
-  sheetContainer: {
+  sheetModalContainer: {
     width: '100%',
     maxWidth: 440,
     alignSelf: 'center',
+    zIndex: 100000,
+  },
+  sheetBackground: {
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     borderWidth: 1,
@@ -415,29 +463,49 @@ const styles = StyleSheet.create({
           shadowOpacity: 0.45,
           shadowRadius: 36,
         }
-      : Platform.OS === 'android' ? { elevation: 0 } : { elevation: 32 }),
-    zIndex: 100000,
+      : { elevation: 32 }),
   },
-  sheetHandleBar: {
-    width: 42,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    alignSelf: 'center',
-    marginTop: 10,
-    marginBottom: 4,
+  sheetHandle: {
+    paddingTop: 12,
+    paddingBottom: 6,
+  },
+  fullHeightContainer: {
+    flex: 1,
+  },
+  sheetViewContent: {
+    width: '100%',
   },
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   sheetTitle: {
     fontSize: 18,
     fontWeight: '700',
     flex: 1,
+  },
+  sheetHeaderContent: {
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: 8,
+  },
+  sheetBody: {
+    paddingHorizontal: 20,
+    paddingTop: 4,
+  },
+  sheetScrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 6,
+  },
+  sheetFooter: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  backdropBase: {
+    ...StyleSheet.absoluteFill,
   },
   dialogOverlay: {
     ...StyleSheet.absoluteFill,

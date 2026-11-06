@@ -2,6 +2,8 @@
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Platform, Animated, Easing } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -925,19 +927,23 @@ function MainContent() {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <I18nProvider>
-        <ThemeProvider>
-          <AppDataProvider>
-            <ToastProvider>
-              <ErrorBoundary>
-                <MainContent />
-              </ErrorBoundary>
-            </ToastProvider>
-          </AppDataProvider>
-        </ThemeProvider>
-      </I18nProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <I18nProvider>
+          <ThemeProvider>
+            <AppDataProvider>
+              <ToastProvider>
+                <BottomSheetModalProvider>
+                  <ErrorBoundary>
+                    <MainContent />
+                  </ErrorBoundary>
+                </BottomSheetModalProvider>
+              </ToastProvider>
+            </AppDataProvider>
+          </ThemeProvider>
+        </I18nProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 

@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import { registerRootComponent } from 'expo';
 import React from 'react';
 import { I18nManager, Platform, Text, TextInput } from 'react-native';
