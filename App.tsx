@@ -82,31 +82,46 @@ const AppChrome = React.memo(function AppChrome({
   children: React.ReactNode;
 }) {
   const { isDark } = useTheme();
-  const [curtainOpacity] = useState(() => new Animated.Value(0));
-  const previousTheme = useRef(isDark);
-  const [curtainBg, setCurtainBg] = useState(isDark ? '#020306' : '#dde2ec');
+  const [darkOverlayOpacity] = useState(() => new Animated.Value(0));
+  const [lightOverlayOpacity] = useState(() => new Animated.Value(0));
+  const prevThemeRef = useRef(isDark);
 
   useLayoutEffect(() => {
-    if (previousTheme.current === isDark) return;
-    const prevWasDark = previousTheme.current;
-    previousTheme.current = isDark;
+    if (prevThemeRef.current === isDark) return;
+    const wasDark = prevThemeRef.current;
+    prevThemeRef.current = isDark;
 
     if (Platform.OS === 'web') {
       // روی وب ترنزیشن 0.5 ثانیه‌ای با CSS در index.html به صورت یکپارچه اجرا می‌شود
       return;
     }
 
-    // روی موبایل (iOS و Android) ترنزیشن ۵۰۰ میلی‌ثانیه‌ای نرم Dissolve با Native Driver
-    setCurtainBg(prevWasDark ? '#04060c' : '#dde2ec');
-    curtainOpacity.stopAnimation();
-    curtainOpacity.setValue(0.9);
-    Animated.timing(curtainOpacity, {
-      toValue: 0,
-      duration: 500,
-      easing: Easing.bezier(0.4, 0, 0.2, 1),
-      useNativeDriver: true,
-    }).start();
-  }, [curtainOpacity, isDark]);
+    // توقف هر انیمیشن قبلی به صورت فوری برای جلوگیری از انباشت لایه‌ها
+    darkOverlayOpacity.stopAnimation();
+    lightOverlayOpacity.stopAnimation();
+
+    if (wasDark) {
+      // تغییر از تیره به روشن: لایه تیره نرم فیدآوت شده تا تم روشن زیرین پدیدار شود
+      lightOverlayOpacity.setValue(0);
+      darkOverlayOpacity.setValue(0.65);
+      Animated.timing(darkOverlayOpacity, {
+        toValue: 0,
+        duration: 450,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }).start();
+    } else {
+      // تغییر از روشن به تیره: لایه روشن نرم فیدآوت شده تا تم تیره زیرین پدیدار شود
+      darkOverlayOpacity.setValue(0);
+      lightOverlayOpacity.setValue(0.65);
+      Animated.timing(lightOverlayOpacity, {
+        toValue: 0,
+        duration: 450,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [darkOverlayOpacity, lightOverlayOpacity, isDark]);
 
   return (
     <SafeAreaView
@@ -146,16 +161,28 @@ const AppChrome = React.memo(function AppChrome({
       )}
       {children}
       {Platform.OS !== 'web' && (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.themeCurtain,
-            {
-              backgroundColor: curtainBg,
-              opacity: curtainOpacity,
-            },
-          ]}
-        />
+        <>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.themeCurtain,
+              {
+                backgroundColor: '#04060c',
+                opacity: darkOverlayOpacity,
+              },
+            ]}
+          />
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.themeCurtain,
+              {
+                backgroundColor: '#dde2ec',
+                opacity: lightOverlayOpacity,
+              },
+            ]}
+          />
+        </>
       )}
     </SafeAreaView>
   );

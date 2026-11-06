@@ -1,6 +1,6 @@
 // --- START OF FILE HorizonThemeToggle.tsx ---
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   TouchableOpacity,
   StyleSheet,
@@ -206,6 +206,16 @@ function NativeHorizonThemeToggle({
 }) {
   // 0 = Sun (Light Mode), 1 = Moon (Dark Mode)
   const [anim] = useState(() => new Animated.Value(isDark ? 1 : 0));
+  const lastPressRef = useRef(0);
+
+  const handlePress = useCallback(() => {
+    const now = Date.now();
+    if (now - lastPressRef.current < 450) {
+      return;
+    }
+    lastPressRef.current = now;
+    onToggle();
+  }, [onToggle]);
 
   useEffect(() => {
     Animated.timing(anim, {
@@ -243,7 +253,7 @@ function NativeHorizonThemeToggle({
   return (
     <TouchableOpacity
       activeOpacity={0.8}
-      onPress={onToggle}
+      onPress={handlePress}
       style={[{ width: size, height: size, position: 'relative' }, style]}
     >
       {/* لایه خورشید (حالت روز - زرد طلایی) */}
