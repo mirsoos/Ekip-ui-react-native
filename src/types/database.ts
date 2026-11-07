@@ -93,6 +93,8 @@ export interface GroupRequest {
   profile?: Profile;
 }
 
+export type MessageDeliveryStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+
 export interface Message {
   id: string;
   conversation_id: string;
@@ -102,6 +104,9 @@ export interface Message {
   read_at: string | null;
   created_at: string;
   sender?: Profile;
+  status?: MessageDeliveryStatus;
+  reply_to?: Message | null;
+  is_deleted?: boolean;
 }
 
 export interface Conversation {

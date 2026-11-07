@@ -548,6 +548,10 @@ export interface GlassInputProps {
   numberOfLines?: number;
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  onFocus?: () => void;
+  onBlur?: () => void;
+  onSubmitEditing?: () => void;
+  returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send';
   style?: StyleProp<ViewStyle>;
 }
 
@@ -561,12 +565,18 @@ export function GlassInputComponent({
   numberOfLines = 3,
   keyboardType = 'default',
   autoCapitalize,
+  onFocus,
+  onBlur,
+  onSubmitEditing,
+  returnKeyType,
   style,
 }: GlassInputProps) {
   const { colors, isDark } = useTheme();
   const themeStyles = GLASS_THEME_STYLES[isDark ? 'dark' : 'light'];
   const { isRTL } = useI18n();
   const IconComp = icon ? getIcon(icon) : null;
+  const internalInputRef = React.useRef<any>(null);
+
   const inputStyle = React.useMemo(
     () => [
       styles.inputWrapper,
@@ -593,7 +603,11 @@ export function GlassInputComponent({
   );
 
   return (
-    <View style={inputStyle}>
+    <TouchableOpacity
+      activeOpacity={1}
+      onPress={() => internalInputRef.current?.focus()}
+      style={inputStyle}
+    >
       {IconComp && (
         <IconComp
           size={18}
@@ -607,6 +621,7 @@ export function GlassInputComponent({
         />
       )}
       <TextInput
+        ref={internalInputRef}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
@@ -616,9 +631,13 @@ export function GlassInputComponent({
         numberOfLines={numberOfLines}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        onSubmitEditing={onSubmitEditing}
+        returnKeyType={returnKeyType}
         style={inputTextStyle}
       />
-    </View>
+    </TouchableOpacity>
   );
 }
 

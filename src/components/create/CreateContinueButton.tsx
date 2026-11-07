@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FrostedGlass } from '../FrostedGlass';
 import { getIcon } from '../../lib/icons';
@@ -23,7 +23,34 @@ export function CreateContinueButtonComponent({
   const isFinal = step === totalSteps - 1;
   const IconComp = getIcon(isFinal ? 'Check' : isRTL ? 'ArrowLeft' : 'ArrowRight');
 
-  const bottomOffset = Platform.OS === 'web' ? 88 : 88 + Math.max(0, insets.bottom);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const onShow = (e: any) => {
+      setKeyboardHeight(e?.endCoordinates?.height ?? 0);
+    };
+    const onHide = () => {
+      setKeyboardHeight(0);
+    };
+
+    const showSub = Keyboard.addListener(showEvent, onShow);
+    const hideSub = Keyboard.addListener(hideEvent, onHide);
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  const defaultBottomOffset = Platform.OS === 'web' ? 88 : 88 + Math.max(0, insets.bottom);
+  const bottomOffset =
+    Platform.OS === 'ios' && keyboardHeight > 0
+      ? keyboardHeight + 12
+      : defaultBottomOffset;
 
   return (
     <View

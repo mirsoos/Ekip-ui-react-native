@@ -99,11 +99,15 @@ export function ForgotPasswordView({
       <ScrollView
         showsVerticalScrollIndicator={false}
         className="animate-raise"
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets={true}
         contentContainerStyle={[
           styles.container,
           {
             paddingTop: getSinglePillContentPaddingTop(insets.top),
             paddingHorizontal: HEADER_METRICS.buttonOffset,
+            paddingBottom: 120 + insets.bottom,
           },
         ]}
       >

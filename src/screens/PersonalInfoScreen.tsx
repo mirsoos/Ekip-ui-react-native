@@ -10,6 +10,8 @@ import {
   Image,
   BackHandler,
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
@@ -120,15 +122,20 @@ export function PersonalInfoScreenComponent({
   const textAlign = isRTL ? ('right' as const) : ('left' as const);
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.container}
+    >
       <ScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets={true}
         contentContainerStyle={[
           styles.scrollContent,
           {
             paddingTop: getSinglePillContentPaddingTop(insets.top),
-            paddingBottom: 40 + insets.bottom,
+            paddingBottom: 130 + insets.bottom,
           },
         ]}
       >
@@ -277,7 +284,7 @@ export function PersonalInfoScreenComponent({
           </View>
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

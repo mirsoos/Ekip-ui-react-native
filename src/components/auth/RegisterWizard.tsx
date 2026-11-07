@@ -151,11 +151,14 @@ export function RegisterWizardComponent({
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets={true}
         contentContainerStyle={[
           styles.container,
           {
             paddingTop: getSinglePillContentPaddingTop(insets.top),
-            paddingBottom: 110 + insets.bottom,
+            paddingBottom: 130 + insets.bottom,
           },
         ]}
       >

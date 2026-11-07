@@ -1,7 +1,7 @@
 // --- START OF FILE AuthScreen.tsx ---
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, BackHandler, Keyboard } from 'react-native';
+import { StyleSheet, BackHandler, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
 import { WelcomeView } from '../components/auth/WelcomeView';
 import { LoginForm } from '../components/auth/LoginForm';
 import { TwoFactorView } from '../components/auth/TwoFactorView';
@@ -87,7 +87,10 @@ export function AuthScreen({ onComplete }: { onComplete: () => void }) {
       : `auth-register-${language}`;
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.container}
+    >
       <ScreenTransition screenKey={activeScreenKey}>
         {mode === 'welcome' ? (
           <WelcomeView
@@ -124,7 +127,7 @@ export function AuthScreen({ onComplete }: { onComplete: () => void }) {
           />
         )}
       </ScreenTransition>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

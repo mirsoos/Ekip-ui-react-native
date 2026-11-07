@@ -1,7 +1,7 @@
 // --- START OF FILE ChatInputBar.tsx ---
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet, Platform, Animated, Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FrostedGlass } from '../FrostedGlass';
@@ -48,6 +48,30 @@ export function ChatInputBarComponent({
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
 
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const onShow = (e: any) => {
+      setKeyboardHeight(e?.endCoordinates?.height ?? 0);
+    };
+    const onHide = () => {
+      setKeyboardHeight(0);
+    };
+
+    const showSub = Keyboard.addListener(showEvent, onShow);
+    const hideSub = Keyboard.addListener(hideEvent, onHide);
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   const [enterAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
@@ -72,7 +96,13 @@ export function ChatInputBarComponent({
       style={[
         styles.outerContainer,
         {
-          paddingBottom: Platform.OS === 'web' ? 10 : Math.max(10, insets.bottom + 6),
+          bottom: Platform.OS === 'ios' ? keyboardHeight : 0,
+          paddingBottom:
+            Platform.OS === 'web'
+              ? 10
+              : keyboardHeight > 0
+              ? 8
+              : Math.max(10, insets.bottom + 6),
         },
       ]}
       pointerEvents="box-none"

@@ -1,7 +1,7 @@
 // --- START OF FILE App.tsx ---
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Platform, Animated, Easing } from 'react-native';
+import { View, StyleSheet, Platform, Animated, Easing, Keyboard } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { StatusBar } from 'expo-status-bar';
@@ -639,9 +639,25 @@ function MainContent() {
     screen.name === 'profile' &&
     (screen.userId === 'me' || !screen.userId);
 
+  const [isKeyboardVisible, setKeyboardVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   const showBottomNav =
-    ['discover', 'activity', 'create', 'chatList'].includes(screen.name) ||
-    (screen.name === 'profile' && screen.userId === 'me');
+    !isKeyboardVisible &&
+    (['discover', 'activity', 'create', 'chatList'].includes(screen.name) ||
+      (screen.name === 'profile' && screen.userId === 'me'));
   const activeHeaderKey = `${screen.name}-${
     'userId' in screen
       ? screen.userId
@@ -682,15 +698,15 @@ function MainContent() {
             <ScreenTransition
               screenKey={`${screen.name}-${'userId' in screen ? screen.userId : ''}-${history.length}`}
             >
-              <SwipeNavigationContainer
-                canGoBack={history.length > 0}
-                onGoBack={pop}
-                canSwipeLeftTab={isMainScreen && currentMainIndex < mainTabs.length - 1}
-                canSwipeRightTab={isMainScreen && currentMainIndex > 0}
-                onSwipeNextTab={handleSwipeNextTab}
-                onSwipePrevTab={handleSwipePrevTab}
-              >
-                <ErrorBoundary onGoHome={handleGoHome}>
+              <ErrorBoundary onGoHome={handleGoHome}>
+                <SwipeNavigationContainer
+                  canGoBack={history.length > 0}
+                  onGoBack={pop}
+                  canSwipeLeftTab={isMainScreen && currentMainIndex < mainTabs.length - 1}
+                  canSwipeRightTab={isMainScreen && currentMainIndex > 0}
+                  onSwipeNextTab={handleSwipeNextTab}
+                  onSwipePrevTab={handleSwipePrevTab}
+                >
                 {isDiscoverActive && (
                   <DiscoverScreen
                     ref={discoverRef}
@@ -809,8 +825,8 @@ function MainContent() {
                 {screen.name === 'security' && <SecurityScreen onBack={pop} />}
                 {screen.name === 'location' && <LocationScreen onBack={pop} />}
                 {screen.name === 'chatTheme' && <ChatThemeScreen onBack={pop} />}
-                </ErrorBoundary>
-              </SwipeNavigationContainer>
+                </SwipeNavigationContainer>
+              </ErrorBoundary>
             </ScreenTransition>
           </View>
         )}

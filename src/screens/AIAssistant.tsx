@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AIChatBubble } from '../components/ai/AIChatBubble';
 import { AITypingIndicator } from '../components/ai/AITypingIndicator';
@@ -150,6 +150,32 @@ export const AIAssistant = React.memo(
     }, 800);
   };
 
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const onShow = (e: any) => {
+      setKeyboardHeight(e?.endCoordinates?.height ?? 0);
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      }, 50);
+    };
+    const onHide = () => {
+      setKeyboardHeight(0);
+    };
+
+    const showSub = Keyboard.addListener(showEvent, onShow);
+    const hideSub = Keyboard.addListener(hideEvent, onHide);
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   React.useImperativeHandle(ref, () => ({
     sendMessage: (text: string) => send(text),
   }));
@@ -166,7 +192,7 @@ export const AIAssistant = React.memo(
           styles.messagesContent,
           {
             paddingTop: getSinglePillContentPaddingTop(insets.top),
-            paddingBottom: 70 + insets.bottom,
+            paddingBottom: 70 + insets.bottom + keyboardHeight,
           },
         ]}
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}

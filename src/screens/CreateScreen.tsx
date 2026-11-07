@@ -10,6 +10,7 @@ import {
   Animated,
   Easing,
   Keyboard,
+  KeyboardAvoidingView,
   BackHandler,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -308,11 +309,16 @@ export const CreateScreen = React.memo(
     const textAlign = isRTL ? ('right' as const) : ('left' as const);
 
     return (
-      <View style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.container}
+      >
         <ScrollView
           ref={scrollViewRef}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets={true}
           contentContainerStyle={[
             styles.scrollContent,
             {
@@ -541,7 +547,7 @@ export const CreateScreen = React.memo(
           onToggleMember={toggleInitialMember}
           maxSelection={groupType === 'couple' ? 1 : undefined}
         />
-      </View>
+      </KeyboardAvoidingView>
     );
   })
 );
