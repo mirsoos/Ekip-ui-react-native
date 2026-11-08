@@ -4,9 +4,7 @@ import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   FlatList,
-  ScrollView,
   StyleSheet,
-  KeyboardAvoidingView,
   Platform,
   BackHandler,
   Keyboard,
@@ -15,12 +13,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
+import { ChatContainer } from '../features/chat';
 import { GlassEmpty } from '../components/Glass';
 import { ChatListItem } from '../components/chat/ChatListItem';
-import { ChatMessageBubble } from '../components/chat/ChatMessageBubble';
 import { ChatListItemSkeleton } from '../components/skeleton';
 import { useI18n } from '../lib/i18n';
-import { getMultiRowContentPaddingTop, getSinglePillContentPaddingTop } from '../lib/headerLayout';
+import { getMultiRowContentPaddingTop } from '../lib/headerLayout';
 import type { Conversation } from '../types/database';
 
 const extractConversationKey = (conversation: Conversation) => conversation.id;
@@ -156,96 +154,36 @@ export function ConversationScreenComponent({
   conversationId: string;
   onBack: () => void;
 }) {
-  const insets = useSafeAreaInsets();
-  const { conversations, messages } = useAppData();
-  const scrollRef = useRef<any>(null);
-  const prevCountRef = useRef<number>(0);
+  const { conversations, me } = useAppData();
 
   const conv = useMemo(
     () => conversations.find((c) => c.id === conversationId),
     [conversations, conversationId]
   );
-  const convMessages = messages[conversationId] ?? [];
-
-  const [keyboardHeight, setKeyboardHeight] = React.useState(0);
 
   useEffect(() => {
-    if (Platform.OS === 'web') return;
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-
-    const onShow = (e: any) => {
-      setKeyboardHeight(e?.endCoordinates?.height ?? 0);
-      setTimeout(() => {
-        scrollRef.current?.scrollToEnd({ animated: true });
-      }, 50);
-    };
-    const onHide = () => {
-      setKeyboardHeight(0);
-    };
-
-    const showSub = Keyboard.addListener(showEvent, onShow);
-    const hideSub = Keyboard.addListener(hideEvent, onHide);
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
-
-  useEffect(() => {
+    Keyboard.dismiss();
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       onBack();
       return true;
     });
-    return () => sub.remove();
+    return () => {
+      Keyboard.dismiss();
+      sub.remove();
+    };
   }, [onBack]);
-
-  useEffect(() => {
-    if (convMessages.length > prevCountRef.current) {
-      const animated = prevCountRef.current > 0;
-      prevCountRef.current = convMessages.length;
-      const timer = setTimeout(() => {
-        scrollRef.current?.scrollToEnd({ animated });
-      }, 30);
-      return () => clearTimeout(timer);
-    }
-    prevCountRef.current = convMessages.length;
-  }, [convMessages.length]);
-
-  const handleContentSizeChange = useCallback(() => {
-    scrollRef.current?.scrollToEnd({ animated: false });
-  }, []);
 
   if (!conv) return null;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
-    >
-      <ScrollView
-        ref={scrollRef}
-        showsVerticalScrollIndicator={false}
-        removeClippedSubviews={Platform.OS === 'android'}
-        contentContainerStyle={[
-          styles.messagesContent,
-          {
-            paddingTop: getSinglePillContentPaddingTop(insets.top),
-            paddingBottom: 75 + insets.bottom + keyboardHeight,
-          },
-        ]}
-        onContentSizeChange={handleContentSizeChange}
-      >
-        {convMessages.map((m) => (
-          <ChatMessageBubble
-            key={m.id}
-            message={m}
-            isMe={m.sender_id === 'me'}
-          />
-        ))}
-      </ScrollView>
-    </KeyboardAvoidingView>
+    <View style={styles.container}>
+      <ChatContainer
+        conversationId={conversationId}
+        isGroupChat={conv.type === 'group'}
+        currentUserId={me.id || 'me'}
+        onBack={onBack}
+      />
+    </View>
   );
 }
 
@@ -259,10 +197,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 100,
     gap: 8,
-  },
-  messagesContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 90,
-    gap: 12,
   },
 });

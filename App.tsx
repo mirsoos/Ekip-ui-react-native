@@ -3,6 +3,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Platform, Animated, Easing, Keyboard } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
@@ -49,7 +50,6 @@ import { ChatThemeScreen } from './src/screens/ChatThemeScreen';
 import { Loading } from './src/screens/Loading';
 
 import { AuroraBackground } from './src/components/AuroraBackground';
-import { SwipeNavigationContainer } from './src/components/common/SwipeNavigationContainer';
 import { ScreenTransition } from './src/components/common/ScreenTransition';
 import { ErrorBoundary } from './src/components/common/ErrorBoundary';
 import { I18nProvider, useI18n } from './src/lib/i18n';
@@ -294,7 +294,7 @@ const ActiveBottomNavTransition = React.memo(function ActiveBottomNavTransition(
   });
 
   if (!show) {
-    return <View pointerEvents="none" style={{ display: "none" }}>{children}</View>;
+    return null;
   }
 
   if (Platform.OS === 'web') {
@@ -699,14 +699,6 @@ function MainContent() {
               screenKey={`${screen.name}-${'userId' in screen ? screen.userId : ''}-${history.length}`}
             >
               <ErrorBoundary onGoHome={handleGoHome}>
-                <SwipeNavigationContainer
-                  canGoBack={history.length > 0}
-                  onGoBack={pop}
-                  canSwipeLeftTab={isMainScreen && currentMainIndex < mainTabs.length - 1}
-                  canSwipeRightTab={isMainScreen && currentMainIndex > 0}
-                  onSwipeNextTab={handleSwipeNextTab}
-                  onSwipePrevTab={handleSwipePrevTab}
-                >
                 {isDiscoverActive && (
                   <DiscoverScreen
                     ref={discoverRef}
@@ -825,7 +817,6 @@ function MainContent() {
                 {screen.name === 'security' && <SecurityScreen onBack={pop} />}
                 {screen.name === 'location' && <LocationScreen onBack={pop} />}
                 {screen.name === 'chatTheme' && <ChatThemeScreen onBack={pop} />}
-                </SwipeNavigationContainer>
               </ErrorBoundary>
             </ScreenTransition>
           </View>
@@ -893,13 +884,7 @@ function MainContent() {
         {screen.name === 'conversation' && (() => {
           const conv = conversations.find((item) => item.id === screen.conversationId);
           return conv ? (
-            <>
-              <ChatHeader conversation={conv} onBack={pop} />
-              <ChatInputBar
-                onSendMessage={(text) => addMessage(screen.conversationId, text)}
-                placeholder={t('chat.transmitDispatch')}
-              />
-            </>
+            <ChatHeader conversation={conv} onBack={pop} />
           ) : null;
         })()}
         {screen.name === 'ai' && (
@@ -977,9 +962,11 @@ export default function App() {
             <AppDataProvider>
               <ToastProvider>
                 <BottomSheetModalProvider>
-                  <ErrorBoundary>
-                    <MainContent />
-                  </ErrorBoundary>
+                  <KeyboardProvider preload={false}>
+                    <ErrorBoundary>
+                      <MainContent />
+                    </ErrorBoundary>
+                  </KeyboardProvider>
                 </BottomSheetModalProvider>
               </ToastProvider>
             </AppDataProvider>

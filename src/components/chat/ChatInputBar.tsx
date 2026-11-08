@@ -1,7 +1,7 @@
 // --- START OF FILE ChatInputBar.tsx ---
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet, Platform, Animated, Keyboard } from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet, Platform, Animated, Keyboard, Easing } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FrostedGlass } from '../FrostedGlass';
@@ -76,10 +76,10 @@ export function ChatInputBarComponent({
 
   useEffect(() => {
     enterAnim.setValue(0);
-    Animated.spring(enterAnim, {
+    Animated.timing(enterAnim, {
       toValue: 1,
-      bounciness: 4,
-      speed: 14,
+      duration: 180,
+      easing: Easing.out(Easing.quad),
       useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, [enterAnim]);
