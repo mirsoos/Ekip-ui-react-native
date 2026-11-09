@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Play } from 'lucide-react-native';
 import type { Attachment } from '../../types/chat.types';
-import { MediaLightbox } from './MediaLightbox';
 import { SpoilerView } from '../RichText/SpoilerView';
 
 export interface MediaGridProps {
@@ -81,17 +80,11 @@ export const MediaGrid = React.memo(function MediaGrid({
   onPressItem,
   maxWidth = 260,
 }: MediaGridProps) {
-  const [lightboxVisible, setLightboxVisible] = useState(false);
-  const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
-
   const handleTilePress = useCallback(
     (index: number) => {
       const item = attachments[index];
       if (onPressItem) {
         onPressItem(item, index);
-      } else {
-        setSelectedMediaIndex(index);
-        setLightboxVisible(true);
       }
     },
     [attachments, onPressItem]
@@ -105,23 +98,14 @@ export const MediaGrid = React.memo(function MediaGrid({
   if (count === 1) {
     const item = attachments[0];
     return (
-      <>
-        <View style={[styles.container, styles.singleItem, { width: maxWidth, height: 200 }]}>
-          <MediaTile
-            item={item}
-            index={0}
-            style={{ width: '100%', height: '100%', borderRadius: 14 }}
-            onPress={() => handleTilePress(0)}
-          />
-        </View>
-
-        <MediaLightbox
-          visible={lightboxVisible}
-          media={attachments}
-          initialIndex={selectedMediaIndex}
-          onClose={() => setLightboxVisible(false)}
+      <View style={[styles.container, styles.singleItem, { width: maxWidth, height: 200 }]}>
+        <MediaTile
+          item={item}
+          index={0}
+          style={{ width: '100%', height: '100%', borderRadius: 14 }}
+          onPress={() => handleTilePress(0)}
         />
-      </>
+      </View>
     );
   }
 
@@ -129,26 +113,17 @@ export const MediaGrid = React.memo(function MediaGrid({
   if (count === 2) {
     const halfWidth = (maxWidth - 4) / 2;
     return (
-      <>
-        <View style={[styles.container, styles.rowLayout, { width: maxWidth, height: 160 }]}>
-          {attachments.map((item, idx) => (
-            <MediaTile
-              key={item.id}
-              item={item}
-              index={idx}
-              style={{ width: halfWidth, height: '100%' }}
-              onPress={() => handleTilePress(idx)}
-            />
-          ))}
-        </View>
-
-        <MediaLightbox
-          visible={lightboxVisible}
-          media={attachments}
-          initialIndex={selectedMediaIndex}
-          onClose={() => setLightboxVisible(false)}
-        />
-      </>
+      <View style={[styles.container, styles.rowLayout, { width: maxWidth, height: 160 }]}>
+        {attachments.map((item, idx) => (
+          <MediaTile
+            key={item.id}
+            item={item}
+            index={idx}
+            style={{ width: halfWidth, height: '100%' }}
+            onPress={() => handleTilePress(idx)}
+          />
+        ))}
+      </View>
     );
   }
 
@@ -159,40 +134,31 @@ export const MediaGrid = React.memo(function MediaGrid({
     const rightHeight = (180 - 4) / 2;
 
     return (
-      <>
-        <View style={[styles.container, styles.rowLayout, { width: maxWidth, height: 180 }]}>
-          {/* Left large */}
-          <MediaTile
-            item={attachments[0]}
-            index={0}
-            style={{ width: leftWidth, height: '100%' }}
-            onPress={() => handleTilePress(0)}
-          />
-
-          {/* Right stacked */}
-          <View style={[styles.colLayout, { width: rightWidth, height: '100%' }]}>
-            {[1, 2].map((idx) => {
-              const item = attachments[idx];
-              return (
-                <MediaTile
-                  key={item.id}
-                  item={item}
-                  index={idx}
-                  style={{ width: '100%', height: rightHeight }}
-                  onPress={() => handleTilePress(idx)}
-                />
-              );
-            })}
-          </View>
-        </View>
-
-        <MediaLightbox
-          visible={lightboxVisible}
-          media={attachments}
-          initialIndex={selectedMediaIndex}
-          onClose={() => setLightboxVisible(false)}
+      <View style={[styles.container, styles.rowLayout, { width: maxWidth, height: 180 }]}>
+        {/* Left large */}
+        <MediaTile
+          item={attachments[0]}
+          index={0}
+          style={{ width: leftWidth, height: '100%' }}
+          onPress={() => handleTilePress(0)}
         />
-      </>
+
+        {/* Right stacked */}
+        <View style={[styles.colLayout, { width: rightWidth, height: '100%' }]}>
+          {[1, 2].map((idx) => {
+            const item = attachments[idx];
+            return (
+              <MediaTile
+                key={item.id}
+                item={item}
+                index={idx}
+                style={{ width: '100%', height: rightHeight }}
+                onPress={() => handleTilePress(idx)}
+              />
+            );
+          })}
+        </View>
+      </View>
     );
   }
 
@@ -202,31 +168,22 @@ export const MediaGrid = React.memo(function MediaGrid({
   const extraCount = count - 4;
 
   return (
-    <>
-      <View style={[styles.container, styles.gridWrap, { width: maxWidth }]}>
-        {displayItems.map((item, idx) => {
-          const isLast = idx === 3 && extraCount > 0;
-          return (
-            <MediaTile
-              key={item.id}
-              item={item}
-              index={idx}
-              style={{ width: tileSize, height: tileSize }}
-              onPress={() => handleTilePress(idx)}
-              isLastWithMore={isLast}
-              moreCount={extraCount + 1}
-            />
-          );
-        })}
-      </View>
-
-      <MediaLightbox
-        visible={lightboxVisible}
-        media={attachments}
-        initialIndex={selectedMediaIndex}
-        onClose={() => setLightboxVisible(false)}
-      />
-    </>
+    <View style={[styles.container, styles.gridWrap, { width: maxWidth }]}>
+      {displayItems.map((item, idx) => {
+        const isLast = idx === 3 && extraCount > 0;
+        return (
+          <MediaTile
+            key={item.id}
+            item={item}
+            index={idx}
+            style={{ width: tileSize, height: tileSize }}
+            onPress={() => handleTilePress(idx)}
+            isLastWithMore={isLast}
+            moreCount={extraCount + 1}
+          />
+        );
+      })}
+    </View>
   );
 });
 

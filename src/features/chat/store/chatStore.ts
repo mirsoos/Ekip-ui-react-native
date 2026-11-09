@@ -24,11 +24,27 @@ export const CURRENT_USER: Author = {
 
 let audioInterval: ReturnType<typeof setInterval> | null = null;
 let isProcessingOutbox = false;
-const clearAudioInterval = () => {
+const activeTimeouts = new Set<ReturnType<typeof setTimeout>>();
+
+export const clearAudioInterval = () => {
   if (audioInterval) {
     clearInterval(audioInterval);
     audioInterval = null;
   }
+};
+
+export const registerTimeout = (fn: () => void, delayMs: number): ReturnType<typeof setTimeout> => {
+  const timer = setTimeout(() => {
+    activeTimeouts.delete(timer);
+    fn();
+  }, delayMs);
+  activeTimeouts.add(timer);
+  return timer;
+};
+
+export const clearActiveTimeouts = () => {
+  activeTimeouts.forEach((timer) => clearTimeout(timer));
+  activeTimeouts.clear();
 };
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -112,6 +128,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   stopAudio: () => {
     clearAudioInterval();
+    clearActiveTimeouts();
     set({ activeAudioMessageId: null, audioPlaybackProgress: 0 });
   },
 
@@ -396,7 +413,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
 
         // Schedule DELIVERED and READ transitions
-        setTimeout(() => {
+        registerTimeout(() => {
           set((state) => {
             const msg = state.messages[serverId];
             if (!msg || msg.status === 'FAILED') return state;
@@ -409,7 +426,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           });
         }, 400);
 
-        setTimeout(() => {
+        registerTimeout(() => {
           set((state) => {
             const msg = state.messages[serverId];
             if (!msg || msg.status === 'FAILED') return state;
@@ -530,7 +547,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     // Pipeline: SENDING -> SENT -> DELIVERED -> READ (or FAILED if test trigger)
     const isFailureSimulation = text.trim() === '/fail';
 
-    setTimeout(() => {
+    registerTimeout(() => {
       if (isFailureSimulation) {
         set((state) => {
           const current = state.messages[tempId];
@@ -582,7 +599,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       });
 
       // After 600ms transition to DELIVERED
-      setTimeout(() => {
+      registerTimeout(() => {
         set((state) => {
           const current = state.messages[serverId];
           if (!current || current.status === 'FAILED') return state;
@@ -600,7 +617,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }, 600);
 
       // After 1400ms transition to READ
-      setTimeout(() => {
+      registerTimeout(() => {
         set((state) => {
           const current = state.messages[serverId];
           if (!current || current.status === 'FAILED') return state;
@@ -638,7 +655,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       },
     }));
 
-    setTimeout(() => {
+    registerTimeout(() => {
       const serverId = `srv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const convId = message.conversationId;
 
@@ -669,7 +686,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         };
       });
 
-      setTimeout(() => {
+      registerTimeout(() => {
         set((state) => {
           const current = state.messages[serverId];
           if (!current) return state;
@@ -1073,6 +1090,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   clearConversation: (conversationId: string) => {
+    clearAudioInterval();
+    clearActiveTimeouts();
     set((state) => {
       const ids = state.conversationMessageIds[conversationId] || [];
       const newMessages = { ...state.messages };
@@ -1196,3 +1215,21 @@ export const useChatCustomBackgroundUri = (): string | null => {
   return useChatStore((state) => state.customBackgroundUri);
 };
 
+export const useIsMessageSearchMatching = (messageId: string): boolean => {
+  return useChatStore(
+    (state) =>
+      Boolean(
+        state.searchState.isActive &&
+        state.searchState.query &&
+        state.searchState.matchingMessageIds.includes(messageId)
+      )
+  );
+};
+
+export const useChatSearchQuery = (): string => {
+  return useChatStore((state) => state.searchState.query);
+};
+
+export const useIsMessageHighlighted = (messageId: string): boolean => {
+  return useChatStore((state) => state.highlightedMessageId === messageId);
+};

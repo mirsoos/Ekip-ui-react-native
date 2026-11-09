@@ -1,6 +1,6 @@
 // --- START OF FILE ChatListItem.tsx ---
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { GlassCard, GlassAvatar } from '../Glass';
 import { useTheme } from '../../lib/theme';
@@ -18,10 +18,14 @@ export function ChatListItemComponent({
 }) {
   const { colors } = useTheme();
   const { isRTL } = useI18n();
-  const handlePress = useCallback(
-    () => onSelectConversation(conversationId),
-    [conversationId, onSelectConversation]
-  );
+  const lastPressRef = useRef(0);
+
+  const handlePress = useCallback(() => {
+    const now = Date.now();
+    if (now - lastPressRef.current < 500) return;
+    lastPressRef.current = now;
+    onSelectConversation(conversationId);
+  }, [conversationId, onSelectConversation]);
 
   const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);
   const textAlign = isRTL ? ('right' as const) : ('left' as const);

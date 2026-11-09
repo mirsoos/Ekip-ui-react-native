@@ -195,10 +195,22 @@ const ActiveHeaderTransition = React.memo(function ActiveHeaderTransition({
   screenKey: string;
   children: React.ReactNode;
 }) {
-  const anim = useRef(new Animated.Value(0)).current;
+  const isConversation = screenKey.startsWith('conversation');
+  const anim = useRef(new Animated.Value(isConversation ? 1 : 0)).current;
   const webDivRef = useRef<HTMLDivElement>(null);
+  const isFirstMount = useRef(true);
+  const prevKeyRef = useRef(screenKey);
 
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      prevKeyRef.current = screenKey;
+      return;
+    }
+
+    const wasConversation = prevKeyRef.current.startsWith('conversation');
+    prevKeyRef.current = screenKey;
+
     if (Platform.OS === 'web') {
       if (webDivRef.current) {
         webDivRef.current.classList.remove('header-enter-items');
@@ -206,19 +218,24 @@ const ActiveHeaderTransition = React.memo(function ActiveHeaderTransition({
         webDivRef.current.classList.add('header-enter-items');
       }
     } else {
+      if (isConversation || wasConversation) {
+        anim.setValue(1);
+        return;
+      }
+      anim.stopAnimation();
       anim.setValue(0);
       Animated.timing(anim, {
         toValue: 1,
-        duration: 260,
+        duration: 200,
         easing: Easing.bezier(0.25, 0.1, 0.25, 1),
         useNativeDriver: true,
       }).start();
     }
-  }, [screenKey, anim]);
+  }, [screenKey, anim, isConversation]);
 
   const translateY = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-50, 0],
+    outputRange: [-10, 0],
   });
 
   if (Platform.OS === 'web') {
@@ -268,7 +285,7 @@ const ActiveBottomNavTransition = React.memo(function ActiveBottomNavTransition(
   const wasShown = useRef(show);
 
   useEffect(() => {
-    if (show && !wasShown.current) {
+    if (show !== wasShown.current) {
       if (Platform.OS === 'web') {
         if (webDivRef.current) {
           webDivRef.current.classList.remove('bottomnav-enter-items');
@@ -276,10 +293,10 @@ const ActiveBottomNavTransition = React.memo(function ActiveBottomNavTransition(
           webDivRef.current.classList.add('bottomnav-enter-items');
         }
       } else {
-        anim.setValue(0);
+        anim.stopAnimation();
         Animated.timing(anim, {
-          toValue: 1,
-          duration: 260,
+          toValue: show ? 1 : 0,
+          duration: 200,
           easing: Easing.bezier(0.25, 0.1, 0.25, 1),
           useNativeDriver: true,
         }).start();
@@ -290,14 +307,11 @@ const ActiveBottomNavTransition = React.memo(function ActiveBottomNavTransition(
 
   const translateY = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [16, 0],
+    outputRange: [60, 0],
   });
 
-  if (!show) {
-    return null;
-  }
-
   if (Platform.OS === 'web') {
+    if (!show) return null;
     return (
       <View pointerEvents="box-none">
         <div
@@ -313,7 +327,7 @@ const ActiveBottomNavTransition = React.memo(function ActiveBottomNavTransition(
 
   return (
     <Animated.View
-      pointerEvents="box-none"
+      pointerEvents={show ? 'box-none' : 'none'}
       renderToHardwareTextureAndroid
       style={{
         opacity: anim,
@@ -697,6 +711,7 @@ function MainContent() {
           <View style={styles.screenContainer}>
             <ScreenTransition
               screenKey={`${screen.name}-${'userId' in screen ? screen.userId : ''}-${history.length}`}
+              disableAnimation={screen.name === 'conversation'}
             >
               <ErrorBoundary onGoHome={handleGoHome}>
                 {isDiscoverActive && (

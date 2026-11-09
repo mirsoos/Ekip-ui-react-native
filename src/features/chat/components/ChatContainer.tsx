@@ -27,6 +27,8 @@ import {
   useChatSearchState,
   useChatTypingStates,
   useChatCustomBackgroundUri,
+  clearAudioInterval,
+  clearActiveTimeouts,
 } from '../store/chatStore';
 
 import { MessageList } from './MessageList';
@@ -199,17 +201,19 @@ function ChatContent({
     setCurrentUser(currentUserAuthor);
   }, [currentUserAuthor, setCurrentUser]);
 
-  // Synchronously seed conversation messages if pristine so Frame 1 renders with full chat data (zero empty-flash)
-  const existingIds = useChatStore.getState().conversationMessageIds[conversationId];
-  if (!existingIds || existingIds.length === 0) {
-    const initialSeed = getInitialConversationMessages(
-      conversationId,
-      isGroupChat,
-      currentUserId,
-      currentUserAuthor
-    );
-    useChatStore.getState().seedConversation(conversationId, initialSeed);
-  }
+  // Seed conversation messages in useEffect so it doesn't trigger synchronous store updates and double re-renders during Frame 1 on iOS
+  useEffect(() => {
+    const existingIds = useChatStore.getState().conversationMessageIds[conversationId];
+    if (!existingIds || existingIds.length === 0) {
+      const initialSeed = getInitialConversationMessages(
+        conversationId,
+        isGroupChat,
+        currentUserId,
+        currentUserAuthor
+      );
+      useChatStore.getState().seedConversation(conversationId, initialSeed);
+    }
+  }, [conversationId, isGroupChat, currentUserId, currentUserAuthor]);
 
   const {
     messageIds,
@@ -328,6 +332,9 @@ function ChatContent({
   const [lightboxMedia, setLightboxMedia] = useState<Attachment[] | null>(null);
   const [lightboxInitialIndex, setLightboxInitialIndex] = useState(0);
 
+  // Highlight timer ref for quote jumping
+  const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Ensure keyboard is dismissed and search closed on mount/unmount; mark conversation as read
   useEffect(() => {
     Keyboard.dismiss();
@@ -339,6 +346,12 @@ function ChatContent({
       Keyboard.dismiss();
       setSearchBarOpen(false);
       clearReplyingTo();
+      clearAudioInterval();
+      clearActiveTimeouts();
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+        highlightTimeoutRef.current = null;
+      }
     };
   }, [conversationId, markAsRead, setSearchBarOpen, clearReplyingTo]);
 
@@ -411,8 +424,12 @@ function ChatContent({
           viewPosition: 0.5,
         });
         useChatStore.getState().setHighlightedMessageId(targetId);
-        setTimeout(() => {
+        if (highlightTimeoutRef.current) {
+          clearTimeout(highlightTimeoutRef.current);
+        }
+        highlightTimeoutRef.current = setTimeout(() => {
           useChatStore.getState().setHighlightedMessageId(null);
+          highlightTimeoutRef.current = null;
         }, 1800);
       }
     },

@@ -7,17 +7,30 @@ interface ScreenTransitionProps {
   children: ReactNode;
   screenKey: string;
   style?: StyleProp<ViewStyle>;
+  disableAnimation?: boolean;
 }
 
 export const ScreenTransition = React.memo(function ScreenTransition({
   children,
   screenKey,
   style,
+  disableAnimation = false,
 }: ScreenTransitionProps) {
-  const anim = useRef(new Animated.Value(0)).current;
+  const anim = useRef(new Animated.Value(1)).current;
   const webDivRef = useRef<HTMLDivElement>(null);
+  const isFirstMount = useRef(true);
 
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+
+    if (disableAnimation) {
+      anim.setValue(1);
+      return;
+    }
+
     if (Platform.OS === 'web') {
       if (webDivRef.current) {
         webDivRef.current.classList.remove('screen-enter-items');
@@ -34,12 +47,20 @@ export const ScreenTransition = React.memo(function ScreenTransition({
         useNativeDriver: true,
       }).start();
     }
-  }, [screenKey, anim]);
+  }, [screenKey, anim, disableAnimation]);
 
   const translateY = anim.interpolate({
     inputRange: [0, 1],
     outputRange: [16, 0],
   });
+
+  if (disableAnimation) {
+    return (
+      <View style={[{ flex: 1, width: '100%', height: '100%' }, style]}>
+        {children}
+      </View>
+    );
+  }
 
   if (Platform.OS === 'web') {
     return (

@@ -6,7 +6,33 @@ import type { LinkPreviewData } from '../types/chat.types';
 
 export const URL_REGEX = /(https?:\/\/[^\s]+)/gi;
 
+const MAX_OG_CACHE_SIZE = 50;
 const ogCache = new Map<string, LinkPreviewData>();
+
+export function clearOgCache() {
+  ogCache.clear();
+}
+
+function setOgCache(url: string, data: LinkPreviewData) {
+  if (ogCache.has(url)) {
+    ogCache.delete(url);
+  } else if (ogCache.size >= MAX_OG_CACHE_SIZE) {
+    const oldestKey = ogCache.keys().next().value;
+    if (oldestKey) {
+      ogCache.delete(oldestKey);
+    }
+  }
+  ogCache.set(url, data);
+}
+
+function getOgCache(url: string): LinkPreviewData | undefined {
+  if (!ogCache.has(url)) return undefined;
+  const value = ogCache.get(url)!;
+  // Refresh recency
+  ogCache.delete(url);
+  ogCache.set(url, value);
+  return value;
+}
 
 // Well-known domain metadata simulator for instant zero-lag rendering
 const KNOWN_DOMAINS: Record<string, Partial<LinkPreviewData>> = {
@@ -58,8 +84,9 @@ export function extractAllUrls(text: string): string[] {
 
 export async function fetchLinkPreview(url: string): Promise<LinkPreviewData> {
   const normalizedUrl = url.trim();
-  if (ogCache.has(normalizedUrl)) {
-    return ogCache.get(normalizedUrl)!;
+  const cached = getOgCache(normalizedUrl);
+  if (cached) {
+    return cached;
   }
 
   // Parse hostname
@@ -92,6 +119,6 @@ export async function fetchLinkPreview(url: string): Promise<LinkPreviewData> {
     favicon: siteFavicon,
   };
 
-  ogCache.set(normalizedUrl, data);
+  setOgCache(normalizedUrl, data);
   return data;
 }

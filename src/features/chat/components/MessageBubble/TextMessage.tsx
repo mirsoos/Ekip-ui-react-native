@@ -5,7 +5,7 @@ import type { Message, ReplyPreview } from '../../types/chat.types';
 import { StatusIndicator } from './StatusIndicator';
 import { MarkdownRenderer } from '../RichText/MarkdownRenderer';
 import { HighlightedText } from '../Search/HighlightedText';
-import { useChatSearchState } from '../../store/chatStore';
+import { useIsMessageSearchMatching, useChatSearchQuery } from '../../store/chatStore';
 import { useTheme, useChatTheme, CHAT_THEMES } from '../../../../lib/theme';
 
 export interface TextMessageProps {
@@ -20,6 +20,25 @@ const formatMessageTime = (timestamp: number): string => {
   const date = new Date(timestamp);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 };
+
+const MatchingSearchText = React.memo(function MatchingSearchText({
+  text,
+  textColor,
+}: {
+  text: string;
+  textColor: string;
+}) {
+  const searchQuery = useChatSearchQuery();
+  return (
+    <HighlightedText
+      text={text}
+      searchQuery={searchQuery}
+      style={[styles.messageText, { color: textColor }]}
+      highlightColor="#eab308"
+      highlightTextColor="#0f172a"
+    />
+  );
+});
 
 export const TextMessage = React.memo(function TextMessage({
   message,
@@ -37,11 +56,7 @@ export const TextMessage = React.memo(function TextMessage({
   const defaultTextColor = isMe ? themeConfig.myBubbleText : themeConfig.theirBubbleText;
   const resolvedTextColor = textColor || defaultTextColor;
 
-  const searchState = useChatSearchState();
-  const isSearchMatching =
-    searchState.isActive &&
-    searchState.query &&
-    searchState.matchingMessageIds.includes(message.id);
+  const isSearchMatching = useIsMessageSearchMatching(message.id);
 
   return (
     <View style={styles.container}>
@@ -94,13 +109,7 @@ export const TextMessage = React.memo(function TextMessage({
 
       {/* Main message text: HighlightedText when searching, or zero-lag MarkdownRenderer */}
       {isSearchMatching ? (
-        <HighlightedText
-          text={message.text}
-          searchQuery={searchState.query}
-          style={[styles.messageText, { color: resolvedTextColor }]}
-          highlightColor="#eab308"
-          highlightTextColor="#0f172a"
-        />
+        <MatchingSearchText text={message.text} textColor={resolvedTextColor} />
       ) : (
         <MarkdownRenderer
           content={message.text}

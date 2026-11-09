@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, TouchableWithoutFeedback, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -6,6 +6,7 @@ import Animated, {
   withTiming,
   withRepeat,
   withSequence,
+  cancelAnimation,
   runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -18,6 +19,13 @@ export interface SpoilerViewProps {
   isInline?: boolean;
   style?: any;
 }
+
+const STATIC_PARTICLES = Array.from({ length: 14 }).map((_, i) => ({
+  id: i,
+  top: `${((i * 17) % 80) + 10}%`,
+  left: `${((i * 23) % 85) + 5}%`,
+  opacity: 0.3 + (i % 5) * 0.15,
+}));
 
 export const SpoilerView = React.memo(function SpoilerView({
   children,
@@ -33,15 +41,23 @@ export const SpoilerView = React.memo(function SpoilerView({
   const maskOpacity = useSharedValue(initialRevealed ? 0 : 1);
   const shimmerTranslate = useSharedValue(0);
 
-  React.useEffect(() => {
-    if (!initialRevealed) {
+  useEffect(() => {
+    if (!isRevealed) {
       shimmerTranslate.value = withRepeat(
         withSequence(withTiming(1, { duration: 1400 }), withTiming(0, { duration: 1400 })),
         -1,
         true
       );
+    } else {
+      cancelAnimation(shimmerTranslate);
+      cancelAnimation(maskOpacity);
     }
-  }, [initialRevealed, shimmerTranslate]);
+
+    return () => {
+      cancelAnimation(shimmerTranslate);
+      cancelAnimation(maskOpacity);
+    };
+  }, [isRevealed, shimmerTranslate, maskOpacity]);
 
   const handlePress = useCallback(() => {
     if (isRevealed) return;
@@ -52,13 +68,14 @@ export const SpoilerView = React.memo(function SpoilerView({
 
     maskOpacity.value = withTiming(0, { duration: 250 }, (finished) => {
       if (finished) {
+        cancelAnimation(shimmerTranslate);
         runOnJS(setIsRevealed)(true);
         if (onReveal) {
           runOnJS(onReveal)();
         }
       }
     });
-  }, [isRevealed, maskOpacity, onReveal]);
+  }, [isRevealed, maskOpacity, shimmerTranslate, onReveal]);
 
   const maskAnimStyle = useAnimatedStyle(() => {
     'worklet';
@@ -99,15 +116,15 @@ export const SpoilerView = React.memo(function SpoilerView({
           >
             {/* Procedural Particle Dust Dots */}
             <View style={styles.dustContainer}>
-              {Array.from({ length: 14 }).map((_, i) => (
+              {STATIC_PARTICLES.map((p) => (
                 <View
-                  key={i}
+                  key={p.id}
                   style={[
                     styles.dustParticle,
                     {
-                      top: `${((i * 17) % 80) + 10}%`,
-                      left: `${((i * 23) % 85) + 5}%`,
-                      opacity: 0.3 + (i % 5) * 0.15,
+                      top: p.top as any,
+                      left: p.left as any,
+                      opacity: p.opacity,
                     },
                   ]}
                 />

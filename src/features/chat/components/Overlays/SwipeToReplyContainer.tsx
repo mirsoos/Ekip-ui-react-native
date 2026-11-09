@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
@@ -33,62 +33,64 @@ export const SwipeToReplyContainer = React.memo(function SwipeToReplyContainer({
   const translateX = useSharedValue(0);
   const hasTriggeredHaptic = useSharedValue(false);
 
-  const triggerHaptic = () => {
-    try {
-      if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
-    } catch {
-      // safe fallback
-    }
-  };
-
-  const handleReplyRelease = (msg: Message) => {
-    onReply(msg);
-  };
-
-  const panGesture = Gesture.Pan()
-    .enabled(enabled)
-    .activeOffsetX([-15, 15])
-    .failOffsetY([-8, 8])
-    .onUpdate((event) => {
-      'worklet';
-      // Restrict swipe: swipe rightwards for left-aligned messages, or leftwards
-      // Telegram style: swiping leftwards triggers reply
-      const rawX = -event.translationX;
-      if (rawX > 0) {
-        // Logarithmic / rubber-band resistance beyond threshold
-        if (rawX <= SWIPE_THRESHOLD) {
-          translateX.value = -rawX;
-        } else {
-          const excess = rawX - SWIPE_THRESHOLD;
-          const damped = excess * 0.28;
-          translateX.value = -(SWIPE_THRESHOLD + Math.min(damped, MAX_SWIPE - SWIPE_THRESHOLD));
+  const panGesture = useMemo(() => {
+    const triggerHaptic = () => {
+      try {
+        if (Platform.OS !== 'web') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
+      } catch {
+        // safe fallback
+      }
+    };
 
-        // Trigger haptic once precisely upon crossing threshold
-        if (rawX >= SWIPE_THRESHOLD && !hasTriggeredHaptic.value) {
-          hasTriggeredHaptic.value = true;
-          runOnJS(triggerHaptic)();
-        } else if (rawX < SWIPE_THRESHOLD && hasTriggeredHaptic.value) {
+    const handleReplyRelease = (msg: Message) => {
+      onReply(msg);
+    };
+
+    return Gesture.Pan()
+      .enabled(enabled)
+      .activeOffsetX([-15, 15])
+      .failOffsetY([-8, 8])
+        .onUpdate((event) => {
+          'worklet';
+          // Restrict swipe: swipe rightwards for left-aligned messages, or leftwards
+          // Telegram style: swiping leftwards triggers reply
+          const rawX = -event.translationX;
+          if (rawX > 0) {
+            // Logarithmic / rubber-band resistance beyond threshold
+            if (rawX <= SWIPE_THRESHOLD) {
+              translateX.value = -rawX;
+            } else {
+              const excess = rawX - SWIPE_THRESHOLD;
+              const damped = excess * 0.28;
+              translateX.value = -(SWIPE_THRESHOLD + Math.min(damped, MAX_SWIPE - SWIPE_THRESHOLD));
+            }
+
+            // Trigger haptic once precisely upon crossing threshold
+            if (rawX >= SWIPE_THRESHOLD && !hasTriggeredHaptic.value) {
+              hasTriggeredHaptic.value = true;
+              runOnJS(triggerHaptic)();
+            } else if (rawX < SWIPE_THRESHOLD && hasTriggeredHaptic.value) {
+              hasTriggeredHaptic.value = false;
+            }
+          } else {
+            translateX.value = 0;
+          }
+        })
+        .onEnd(() => {
+          'worklet';
+          const shouldReply = -translateX.value >= SWIPE_THRESHOLD;
+          if (shouldReply) {
+            runOnJS(handleReplyRelease)(message);
+          }
           hasTriggeredHaptic.value = false;
-        }
-      } else {
-        translateX.value = 0;
-      }
-    })
-    .onEnd(() => {
-      'worklet';
-      const shouldReply = -translateX.value >= SWIPE_THRESHOLD;
-      if (shouldReply) {
-        runOnJS(handleReplyRelease)(message);
-      }
-      hasTriggeredHaptic.value = false;
-      translateX.value = withTiming(0, {
-        duration: 180,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      });
-    });
+          translateX.value = withTiming(0, {
+            duration: 180,
+            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          });
+        });
+  }, [enabled, message, onReply, translateX, hasTriggeredHaptic]);
 
   const animatedRowStyle = useAnimatedStyle(() => {
     'worklet';

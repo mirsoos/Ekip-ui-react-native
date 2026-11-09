@@ -15,7 +15,8 @@ import Animated, {
   withSequence,
   withTiming,
   Easing,
-  FadeIn,
+  SlideInRight,
+  SlideInLeft,
 } from 'react-native-reanimated';
 
 import type { Message, Attachment, ReplyPreview, BubbleLayout } from '../../types/chat.types';
@@ -23,7 +24,7 @@ import { TextMessage } from './TextMessage';
 import { MediaMessage } from './MediaMessage';
 import { SwipeToReplyContainer } from '../Overlays/SwipeToReplyContainer';
 import { ReactionBadge } from '../Reactions/ReactionBadge';
-import { useChatHighlightedMessageId, useChatStore } from '../../store/chatStore';
+import { useIsMessageHighlighted, useChatStore } from '../../store/chatStore';
 import { useChatTheme, CHAT_THEMES } from '../../../../lib/theme';
 
 export interface MessageBubbleProps {
@@ -114,8 +115,7 @@ export const MessageBubble = React.memo(function MessageBubble({
   });
 
   // Targeted Quote-Jumping & Search Highlight Pulse
-  const highlightedId = useChatHighlightedMessageId();
-  const isHighlighted = highlightedId === message.id;
+  const isHighlighted = useIsMessageHighlighted(message.id);
   const highlightAnim = useSharedValue(0);
 
   useEffect(() => {
@@ -172,7 +172,11 @@ export const MessageBubble = React.memo(function MessageBubble({
   return (
     <SwipeToReplyContainer message={message} onReply={onReply}>
       <Animated.View
-        entering={FadeIn.duration(150)}
+        entering={
+          isMe
+            ? SlideInRight.duration(250).easing(Easing.out(Easing.quad))
+            : SlideInLeft.duration(250).easing(Easing.out(Easing.quad))
+        }
         style={[
           styles.rowContainer,
           isMe ? styles.rowMe : styles.rowOther,
