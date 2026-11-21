@@ -14,15 +14,15 @@ interface ChatThemeScreenProps {
   onBack: () => void;
 }
 
+const Check = getIcon('Check');
+const Palette = getIcon('Palette');
+
 export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { chatTheme, setChatTheme } = useChatTheme();
   const { isRTL } = useI18n();
   const { showToast } = useToast();
-
-  const Check = getIcon('Check');
-  const Palette = getIcon('Palette');
 
   const selectedConfig = CHAT_THEMES[chatTheme] ?? CHAT_THEMES.default;
 

@@ -82,7 +82,7 @@ export function RequestsModalComponent({
                 {r.message && (
                   <View style={[styles.msgBox, { backgroundColor: colors.glassThinBg }]}>
                     <Text style={[styles.msgText, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
-                      "{r.message}"
+                      {`"${r.message}"`}
                     </Text>
                   </View>
                 )}

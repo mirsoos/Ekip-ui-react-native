@@ -1,7 +1,8 @@
 // --- START OF FILE ProfileScreen.tsx ---
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppData } from '../lib/appData';
@@ -16,7 +17,7 @@ import { ProfileScreenSkeleton } from '../components/skeleton';
 import { darkColors, lightColors, useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { useToast } from '../lib/ToastContext';
-import { getIcon, type IconName } from '../lib/icons';
+import { getIcon, Icons, type IconName } from '../lib/icons';
 import type { Badge, Friendship, Group, Mission } from '../types/database';
 
 type ProfileListItem =
@@ -47,6 +48,11 @@ const ProfileGroupCard = React.memo(function ProfileGroupCard({
   return <EkipCard group={group} onPress={onPress} />;
 });
 
+const BadgeItemIcon = React.memo(function BadgeItemIcon({ name }: { name: string }) {
+  const Comp = getIcon(name);
+  return <Comp size={18} color="#f472b6" strokeWidth={2.4} />;
+});
+
 const ProfileBanner = React.memo(function ProfileBanner({
   bannerUrl,
   isDark,
@@ -57,7 +63,13 @@ const ProfileBanner = React.memo(function ProfileBanner({
   return (
     <View style={styles.bannerWrap}>
       {bannerUrl ? (
-        <Image source={{ uri: bannerUrl }} style={styles.bannerImg} />
+        <Image
+          source={{ uri: bannerUrl }}
+          style={styles.bannerImg}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          transition={200}
+        />
       ) : (
         <View
           style={[
@@ -195,11 +207,10 @@ export function ProfileScreenComponent({
       }
 
       if (item.kind === 'badge') {
-        const BadgeIcon = getIcon((item.value.icon as IconName) ?? 'Award');
         return (
           <GlassCard variant="thin" style={[styles.badgeCard, rowDirStyle]}>
             <View style={styles.badgeIcon}>
-              <BadgeIcon size={18} color="#f472b6" strokeWidth={2.4} />
+              <BadgeItemIcon name={item.value.icon || 'Award'} />
             </View>
             <View style={[styles.itemText, itemTextSpacing]}>
               <Text
@@ -262,7 +273,7 @@ export function ProfileScreenComponent({
       const friend = item.value;
       const friendProfile = friend.profile;
       if (!friendProfile) return null;
-      const ChevronIcon = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
+      const ChevronIcon = isRTL ? Icons.ChevronLeft : Icons.ChevronRight;
       return (
         <TouchableOpacity activeOpacity={0.75} onPress={() => noopOpenProfile(friendProfile.id)}>
           <GlassCard variant="thin" style={[styles.friendCard, rowDirStyle]}>

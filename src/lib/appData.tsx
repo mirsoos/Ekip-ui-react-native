@@ -1,13 +1,15 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
 import {
-  demoProfiles, demoGroups, demoMembers, demoRequests,
-  demoConversations, demoMessages, demoNotifications,
-  demoBadges, demoMissions, demoFriends,
+  demoProfiles, demoMembers, demoConversations, demoMessages,
 } from './demoData';
 import type {
   Profile, Group, GroupMember, GroupRequest, Conversation, Message,
   Notification, Badge, Mission, Friendship,
 } from '../types/database';
+import { useAuthStore } from '../store/authStore';
+import { useEkipStore } from '../store/ekipStore';
+import { useNotificationStore } from '../store/notificationStore';
+import { useUserStore } from '../store/userStore';
 
 interface AppData {
   me: Profile;
@@ -38,26 +40,32 @@ interface AppData {
 const AppDataContext = createContext<AppData | null>(null);
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
-  const [me, setMe] = useState<Profile>(demoProfiles[0]);
-  const [groups, setGroups] = useState<Group[]>(demoGroups);
-  const [requests, setRequests] = useState<GroupRequest[]>(demoRequests);
+  // Zustand Store integrations
+  const me = useAuthStore((s) => s.me);
+  const updateMe = useAuthStore((s) => s.updateMe);
+
+  const groups = useEkipStore((s) => s.groups);
+  const requests = useEkipStore((s) => s.requests);
+  const addGroup = useEkipStore((s) => s.addGroup);
+  const addRequest = useEkipStore((s) => s.addRequest);
+  const updateRequest = useEkipStore((s) => s.updateRequest);
+
+  const notifications = useNotificationStore((s) => s.notifications);
+  const markNotificationRead = useNotificationStore((s) => s.markNotificationRead);
+  const markAllNotificationsRead = useNotificationStore((s) => s.markAllNotificationsRead);
+  const addNotification = useNotificationStore((s) => s.addNotification);
+
+  const profiles = useUserStore((s) => s.profiles);
+  const badges = useUserStore((s) => s.badges);
+  const missions = useUserStore((s) => s.missions);
+  const friends = useUserStore((s) => s.friends);
+  const addFriend = useUserStore((s) => s.addFriend);
+  const updateFriend = useUserStore((s) => s.updateFriend);
+
+  // Conversation & Message state
   const [conversations, setConversations] = useState<Conversation[]>(demoConversations);
   const [messages, setMessages] = useState<Record<string, Message[]>>(demoMessages);
-  const [notifications, setNotifications] = useState<Notification[]>(demoNotifications);
-  const [friends, setFriends] = useState<Friendship[]>(demoFriends);
-
-  const profiles = useMemo(() => [me, ...demoProfiles.slice(1)], [me]);
   const members = demoMembers;
-  const badges = demoBadges;
-  const missions = demoMissions;
-
-  const addGroup = useCallback((g: Group) => setGroups((prev) => [g, ...prev]), []);
-
-  const addRequest = useCallback((r: GroupRequest) => setRequests((prev) => [r, ...prev]), []);
-
-  const updateRequest = useCallback((id: string, status: GroupRequest['status']) => {
-    setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
-  }, []);
 
   const addMessage = useCallback((convId: string, body: string) => {
     const newMsg: Message = {
@@ -89,52 +97,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const markNotificationRead = useCallback((id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-    );
-  }, []);
-
-  const markAllNotificationsRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-  }, []);
-
-  const addFriend = useCallback((friendId: string) => {
-    const friend = demoProfiles.find((p) => p.id === friendId);
-    if (!friend) return;
-    const newFriend: Friendship = {
-      id: `f-${Date.now()}`,
-      user_id: 'me',
-      friend_id: friendId,
-      status: 'accepted',
-      created_at: new Date().toISOString(),
-      profile: friend,
-    };
-    setFriends((prev) => [newFriend, ...prev]);
-  }, []);
-
-  const updateFriend = useCallback((id: string, status: Friendship['status']) => {
-    setFriends((prev) => prev.map((f) => (f.id === id ? { ...f, status } : f)));
-  }, []);
-
-  const addNotification = useCallback(
-    (n: Omit<Notification, 'id' | 'user_id' | 'created_at' | 'is_read'>) => {
-      const newNotif: Notification = {
-        ...n,
-        id: `n-${Date.now()}`,
-        user_id: 'me',
-        is_read: false,
-        created_at: new Date().toISOString(),
-      };
-      setNotifications((prev) => [newNotif, ...prev]);
-    },
-    []
-  );
-
-  const updateMe = useCallback((updates: Partial<Profile>) => {
-    setMe((prev) => ({ ...prev, ...updates }));
-  }, []);
-
   const value = useMemo(
     () => ({
       me,
@@ -164,10 +126,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       me,
       profiles,
       groups,
+      members,
       requests,
       conversations,
       messages,
       notifications,
+      badges,
+      missions,
       friends,
       addGroup,
       addRequest,

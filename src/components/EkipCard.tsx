@@ -1,7 +1,8 @@
 // --- START OF FILE EkipCard.tsx ---
 
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Image, Animated, Easing, Platform } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, Platform } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { LucideIcon } from 'lucide-react-native';
 import Svg, {
@@ -605,7 +606,13 @@ const EkipCardCompact = React.memo(function EkipCardCompact({
     >
       <View style={[styles.compactRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         {group.cover_url ? (
-          <Image source={{ uri: group.cover_url }} style={styles.compactImage} />
+          <Image
+            source={{ uri: group.cover_url }}
+            style={styles.compactImage}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={200}
+          />
         ) : (
           <View style={[styles.compactImage, { backgroundColor: colors.glassThinBg }]} />
         )}
@@ -693,7 +700,13 @@ export function EkipCardComponent({
       {/* Cover image banner */}
       <View style={styles.coverWrapper}>
         {group.cover_url && (
-          <Image source={{ uri: group.cover_url }} style={styles.coverImage} />
+          <Image
+            source={{ uri: group.cover_url }}
+            style={styles.coverImage}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={200}
+          />
         )}
         <LinearGradient
           colors={['transparent', 'rgba(0, 0, 0, 0.7)']}

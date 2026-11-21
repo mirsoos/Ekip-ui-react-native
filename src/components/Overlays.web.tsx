@@ -42,13 +42,16 @@ export function GlassSheet({
   const [isRendered, setIsRendered] = useState(open);
 
   useEffect(() => {
+    let timer: number | undefined;
     if (open) {
       isMounted.current = true;
-      setIsRendered(true);
+      timer = window.setTimeout(() => setIsRendered(true), 0);
     } else if (isMounted.current) {
-      const closeTimer = window.setTimeout(() => setIsRendered(false), 520);
-      return () => window.clearTimeout(closeTimer);
+      timer = window.setTimeout(() => setIsRendered(false), 520);
     }
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -84,9 +87,7 @@ export function GlassSheet({
         style={{
           position: 'absolute',
           inset: 0,
-          backgroundColor: isDark ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.22)',
-          backdropFilter: 'blur(2px)',
-          WebkitBackdropFilter: 'blur(2px)',
+          backgroundColor: isDark ? 'rgba(0, 0, 0, 0.65)' : 'rgba(0, 0, 0, 0.40)',
           willChange: 'opacity',
           animationDuration: '500ms',
           cursor: 'pointer',
@@ -112,9 +113,7 @@ export function GlassSheet({
           overflow: 'hidden',
           animationDuration: open ? '620ms' : '460ms',
           animationTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
-          backgroundColor: isDark ? 'rgba(14, 20, 34, 0.75)' : 'rgba(255, 255, 255, 0.78)',
-          backdropFilter: 'blur(32px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+          backgroundColor: isDark ? 'rgba(14, 20, 34, 0.95)' : 'rgba(255, 255, 255, 0.96)',
           borderTop: isDark ? '1px solid rgba(255, 255, 255, 0.22)' : '1px solid rgba(255, 255, 255, 0.85)',
           borderLeft: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.60)',
           borderRight: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.60)',
@@ -196,12 +195,15 @@ export function GlassDialog({
   const [isRendered, setIsRendered] = useState(open);
 
   useEffect(() => {
+    let timer: number | undefined;
     if (open) {
-      setIsRendered(true);
+      timer = window.setTimeout(() => setIsRendered(true), 0);
     } else {
-      const closeTimer = window.setTimeout(() => setIsRendered(false), 500);
-      return () => window.clearTimeout(closeTimer);
+      timer = window.setTimeout(() => setIsRendered(false), 500);
     }
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
   }, [open]);
 
   if (!isRendered) return null;

@@ -149,12 +149,8 @@ const AppChrome = React.memo(function AppChrome({
             style={[
               StyleSheet.absoluteFill,
               {
-                backdropFilter: 'blur(30px)',
-                WebkitBackdropFilter: 'blur(30px)',
-                backgroundImage: isDark
-                  ? 'linear-gradient(to right, rgba(2, 3, 6, 0.85) 0%, rgba(2, 3, 6, 0.35) 30%, transparent 45%, transparent 55%, rgba(2, 3, 6, 0.35) 70%, rgba(2, 3, 6, 0.85) 100%)'
-                  : 'linear-gradient(to right, rgba(200, 210, 225, 0.85) 0%, rgba(200, 210, 225, 0.35) 30%, transparent 45%, transparent 55%, rgba(200, 210, 225, 0.35) 70%, rgba(200, 210, 225, 0.85) 100%)',
-              } as any,
+                backgroundColor: isDark ? 'rgba(2, 3, 6, 0.45)' : 'rgba(220, 226, 238, 0.45)',
+              },
             ]}
           />
         </View>
@@ -196,8 +192,7 @@ const ActiveHeaderTransition = React.memo(function ActiveHeaderTransition({
   children: React.ReactNode;
 }) {
   const isConversation = screenKey.startsWith('conversation');
-  const anim = useRef(new Animated.Value(isConversation ? 1 : 0)).current;
-  const webDivRef = useRef<HTMLDivElement>(null);
+  const anim = useRef(new Animated.Value(1)).current;
   const isFirstMount = useRef(true);
   const prevKeyRef = useRef(screenKey);
 
@@ -211,50 +206,25 @@ const ActiveHeaderTransition = React.memo(function ActiveHeaderTransition({
     const wasConversation = prevKeyRef.current.startsWith('conversation');
     prevKeyRef.current = screenKey;
 
-    if (Platform.OS === 'web') {
-      if (webDivRef.current) {
-        webDivRef.current.classList.remove('header-enter-items');
-        void webDivRef.current.offsetWidth;
-        webDivRef.current.classList.add('header-enter-items');
-      }
-    } else {
-      if (isConversation || wasConversation) {
-        anim.setValue(1);
-        return;
-      }
-      anim.stopAnimation();
-      anim.setValue(0);
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 200,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-        useNativeDriver: true,
-      }).start();
+    if (isConversation || wasConversation) {
+      anim.setValue(1);
+      return;
     }
+
+    anim.stopAnimation();
+    anim.setValue(0);
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: 320,
+      easing: Easing.bezier(0.16, 1, 0.3, 1),
+      useNativeDriver: Platform.OS !== 'web',
+    }).start();
   }, [screenKey, anim, isConversation]);
 
   const translateY = anim.interpolate({
     inputRange: [0, 1],
     outputRange: [-10, 0],
   });
-
-  if (Platform.OS === 'web') {
-    return (
-      <View pointerEvents="box-none" style={styles.headerOverlayWrapper}>
-        <div
-          ref={webDivRef}
-          className="header-enter-items"
-          style={{
-            height: "100%",
-            width: "100%",
-            pointerEvents: "none",
-          }}
-        >
-          {children}
-        </div>
-      </View>
-    );
-  }
 
   return (
     <Animated.View
@@ -281,26 +251,17 @@ const ActiveBottomNavTransition = React.memo(function ActiveBottomNavTransition(
   children: React.ReactNode;
 }) {
   const anim = useRef(new Animated.Value(show ? 1 : 0)).current;
-  const webDivRef = useRef<HTMLDivElement>(null);
   const wasShown = useRef(show);
 
   useEffect(() => {
     if (show !== wasShown.current) {
-      if (Platform.OS === 'web') {
-        if (webDivRef.current) {
-          webDivRef.current.classList.remove('bottomnav-enter-items');
-          void webDivRef.current.offsetWidth;
-          webDivRef.current.classList.add('bottomnav-enter-items');
-        }
-      } else {
-        anim.stopAnimation();
-        Animated.timing(anim, {
-          toValue: show ? 1 : 0,
-          duration: 200,
-          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          useNativeDriver: true,
-        }).start();
-      }
+      anim.stopAnimation();
+      Animated.timing(anim, {
+        toValue: show ? 1 : 0,
+        duration: 280,
+        easing: Easing.bezier(0.16, 1, 0.3, 1),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
     }
     wasShown.current = show;
   }, [show, anim]);
@@ -309,21 +270,6 @@ const ActiveBottomNavTransition = React.memo(function ActiveBottomNavTransition(
     inputRange: [0, 1],
     outputRange: [60, 0],
   });
-
-  if (Platform.OS === 'web') {
-    if (!show) return null;
-    return (
-      <View pointerEvents="box-none">
-        <div
-          ref={webDivRef}
-          className="bottomnav-enter-items"
-          style={{ width: "100%", pointerEvents: "none" }}
-        >
-          {children}
-        </div>
-      </View>
-    );
-  }
 
   return (
     <Animated.View
@@ -668,10 +614,11 @@ function MainContent() {
     };
   }, []);
 
-  const showBottomNav =
-    !isKeyboardVisible &&
-    (['discover', 'activity', 'create', 'chatList'].includes(screen.name) ||
-      (screen.name === 'profile' && screen.userId === 'me'));
+  const isTabScreen =
+    ['discover', 'activity', 'create', 'chatList'].includes(screen.name) ||
+    (screen.name === 'profile' && screen.userId === 'me');
+
+  const showBottomNav = !isKeyboardVisible && isTabScreen;
   const activeHeaderKey = `${screen.name}-${
     'userId' in screen
       ? screen.userId
@@ -714,7 +661,14 @@ function MainContent() {
               disableAnimation={screen.name === 'conversation'}
             >
               <ErrorBoundary onGoHome={handleGoHome}>
-                {isDiscoverActive && (
+                {/* 5 Persistent Tab Roots (Zero Re-instantiation Lag) */}
+                <View
+                  style={[
+                    StyleSheet.absoluteFill,
+                    { opacity: isDiscoverActive ? 1 : 0, zIndex: isDiscoverActive ? 1 : -1 },
+                  ]}
+                  pointerEvents={isDiscoverActive ? 'auto' : 'none'}
+                >
                   <DiscoverScreen
                     ref={discoverRef}
                     search={discoverSearch}
@@ -727,8 +681,15 @@ function MainContent() {
                     initialScrollOffset={getScrollOffset('discover')}
                     onScrollOffsetChange={(offset) => saveScrollOffset('discover', offset)}
                   />
-                )}
-                {isActivityActive && (
+                </View>
+
+                <View
+                  style={[
+                    StyleSheet.absoluteFill,
+                    { opacity: isActivityActive ? 1 : 0, zIndex: isActivityActive ? 1 : -1 },
+                  ]}
+                  pointerEvents={isActivityActive ? 'auto' : 'none'}
+                >
                   <ActivityScreen
                     tab={activityTab}
                     onChangeTab={setActivityTab}
@@ -738,16 +699,30 @@ function MainContent() {
                     initialScrollOffset={getScrollOffset(`activity:${activityTab}`)}
                     onScrollOffsetChange={(offset) => saveScrollOffset(`activity:${activityTab}`, offset)}
                   />
-                )}
-                {isCreateActive && (
+                </View>
+
+                <View
+                  style={[
+                    StyleSheet.absoluteFill,
+                    { opacity: isCreateActive ? 1 : 0, zIndex: isCreateActive ? 1 : -1 },
+                  ]}
+                  pointerEvents={isCreateActive ? 'auto' : 'none'}
+                >
                   <CreateScreen
                     ref={createRef}
                     onStateChange={setCreateState}
                     onBack={handleBackFromCreate}
                     onCreated={handleGroupCreated}
                   />
-                )}
-                {isChatListActive && (
+                </View>
+
+                <View
+                  style={[
+                    StyleSheet.absoluteFill,
+                    { opacity: isChatListActive ? 1 : 0, zIndex: isChatListActive ? 1 : -1 },
+                  ]}
+                  pointerEvents={isChatListActive ? 'auto' : 'none'}
+                >
                   <ChatListScreen
                     search={chatSearch}
                     onOpenConversation={handleOpenConversation}
@@ -755,8 +730,15 @@ function MainContent() {
                     initialScrollOffset={getScrollOffset('chatList')}
                     onScrollOffsetChange={(offset) => saveScrollOffset('chatList', offset)}
                   />
-                )}
-                {isOwnProfileActive && (
+                </View>
+
+                <View
+                  style={[
+                    StyleSheet.absoluteFill,
+                    { opacity: isOwnProfileActive ? 1 : 0, zIndex: isOwnProfileActive ? 1 : -1 },
+                  ]}
+                  pointerEvents={isOwnProfileActive ? 'auto' : 'none'}
+                >
                   <ProfileScreen
                     userId="me"
                     isOwnProfile={true}
@@ -768,70 +750,76 @@ function MainContent() {
                     scrollY={profileScrollY}
                     contentOffset={activeProfileScrollOffset}
                   />
+                </View>
+
+                {/* Pushed Sub-screens (Rendered on top when active) */}
+                {!isTabScreen && (
+                  <View style={[StyleSheet.absoluteFill, { zIndex: 10 }]} pointerEvents="auto">
+                    {screen.name === 'profile' && screen.userId !== 'me' && (
+                      <ProfileScreen
+                        key={screen.userId}
+                        userId={screen.userId}
+                        isOwnProfile={false}
+                        onBack={pop}
+                        onOpenGroup={handleOpenGroup}
+                        onOpenSettings={handleOpenSettings}
+                        onOpenPersonalInfo={handleOpenPersonalInfo}
+                        onOpenVerification={handleOpenVerification}
+                        scrollY={profileScrollY}
+                        contentOffset={activeProfileScrollOffset}
+                      />
+                    )}
+                    {screen.name === 'group' && (
+                      <EkipDetail
+                        group={screen.group}
+                        onBack={pop}
+                        onOpenProfile={handleOpenProfile}
+                        onOpenChat={handleOpenConversation}
+                        initialScrollOffset={getScrollOffset(`group:${screen.group.id}`)}
+                        onScrollOffsetChange={(offset) => saveScrollOffset(`group:${screen.group.id}`, offset)}
+                      />
+                    )}
+                    {screen.name === 'conversation' && (
+                      <ConversationScreen conversationId={screen.conversationId} onBack={pop} />
+                    )}
+                    {screen.name === 'notifications' && (
+                      <NotificationsScreen
+                        onBack={pop}
+                        onOpenConversation={handleOpenConversation}
+                        initialScrollOffset={getScrollOffset('notifications')}
+                        onScrollOffsetChange={(offset) => saveScrollOffset('notifications', offset)}
+                      />
+                    )}
+                    {screen.name === 'ai' && <AIAssistant ref={aiRef} onBack={pop} />}
+                    {screen.name === 'settings' && (
+                      <SettingsScreen
+                        onBack={pop}
+                        onOpenPlans={handleOpenPlans}
+                        onOpenPersonalInfo={handleOpenPersonalInfo}
+                        onOpenVerification={handleOpenVerification}
+                        onOpenPrivacy={handleOpenPrivacy}
+                        onOpenSecurity={handleOpenSecurity}
+                        onOpenNotifications={handleOpenNotificationsScreen}
+                        onOpenLocation={handleOpenLocation}
+                        onOpenChatTheme={handleOpenChatTheme}
+                        onOpenOnboarding={() => push({ name: 'onboarding' })}
+                        onSignOut={handleSignOut}
+                      />
+                    )}
+                    {screen.name === 'plans' && <PlansScreen onBack={pop} />}
+                    {screen.name === 'personalInfo' && (
+                      <PersonalInfoScreen
+                        onBack={pop}
+                        onOpenVerification={handleOpenVerification}
+                      />
+                    )}
+                    {screen.name === 'verification' && <VerificationScreen onBack={pop} />}
+                    {screen.name === 'privacy' && <PrivacyScreen onBack={pop} />}
+                    {screen.name === 'security' && <SecurityScreen onBack={pop} />}
+                    {screen.name === 'location' && <LocationScreen onBack={pop} />}
+                    {screen.name === 'chatTheme' && <ChatThemeScreen onBack={pop} />}
+                  </View>
                 )}
-                {screen.name === 'profile' && screen.userId !== 'me' && (
-                  <ProfileScreen
-                    key={screen.userId}
-                    userId={screen.userId}
-                    isOwnProfile={false}
-                    onBack={pop}
-                    onOpenGroup={handleOpenGroup}
-                    onOpenSettings={handleOpenSettings}
-                    onOpenPersonalInfo={handleOpenPersonalInfo}
-                    onOpenVerification={handleOpenVerification}
-                    scrollY={profileScrollY}
-                    contentOffset={activeProfileScrollOffset}
-                  />
-                )}
-                {screen.name === 'group' && (
-                  <EkipDetail
-                    group={screen.group}
-                    onBack={pop}
-                    onOpenProfile={handleOpenProfile}
-                    onOpenChat={handleOpenConversation}
-                    initialScrollOffset={getScrollOffset(`group:${screen.group.id}`)}
-                    onScrollOffsetChange={(offset) => saveScrollOffset(`group:${screen.group.id}`, offset)}
-                  />
-                )}
-                {screen.name === 'conversation' && (
-                  <ConversationScreen conversationId={screen.conversationId} onBack={pop} />
-                )}
-                {screen.name === 'notifications' && (
-                  <NotificationsScreen
-                    onBack={pop}
-                    onOpenConversation={handleOpenConversation}
-                    initialScrollOffset={getScrollOffset('notifications')}
-                    onScrollOffsetChange={(offset) => saveScrollOffset('notifications', offset)}
-                  />
-                )}
-                {screen.name === 'ai' && <AIAssistant ref={aiRef} onBack={pop} />}
-                {screen.name === 'settings' && (
-                  <SettingsScreen
-                    onBack={pop}
-                    onOpenPlans={handleOpenPlans}
-                    onOpenPersonalInfo={handleOpenPersonalInfo}
-                    onOpenVerification={handleOpenVerification}
-                    onOpenPrivacy={handleOpenPrivacy}
-                    onOpenSecurity={handleOpenSecurity}
-                    onOpenNotifications={handleOpenNotificationsScreen}
-                    onOpenLocation={handleOpenLocation}
-                    onOpenChatTheme={handleOpenChatTheme}
-                    onOpenOnboarding={() => push({ name: 'onboarding' })}
-                    onSignOut={handleSignOut}
-                  />
-                )}
-                {screen.name === 'plans' && <PlansScreen onBack={pop} />}
-                {screen.name === 'personalInfo' && (
-                  <PersonalInfoScreen
-                    onBack={pop}
-                    onOpenVerification={handleOpenVerification}
-                  />
-                )}
-                {screen.name === 'verification' && <VerificationScreen onBack={pop} />}
-                {screen.name === 'privacy' && <PrivacyScreen onBack={pop} />}
-                {screen.name === 'security' && <SecurityScreen onBack={pop} />}
-                {screen.name === 'location' && <LocationScreen onBack={pop} />}
-                {screen.name === 'chatTheme' && <ChatThemeScreen onBack={pop} />}
               </ErrorBoundary>
             </ScreenTransition>
           </View>

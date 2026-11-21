@@ -664,7 +664,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingVertical: 6,
     paddingHorizontal: 6,
-    direction: 'ltr',
     ...(Platform.OS === 'ios'
       ? {
           shadowColor: '#000',

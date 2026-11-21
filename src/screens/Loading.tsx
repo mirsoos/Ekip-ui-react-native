@@ -604,7 +604,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 2,
     position: 'relative',
-    direction: 'ltr',
   },
   pulseRing: {
     position: 'absolute',
@@ -631,7 +630,6 @@ const styles = StyleSheet.create({
   telemetrySection: {
     alignItems: 'center',
     marginTop: 32,
-    direction: 'ltr',
   },
   progressTextContainer: {
     width: BRAND_TEXT_WIDTH,

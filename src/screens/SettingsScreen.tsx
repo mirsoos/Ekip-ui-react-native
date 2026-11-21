@@ -17,11 +17,16 @@ import { GlassSheet } from '../components/Overlays';
 import { SettingsSection } from '../components/settings/SettingsSection';
 import { SettingsDivider } from '../components/settings/SettingsDivider';
 import { HorizonThemeToggle } from '../components/common/HorizonThemeToggle';
-import { getIcon } from '../lib/icons';
+import { getIcon, Icons } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n, LANGUAGES } from '../lib/i18n';
 import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
+
+const Moon = getIcon('Moon');
+const Sun = getIcon('Sun');
+const Crown = getIcon('Crown');
+const Check = getIcon('Check');
 
 export function SettingsScreenComponent({
   onBack,
@@ -80,11 +85,7 @@ export function SettingsScreenComponent({
     };
   }, [onBack, showLanguageSheet, showPremiumSheet]);
 
-  const ChevronIcon = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
-  const Moon = getIcon('Moon');
-  const Sun = getIcon('Sun');
-  const Crown = getIcon('Crown');
-  const Check = getIcon('Check');
+  const ChevronIcon = isRTL ? Icons.ChevronLeft : Icons.ChevronRight;
 
   const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);
   const textAlign = isRTL ? ('right' as const) : ('left' as const);

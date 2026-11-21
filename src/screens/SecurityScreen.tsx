@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassCard, GlassButton, LiquidGlassToggle } from '../components/Glass';
 import { GlassSheet } from '../components/Overlays';
-import { getIcon } from '../lib/icons';
+import { getIcon, Icons } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { useToast } from '../lib/ToastContext';
@@ -87,6 +87,14 @@ const RECOVERY_CODES = [
   'EKIP-60Z3-88PP',
 ];
 
+const ShieldCheck = getIcon('ShieldCheck');
+const Lock = getIcon('Lock');
+const Key = getIcon('Key');
+const Smartphone = getIcon('Smartphone');
+const Laptop = getIcon('Laptop');
+const Tablet = getIcon('Tablet');
+const Trash = getIcon('Trash');
+
 export function SecurityScreen({ onBack }: SecurityScreenProps) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -108,15 +116,7 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [showRecoverySheet, setShowRecoverySheet] = useState(false);
-
-  const ShieldCheck = getIcon('ShieldCheck');
-  const Lock = getIcon('Lock');
-  const Key = getIcon('Key');
-  const Smartphone = getIcon('Smartphone');
-  const Laptop = getIcon('Laptop');
-  const Tablet = getIcon('Tablet');
-  const Trash = getIcon('Trash');
-  const ChevronRight = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
+  const ChevronIcon = isRTL ? Icons.ChevronLeft : Icons.ChevronRight;
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -198,7 +198,7 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
             </View>
             <LiquidGlassToggle
               checked={passkeyRegistered}
-              onChange={(val) => {
+              onChange={(val: boolean) => {
                 setPasskeyRegistered(val);
                 showToast(
                   val
@@ -299,7 +299,7 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
                 {isRTL ? 'آخرین تغییر: ۲۴ روز پیش' : 'Last updated 24 days ago'}
               </Text>
             </View>
-            <ChevronRight size={18} color={colors.textTertiary} />
+            <ChevronIcon size={18} color={colors.textTertiary} />
           </TouchableOpacity>
 
           <View style={[styles.divider, { backgroundColor: colors.divider }]} />
@@ -321,7 +321,7 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
                   : 'Emergency one-time access tokens'}
               </Text>
             </View>
-            <ChevronRight size={18} color={colors.textTertiary} />
+            <ChevronIcon size={18} color={colors.textTertiary} />
           </TouchableOpacity>
         </GlassCard>
 

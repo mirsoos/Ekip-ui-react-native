@@ -1,7 +1,16 @@
 // --- START OF FILE FloatingGlassHeader.tsx ---
 
 import React, { useRef, useEffect, useState, type ReactNode } from 'react';
-import { View, Text, StyleSheet, Platform, Animated, Easing, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  Animated,
+  Easing,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassBackButton } from '../Glass';
 import { FrostedGlass } from '../FrostedGlass';
@@ -30,6 +39,9 @@ export interface FloatingGlassHeaderProps {
   animated?: boolean;
 }
 
+const USE_NATIVE_DRIVER = Platform.OS !== 'web';
+const ENTRANCE_DURATION = 380;
+
 export function FloatingGlassHeaderComponent({
   title,
   subtitle,
@@ -45,31 +57,22 @@ export function FloatingGlassHeaderComponent({
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
 
-  const [anim] = useState(() => new Animated.Value(0));
-  const webDivRef = useRef<HTMLDivElement>(null);
-  const hasMounted = useRef(false);
+  const [anim] = useState(() => new Animated.Value(animated ? 0 : 1));
 
   useEffect(() => {
     if (!animated) return;
-    if (Platform.OS === 'web') {
-      if (!hasMounted.current) {
-        hasMounted.current = true;
-        return;
-      }
-      if (webDivRef.current) {
-        webDivRef.current.classList.remove('header-enter-items');
-        void webDivRef.current.offsetWidth;
-        webDivRef.current.classList.add('header-enter-items');
-      }
-    } else {
-      anim.setValue(0);
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 260,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-        useNativeDriver: true,
-      }).start();
-    }
+    anim.setValue(0);
+    const timing = Animated.timing(anim, {
+      toValue: 1,
+      duration: ENTRANCE_DURATION,
+      easing: Easing.bezier(0.16, 1, 0.3, 1),
+      useNativeDriver: USE_NATIVE_DRIVER,
+    });
+    timing.start();
+
+    return () => {
+      timing.stop();
+    };
   }, [animated, anim]);
 
   const translateY = anim.interpolate({
@@ -85,12 +88,11 @@ export function FloatingGlassHeaderComponent({
         {
           flexDirection: isRTL ? 'row-reverse' : 'row',
           borderColor: colors.glassBorderStrong,
-          ...(Platform.OS === 'web' ? ({ pointerEvents: 'auto' } as any) : {}),
         },
         pillStyle,
       ]}
     >
-      {/* 360° Frosted Glass */}
+      {/* 360° Frosted Glass (Layered RGBA Standard) */}
       <FrostedGlass
         borderRadius={28}
         marginWidth={14}
@@ -101,7 +103,7 @@ export function FloatingGlassHeaderComponent({
       />
 
       {onBack && (
-        <GlassBackButton onPress={onBack} style={{ zIndex: 10 }} />
+        <GlassBackButton onPress={onBack} />
       )}
 
       {leading && (
@@ -114,24 +116,23 @@ export function FloatingGlassHeaderComponent({
         <View style={{ flex: 1, zIndex: 10 }}>
           {children}
         </View>
-      ) : (title !== undefined || subtitle !== undefined) ? (
-        <View style={{ flex: 1, zIndex: 10 }}>
-          {title ? (
-            <Text
-              style={[
-                styles.title,
-                {
-                  color: colors.textPrimary,
-                  textAlign: isRTL ? 'right' : 'left',
-                },
-              ]}
-              numberOfLines={1}
-            >
-              {title}
-            </Text>
-          ) : null}
+      ) : title ? (
+        <View style={{ flex: 1, zIndex: 10, justifyContent: 'center' }}>
+          <Text
+            numberOfLines={1}
+            style={[
+              styles.title,
+              {
+                color: colors.textPrimary,
+                textAlign: isRTL ? 'right' : 'left',
+              },
+            ]}
+          >
+            {title}
+          </Text>
           {subtitle ? (
             <Text
+              numberOfLines={1}
               style={[
                 styles.status,
                 {
@@ -139,7 +140,6 @@ export function FloatingGlassHeaderComponent({
                   textAlign: isRTL ? 'right' : 'left',
                 },
               ]}
-              numberOfLines={1}
             >
               {subtitle}
             </Text>
@@ -156,32 +156,6 @@ export function FloatingGlassHeaderComponent({
       )}
     </View>
   );
-
-  if (Platform.OS === 'web' && animated) {
-    return (
-      <View
-        pointerEvents="box-none"
-        style={[
-          styles.outerContainer,
-          {
-            paddingTop: getHeaderTopInset(insets.top),
-          },
-          style,
-        ]}
-      >
-        <div
-          ref={webDivRef}
-          className="header-enter-items"
-          style={{
-            width: '100%',
-            pointerEvents: 'none',
-          }}
-        >
-          {headerContent}
-        </div>
-      </View>
-    );
-  }
 
   if (animated) {
     return (

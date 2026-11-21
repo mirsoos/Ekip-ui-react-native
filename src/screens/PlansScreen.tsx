@@ -14,14 +14,15 @@ interface PlansScreenProps {
   onBack: () => void;
 }
 
+const Crown = getIcon('Crown');
+const Check = getIcon('Check');
+const Sparkles = getIcon('Sparkles');
+
 export function PlansScreenComponent({ onBack }: PlansScreenProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { isRTL } = useI18n();
   const { showToast } = useToast();
-  const Crown = getIcon('Crown');
-  const Check = getIcon('Check');
-  const Sparkles = getIcon('Sparkles');
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {

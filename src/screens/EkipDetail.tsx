@@ -7,12 +7,12 @@ import {
   ScrollView,
   StyleSheet,
   Platform,
-  Image,
   TouchableOpacity,
   BackHandler,
   type NativeSyntheticEvent,
   type NativeScrollEvent,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
 import { GlassButton } from '../components/Glass';
@@ -256,7 +256,9 @@ export function EkipDetailComponent({
               <Image
                 source={{ uri: group.cover_url }}
                 style={styles.ownerCoverImage}
-                resizeMode="cover"
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={200}
               />
             </View>
           </View>

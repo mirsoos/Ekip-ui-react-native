@@ -32,6 +32,12 @@ interface SavedPlace {
   category: 'favorite' | 'home' | 'work';
 }
 
+const MapPin = getIcon('MapPin');
+const Compass = getIcon('Compass');
+const Navigation = getIcon('Navigation');
+const Check = getIcon('Check');
+const Trash = getIcon('Trash');
+
 export function LocationScreen({ onBack }: LocationScreenProps) {
   const insets = useSafeAreaInsets();
   const { me, updateMe, addNotification } = useAppData();
@@ -60,12 +66,6 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
   const [showAddPlaceModal, setShowAddPlaceModal] = useState(false);
   const [newPlaceName, setNewPlaceName] = useState('');
   const [newPlaceAddress, setNewPlaceAddress] = useState('');
-
-  const MapPin = getIcon('MapPin');
-  const Compass = getIcon('Compass');
-  const Navigation = getIcon('Navigation');
-  const Check = getIcon('Check');
-  const Trash = getIcon('Trash');
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {

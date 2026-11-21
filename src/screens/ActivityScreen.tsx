@@ -7,11 +7,11 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
-  Image,
   Platform,
   type NativeSyntheticEvent,
   type NativeScrollEvent,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
@@ -134,7 +134,7 @@ export function ActivityScreenComponent({
     };
   }, [groups, members, requests]);
 
-  const ChevronRight = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
+  const ChevronRight = isRTL ? Icons.ChevronLeft : Icons.ChevronRight;
 
   const handleAccept = useCallback(
     (reqId: string, profileName: string, groupTitle: string) => {
@@ -244,7 +244,9 @@ export function ActivityScreenComponent({
                 <Image
                   source={{ uri: group.cover_url }}
                   style={styles.bannerImage}
-                  resizeMode="cover"
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  transition={200}
                 />
               ) : (
                 <View style={[styles.bannerImage, { backgroundColor: colors.glassThinBg }]} />
@@ -372,7 +374,9 @@ export function ActivityScreenComponent({
                 <Image
                   source={{ uri: group.cover_url }}
                   style={styles.thumbImage}
-                  resizeMode="cover"
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  transition={200}
                 />
               ) : (
                 <View style={[styles.thumbImage, { backgroundColor: colors.glassThinBg }]} />
@@ -434,7 +438,9 @@ export function ActivityScreenComponent({
                 <Image
                   source={{ uri: group.cover_url }}
                   style={styles.thumbImage}
-                  resizeMode="cover"
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  transition={200}
                 />
               ) : (
                 <View style={[styles.thumbImage, { backgroundColor: colors.glassThinBg }]} />

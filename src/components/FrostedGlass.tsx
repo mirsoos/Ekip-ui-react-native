@@ -4,11 +4,9 @@ import React, { type ReactNode } from 'react';
 import {
   View,
   StyleSheet,
-  Platform,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import {
   ThemeContext,
   darkColors,
@@ -27,6 +25,10 @@ export interface FrostedGlassProps {
   pointerEvents?: 'none' | 'box-none' | 'box-only' | 'auto';
 }
 
+/**
+ * Liquid Glass Standard Surface (NO BLUR EVER):
+ * Pure layered RGBA tokens, borders, and native platform shadows.
+ */
 export const FrostedGlass = React.memo(function FrostedGlass({
   children,
   style,
@@ -51,81 +53,22 @@ export const FrostedGlass = React.memo(function FrostedGlass({
     style,
   ];
 
-  if (Platform.OS === 'android') {
-    return (
-      <View pointerEvents={pointerEvents} style={containerStyle}>
-        <View
-          pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              borderRadius,
-              backgroundColor: `rgba(255, 255, 255, ${overlayOpacity})`,
-            },
-          ]}
-        />
-        {children}
-      </View>
-    );
-  }
-
-  if (Platform.OS === 'web') {
-    const flattened = StyleSheet.flatten(style);
-    const bg = flattened?.backgroundColor ?? colors.glassHeaderBg;
-
-    const webBlurStyle: ViewStyle = {
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
-      backgroundColor: bg,
-    } as any;
-
-    return (
-      <View
-        pointerEvents={pointerEvents}
-        style={[
-          styles.container,
-          {
-            borderRadius,
-            borderColor: colors.glassBorderStrong,
-          },
-          style,
-          webBlurStyle,
-        ]}
-      >
-        <View
-          pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              borderRadius,
-              backgroundColor: `rgba(255, 255, 255, ${overlayOpacity})`,
-            },
-          ]}
-        />
-        {children}
-      </View>
-    );
-  }
-
   return (
-    <BlurView
-      pointerEvents={pointerEvents}
-      intensity={50}
-      tint={isDark ? 'dark' : 'light'}
-      style={containerStyle}
-    >
+    <View pointerEvents={pointerEvents} style={containerStyle}>
       <View
         pointerEvents="none"
         style={[
           StyleSheet.absoluteFill,
           {
             borderRadius,
-            backgroundColor: `rgba(255, 255, 255, ${overlayOpacity})`,
+            backgroundColor: isDark
+              ? `rgba(255, 255, 255, ${overlayOpacity})`
+              : `rgba(255, 255, 255, ${Math.min(overlayOpacity * 2, 0.25)})`,
           },
         ]}
       />
       {children}
-    </BlurView>
+    </View>
   );
 });
 
@@ -146,8 +89,4 @@ const styles = StyleSheet.create({
     backgroundColor: lightColors.glassHeaderBg,
     borderColor: lightColors.glassBorderStrong,
   },
-  webBlur: {
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
-  } as ViewStyle,
 });

@@ -251,3 +251,7 @@ export function useChatTheme(): ChatThemeContextValue {
   if (!context) throw new Error('useChatTheme must be used within ThemeProvider');
   return context;
 }
+
+export * from './theme/typography';
+export * from './theme/spacing';
+export * from './animations';

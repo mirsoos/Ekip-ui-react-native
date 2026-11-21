@@ -38,6 +38,15 @@ interface DocumentDetails {
   expiryDate: string;
 }
 
+const Check = getIcon('Check');
+const Lock = getIcon('Lock');
+const Camera = getIcon('Camera');
+const Sparkles = getIcon('Sparkles');
+const Award = getIcon('Award');
+const Zap = getIcon('Zap');
+const Smartphone = getIcon('Smartphone');
+const Mail = getIcon('Mail');
+
 export function VerificationScreen({ onBack }: VerificationScreenProps) {
   const insets = useSafeAreaInsets();
   const { me, updateMe, addNotification } = useAppData();
@@ -62,15 +71,6 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
   const [faceScanStep, setFaceScanStep] = useState<'idle' | 'scanning' | 'smiling' | 'success'>('idle');
   const [docScanning, setDocScanning] = useState(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  const Check = getIcon('Check');
-  const Lock = getIcon('Lock');
-  const Camera = getIcon('Camera');
-  const Sparkles = getIcon('Sparkles');
-  const Award = getIcon('Award');
-  const Zap = getIcon('Zap');
-  const Smartphone = getIcon('Smartphone');
-  const Mail = getIcon('Mail');
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {

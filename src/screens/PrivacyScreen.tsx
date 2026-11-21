@@ -8,7 +8,7 @@ import { GlassCard, GlassButton, GlassAvatar } from '../components/Glass';
 import { TactileSegmented } from '../components/common/TactileSegmented';
 import { GlassSheet } from '../components/Overlays';
 import { LiquidGlassToggle } from '../components/common/LiquidGlassToggle';
-import { getIcon } from '../lib/icons';
+import { getIcon, Icons } from '../lib/icons';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { useToast } from '../lib/ToastContext';
@@ -46,6 +46,10 @@ const INITIAL_BLOCKED_USERS: BlockedUser[] = [
   },
 ];
 
+const Eye = getIcon('Eye');
+const EyeOff = getIcon('EyeOff');
+const Ban = getIcon('Ban');
+
 export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
   const insets = useSafeAreaInsets();
   const { addNotification } = useAppData();
@@ -66,11 +70,7 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
 
   const [showBlockedSheet, setShowBlockedSheet] = useState(false);
   const [blockedList, setBlockedList] = useState<BlockedUser[]>(INITIAL_BLOCKED_USERS);
-
-  const Eye = getIcon('Eye');
-  const EyeOff = getIcon('EyeOff');
-  const Ban = getIcon('Ban');
-  const ChevronRight = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
+  const ChevronIcon = isRTL ? Icons.ChevronLeft : Icons.ChevronRight;
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -375,7 +375,7 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
                   : `${blockedList.length} accounts restricted`}
               </Text>
             </View>
-            <ChevronRight size={18} color={colors.textTertiary} />
+            <ChevronIcon size={18} color={colors.textTertiary} />
           </TouchableOpacity>
         </GlassCard>
       </ScrollView>

@@ -59,3 +59,53 @@ The authentic Apple Liquid Glass active indicator (e.g. `BottomNav.tsx`) follows
 3. **Execute the exact user command directly** with the absolute minimum number of tool calls, fastest turnaround time, and lowest token consumption.
 
 
+# Ekip React Native - Architecture & Clean Migration Standards
+
+## Core Architecture Principles
+1. **Feature-Driven & Modular Layout:**
+   - `app/`: Strictly for Expo Router route declarations (thin controller/screen entry-points, max 30-40 lines).
+   - `src/features/<feature>/`: Isolated modules containing their own components, hooks, services, and types.
+   - `src/components/common/` & `src/components/glass/`: Domain-agnostic, reusable UI primitives.
+   - `src/services/`: Pure network and storage access layer.
+   - `src/store/`: Global state (e.g. Zustand) separated from UI logic.
+
+2. **Liquid Glass Standards (NO BLUR EVER):**
+   - ZERO blur allowed anywhere in the app. Prohibited to use `expo-blur`, `BlurView`, or `backdropFilter`.
+   - Rely strictly on layered RGBA tokens (`colors.ts`), borders (`surfaceBorder`, `surfaceBorderStrong`), and native platform shadows.
+   - Stars are strictly exclusive to the Loading screen atmosphere; all other screens use `AuroraBackground` without stars.
+
+3. **Universal 3-Tier Screen Architecture & Entrance Law (STRICT PROJECT STANDARD):**
+   - Every post-login screen is structurally divided into 3 standardized tiers:
+     1. **Header:** Any header (such as `FloatingGlassHeader` or top navigation pills) MUST always drop down from above with an entrance animation (`translateY: -50 -> 0`, `opacity: 0 -> 1`, duration: `animationDurations.sceneEntrance` 380ms).
+     2. **Page & Screen Content:** Any page or screen content (including tabs, wizards, and modals) MUST always rise from below with an entrance animation (`translateY: 20 -> 0`, `opacity: 0 -> 1`, duration: `animationDurations.sceneEntrance` 380ms) using the centralized `MotionView` primitive, with bottom clearance `layout.bottomNavClearance` (100px).
+     3. **Universal BottomNav:** `BottomNav` is a fixed requirement on EVERY post-login screen without exception ("وحی منزل"), mounted stably at the layout level without unmounting or re-entering.
+
+4. **Zero-Lag JS Thread Performance Law (STRICT PROJECT STANDARD):**
+   - **No Naive Screen Destructions / No Re-instantiation Lag:** Never use raw conditional rendering (`{isActive && <Screen />}`) that destroys and recreates heavy screen trees on tab switches. Screen data, inputs, and scroll offsets MUST stay preserved in Zustand stores.
+   - **No `display: 'none'` Layout Trashing:** NEVER use `display: 'none'` to toggle screen visibility, as it forces the native Yoga engine to discard and recalculate entire layout trees on re-activation (causing severe frame drops).
+   - **No Background Resource Leaks (`opacity: 0` without Freezing):** Inactive screens must never run active animations, timers, or scroll listeners in the background. Inactive screens must be frozen to consume 0% JS CPU.
+   - **Pure GPU Native Driver Execution:** Every animation (headers, pages, icons, modals) MUST run with `useNativeDriver: true` or native Reanimated worklets. NEVER calculate trigonometry (`Math.sin`, `Math.cos`), dynamic SVG gradient coordinates, or loop math on the JS thread.
+   - **Virtualized List Optimization:** Any `FlatList` MUST implement `getItemLayout` for fixed-height items, cap `windowSize <= 5`, set `removeClippedSubviews: true`, `initialNumToRender: 6`, `maxToRenderPerBatch: 5`, and use `expo-image` with hardware-accelerated memory/disk caching.
+   - **Fine-Grained Zustand Subscriptions:** NEVER subscribe whole store objects into screens. Always use granular selectors (`useStore(s => s.specificValue)`). Typing into inputs must NEVER trigger re-renders of list items or sibling components.
+
+## Strict Prohibited Patterns (ZERO TOLERANCE - NEVER COPY FROM LEGACY)
+1. **No Web-Only CSS Filter Hacks:**
+   - NEVER write `backdropFilter` or `WebkitBackdropFilter`.
+   - NEVER use `as any` style casts to force browser CSS into React Native `StyleSheet`.
+2. **No Web DOM Manipulations:**
+   - NEVER use `webDivRef.current.classList.add/remove` or `void offsetWidth`.
+   - Animate purely with React Native Reanimated or standard React Native `Animated`.
+3. **No Invalid React Native Style Properties:**
+   - NEVER use `direction: 'ltr'` or `direction: 'rtl'`. Use `writingDirection` for typography and Flexbox / `I18nManager` for layouts.
+4. **No Custom Routing or History State Hacks:**
+   - NEVER create manual navigation history arrays (`historyRef`, `push/pop` state machines).
+   - Strictly use Expo Router (`useRouter`, `usePathname`, `useLocalSearchParams`, `Link`).
+5. **No Monolithic Files:**
+   - Files MUST stay focused and modular (target max 200 lines). Break large screens into smaller sub-components and custom hooks.
+6. **No Inline Hardcoding:**
+   - Colors from `@/lib/theme`, fonts from `@/lib/theme/typography`, spacing from `@/lib/theme/spacing`, animations from `@/lib/animations`, texts from `@/lib/i18n`.
+
+## Migration Workflow
+1. When migrating from the legacy project (`antigravity`), extract ONLY the pure visual design, typography, colors, and business logic formulas.
+2. Cleanse and refactor the code according to the above rules BEFORE writing it to the new project (`Ekip-ReactNative`).
+3. Always verify with `npx tsc --noEmit` before concluding any migration step.
