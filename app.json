@@ -3,7 +3,6 @@
     "name": "Ekip",
     "slug": "ekip",
     "version": "1.0.0",
-    "scheme": "ekip",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -39,8 +38,7 @@
           ]
         }
       ],
-      "expo-status-bar",
-      "expo-router"
+      "expo-status-bar"
     ]
   }
 }
