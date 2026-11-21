@@ -4,7 +4,6 @@ import Animated, {
   FadeIn,
   FadeOut,
 } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { ParticleBurst } from './ParticleBurst';
 
@@ -75,11 +74,7 @@ export const ReactionBar = React.memo(function ReactionBar({
             exiting={FadeOut.duration(150)}
             style={styles.capsule}
           >
-            {Platform.OS === 'ios' ? (
-              <BlurView intensity={45} tint="dark" style={StyleSheet.absoluteFill} />
-            ) : (
-              <View style={[StyleSheet.absoluteFill, styles.androidGlassFallback]} />
-            )}
+            <View style={[StyleSheet.absoluteFill, styles.glassSurface]} />
 
             <View style={styles.emojisRow}>
               {emojis.map((emoji) => (
@@ -146,6 +141,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 10,
     elevation: 8,
+  },
+  glassSurface: {
+    backgroundColor: 'rgba(15, 23, 42, 0.94)',
   },
   androidGlassFallback: {
     backgroundColor: 'rgba(15, 23, 42, 0.94)',
