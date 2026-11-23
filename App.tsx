@@ -11,6 +11,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import {
   ThemeProvider,
   useTheme,
+  animationDurations,
 } from './src/lib/theme';
 import { AppDataProvider, useAppData } from './src/lib/appData';
 import { BottomNav, type TabKey } from './src/components/BottomNav';
@@ -22,6 +23,7 @@ import { ActivityHeader } from './src/components/activity/ActivityHeader';
 import { SettingsHeader } from './src/components/settings/SettingsHeader';
 import { AIHeader } from './src/components/ai/AIHeader';
 import { ProfileHeader } from './src/components/profile/ProfileHeader';
+import { EkipDetailHeader } from './src/components/ekip/EkipDetailHeader';
 import { EkipActionBar } from './src/components/ekip/EkipActionBar';
 import { CreateContinueButton } from './src/components/create/CreateContinueButton';
 import { CreateHeader } from './src/components/create/CreateHeader';
@@ -32,7 +34,7 @@ import type { Group } from './src/types/database';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { Onboarding } from './src/screens/Onboarding';
 import { DiscoverScreen, type DiscoverScreenHandle } from './src/screens/DiscoverScreen';
-import { EkipDetail } from './src/screens/EkipDetail';
+import { EkipDetail, type EkipDetailHandle } from './src/screens/EkipDetail';
 import { CreateScreen, type CreateScreenHandle } from './src/screens/CreateScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { ActivityScreen } from './src/screens/ActivityScreen';
@@ -215,7 +217,7 @@ const ActiveHeaderTransition = React.memo(function ActiveHeaderTransition({
     anim.setValue(0);
     Animated.timing(anim, {
       toValue: 1,
-      duration: 320,
+      duration: animationDurations.headerEntrance,
       easing: Easing.bezier(0.16, 1, 0.3, 1),
       useNativeDriver: Platform.OS !== 'web',
     }).start();
@@ -223,7 +225,7 @@ const ActiveHeaderTransition = React.memo(function ActiveHeaderTransition({
 
   const translateY = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-10, 0],
+    outputRange: [-36, 0],
   });
 
   return (
@@ -344,6 +346,7 @@ function MainContent() {
   const createRef = React.useRef<CreateScreenHandle>(null);
   const discoverRef = React.useRef<DiscoverScreenHandle>(null);
   const aiRef = React.useRef<AIAssistantHandle>(null);
+  const ekipDetailRef = React.useRef<EkipDetailHandle>(null);
   const profileScrollY = React.useRef(new Animated.Value(0)).current;
   const profileScrollOffsets = React.useRef(new Map<string, number>());
   const activeProfileId = screen.name === 'profile' ? screen.userId : 'me';
@@ -771,6 +774,7 @@ function MainContent() {
                     )}
                     {screen.name === 'group' && (
                       <EkipDetail
+                        ref={ekipDetailRef}
                         group={screen.group}
                         onBack={pop}
                         onOpenProfile={handleOpenProfile}
@@ -924,10 +928,10 @@ function MainContent() {
         {screen.name === 'chatTheme' && <SettingsHeader onBack={pop} title={t('settings.headerChatTheme')} />}
         {screen.name === 'notifications' && <SettingsHeader onBack={pop} title={t('settings.headerNotifications')} />}
         {screen.name === 'group' && (
-          <EkipActionBar
+          <EkipDetailHeader
             group={screen.group}
-            onOpenProfile={handleOpenProfile}
-            onOpenChat={handleOpenConversation}
+            onBack={pop}
+            onShare={() => ekipDetailRef.current?.openShare()}
           />
         )}
         </ActiveHeaderTransition>

@@ -1,7 +1,8 @@
 // --- START OF FILE ScreenTransition.tsx ---
 
 import React, { useEffect, useRef, useState, type ReactNode } from 'react';
-import { View, Platform, Animated, Easing, type StyleProp, type ViewStyle, StyleSheet } from 'react-native';
+import { View, Platform, Animated, type StyleProp, type ViewStyle, StyleSheet } from 'react-native';
+import { animationDurations, animationEasings } from '../../lib/theme/animations';
 
 interface ScreenTransitionProps {
   children: ReactNode;
@@ -11,7 +12,7 @@ interface ScreenTransitionProps {
 }
 
 const USE_NATIVE_DRIVER = Platform.OS !== 'web';
-const TRANSITION_DURATION = 320;
+const TRANSITION_DURATION = animationDurations.sceneEntrance;
 
 export const ScreenTransition = React.memo(function ScreenTransition({
   children,
@@ -38,7 +39,7 @@ export const ScreenTransition = React.memo(function ScreenTransition({
     const timing = Animated.timing(anim, {
       toValue: 1,
       duration: TRANSITION_DURATION,
-      easing: Easing.bezier(0.16, 1, 0.3, 1),
+      easing: animationEasings.smoothDecelerate,
       useNativeDriver: USE_NATIVE_DRIVER,
     });
     timing.start();
@@ -50,7 +51,7 @@ export const ScreenTransition = React.memo(function ScreenTransition({
 
   const translateY = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [16, 0],
+    outputRange: [48, 0],
   });
 
   if (disableAnimation) {

@@ -98,15 +98,15 @@ export const CreateScreen = React.memo(
       scrollViewRef.current?.scrollTo({ y: 0, animated: false });
       Animated.timing(stepAnim, {
         toValue: 1,
-        duration: 240,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        duration: 420,
+        easing: Easing.bezier(0.16, 1, 0.3, 1),
         useNativeDriver: Platform.OS !== 'web',
       }).start();
     }, [step, stepAnim]);
 
     const stepTranslateY = stepAnim.interpolate({
       inputRange: [0, 1],
-      outputRange: [12, 0],
+      outputRange: [32, 0],
     });
 
     const canProceed = useCallback((): boolean => {

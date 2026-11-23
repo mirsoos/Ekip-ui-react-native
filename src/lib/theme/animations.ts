@@ -4,13 +4,13 @@ import { Animated, Easing, Platform } from 'react-native';
 export const USE_NATIVE_DRIVER = Platform.OS !== 'web';
 
 export const animationDurations = {
-  sceneEntrance: 380,
-  headerEntrance: 380,
-  bottomNavEntrance: 280,
+  sceneEntrance: 540,
+  headerEntrance: 520,
+  bottomNavEntrance: 320,
   pillSpring: 300,
   cardHover: 200,
   toastFade: 240,
-  modalEntrance: 250,
+  modalEntrance: 340,
   pressFeedback: 120,
 } as const;
 
@@ -56,7 +56,7 @@ export interface UseEntranceAnimationOptions {
 export function useEntranceAnimation({
   delay = 0,
   duration = animationDurations.sceneEntrance,
-  initialY = 20,
+  initialY = 48,
 }: UseEntranceAnimationOptions = {}) {
   const [anim] = useState(() => new Animated.Value(0));
 

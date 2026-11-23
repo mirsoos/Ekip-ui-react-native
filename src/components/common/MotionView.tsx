@@ -10,6 +10,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { BOTTOM_NAV_CLEARANCE } from '../../constants/layout';
+import { animationDurations } from '../../lib/theme/animations';
 
 export interface MotionViewProps {
   children?: ReactNode;
@@ -20,14 +21,14 @@ export interface MotionViewProps {
   bottomClearance?: number;
   /** Delay before animation starts (ms) */
   delay?: number;
-  /** Optional custom duration (ms), defaults to 380ms per project standard */
+  /** Optional custom duration (ms), defaults to 540ms per project standard */
   duration?: number;
   /** Optional key that retriggers animation when changed */
   animationKey?: string | number;
 }
 
-const ENTRANCE_DURATION = 380;
-const INITIAL_TRANSLATE_Y = 20;
+const ENTRANCE_DURATION = animationDurations.sceneEntrance;
+const INITIAL_TRANSLATE_Y = 48;
 
 /**
  * Universal Screen Content Motion Primitive (STRICT PROJECT STANDARD):

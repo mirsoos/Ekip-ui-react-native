@@ -17,6 +17,7 @@ import { FrostedGlass } from '../FrostedGlass';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';
+import { animationDurations } from '../../lib/theme/animations';
 
 export interface FloatingGlassHeaderProps {
   /** Optional title */
@@ -40,7 +41,7 @@ export interface FloatingGlassHeaderProps {
 }
 
 const USE_NATIVE_DRIVER = Platform.OS !== 'web';
-const ENTRANCE_DURATION = 380;
+const ENTRANCE_DURATION = animationDurations.headerEntrance;
 
 export function FloatingGlassHeaderComponent({
   title,

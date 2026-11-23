@@ -36,8 +36,8 @@ export const OnboardingSlide = React.memo(function OnboardingSlide({
     entrance.setValue(0);
     const animation = Animated.timing(entrance, {
       toValue: 1,
-      duration: 260,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      duration: 480,
+      easing: Easing.bezier(0.16, 1, 0.3, 1),
       useNativeDriver: Platform.OS !== 'web',
     });
     animation.start();
@@ -47,7 +47,7 @@ export const OnboardingSlide = React.memo(function OnboardingSlide({
 
   const translateY = entrance.interpolate({
     inputRange: [0, 1],
-    outputRange: [16, 0],
+    outputRange: [42, 0],
   });
 
   return (

@@ -1,13 +1,12 @@
 // --- START OF FILE EkipDetail.tsx ---
 
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
   Platform,
-  TouchableOpacity,
   BackHandler,
   type NativeSyntheticEvent,
   type NativeScrollEvent,
@@ -18,8 +17,6 @@ import { useAppData } from '../lib/appData';
 import { GlassButton } from '../components/Glass';
 import { GlassSheet } from '../components/Overlays';
 import { Icons, type IconName } from '../lib/icons';
-import { FloatingGlassHeader } from '../components/common/FloatingGlassHeader';
-import { FrostedGlass } from '../components/FrostedGlass';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 import { EkipEventInfoCard } from '../components/ekip/EkipEventInfoCard';
 import { EkipHostCard } from '../components/ekip/EkipHostCard';
@@ -38,24 +35,34 @@ const categoryIcons: Record<string, IconName> = {
   work: 'Briefcase',
 };
 
-export function EkipDetailComponent({
-  group,
-  onBack,
-  onOpenProfile,
-  onOpenChat,
-  initialScrollOffset = 0,
-  onScrollOffsetChange,
-}: {
+export interface EkipDetailHandle {
+  openShare: () => void;
+}
+
+export interface EkipDetailProps {
   group: Group;
   onBack: () => void;
   onOpenProfile: (userId: string) => void;
   onOpenChat: (conversationId: string) => void;
   initialScrollOffset?: number;
   onScrollOffsetChange?: (offset: number) => void;
-}) {
+}
+
+export const EkipDetail = React.memo(
+  forwardRef<EkipDetailHandle, EkipDetailProps>(function EkipDetail(
+    {
+      group,
+      onBack,
+      onOpenProfile,
+      onOpenChat,
+      initialScrollOffset = 0,
+      onScrollOffsetChange,
+    },
+    ref
+  ) {
   const { me, members, requests, addRequest, updateRequest, addNotification } = useAppData();
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { t, isRTL } = useI18n();
   const { showToast } = useToast();
 
@@ -118,8 +125,6 @@ export function EkipDetailComponent({
     () => requests.find((r) => r.group_id === group.id && r.user_id === 'me'),
     [requests, group.id]
   );
-
-  const isOwner = group.owner_id === 'me';
 
   // Eligibility check
   const levelOk = !group.required_level || me.level >= group.required_level;
@@ -185,42 +190,16 @@ export function EkipDetailComponent({
     }
   }, [group.owner, onOpenProfile]);
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      openShare: () => setShowShare(true),
+    }),
+    []
+  );
+
   return (
     <View style={styles.container}>
-      <FloatingGlassHeader
-        onBack={onBack}
-        title={group.title}
-        subtitle={
-          isOwner
-            ? t('ekip.manage')
-            : group.category === 'work'
-            ? t('discover.cat.work')
-            : t('discover.cat.entertainment')
-        }
-        trailing={
-          <TouchableOpacity
-            activeOpacity={0.75}
-            onPress={() => setShowShare(true)}
-            style={[
-              styles.headerActionBtn,
-              { borderColor: colors.glassBorderStrong },
-            ]}
-          >
-            <FrostedGlass
-              borderRadius={21}
-              marginWidth={9}
-              scale={21}
-              blurDeviation={1.6}
-              overlayOpacity={isDark ? 0.1 : 0.22}
-              style={StyleSheet.absoluteFill}
-            />
-            <View style={styles.headerIconWrap}>
-              <Icons.Share size={20} color={colors.textPrimary} strokeWidth={2.2} />
-            </View>
-          </TouchableOpacity>
-        }
-      />
-
       <ScrollView
         ref={scrollRef}
         contentOffset={initialOffset}
@@ -394,9 +373,7 @@ export function EkipDetailComponent({
       </GlassSheet>
     </View>
   );
-}
-
-export const EkipDetail = React.memo(EkipDetailComponent);
+}));
 
 const styles = StyleSheet.create({
   container: {
@@ -474,25 +451,5 @@ const styles = StyleSheet.create({
   ownerCoverImage: {
     width: '100%',
     height: '100%',
-  },
-  headerActionBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: radii.pill,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: themeColors.palette.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: Platform.OS === 'android' ? 0 : 4,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  headerIconWrap: {
-    zIndex: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
