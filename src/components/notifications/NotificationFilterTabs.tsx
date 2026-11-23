@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { TactileSegmented } from '../common/TactileSegmented';
 import { useI18n } from '../../lib/i18n';
+import { brandColors, spacing } from '../../lib/theme';
 
 export function NotificationFilterTabs({
   filter,
@@ -50,15 +51,15 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
+    gap: spacing.md,
+    marginBottom: spacing.md,
   },
   markBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   markText: {
-    color: '#f472b6',
+    color: brandColors.brandPink,
     fontSize: 12,
     fontWeight: '700',
   },

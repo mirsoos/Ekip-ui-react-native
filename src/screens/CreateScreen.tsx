@@ -23,7 +23,7 @@ import { TagSelector } from '../components/create/TagSelector';
 import { AISuggestionsSheet } from '../components/create/AISuggestionsSheet';
 import { SelectMembersSheet } from '../components/create/SelectMembersSheet';
 import { allInterests } from '../lib/demoData';
-import { useTheme } from '../lib/theme';
+import { useTheme, spacing, sharedStyles } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 import type { Group, GroupCategory, GroupType, Profile } from '../types/database';
@@ -90,7 +90,7 @@ export const CreateScreen = React.memo(
     const [showAI, setShowAI] = useState(false);
 
     // انیمیشن ورود نرم هر مرحله روی موبایل و وب (معادل کلاس animate-raise)
-    const stepAnim = useRef(new Animated.Value(1)).current;
+    const [stepAnim] = useState(() => new Animated.Value(1));
 
     useEffect(() => {
       stepAnim.stopAnimation();
@@ -323,13 +323,13 @@ export const CreateScreen = React.memo(
             styles.scrollContent,
             {
               paddingTop: getSinglePillContentPaddingTop(insets.top),
-              paddingBottom: 175 + insets.bottom,
+              paddingBottom: spacing.bottomNavClearance + spacing.headerBarHeight + spacing.xl + insets.bottom,
             },
           ]}
         >
           <Animated.View
             style={{
-              gap: 14,
+              gap: spacing.lg,
               opacity: stepAnim,
               transform: [{ translateY: stepTranslateY }],
             }}
@@ -377,7 +377,7 @@ export const CreateScreen = React.memo(
                   {t('create.step1Sub')}
                 </Text>
 
-                <View style={{ flexDirection: rowDir, gap: 10 }}>
+                <View style={{ flexDirection: rowDir, gap: spacing.md }}>
                   <View style={{ flex: 1 }}>
                     <GlassInput
                       placeholder={t('create.minOperators')}
@@ -426,7 +426,7 @@ export const CreateScreen = React.memo(
                   {t('create.step2Sub')}
                 </Text>
 
-                <View style={{ flexDirection: rowDir, gap: 10 }}>
+                <View style={{ flexDirection: rowDir, gap: spacing.md }}>
                   <View style={{ flex: 1 }}>
                     <GlassInput
                       placeholder={t('create.minLevel')}
@@ -445,7 +445,7 @@ export const CreateScreen = React.memo(
                   </View>
                 </View>
 
-                <View style={{ flexDirection: rowDir, gap: 10 }}>
+                <View style={{ flexDirection: rowDir, gap: spacing.md }}>
                   <View style={{ flex: 1 }}>
                     <GlassInput
                       placeholder={t('create.minAge')}
@@ -486,7 +486,7 @@ export const CreateScreen = React.memo(
                   {t('create.step3Sub')}
                 </Text>
 
-                <View style={{ flexDirection: rowDir, gap: 10 }}>
+                <View style={{ flexDirection: rowDir, gap: spacing.md }}>
                   <View style={{ flex: 1 }}>
                     <GlassInput
                       icon="Calendar"
@@ -511,7 +511,7 @@ export const CreateScreen = React.memo(
                   onSelect={setCoverUrl}
                 />
 
-                <View style={{ gap: 10, marginTop: 8 }}>
+                <View style={{ gap: spacing.md, marginTop: spacing.sm }}>
                   <GlassToggle
                     checked={autoAccept}
                     onChange={setAutoAccept}
@@ -554,11 +554,11 @@ export const CreateScreen = React.memo(
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 120,
+    paddingHorizontal: spacing.screenPadding,
+    paddingBottom: spacing.bottomNavClearance,
   },
   stepTitle: {
     fontSize: 22,
@@ -568,11 +568,11 @@ const styles = StyleSheet.create({
   stepSub: {
     fontSize: 13,
     marginTop: -8,
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   fieldLabel: {
     fontSize: 13,
     fontWeight: '600',
-    marginBottom: 6,
+    marginBottom: spacing.xs,
   },
 });

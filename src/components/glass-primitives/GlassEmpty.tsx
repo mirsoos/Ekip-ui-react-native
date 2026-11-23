@@ -1,6 +1,6 @@
 import React, { type ReactNode } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { getIcon, type IconName } from '../../lib/icons';
+import { Icon, type IconName } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { GLASS_THEME_STYLES } from './theme';
 
@@ -17,7 +17,6 @@ export function GlassEmptyComponent({
 }) {
   const { colors, isDark } = useTheme();
   const themeStyles = GLASS_THEME_STYLES[isDark ? 'dark' : 'light'];
-  const IconComp = getIcon(icon);
 
   return (
     <View style={styles.emptyContainer}>
@@ -27,7 +26,7 @@ export function GlassEmptyComponent({
           themeStyles.emptyIcon,
         ]}
       >
-        <IconComp size={30} color={colors.textTertiary} strokeWidth={1.8} />
+        <Icon name={icon} size={30} color={colors.textTertiary} strokeWidth={1.8} />
       </View>
       <Text style={[styles.emptyTitle, themeStyles.emptyTitle]}>
         {title}

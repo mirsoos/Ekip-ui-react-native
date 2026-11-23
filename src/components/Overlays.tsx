@@ -295,8 +295,8 @@ export const GlassDialog = React.memo(function GlassDialog({
   const { colors, isDark } = useTheme();
   const [modalVisible, setModalVisible] = useState(open);
 
-  const backdropAnim = useRef(new Animated.Value(open ? 1 : 0)).current;
-  const scaleAnim = useRef(new Animated.Value(open ? 1 : 0.85)).current;
+  const [backdropAnim] = useState(() => new Animated.Value(open ? 1 : 0));
+  const [scaleAnim] = useState(() => new Animated.Value(open ? 1 : 0.85));
 
   useEffect(() => {
     if (!open) return;
@@ -345,7 +345,7 @@ export const GlassDialog = React.memo(function GlassDialog({
         if (finished) setModalVisible(false);
       });
     }
-  }, [open]);
+  }, [open, backdropAnim, scaleAnim]);
 
   if (!open && !modalVisible) return null;
 

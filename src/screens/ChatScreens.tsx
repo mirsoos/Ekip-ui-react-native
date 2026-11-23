@@ -18,6 +18,7 @@ import { GlassEmpty } from '../components/Glass';
 import { ChatListItem } from '../components/chat/ChatListItem';
 import { ChatListItemSkeleton } from '../components/skeleton';
 import { useI18n } from '../lib/i18n';
+import { spacing, sharedStyles } from '../lib/theme';
 import { getMultiRowContentPaddingTop } from '../lib/headerLayout';
 import type { Conversation } from '../types/database';
 
@@ -93,7 +94,7 @@ export function ChatListScreenComponent({
       styles.listContent,
       {
         paddingTop: getMultiRowContentPaddingTop(insets.top),
-        paddingBottom: 100 + insets.bottom,
+        paddingBottom: spacing.bottomNavClearance + insets.bottom,
       },
     ],
     [insets.top, insets.bottom]
@@ -191,11 +192,11 @@ export const ConversationScreen = React.memo(ConversationScreenComponent);
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
   listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 100,
-    gap: 8,
+    paddingHorizontal: spacing.screenPadding,
+    paddingBottom: spacing.bottomNavClearance,
+    gap: spacing.sm,
   },
 });

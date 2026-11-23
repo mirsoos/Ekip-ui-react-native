@@ -13,7 +13,7 @@ import {
   SkipForward, Volume2, Layers, MapPinned, Route, Circle, CheckCircle2,
   AlertCircle, XCircle, PlusCircle, MinusCircle, ArrowUpRight, RefreshCw,
   Power, Fingerprint, Brush, Rocket, Activity, BarChart3, LineChart, Brain,
-  Radio, type LucideIcon,
+  Radio, type LucideIcon, type LucideProps,
 } from 'lucide-react-native';
 
 export const Icons = {
@@ -37,4 +37,13 @@ export type IconName = keyof typeof Icons;
 
 export function getIcon(name: string): LucideIcon {
   return (Icons as Record<string, LucideIcon>)[name] ?? Icons.Sparkles;
+}
+
+export interface IconProps extends LucideProps {
+  name: IconName | string;
+}
+
+export function Icon({ name, ...props }: IconProps) {
+  const IconComponent = (Icons as Record<string, LucideIcon>)[name] ?? Icons.Sparkles;
+  return React.createElement(IconComponent, props);
 }

@@ -24,7 +24,7 @@ export function EkipJoinModalComponent({
   onClose: () => void;
 }) {
   const { colors } = useTheme();
-  const { isRTL, t } = useI18n();
+  const { isRTL } = useI18n();
 
   return (
     <GlassSheet open={open} onClose={onClose} title={isRTL ? `پیوستن به ${group.title}` : `Join ${group.title}`}>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
-import { getIcon, type IconName } from '../../lib/icons';
+import { Icon, type IconName } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 
@@ -15,7 +15,6 @@ export function InfoPill({
 }) {
   const { colors } = useTheme();
   const { isRTL } = useI18n();
-  const IconComp = getIcon(icon);
 
   return (
     <View
@@ -29,7 +28,8 @@ export function InfoPill({
         style,
       ]}
     >
-      <IconComp
+      <Icon
+        name={icon}
         size={13}
         color={colors.textTertiary}
         strokeWidth={2.2}

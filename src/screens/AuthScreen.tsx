@@ -9,6 +9,7 @@ import { ForgotPasswordView } from '../components/auth/ForgotPasswordView';
 import { RegisterWizard } from '../components/auth/RegisterWizard';
 import { ScreenTransition } from '../components/common/ScreenTransition';
 import { useI18n } from '../lib/i18n';
+import { sharedStyles } from '../lib/theme';
 
 export function AuthScreen({ onComplete }: { onComplete: () => void }) {
   const { language } = useI18n();
@@ -133,6 +134,6 @@ export function AuthScreen({ onComplete }: { onComplete: () => void }) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
 });

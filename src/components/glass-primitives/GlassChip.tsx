@@ -7,7 +7,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { getIcon, type IconName } from '../../lib/icons';
+import { Icon, type IconName } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import {
   GLASS_THEME_STYLES,
@@ -34,7 +34,6 @@ export function GlassChipComponent({
 }: GlassChipProps) {
   const { colors, isDark } = useTheme();
   const themeStyles = GLASS_THEME_STYLES[isDark ? 'dark' : 'light'];
-  const IconComp = icon ? getIcon(icon) : null;
 
   if (active) {
     return (
@@ -45,8 +44,8 @@ export function GlassChipComponent({
           end={GRADIENT_END}
           style={styles.chip}
         >
-          {IconComp && (
-            <IconComp size={14} color="#ffffff" style={SMALL_CHIP_ICON_STYLE} />
+          {icon && (
+            <Icon name={icon} size={14} color="#ffffff" style={SMALL_CHIP_ICON_STYLE} />
           )}
           {typeof children === 'string' ? (
             <Text style={styles.activeChipText}>
@@ -66,8 +65,9 @@ export function GlassChipComponent({
       onPress={onPress}
       style={style ? [styles.chip, themeStyles.chip, style] : [styles.chip, themeStyles.chip]}
     >
-      {IconComp && (
-        <IconComp
+      {icon && (
+        <Icon
+          name={icon}
           size={14}
           color={colors.textSecondary}
           style={SMALL_CHIP_ICON_STYLE}

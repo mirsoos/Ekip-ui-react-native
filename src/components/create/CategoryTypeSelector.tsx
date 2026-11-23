@@ -1,11 +1,11 @@
 // --- START OF FILE CategoryTypeSelector.tsx ---
 
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard, GlassButton, GlassAvatar } from '../Glass';
 import { TactileSegmented } from '../common/TactileSegmented';
-import { getIcon } from '../../lib/icons';
+import { Icons } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { GroupCategory, GroupType, Profile } from '../../types/database';
@@ -27,15 +27,13 @@ export const CategoryTypeSelector = React.memo(function CategoryTypeSelector({
 }) {
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
-  const PartyPopper = getIcon('PartyPopper');
-  const Briefcase = getIcon('Briefcase');
 
   const minRequired = groupType === 'solo' ? 0 : 1;
   const isCouple = groupType === 'couple';
   const hasEnough = isCouple ? initialMembers.length === 1 : initialMembers.length >= minRequired;
   const isVisible = groupType !== 'solo';
 
-  const anim = useRef(new Animated.Value(isVisible ? 1 : 0)).current;
+  const [anim] = useState(() => new Animated.Value(isVisible ? 1 : 0));
 
   useEffect(() => {
     if (isVisible) {
@@ -94,11 +92,11 @@ export const CategoryTypeSelector = React.memo(function CategoryTypeSelector({
                   colors={['#f472b6', '#ec4899']}
                   style={styles.iconBox}
                 >
-                  <PartyPopper size={20} color="#ffffff" />
+                  <Icons.PartyPopper size={20} color="#ffffff" />
                 </LinearGradient>
               ) : (
                 <View style={[styles.iconBox, { backgroundColor: colors.glassThinBg }]}>
-                  <PartyPopper size={20} color={colors.textPrimary} />
+                  <Icons.PartyPopper size={20} color={colors.textPrimary} />
                 </View>
               )}
               <View style={{ flex: 1, marginLeft: isRTL ? 0 : 10, marginRight: isRTL ? 10 : 0 }}>
@@ -130,11 +128,11 @@ export const CategoryTypeSelector = React.memo(function CategoryTypeSelector({
                   colors={['#3b82f6', '#2563eb']}
                   style={styles.iconBox}
                 >
-                  <Briefcase size={20} color="#ffffff" />
+                  <Icons.Briefcase size={20} color="#ffffff" />
                 </LinearGradient>
               ) : (
                 <View style={[styles.iconBox, { backgroundColor: colors.glassThinBg }]}>
-                  <Briefcase size={20} color={colors.textPrimary} />
+                  <Icons.Briefcase size={20} color={colors.textPrimary} />
                 </View>
               )}
               <View style={{ flex: 1, marginLeft: isRTL ? 0 : 10, marginRight: isRTL ? 10 : 0 }}>

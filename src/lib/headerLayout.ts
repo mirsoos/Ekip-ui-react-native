@@ -55,11 +55,17 @@ export function getSinglePillContentPaddingTop(insetsTop: number): number {
 
 /**
  * Standardized paddingTop for screen scrollable content under multi-row headers
- * (e.g. Discover, Activity, ChatList)
+ * (e.g. Discover, ChatList)
  */
-export function getMultiRowContentPaddingTop(
-  insetsTop: number,
-  headerCardHeight: number = MULTI_ROW_HEADER_HEIGHT
-): number {
-  return getContentTopInset(insetsTop, 'multi', headerCardHeight);
+export function getMultiRowContentPaddingTop(insetsTop: number): number {
+  return getContentTopInset(insetsTop, 'multi');
+}
+
+/**
+ * Standardized paddingTop specifically for ActivityScreen under ActivityHeader
+ * (which contains topRow + TactileSegmented tabs, height ~136px)
+ * Guarantees exact 20px uniform clearance below the header.
+ */
+export function getActivityContentPaddingTop(insetsTop: number): number {
+  return getContentTopInset(insetsTop, 'activity');
 }

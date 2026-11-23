@@ -1,6 +1,6 @@
 // --- START OF FILE FloatingGlassHeader.tsx ---
 
-import React, { useRef, useEffect, useState, type ReactNode } from 'react';
+import React, { useEffect, useState, type ReactNode } from 'react';
 import {
   View,
   Text,

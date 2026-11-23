@@ -1,6 +1,6 @@
 // --- START OF FILE EkipCard.tsx ---
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,7 +10,6 @@ import Svg, {
   Rect,
   Stop,
   Defs,
-  Mask,
 } from 'react-native-svg';
 import { type Group } from '../types/database';
 import { GlassCard, GlassAvatar, GlassBadgeIcon } from './Glass';

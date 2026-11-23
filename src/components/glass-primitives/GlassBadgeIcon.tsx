@@ -6,7 +6,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { getIcon, type IconName } from '../../lib/icons';
+import { Icon, type IconName } from '../../lib/icons';
 import { useI18n } from '../../lib/i18n';
 
 export function GlassBadgeIconComponent({
@@ -23,7 +23,6 @@ export function GlassBadgeIconComponent({
   style?: StyleProp<ViewStyle>;
 }) {
   const { isRTL } = useI18n();
-  const IconComp = getIcon(icon);
   const colorMap: Record<string, string> = {
     pink: '#f472b6',
     blue: '#3b82f6',
@@ -48,7 +47,8 @@ export function GlassBadgeIconComponent({
         style,
       ]}
     >
-      <IconComp
+      <Icon
+        name={icon}
         size={11}
         color={solid ? '#ffffff' : c}
         strokeWidth={2.5}

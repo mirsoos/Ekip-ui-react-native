@@ -18,7 +18,7 @@ import { useAppData } from '../lib/appData';
 import { GlassButton, GlassInput } from '../components/Glass';
 import { TactileSegmented } from '../components/common/TactileSegmented';
 import { allInterests } from '../lib/demoData';
-import { useTheme } from '../lib/theme';
+import { useTheme, spacing, radii, sharedStyles } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
@@ -106,6 +106,7 @@ export function PersonalInfoScreenComponent({
     selectedAvatar,
     interests,
     isRTL,
+    showToast,
     onBack,
   ]);
 
@@ -135,19 +136,19 @@ export function PersonalInfoScreenComponent({
           styles.scrollContent,
           {
             paddingTop: getSinglePillContentPaddingTop(insets.top),
-            paddingBottom: 130 + insets.bottom,
+            paddingBottom: spacing.bottomNavClearance + spacing.xxxl + insets.bottom,
           },
         ]}
       >
         {/* Avatar Preset Selector */}
-        <View style={{ gap: 8 }}>
+        <View style={{ gap: spacing.sm }}>
           <Text style={[styles.fieldLabel, { color: colors.textSecondary, textAlign }]}>
             {isRTL ? 'تصویر پروفایل' : 'Operator Avatar'}
           </Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 10, paddingVertical: 4, flexDirection: rowDir, flexGrow: 1 }}
+            contentContainerStyle={{ gap: spacing.md, paddingVertical: spacing.xs, flexDirection: rowDir, flexGrow: 1 }}
           >
             {AVATAR_PRESETS.map((url) => {
               const isSelected = selectedAvatar === url;
@@ -158,7 +159,7 @@ export function PersonalInfoScreenComponent({
                   onPress={() => setSelectedAvatar(url)}
                   style={[
                     styles.avatarChoice,
-                    isSelected && { borderColor: '#f472b6', borderWidth: 2 },
+                    isSelected && { borderColor: colors.brandPink, borderWidth: 2 },
                   ]}
                 >
                   <Image source={{ uri: url }} style={styles.avatarImg} />
@@ -169,8 +170,8 @@ export function PersonalInfoScreenComponent({
         </View>
 
         {/* Inputs */}
-        <View style={{ gap: 12, marginTop: 14 }}>
-          <View style={{ flexDirection: rowDir, gap: 10 }}>
+        <View style={{ gap: spacing.md, marginTop: spacing.md }}>
+          <View style={{ flexDirection: rowDir, gap: spacing.md }}>
             <View style={{ flex: 1 }}>
               <GlassInput
                 placeholder={isRTL ? 'نام' : 'First Name'}
@@ -201,7 +202,7 @@ export function PersonalInfoScreenComponent({
             onChangeText={setJob}
           />
 
-          <View style={{ flexDirection: rowDir, gap: 10 }}>
+          <View style={{ flexDirection: rowDir, gap: spacing.md }}>
             <View style={{ flex: 2 }}>
               <GlassInput
                 icon="MapPin"
@@ -231,7 +232,7 @@ export function PersonalInfoScreenComponent({
             numberOfLines={3}
           />
 
-          <View style={{ marginTop: 4 }}>
+          <View style={{ marginTop: spacing.xs }}>
             <Text style={[styles.fieldLabel, { color: colors.textSecondary, textAlign }]}>
               {isRTL ? 'جنسیت' : 'Gender'}
             </Text>
@@ -243,7 +244,7 @@ export function PersonalInfoScreenComponent({
           </View>
 
           {/* Interests */}
-          <View style={{ marginTop: 10 }}>
+          <View style={{ marginTop: spacing.sm }}>
             <Text style={[styles.fieldLabel, { color: colors.textSecondary, textAlign }]}>
               {isRTL ? 'مهارت‌ها و حوزه‌های فعالیت' : 'Operational Disciplines & Skills'}
             </Text>
@@ -258,15 +259,15 @@ export function PersonalInfoScreenComponent({
                     style={[
                       styles.chip,
                       {
-                        backgroundColor: active ? '#f472b6' : colors.glassThinBg,
-                        borderColor: active ? '#f472b6' : colors.glassBorder,
+                        backgroundColor: active ? colors.brandPink : colors.glassThinBg,
+                        borderColor: active ? colors.brandPink : colors.glassBorder,
                       },
                     ]}
                   >
                     <Text
                       style={[
                         styles.chipText,
-                        { color: active ? '#ffffff' : colors.textSecondary },
+                        { color: active ? colors.white : colors.textSecondary },
                       ]}
                     >
                       {interest}
@@ -277,7 +278,7 @@ export function PersonalInfoScreenComponent({
             </View>
           </View>
 
-          <View style={{ marginTop: 20 }}>
+          <View style={{ marginTop: spacing.xl }}>
             <GlassButton size="lg" fullWidth onPress={handleSave}>
               {isRTL ? 'ذخیره تغییرات' : 'Save Dossier Changes'}
             </GlassButton>
@@ -292,21 +293,21 @@ export const PersonalInfoScreen = React.memo(PersonalInfoScreenComponent);
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingHorizontal: spacing.screenPadding,
+    paddingBottom: spacing.huge,
   },
   fieldLabel: {
     fontSize: 13,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   avatarChoice: {
     width: 60,
     height: 60,
-    borderRadius: 20,
+    borderRadius: radii.card,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'transparent',
@@ -318,12 +319,12 @@ const styles = StyleSheet.create({
   chipsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.sm,
   },
   chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 14,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.md,
     borderWidth: 1,
   },
   chipText: {

@@ -30,6 +30,18 @@ export const typography = {
     lineHeight: 26,
     fontWeight: '700',
   } as TextStyle,
+  h4: {
+    fontFamily: FONT_FAMILIES.bold,
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '600',
+  } as TextStyle,
+  subtitle: {
+    fontFamily: FONT_FAMILIES.regular,
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '400',
+  } as TextStyle,
   body: {
     fontFamily: FONT_FAMILIES.regular,
     fontSize: 15,
@@ -41,6 +53,12 @@ export const typography = {
     fontSize: 15,
     lineHeight: 22,
     fontWeight: '600',
+  } as TextStyle,
+  bodySmall: {
+    fontFamily: FONT_FAMILIES.regular,
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '400',
   } as TextStyle,
   caption: {
     fontFamily: FONT_FAMILIES.regular,
@@ -60,5 +78,17 @@ export const typography = {
     lineHeight: 14,
     fontWeight: '700',
     letterSpacing: 0.5,
+  } as TextStyle,
+  button: {
+    fontFamily: FONT_FAMILIES.bold,
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '600',
+  } as TextStyle,
+  label: {
+    fontFamily: FONT_FAMILIES.regular,
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: '500',
   } as TextStyle,
 } as const;

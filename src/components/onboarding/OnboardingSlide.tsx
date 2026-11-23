@@ -1,9 +1,9 @@
 // --- START OF FILE OnboardingSlide.tsx ---
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Platform, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { getIcon, type IconName } from '../../lib/icons';
+import { Icon, type IconName } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 
 export interface SlideData {
@@ -29,8 +29,7 @@ export const OnboardingSlide = React.memo(function OnboardingSlide({
   step: number;
 }) {
   const { colors } = useTheme();
-  const IconComp = getIcon(slide.icon);
-  const entrance = useRef(new Animated.Value(0)).current;
+  const [entrance] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     entrance.stopAnimation();
@@ -67,7 +66,7 @@ export const OnboardingSlide = React.memo(function OnboardingSlide({
           colors={[hexToRgba(slide.color, 0.28), hexToRgba(slide.color, 0.08)]}
           style={styles.iconBox}
         >
-          <IconComp size={54} color={colors.textPrimary} strokeWidth={1.8} />
+          <Icon name={slide.icon} size={54} color={colors.textPrimary} strokeWidth={1.8} />
         </LinearGradient>
       </View>
 

@@ -1,6 +1,6 @@
 // --- START OF FILE ProfileScreen.tsx ---
 
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,10 +14,19 @@ import { ProfileHeaderCard } from '../components/profile/ProfileHeaderCard';
 import { ProfileXpCard } from '../components/profile/ProfileXpCard';
 import { EkipCard } from '../components/EkipCard';
 import { ProfileScreenSkeleton } from '../components/skeleton';
-import { darkColors, lightColors, useTheme } from '../lib/theme';
+import {
+  darkColors,
+  lightColors,
+  useTheme,
+  colors as themeColors,
+  brandColors,
+  spacing,
+  radii,
+  sharedStyles,
+} from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { useToast } from '../lib/ToastContext';
-import { getIcon, Icons, type IconName } from '../lib/icons';
+import { Icons, Icon } from '../lib/icons';
 import type { Badge, Friendship, Group, Mission } from '../types/database';
 
 type ProfileListItem =
@@ -49,8 +58,7 @@ const ProfileGroupCard = React.memo(function ProfileGroupCard({
 });
 
 const BadgeItemIcon = React.memo(function BadgeItemIcon({ name }: { name: string }) {
-  const Comp = getIcon(name);
-  return <Comp size={18} color="#f472b6" strokeWidth={2.4} />;
+  return <Icon name={name} size={18} color={brandColors.brandPink} strokeWidth={2.4} />;
 });
 
 const ProfileBanner = React.memo(function ProfileBanner({
@@ -79,7 +87,7 @@ const ProfileBanner = React.memo(function ProfileBanner({
         />
       )}
       <LinearGradient
-        colors={['rgba(0,0,0,0.3)', 'transparent', 'rgba(0,0,0,0.6)']}
+        colors={[themeColors.dark.overlay, themeColors.palette.transparent, themeColors.dark.overlay]}
         style={styles.bannerGradient}
       />
     </View>
@@ -116,7 +124,7 @@ export function ProfileScreenComponent({
   const { showToast } = useToast();
   const [tab, setTab] = useState('activity');
   const [showActions, setShowActions] = useState(false);
-  const internalScrollY = useRef(new Animated.Value(0)).current;
+  const [internalScrollY] = useState(() => new Animated.Value(0));
   const scrollY = externalScrollY ?? internalScrollY;
 
   const profile = useMemo(
@@ -309,7 +317,7 @@ export function ProfileScreenComponent({
     () => [
       styles.scrollContent,
       {
-        paddingBottom: isOwnProfile ? 100 + insets.bottom : 24 + insets.bottom,
+        paddingBottom: isOwnProfile ? spacing.bottomNavClearance + insets.bottom : spacing.xxl + insets.bottom,
       },
     ],
     [insets.bottom, isOwnProfile]
@@ -503,7 +511,7 @@ export function ProfileScreenComponent({
         onClose={closeActions}
         title={isRTL ? 'گزینه‌های کاربر' : 'Operative Options'}
       >
-        <View style={{ gap: 10, paddingVertical: 8 }}>
+        <View style={{ gap: spacing.md, paddingVertical: spacing.sm }}>
           <GlassButton fullWidth variant="secondary" onPress={handleAddFriend}>
             {existingFriend
               ? isRTL
@@ -526,10 +534,10 @@ export const ProfileScreen = React.memo(ProfileScreenComponent);
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
   scrollContent: {
-    paddingBottom: 24,
+    paddingBottom: spacing.xxl,
   },
   bannerWrap: {
     position: 'relative',
@@ -548,41 +556,40 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   statsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 16,
-    marginTop: 14,
+    ...sharedStyles.row,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.screenPadding,
+    marginTop: spacing.md,
   },
   xpWrap: {
-    paddingHorizontal: 16,
-    marginTop: 14,
+    paddingHorizontal: spacing.screenPadding,
+    marginTop: spacing.md,
   },
   tabsWrap: {
-    paddingHorizontal: 16,
-    marginTop: 8,
+    paddingHorizontal: spacing.screenPadding,
+    marginTop: spacing.sm,
   },
   headerBottomSpacer: {
-    height: 14,
+    height: spacing.md,
   },
   itemSeparator: {
-    height: 10,
+    height: spacing.sm,
   },
   tabContentWrap: {
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.screenPadding,
   },
   badgeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderRadius: 18,
+    ...sharedStyles.row,
+    padding: spacing.sm,
+    borderRadius: radii.lg,
   },
   badgeIcon: {
     width: 38,
     height: 38,
-    borderRadius: 12,
+    borderRadius: radii.input,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(244, 114, 182, 0.18)',
+    backgroundColor: darkColors.glassPillBg,
   },
   itemText: {
     flex: 1,
@@ -594,49 +601,48 @@ const styles = StyleSheet.create({
   },
   itemDescription: {
     fontSize: 11,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   missionCard: {
-    padding: 12,
-    borderRadius: 20,
+    padding: spacing.md,
+    borderRadius: radii.card,
   },
   missionTop: {
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   missionReward: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#f472b6',
+    color: darkColors.brandPink,
   },
   missionProgressRow: {
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 6,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
   },
   missionProgressTrack: {
     height: 8,
-    borderRadius: 4,
+    borderRadius: radii.xxs,
     borderWidth: 1,
     overflow: 'hidden',
   },
   missionProgressBar: {
     height: '100%',
-    borderRadius: 4,
-    backgroundColor: '#f472b6',
+    borderRadius: radii.xxs,
+    backgroundColor: darkColors.brandPink,
   },
   missionComplete: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#22c55e',
-    marginTop: 8,
+    color: darkColors.success,
+    marginTop: spacing.sm,
   },
   friendCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderRadius: 20,
+    ...sharedStyles.row,
+    padding: spacing.sm,
+    borderRadius: radii.card,
   },
 });

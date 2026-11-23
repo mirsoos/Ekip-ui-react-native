@@ -5,7 +5,7 @@ if (Platform.OS !== 'web') {
   try {
     I18nManager.allowRTL(false);
     I18nManager.forceRTL(false);
-  } catch (e) {}
+  } catch {}
 }
 
 export type Language = 'en' | 'fa';

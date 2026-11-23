@@ -8,7 +8,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { getIcon, type IconName } from '../../lib/icons';
+import { Icon, type IconName } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import {
   GLASS_THEME_STYLES,
@@ -55,9 +55,6 @@ export function GlassButtonComponent({
   const padVertical = size === 'sm' ? 8 : size === 'lg' ? 15 : 12;
   const padHorizontal = size === 'sm' ? 14 : size === 'lg' ? 24 : 18;
   const iconSize = size === 'sm' ? 16 : size === 'lg' ? 20 : 18;
-
-  const IconComp = icon ? getIcon(icon) : null;
-  const IconRightComp = iconRight ? getIcon(iconRight) : null;
 
   const baseStyle = React.useMemo<ViewStyle>(
     () => ({
@@ -106,8 +103,9 @@ export function GlassButtonComponent({
           end={GRADIENT_END}
           style={primaryGradientStyle}
         >
-          {IconComp && (
-            <IconComp
+          {icon && (
+            <Icon
+              name={icon}
               size={iconSize}
               color="#ffffff"
               style={BUTTON_ICON_LEFT_STYLE}
@@ -122,8 +120,9 @@ export function GlassButtonComponent({
           ) : (
             children
           )}
-          {IconRightComp && (
-            <IconRightComp
+          {iconRight && (
+            <Icon
+              name={iconRight}
               size={iconSize}
               color="#ffffff"
               style={BUTTON_ICON_RIGHT_STYLE}
@@ -142,8 +141,9 @@ export function GlassButtonComponent({
       disabled={disabled}
       style={secondaryStyle}
     >
-      {IconComp && (
-        <IconComp
+      {icon && (
+        <Icon
+          name={icon}
           size={iconSize}
           color={isSecondary ? colors.textPrimary : colors.textSecondary}
           style={BUTTON_ICON_LEFT_STYLE}
@@ -163,8 +163,9 @@ export function GlassButtonComponent({
       ) : (
         children
       )}
-      {IconRightComp && (
-        <IconRightComp
+      {iconRight && (
+        <Icon
+          name={iconRight}
           size={iconSize}
           color={isSecondary ? colors.textPrimary : colors.textSecondary}
           style={BUTTON_ICON_RIGHT_STYLE}

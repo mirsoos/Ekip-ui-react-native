@@ -13,7 +13,7 @@ import {
 import { createPortal } from 'react-dom';
 import { GlassButton } from '../Glass';
 import { PixelFightStage } from './PixelFightStage';
-import { getIcon } from '../../lib/icons';
+import { Icons } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 
@@ -116,19 +116,15 @@ function DedicatedErrorSheet({
   onGoHome?: () => void;
 }) {
   const { colors, isDark } = useTheme();
-  const { t, isRTL } = useI18n();
+  const { t } = useI18n();
   const [showDetails, setShowDetails] = useState(false);
 
   const finalTitle = title ?? t('error.boundaryTitle');
   const finalMessage = message ?? t('error.boundaryMessage');
 
-  const AlertIcon = getIcon('AlertCircle');
-  const ChevronDown = getIcon('ChevronDown');
-  const ChevronUp = getIcon('ChevronUp');
-
   // Entrance & Exit animated values
-  const backdropAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(600)).current;
+  const [backdropAnim] = useState(() => new Animated.Value(0));
+  const [slideAnim] = useState(() => new Animated.Value(600));
   const isClosing = useRef(false);
 
   useEffect(() => {
@@ -228,7 +224,7 @@ function DedicatedErrorSheet({
                 },
               ]}
             >
-              <AlertIcon size={24} color="#f43f5e" strokeWidth={2.4} />
+              <Icons.AlertCircle size={24} color="#f43f5e" strokeWidth={2.4} />
             </View>
 
             <View style={{ flex: 1, marginLeft: 14 }}>
@@ -276,9 +272,9 @@ function DedicatedErrorSheet({
                   {showDetails ? 'Hide technical details' : 'Show technical details'}
                 </Text>
                 {showDetails ? (
-                  <ChevronUp size={14} color={colors.textTertiary} />
+                  <Icons.ChevronUp size={14} color={colors.textTertiary} />
                 ) : (
-                  <ChevronDown size={14} color={colors.textTertiary} />
+                  <Icons.ChevronDown size={14} color={colors.textTertiary} />
                 )}
               </TouchableOpacity>
 

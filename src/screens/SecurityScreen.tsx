@@ -1,6 +1,6 @@
 // --- START OF FILE SecurityScreen.tsx ---
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassCard, GlassButton, LiquidGlassToggle } from '../components/Glass';
 import { GlassSheet } from '../components/Overlays';
 import { getIcon, Icons } from '../lib/icons';
-import { useTheme } from '../lib/theme';
+import { useTheme, spacing, radii, sharedStyles } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
@@ -97,7 +97,7 @@ const Trash = getIcon('Trash');
 
 export function SecurityScreen({ onBack }: SecurityScreenProps) {
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { isRTL } = useI18n();
   const { showToast } = useToast();
 
@@ -164,7 +164,7 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
     marginRight: isRTL ? 12 : 0,
   };
   const inputThemeStyle = {
-    backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)',
+    backgroundColor: colors.glassInputBg,
     borderColor: colors.glassBorder,
     color: colors.textPrimary,
     textAlign,
@@ -176,15 +176,16 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
         style={styles.content}
         contentContainerStyle={{
           paddingTop: getSinglePillContentPaddingTop(insets.top),
-          paddingBottom: 60 + insets.bottom,
+          paddingHorizontal: spacing.screenPadding,
+          paddingBottom: spacing.bottomNavClearance + insets.bottom,
         }}
         showsVerticalScrollIndicator={false}
       >
         {/* Passkey / Biometrics Card */}
-        <GlassCard variant="thick" style={styles.heroCard}>
+        <GlassCard variant="thick" style={[styles.heroCard, { borderColor: colors.glassBorderActive }]}>
           <View style={[styles.heroHeader, { flexDirection: rowDir }]}>
-            <View style={[styles.iconBox, { backgroundColor: 'rgba(16,185,129,0.15)' }]}>
-              <ShieldCheck size={22} color="#10b981" />
+            <View style={[styles.iconBox, { backgroundColor: colors.glassPillBg }]}>
+              <ShieldCheck size={22} color={colors.brandGreen} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.heroTitle, { color: colors.textPrimary, textAlign }]}>
@@ -288,8 +289,8 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
             style={[styles.actionRow, { flexDirection: rowDir }]}
             onPress={() => setShowPasswordSheet(true)}
           >
-            <View style={[styles.iconBox, { backgroundColor: 'rgba(236,72,153,0.15)' }]}>
-              <Lock size={18} color="#ec4899" />
+            <View style={[styles.iconBox, { backgroundColor: colors.glassPillBg }]}>
+              <Lock size={18} color={colors.brandPink} />
             </View>
             <View style={[{ flex: 1 }, textSpacing]}>
               <Text style={[styles.settingTitle, { color: colors.textPrimary, textAlign }]}>
@@ -308,8 +309,8 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
             style={[styles.actionRow, { flexDirection: rowDir }]}
             onPress={() => setShowRecoverySheet(true)}
           >
-            <View style={[styles.iconBox, { backgroundColor: 'rgba(245,158,11,0.15)' }]}>
-              <Key size={18} color="#f59e0b" />
+            <View style={[styles.iconBox, { backgroundColor: colors.glassPillBg }]}>
+              <Key size={18} color={colors.brandAmber} />
             </View>
             <View style={[{ flex: 1 }, textSpacing]}>
               <Text style={[styles.settingTitle, { color: colors.textPrimary, textAlign }]}>
@@ -344,12 +345,12 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
                   )}
                 </View>
                 <View style={[{ flex: 1 }, textSpacing]}>
-                  <View style={{ flexDirection: rowDir, alignItems: 'center', gap: 6 }}>
+                  <View style={{ flexDirection: rowDir, alignItems: 'center', gap: spacing.xs }}>
                     <Text style={[styles.settingTitle, { color: colors.textPrimary, textAlign }]}>
                       {dev.name}
                     </Text>
                     {dev.isCurrent && (
-                      <Text style={styles.currentBadge}>
+                      <Text style={[styles.currentBadge, { color: colors.brandGreen, backgroundColor: colors.glassPillBg }]}>
                         {isRTL ? 'این دستگاه' : 'This Device'}
                       </Text>
                     )}
@@ -360,7 +361,7 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
                   <Text
                     style={[
                       styles.settingDesc,
-                      { marginTop: 2, color: colors.textTertiary, textAlign },
+                      { marginTop: spacing.xxs, color: colors.textTertiary, textAlign },
                     ]}
                   >
                     {dev.location} · {dev.lastActive}
@@ -369,9 +370,9 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
                 {!dev.isCurrent && (
                   <TouchableOpacity
                     onPress={() => handleRevokeDevice(dev.id, dev.name)}
-                    style={{ padding: 6 }}
+                    style={{ padding: spacing.xs }}
                   >
-                    <Trash size={16} color="#ef4444" />
+                    <Trash size={16} color={colors.danger} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -386,7 +387,7 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
         onClose={() => setShowPasswordSheet(false)}
         title={isRTL ? 'به‌روزرسانی رمز عبور' : 'Update Master Password'}
       >
-        <View style={{ paddingVertical: 10 }}>
+        <View style={{ paddingVertical: spacing.sm }}>
           <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign }]}>
             {isRTL ? 'رمز عبور فعلی' : 'CURRENT PASSWORD'}
           </Text>
@@ -401,7 +402,7 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
           <Text
             style={[
               styles.inputLabel,
-              { marginTop: 14, color: colors.textSecondary, textAlign },
+              { marginTop: spacing.md, color: colors.textSecondary, textAlign },
             ]}
           >
             {isRTL ? 'رمز عبور جدید' : 'NEW PASSWORD'}
@@ -417,7 +418,7 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
           <Text
             style={[
               styles.inputLabel,
-              { marginTop: 14, color: colors.textSecondary, textAlign },
+              { marginTop: spacing.md, color: colors.textSecondary, textAlign },
             ]}
           >
             {isRTL ? 'تکرار رمز عبور جدید' : 'CONFIRM NEW PASSWORD'}
@@ -430,7 +431,7 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
             placeholderTextColor={colors.textTertiary}
           />
 
-          <View style={{ marginTop: 22 }}>
+          <View style={{ marginTop: spacing.xxl }}>
             <GlassButton variant="primary" fullWidth onPress={handleUpdatePassword}>
               {isRTL ? 'ذخیره رمز عبور جدید' : 'Save New Password'}
             </GlassButton>
@@ -444,12 +445,12 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
         onClose={() => setShowRecoverySheet(false)}
         title={isRTL ? 'کدهای بازیابی اضطراری' : 'Emergency Recovery Codes'}
       >
-        <View style={{ paddingVertical: 10 }}>
+        <View style={{ paddingVertical: spacing.sm }}>
           <Text
             style={{
               fontSize: 13,
               color: colors.textSecondary,
-              marginBottom: 14,
+              marginBottom: spacing.md,
               textAlign,
             }}
           >
@@ -475,7 +476,7 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
             ))}
           </View>
 
-          <View style={{ marginTop: 20 }}>
+          <View style={{ marginTop: spacing.xl }}>
             <GlassButton
               variant="secondary"
               fullWidth
@@ -498,27 +499,24 @@ export function SecurityScreen({ onBack }: SecurityScreenProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
   },
   heroCard: {
-    padding: 16,
-    borderRadius: 22,
-    borderColor: 'rgba(16,185,129,0.3)',
+    padding: spacing.screenPadding,
+    borderRadius: radii.xl,
     borderWidth: 1,
   },
   heroHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    ...sharedStyles.row,
+    gap: spacing.md,
   },
   iconBox: {
     width: 44,
     height: 44,
-    borderRadius: 14,
+    borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -528,27 +526,25 @@ const styles = StyleSheet.create({
   },
   heroDesc: {
     fontSize: 11,
-    marginTop: 2,
+    marginTop: spacing.xxs,
     lineHeight: 16,
   },
   sectionHeading: {
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
-    marginTop: 22,
-    marginBottom: 8,
-    marginHorizontal: 4,
+    marginTop: spacing.xxl,
+    marginBottom: spacing.sm,
+    marginHorizontal: spacing.xs,
   },
   cardSection: {
-    padding: 14,
-    borderRadius: 20,
+    padding: spacing.md,
+    borderRadius: radii.lg,
   },
   settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-    gap: 14,
+    ...sharedStyles.rowBetween,
+    paddingVertical: spacing.xs,
+    gap: spacing.md,
   },
   settingTitle: {
     fontSize: 14,
@@ -556,53 +552,49 @@ const styles = StyleSheet.create({
   },
   settingDesc: {
     fontSize: 11,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   divider: {
-    height: StyleSheet.hairlineWidth,
-    marginVertical: 12,
+    ...sharedStyles.divider,
+    marginVertical: spacing.md,
   },
   actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
+    ...sharedStyles.row,
+    paddingVertical: spacing.xs,
   },
   deviceItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
+    ...sharedStyles.row,
+    paddingVertical: spacing.xs,
   },
   currentBadge: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#10b981',
-    backgroundColor: 'rgba(16,185,129,0.15)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+    borderRadius: radii.xs,
   },
   inputLabel: {
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.8,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderRadius: radii.input,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     fontSize: 14,
   },
   codesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.sm,
   },
   codePill: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.sm,
     borderWidth: 1,
   },
   codeText: {

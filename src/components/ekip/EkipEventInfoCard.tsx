@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard } from '../Glass';
-import { getIcon } from '../../lib/icons';
+import { Icons } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Group } from '../../types/database';
@@ -21,9 +21,6 @@ export function EkipEventInfoCard({ group }: { group: Group }) {
     hour: 'numeric',
     minute: '2-digit',
   });
-
-  const MapPin = getIcon('MapPin');
-  const Clock = getIcon('Clock');
 
   return (
     <GlassCard style={styles.card}>
@@ -45,7 +42,7 @@ export function EkipEventInfoCard({ group }: { group: Group }) {
             {dateStr}
           </Text>
           <View style={[styles.timeRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-            <Clock size={13} color={colors.textTertiary} strokeWidth={2.2} style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }} />
+            <Icons.Clock size={13} color={colors.textTertiary} strokeWidth={2.2} style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }} />
             <Text style={[styles.timeText, { color: colors.textTertiary }]}>
               {timeStr}
             </Text>
@@ -60,7 +57,7 @@ export function EkipEventInfoCard({ group }: { group: Group }) {
 
       <View style={[styles.bottomRow, { borderTopColor: colors.divider }]}>
         <View style={[styles.locRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-          <MapPin size={14} color={colors.textTertiary} strokeWidth={2.2} style={{ marginRight: isRTL ? 0 : 5, marginLeft: isRTL ? 5 : 0 }} />
+          <Icons.MapPin size={14} color={colors.textTertiary} strokeWidth={2.2} style={{ marginRight: isRTL ? 0 : 5, marginLeft: isRTL ? 5 : 0 }} />
           <Text style={[styles.locText, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={1}>
             {group.location_name ? `${group.location_name}، ` : ''}{group.city}
           </Text>

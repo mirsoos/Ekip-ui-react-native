@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { GlassCard, GlassAvatar } from '../Glass';
-import { getIcon } from '../../lib/icons';
+import { Icons } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { GroupMember } from '../../types/database';
@@ -19,14 +19,13 @@ export function EkipMembersSection({
 }) {
   const { colors } = useTheme();
   const { isRTL } = useI18n();
-  const Users = getIcon('Users');
   const activeMembers = members.filter((m) => m.status === 'active');
 
   return (
     <GlassCard style={styles.card}>
       <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center' }}>
-          <Users size={16} color="#f472b6" strokeWidth={2.4} style={{ marginRight: isRTL ? 0 : 6, marginLeft: isRTL ? 6 : 0 }} />
+          <Icons.Users size={16} color="#f472b6" strokeWidth={2.4} style={{ marginRight: isRTL ? 0 : 6, marginLeft: isRTL ? 6 : 0 }} />
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             {isRTL ? 'اعضای اکیپ' : 'Ekip Members'}
           </Text>

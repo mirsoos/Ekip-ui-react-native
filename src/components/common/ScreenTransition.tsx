@@ -1,6 +1,6 @@
 // --- START OF FILE ScreenTransition.tsx ---
 
-import React, { useEffect, useRef, type ReactNode } from 'react';
+import React, { useEffect, useRef, useState, type ReactNode } from 'react';
 import { View, Platform, Animated, Easing, type StyleProp, type ViewStyle, StyleSheet } from 'react-native';
 
 interface ScreenTransitionProps {
@@ -19,7 +19,7 @@ export const ScreenTransition = React.memo(function ScreenTransition({
   style,
   disableAnimation = false,
 }: ScreenTransitionProps) {
-  const anim = useRef(new Animated.Value(1)).current;
+  const [anim] = useState(() => new Animated.Value(1));
   const isFirstMount = useRef(true);
 
   useEffect(() => {

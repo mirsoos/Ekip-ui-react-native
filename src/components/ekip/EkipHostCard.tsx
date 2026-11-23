@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { GlassCard, GlassAvatar, GlassBadgeIcon } from '../Glass';
-import { getIcon } from '../../lib/icons';
+import { Icons } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Profile } from '../../types/database';
@@ -15,8 +15,6 @@ export function EkipHostCard({
 }) {
   const { colors } = useTheme();
   const { isRTL } = useI18n();
-  const ShieldIcon = getIcon('Shield');
-  const ChevronRight = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
 
   return (
     <TouchableOpacity activeOpacity={0.8} onPress={onOpenProfile} style={{ marginBottom: 12 }}>
@@ -43,7 +41,7 @@ export function EkipHostCard({
 
           <View style={[styles.statsRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
             <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center' }}>
-              <ShieldIcon size={12} color="#22c55e" style={{ marginRight: isRTL ? 0 : 3, marginLeft: isRTL ? 3 : 0 }} />
+              <Icons.Shield size={12} color="#22c55e" style={{ marginRight: isRTL ? 0 : 3, marginLeft: isRTL ? 3 : 0 }} />
               <Text style={styles.statText}>
                 {isRTL ? `خوش‌قولی ${host.honor_score}` : `Trust ${host.honor_score}`}
               </Text>
@@ -55,7 +53,11 @@ export function EkipHostCard({
           </View>
         </View>
 
-        <ChevronRight size={18} color={colors.textTertiary} />
+        {isRTL ? (
+          <Icons.ChevronLeft size={18} color={colors.textTertiary} />
+        ) : (
+          <Icons.ChevronRight size={18} color={colors.textTertiary} />
+        )}
       </GlassCard>
     </TouchableOpacity>
   );

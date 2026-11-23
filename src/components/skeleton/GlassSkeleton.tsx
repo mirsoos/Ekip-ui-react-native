@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -17,7 +17,7 @@ import { useTheme } from '../../lib/theme';
  * Creates an organic, deep, sinusoidal pulse (0.35 -> 0.85) without layout shifts or harsh flashes.
  */
 export function useBreathingValue(duration = 1400, enabled = true) {
-  const pulse = useRef(new Animated.Value(0.35)).current;
+  const [pulse] = useState(() => new Animated.Value(0.35));
 
   useEffect(() => {
     if (!enabled) return;
@@ -66,7 +66,7 @@ export function GlassSkeleton({
   style,
   pulseValue,
 }: GlassSkeletonProps) {
-  const { isDark, colors } = useTheme();
+  const { isDark } = useTheme();
   const internalPulse = useBreathingValue(1400, pulseValue === undefined);
   const opacity = pulseValue ?? internalPulse;
 
@@ -100,7 +100,7 @@ export function EkipCardSkeleton({
 }: {
   variant?: 'default' | 'compact' | 'featured';
 }) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const pulse = useBreathingValue();
 
   if (variant === 'compact') {

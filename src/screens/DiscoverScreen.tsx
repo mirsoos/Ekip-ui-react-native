@@ -20,7 +20,7 @@ import { CommunityMembersRow } from '../components/discover/CommunityMembersRow'
 import { DiscoverFilterSheet } from '../components/discover/DiscoverFilterSheet';
 import { EkipCardSkeleton, CommunityMembersRowSkeleton } from '../components/skeleton';
 import { cities } from '../lib/demoData';
-import { useTheme } from '../lib/theme';
+import { useTheme, spacing, sharedStyles } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { getMultiRowContentPaddingTop } from '../lib/headerLayout';
 import type { Group } from '../types/database';
@@ -210,7 +210,7 @@ export const DiscoverScreen = React.memo(
                 >
                   {t('ekip.featured')}
                 </Text>
-                <Text style={[styles.sectionBadge, { color: '#f472b6' }]}>
+                <Text style={[styles.sectionBadge, { color: colors.brandPink }]}>
                   {t('ekip.priority')}
                 </Text>
               </View>
@@ -238,7 +238,7 @@ export const DiscoverScreen = React.memo(
                 styles.sectionTitle,
                 {
                   color: colors.textPrimary,
-                  marginBottom: 12,
+                  marginBottom: spacing.md,
                   textAlign: isRTL ? 'right' : 'left',
                 },
               ]}
@@ -249,6 +249,7 @@ export const DiscoverScreen = React.memo(
         </View>
       ),
       [
+        colors.brandPink,
         colors.textPrimary,
         featured,
         filtered.length,
@@ -299,7 +300,7 @@ export const DiscoverScreen = React.memo(
         styles.scrollContent,
         {
           paddingTop: getMultiRowContentPaddingTop(insets.top),
-          paddingBottom: 100 + insets.bottom,
+          paddingBottom: spacing.bottomNavClearance + insets.bottom,
         },
       ],
       [insets.top, insets.bottom]
@@ -346,26 +347,24 @@ export const DiscoverScreen = React.memo(
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
   scrollContent: {
-    paddingBottom: 100,
+    paddingBottom: spacing.bottomNavClearance,
   },
   sectionWrap: {
-    paddingHorizontal: 16,
-    marginTop: 18,
+    paddingHorizontal: spacing.screenPadding,
+    marginTop: spacing.lg,
   },
   groupCardWrap: {
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.screenPadding,
   },
   groupCardSeparator: {
-    height: 14,
+    height: spacing.md,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
+    ...sharedStyles.rowBetween,
+    marginBottom: spacing.sm,
   },
   sectionTitle: {
     fontSize: 17,
@@ -378,7 +377,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   categoryWrap: {
-    paddingHorizontal: 16,
-    marginTop: 18,
+    paddingHorizontal: spacing.screenPadding,
+    marginTop: spacing.lg,
   },
 });

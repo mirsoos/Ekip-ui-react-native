@@ -16,6 +16,7 @@ import { NotificationFilterTabs } from '../components/notifications/Notification
 import { NotificationItem } from '../components/notifications/NotificationItem';
 import { GlassEmpty } from '../components/Glass';
 import { useI18n } from '../lib/i18n';
+import { spacing, sharedStyles } from '../lib/theme';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 export function NotificationsScreenComponent({
@@ -97,7 +98,7 @@ export function NotificationsScreenComponent({
           styles.scrollContent,
           {
             paddingTop: getSinglePillContentPaddingTop(insets.top),
-            paddingBottom: 40 + insets.bottom,
+            paddingBottom: spacing.bottomNavClearance + insets.bottom,
           },
         ]}
       >
@@ -108,7 +109,7 @@ export function NotificationsScreenComponent({
           onMarkAllRead={markAllNotificationsRead}
         />
 
-        <View style={{ gap: 8 }}>
+        <View style={{ gap: spacing.sm }}>
           {filtered.length === 0 ? (
             <GlassEmpty
               icon="Bell"
@@ -138,10 +139,10 @@ export const NotificationsScreen = React.memo(NotificationsScreenComponent);
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingHorizontal: spacing.screenPadding,
+    paddingBottom: spacing.huge,
   },
 });

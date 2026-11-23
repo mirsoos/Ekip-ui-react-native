@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, useMemo, useCallback, type ReactNode } from 'react';
-import { useColorScheme, Platform } from 'react-native';
+import { Platform } from 'react-native';
+import {
+  darkThemeColors,
+  lightThemeColors,
+  type ThemeColorsType,
+} from './theme/colors';
 
 export type Theme = 'light' | 'dark';
 
@@ -93,77 +98,9 @@ export const CHAT_THEMES: Record<ChatThemeId, ChatThemeConfig> = {
   },
 };
 
-export interface ThemeColors {
-  isDark: boolean;
-  bgCanvas: string;
-  bgCanvasGrad: [string, string, ...string[]];
-  glassBg: string;
-  glassHeaderBg: string;
-  glassCardBg: string;
-  glassThickBg: string;
-  glassThinBg: string;
-  glassBorder: string;
-  glassBorderStrong: string;
-  textPrimary: string;
-  textSecondary: string;
-  textTertiary: string;
-  accent: string;
-  accentPink: string;
-  accentBlue: string;
-  accentGreen: string;
-  danger: string;
-  warning: string;
-  divider: string;
-  cardShadow: string;
-}
-
-export const darkColors: ThemeColors = {
-  isDark: true,
-  bgCanvas: '#04060c',
-  bgCanvasGrad: ['#04060c', '#080a14', '#080e1a', '#060a12'],
-  glassBg: 'rgba(13, 16, 26, 0.94)',
-  glassHeaderBg: 'rgba(13, 16, 26, 0.94)',
-  glassCardBg: 'rgba(255, 255, 255, 0.06)',
-  glassThickBg: 'rgba(11, 14, 23, 0.96)',
-  glassThinBg: 'rgba(255, 255, 255, 0.06)',
-  glassBorder: 'rgba(255, 255, 255, 0.10)',
-  glassBorderStrong: 'rgba(255, 255, 255, 0.20)',
-  textPrimary: '#ffffff',
-  textSecondary: '#a0aec0',
-  textTertiary: '#737d8e',
-  accent: '#f472b6',
-  accentPink: '#f472b6',
-  accentBlue: '#60a5fa',
-  accentGreen: '#34d399',
-  danger: '#f87171',
-  warning: '#fbbf24',
-  divider: 'rgba(255, 255, 255, 0.10)',
-  cardShadow: '#000000',
-};
-
-export const lightColors: ThemeColors = {
-  isDark: false,
-  bgCanvas: '#ebf0fa',
-  bgCanvasGrad: ['#ebf0fa', '#dbeafe', '#e0e7ff', '#dbeafe'],
-  glassBg: 'rgba(255, 255, 255, 0.92)',
-  glassHeaderBg: 'rgba(255, 255, 255, 0.92)',
-  glassCardBg: 'rgba(255, 255, 255, 0.92)',
-  glassThickBg: 'rgba(255, 255, 255, 0.96)',
-  glassThinBg: 'rgba(255, 255, 255, 0.50)',
-  glassBorder: 'rgba(255, 255, 255, 0.60)',
-  glassBorderStrong: 'rgba(255, 255, 255, 0.90)',
-  textPrimary: '#0f172a',
-  textSecondary: '#334155',
-  textTertiary: '#64748b',
-  accent: '#f472b6',
-  accentPink: '#f472b6',
-  accentBlue: '#3b82f6',
-  accentGreen: '#10b981',
-  danger: '#ef4444',
-  warning: '#eab308',
-  divider: 'rgba(15, 23, 42, 0.08)',
-  cardShadow: 'rgba(15, 23, 42, 0.12)',
-};
+export type ThemeColors = ThemeColorsType;
+export const darkColors: ThemeColors = darkThemeColors;
+export const lightColors: ThemeColors = lightThemeColors;
 
 export const themes = {
   dark: darkColors,
@@ -173,7 +110,7 @@ export const themes = {
 export interface ThemeContextValue {
   theme: Theme;
   isDark: boolean;
-  colors: typeof themes.light;
+  colors: ThemeColors;
   toggle: () => void;
 }
 
@@ -196,16 +133,7 @@ function getInitialTheme(): Theme {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const systemColorScheme = useColorScheme();
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('ekip_theme');
-        if (saved === 'light' || saved === 'dark') return saved;
-      } catch {}
-    }
-    return 'dark';
-  });
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
   const [chatTheme, setChatThemeState] = useState<ChatThemeId>('default');
 
   const toggle = useCallback(() => {
@@ -252,6 +180,8 @@ export function useChatTheme(): ChatThemeContextValue {
   return context;
 }
 
-export * from './theme/typography';
+export * from './theme/colors';
 export * from './theme/spacing';
-export * from './animations';
+export * from './theme/typography';
+export * from './theme/animations';
+export * from './theme/sharedStyles';

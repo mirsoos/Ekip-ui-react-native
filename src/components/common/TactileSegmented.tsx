@@ -180,8 +180,8 @@ export const TactileSegmented = React.memo(function TactileSegmented({
   optionsRef.current = options;
 
   // انیمیشن‌های حرکتی و ابعاد
-  const slideAnim = useRef(new Animated.Value(0)).current;
-  const pressScaleAnim = useRef(new Animated.Value(1)).current;
+  const [slideAnim] = useState(() => new Animated.Value(0));
+  const [pressScaleAnim] = useState(() => new Animated.Value(1));
   const isDragging = useRef(false);
   const dragStartRef = useRef(0);
   const currentPosRef = useRef(0);

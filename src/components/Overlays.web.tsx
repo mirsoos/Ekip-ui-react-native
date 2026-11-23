@@ -2,7 +2,7 @@
 
 import React, { type ReactNode, useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { getIcon, type IconName } from '../lib/icons';
+import { type IconName } from '../lib/icons';
 import { GlassButton, GlassCloseButton } from './Glass';
 import { useTheme } from '../lib/theme';
 import { useI18n } from '../lib/i18n';

@@ -1,6 +1,6 @@
 // --- START OF FILE EkipLogoButton.tsx ---
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import {
   TouchableOpacity,
   StyleSheet,
@@ -150,29 +150,29 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
   size = 44,
 }: EkipLogoButtonProps) {
   // Main logo transforms (Always full 1.0 opacity - never dimmed when inactive)
-  const logoScaleAnim = useRef(new Animated.Value(1.0)).current;
-  const pressAnim = useRef(new Animated.Value(1)).current;
+  const [logoScaleAnim] = useState(() => new Animated.Value(1.0));
+  const [pressAnim] = useState(() => new Animated.Value(1));
 
   // Mechanical separation of the 3 SVG pieces
-  const pieceSeparationAnim = useRef(new Animated.Value(0)).current;
+  const [pieceSeparationAnim] = useState(() => new Animated.Value(0));
 
   // Continuous subtle up/down breathing wave on the SVG pieces (while active)
-  const floatAnim = useRef(new Animated.Value(0)).current;
+  const [floatAnim] = useState(() => new Animated.Value(0));
   const floatLoopRef = useRef<Animated.CompositeAnimation | null>(null);
 
   // 3 Sequential Pulse Rings matching exact Logo colors: 1. Blue -> 2. Orange -> 3. Green
-  const pulseBlueAnim = useRef(new Animated.Value(0)).current;
-  const pulseOrangeAnim = useRef(new Animated.Value(0)).current;
-  const pulseGreenAnim = useRef(new Animated.Value(0)).current;
+  const [pulseBlueAnim] = useState(() => new Animated.Value(0));
+  const [pulseOrangeAnim] = useState(() => new Animated.Value(0));
+  const [pulseGreenAnim] = useState(() => new Animated.Value(0));
 
   // Master fade for pulse waves (smooth 280ms dissolution on exit, never abrupt disappearance)
-  const pulseContainerFade = useRef(new Animated.Value(active ? 1 : 0)).current;
+  const [pulseContainerFade] = useState(() => new Animated.Value(active ? 1 : 0));
 
   const timeoutsRef = useRef<any[]>([]);
   const isRunningRef = useRef(false);
 
   // Continuous floating wave on the SVG pieces while active
-  const startFloatingWave = () => {
+  const startFloatingWave = useCallback(() => {
     floatAnim.setValue(0);
     const floatAnimation = Animated.loop(
       Animated.sequence([
@@ -194,7 +194,7 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
     );
     floatLoopRef.current = floatAnimation;
     floatAnimation.start();
-  };
+  }, [floatAnim]);
 
   useEffect(() => {
     if (active) {
@@ -356,7 +356,17 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
       timeoutsRef.current.forEach((t) => clearTimeout(t));
       if (floatLoopRef.current) floatLoopRef.current.stop();
     };
-  }, [active]);
+  }, [
+    active,
+    floatAnim,
+    logoScaleAnim,
+    pieceSeparationAnim,
+    pulseBlueAnim,
+    pulseContainerFade,
+    pulseGreenAnim,
+    pulseOrangeAnim,
+    startFloatingWave,
+  ]);
 
   const handlePressIn = () => {
     Animated.spring(pressAnim, {

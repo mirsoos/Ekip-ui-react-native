@@ -54,7 +54,7 @@ export function ProfileHeaderComponent({
   onScrollOffsetChange?: (offset: number) => void;
 }) {
   const insets = useSafeAreaInsets();
-  const { theme, toggle, colors, isDark } = useTheme();
+  const { theme, colors, isDark } = useTheme();
   const { isRTL } = useI18n();
   const actionButtonStyle = React.useMemo(
     () => [styles.actionBtn, actionButtonStyles[theme]],

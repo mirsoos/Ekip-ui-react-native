@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { GlassCard } from '../Glass';
-import { getIcon } from '../../lib/icons';
+import { Icons } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Group, Profile } from '../../types/database';
@@ -15,10 +15,6 @@ export function EkipRequirementsCard({
 }) {
   const { colors } = useTheme();
   const { isRTL } = useI18n();
-  const Shield = getIcon('Shield');
-  const Check = getIcon('Check');
-  const X = getIcon('X');
-
   const rules: { label: string; passed: boolean; desc: string }[] = [];
 
   if (group.required_level) {
@@ -72,7 +68,7 @@ export function EkipRequirementsCard({
   return (
     <GlassCard variant="thin" style={styles.card}>
       <View style={[styles.header, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-        <Shield size={16} color="#f472b6" strokeWidth={2.4} style={{ marginRight: isRTL ? 0 : 6, marginLeft: isRTL ? 6 : 0 }} />
+        <Icons.Shield size={16} color="#f472b6" strokeWidth={2.4} style={{ marginRight: isRTL ? 0 : 6, marginLeft: isRTL ? 6 : 0 }} />
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           {isRTL ? 'شرایط حضور در برنامه' : 'Participation Requirements'}
         </Text>
@@ -100,9 +96,9 @@ export function EkipRequirementsCard({
                 ]}
               >
                 {rule.passed ? (
-                  <Check size={11} color="#22c55e" strokeWidth={3} />
+                  <Icons.Check size={11} color="#22c55e" strokeWidth={3} />
                 ) : (
-                  <X size={11} color="#ef4444" strokeWidth={3} />
+                  <Icons.X size={11} color="#ef4444" strokeWidth={3} />
                 )}
               </View>
             </View>

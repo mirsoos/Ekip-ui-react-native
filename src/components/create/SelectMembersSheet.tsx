@@ -1,6 +1,6 @@
 // --- START OF FILE SelectMembersSheet.tsx ---
 
-import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Platform } from 'react-native';
 import { GlassCard, GlassAvatar, GlassButton, GlassEmpty, GlassInput } from '../Glass';
 import { TactileSegmented } from '../common/TactileSegmented';
@@ -31,8 +31,8 @@ const MemberAddRemoveButton = React.memo(function MemberAddRemoveButton({
   onPress,
   size = 38,
 }: MemberAddRemoveButtonProps) {
-  const anim = useRef(new Animated.Value(isAdded ? 1 : 0)).current;
-  const pressScale = useRef(new Animated.Value(1)).current;
+  const [anim] = useState(() => new Animated.Value(isAdded ? 1 : 0));
+  const [pressScale] = useState(() => new Animated.Value(1));
 
   useEffect(() => {
     Animated.timing(anim, {

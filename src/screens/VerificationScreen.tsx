@@ -1,6 +1,6 @@
 // --- START OF FILE VerificationScreen.tsx ---
 
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -20,7 +20,7 @@ import {
 import { TactileSegmented } from '../components/common/TactileSegmented';
 import { GlassSheet } from '../components/Overlays';
 import { getIcon } from '../lib/icons';
-import { useTheme } from '../lib/theme';
+import { useTheme, spacing, radii, sharedStyles } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
@@ -50,7 +50,7 @@ const Mail = getIcon('Mail');
 export function VerificationScreen({ onBack }: VerificationScreenProps) {
   const insets = useSafeAreaInsets();
   const { me, updateMe, addNotification } = useAppData();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { isRTL } = useI18n();
   const { showToast } = useToast();
 
@@ -85,9 +85,10 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
       onBack();
       return true;
     });
+    const timers = timersRef.current;
     return () => {
       sub.remove();
-      timersRef.current.forEach((t) => clearTimeout(t));
+      timers.forEach((t) => clearTimeout(t));
     };
   }, [onBack, showDocModal, showFaceModal]);
 
@@ -190,12 +191,16 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
         style={styles.content}
         contentContainerStyle={{
           paddingTop: getSinglePillContentPaddingTop(insets.top),
-          paddingBottom: 60 + insets.bottom,
+          paddingHorizontal: spacing.screenPadding,
+          paddingBottom: spacing.bottomNavClearance + insets.bottom,
         }}
         showsVerticalScrollIndicator={false}
       >
         {/* Hero Card */}
-        <GlassCard variant="thick" style={styles.heroCard}>
+        <GlassCard
+          variant="thick"
+          style={[styles.heroCard, { borderColor: colors.glassBorderActive, borderWidth: 1 }]}
+        >
           <View style={styles.avatarWrap}>
             <GlassAvatar
               user={me}
@@ -221,9 +226,18 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
             @{me.username}
           </Text>
 
-          <View style={[styles.statusPill, { flexDirection: rowDir }]}>
-            <View style={styles.dot} />
-            <Text style={styles.statusText}>
+          <View
+            style={[
+              styles.statusPill,
+              {
+                flexDirection: rowDir,
+                backgroundColor: colors.glassPillBg,
+                borderColor: colors.glassBorderActive,
+              },
+            ]}
+          >
+            <View style={[styles.dot, { backgroundColor: colors.brandPink }]} />
+            <Text style={[styles.statusText, { color: colors.brandPink }]}>
               {isVerified
                 ? isRTL
                   ? 'حساب کاربری تایید شده • هویت معتبر'
@@ -278,8 +292,8 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
 
         <GlassCard style={styles.cardItem}>
           <View style={[styles.itemRow, { flexDirection: rowDir }]}>
-            <View style={[styles.iconBox, { backgroundColor: 'rgba(236,72,153,0.15)' }]}>
-              <Camera size={20} color="#ec4899" />
+            <View style={[styles.iconBox, { backgroundColor: colors.glassPillBg }]}>
+              <Camera size={20} color={colors.brandPink} />
             </View>
             <View style={[{ flex: 1 }, textSpacing]}>
               <Text style={[styles.itemTitle, { color: colors.textPrimary, textAlign }]}>
@@ -307,8 +321,8 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
 
         <GlassCard style={styles.cardItem}>
           <View style={[styles.itemRow, { flexDirection: rowDir }]}>
-            <View style={[styles.iconBox, { backgroundColor: 'rgba(59,130,246,0.15)' }]}>
-              <Lock size={20} color="#3b82f6" />
+            <View style={[styles.iconBox, { backgroundColor: colors.glassPillBg }]}>
+              <Lock size={20} color={colors.brandBlue} />
             </View>
             <View style={[{ flex: 1 }, textSpacing]}>
               <Text style={[styles.itemTitle, { color: colors.textPrimary, textAlign }]}>
@@ -330,8 +344,8 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
 
         <GlassCard style={styles.cardItem}>
           <View style={[styles.itemRow, { flexDirection: rowDir }]}>
-            <View style={[styles.iconBox, { backgroundColor: 'rgba(16,185,129,0.15)' }]}>
-              <Smartphone size={20} color="#10b981" />
+            <View style={[styles.iconBox, { backgroundColor: colors.glassPillBg }]}>
+              <Smartphone size={20} color={colors.brandGreen} />
             </View>
             <View style={[{ flex: 1 }, textSpacing]}>
               <Text style={[styles.itemTitle, { color: colors.textPrimary, textAlign }]}>
@@ -341,14 +355,14 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
                 +98 912 ••• 0199 · {isRTL ? 'تایید شده' : 'Verified'}
               </Text>
             </View>
-            <Check size={18} color="#10b981" />
+            <Check size={18} color={colors.brandGreen} />
           </View>
         </GlassCard>
 
         <GlassCard style={styles.cardItem}>
           <View style={[styles.itemRow, { flexDirection: rowDir }]}>
-            <View style={[styles.iconBox, { backgroundColor: 'rgba(245,158,11,0.15)' }]}>
-              <Mail size={20} color="#f59e0b" />
+            <View style={[styles.iconBox, { backgroundColor: colors.glassPillBg }]}>
+              <Mail size={20} color={colors.brandAmber} />
             </View>
             <View style={[{ flex: 1 }, textSpacing]}>
               <Text style={[styles.itemTitle, { color: colors.textPrimary, textAlign }]}>
@@ -358,7 +372,7 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
                 vance@ekip-command.mil · {isRTL ? 'تایید شده' : 'Verified'}
               </Text>
             </View>
-            <Check size={18} color="#10b981" />
+            <Check size={18} color={colors.brandGreen} />
           </View>
         </GlassCard>
 
@@ -368,23 +382,23 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
         </Text>
         <GlassCard style={styles.cardItem}>
           <View style={[styles.perkRow, { flexDirection: rowDir }]}>
-            <Award size={18} color="#ec4899" />
+            <Award size={18} color={colors.brandPink} />
             <Text style={[styles.perkText, { color: colors.textPrimary, textAlign }]}>
               {isRTL
                 ? 'اولویت بالا در ساخت و میزبانی اکیپ‌ها'
                 : 'High-priority squad creation and hosting'}
             </Text>
           </View>
-          <View style={[styles.perkRow, { marginTop: 12, flexDirection: rowDir }]}>
-            <Zap size={18} color="#ec4899" />
+          <View style={[styles.perkRow, { marginTop: spacing.md, flexDirection: rowDir }]}>
+            <Zap size={18} color={colors.brandPink} />
             <Text style={[styles.perkText, { color: colors.textPrimary, textAlign }]}>
               {isRTL
                 ? 'عضویت بدون معطلی در مأموریت‌های خصوصی'
                 : 'Instant admission to private tactical missions'}
             </Text>
           </View>
-          <View style={[styles.perkRow, { marginTop: 12, flexDirection: rowDir }]}>
-            <Sparkles size={18} color="#ec4899" />
+          <View style={[styles.perkRow, { marginTop: spacing.md, flexDirection: rowDir }]}>
+            <Sparkles size={18} color={colors.brandPink} />
             <Text style={[styles.perkText, { color: colors.textPrimary, textAlign }]}>
               {isRTL
                 ? 'نشان شیشه‌ای متمایز تایید هویت'
@@ -394,7 +408,7 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
         </GlassCard>
 
         {/* Manual override / toggle action */}
-        <View style={{ marginTop: 20 }}>
+        <View style={{ marginTop: spacing.xl }}>
           <GlassButton
             variant={isVerified ? 'secondary' : 'primary'}
             fullWidth
@@ -417,11 +431,11 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
         onClose={() => setShowDocModal(false)}
         title={isRTL ? 'تایید مدرک شناسایی' : 'Document Verification'}
       >
-        <View style={{ paddingVertical: 10 }}>
+        <View style={{ paddingVertical: spacing.sm }}>
           <Text style={[styles.label, { color: colors.textSecondary, textAlign }]}>
             {isRTL ? 'نوع مدرک' : 'DOCUMENT TYPE'}
           </Text>
-          <View style={{ marginTop: 8 }}>
+          <View style={{ marginTop: spacing.sm }}>
             <TactileSegmented
               options={docOptions}
               value={selectedDocType}
@@ -432,7 +446,7 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
           <Text
             style={[
               styles.label,
-              { marginTop: 16, color: colors.textSecondary, textAlign },
+              { marginTop: spacing.lg, color: colors.textSecondary, textAlign },
             ]}
           >
             {isRTL ? 'شماره مدرک' : 'DOCUMENT NUMBER'}
@@ -441,7 +455,7 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
             style={[
               styles.input,
               {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)',
+                backgroundColor: colors.glassInputBg,
                 borderColor: colors.glassBorder,
                 color: colors.textPrimary,
                 textAlign,
@@ -455,7 +469,7 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
           <Text
             style={[
               styles.label,
-              { marginTop: 16, color: colors.textSecondary, textAlign },
+              { marginTop: spacing.lg, color: colors.textSecondary, textAlign },
             ]}
           >
             {isRTL ? 'کشور صادرکننده' : 'ISSUING JURISDICTION'}
@@ -464,7 +478,7 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
             style={[
               styles.input,
               {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)',
+                backgroundColor: colors.glassInputBg,
                 borderColor: colors.glassBorder,
                 color: colors.textPrimary,
                 textAlign,
@@ -475,7 +489,7 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
             placeholderTextColor={colors.textTertiary}
           />
 
-          <View style={{ marginTop: 24 }}>
+          <View style={{ marginTop: spacing.xxl }}>
             <GlassButton
               variant="primary"
               fullWidth
@@ -500,9 +514,17 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
         onClose={() => setShowFaceModal(false)}
         title={isRTL ? 'اسکن سه‌بعدی بیومتریک' : '3D Biometric Liveness'}
       >
-        <View style={{ alignItems: 'center', paddingVertical: 20 }}>
-          <View style={styles.scannerCircle}>
-            <Camera size={40} color="#ec4899" />
+        <View style={{ alignItems: 'center', paddingVertical: spacing.xl }}>
+          <View
+            style={[
+              styles.scannerCircle,
+              {
+                borderColor: colors.brandPink,
+                backgroundColor: colors.glassPillBg,
+              },
+            ]}
+          >
+            <Camera size={40} color={colors.brandPink} />
           </View>
 
           <Text style={[styles.scanStatusText, { color: colors.textPrimary }]}>
@@ -529,7 +551,7 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
           </Text>
 
           {faceScanStep === 'success' && (
-            <View style={{ marginTop: 20, width: '100%' }}>
+            <View style={{ marginTop: spacing.xl, width: '100%' }}>
               <GlassButton variant="primary" fullWidth onPress={() => setShowFaceModal(false)}>
                 {isRTL ? 'تکمیل' : 'Done'}
               </GlassButton>
@@ -543,28 +565,24 @@ export function VerificationScreen({ onBack }: VerificationScreenProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
   },
   heroCard: {
-    padding: 20,
+    padding: spacing.xl,
     alignItems: 'center',
-    borderRadius: 24,
-    borderColor: 'rgba(236,72,153,0.3)',
-    borderWidth: 1,
+    borderRadius: radii.xl,
   },
   avatarWrap: {
     position: 'relative',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 4,
+    ...sharedStyles.row,
+    gap: spacing.xs,
+    marginTop: spacing.xs,
   },
   heroName: {
     fontSize: 18,
@@ -572,36 +590,31 @@ const styles = StyleSheet.create({
   },
   heroHandle: {
     fontSize: 13,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(236,72,153,0.1)',
-    borderColor: 'rgba(236,72,153,0.3)',
+    ...sharedStyles.row,
     borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 12,
-    marginTop: 12,
-    gap: 6,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.input,
+    marginTop: spacing.md,
+    gap: spacing.xs,
   },
   dot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
-    backgroundColor: '#ec4899',
+    borderRadius: radii.badge,
   },
   statusText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#ec4899',
   },
   heroStatsRow: {
-    flexDirection: 'row',
+    ...sharedStyles.row,
     width: '100%',
-    marginTop: 20,
-    paddingTop: 16,
+    marginTop: spacing.xl,
+    paddingTop: spacing.lg,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   statBox: {
@@ -618,29 +631,28 @@ const styles = StyleSheet.create({
   },
   statLbl: {
     fontSize: 10,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   sectionHeading: {
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
-    marginTop: 24,
-    marginBottom: 10,
-    marginHorizontal: 4,
+    marginTop: spacing.xxl,
+    marginBottom: spacing.sm,
+    marginHorizontal: spacing.xs,
   },
   cardItem: {
-    padding: 14,
-    borderRadius: 18,
-    marginBottom: 8,
+    padding: spacing.md,
+    borderRadius: radii.lg,
+    marginBottom: spacing.sm,
   },
   itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    ...sharedStyles.row,
   },
   iconBox: {
     width: 38,
     height: 38,
-    borderRadius: 12,
+    borderRadius: radii.input,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -650,12 +662,11 @@ const styles = StyleSheet.create({
   },
   itemDesc: {
     fontSize: 11,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   perkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    ...sharedStyles.row,
+    gap: spacing.sm,
   },
   perkText: {
     fontSize: 13,
@@ -665,35 +676,33 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.8,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderRadius: radii.input,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     fontSize: 14,
   },
   scannerCircle: {
     width: 90,
     height: 90,
-    borderRadius: 45,
+    borderRadius: radii.pill,
     borderWidth: 2,
-    borderColor: '#ec4899',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(236,72,153,0.1)',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   scanStatusText: {
     fontSize: 15,
     fontWeight: '700',
-    marginBottom: 6,
+    marginBottom: spacing.xs,
     textAlign: 'center',
   },
   scanDesc: {
     fontSize: 12,
     textAlign: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing.xl,
   },
 });

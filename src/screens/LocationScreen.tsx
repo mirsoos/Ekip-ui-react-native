@@ -1,6 +1,6 @@
 // --- START OF FILE LocationScreen.tsx ---
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import { GlassCard, GlassButton, LiquidGlassToggle } from '../components/Glass';
 import { GlassSheet } from '../components/Overlays';
 import { cities } from '../lib/demoData';
 import { getIcon } from '../lib/icons';
-import { useTheme } from '../lib/theme';
+import { useTheme, spacing, radii, sharedStyles } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
@@ -41,7 +41,7 @@ const Trash = getIcon('Trash');
 export function LocationScreen({ onBack }: LocationScreenProps) {
   const insets = useSafeAreaInsets();
   const { me, updateMe, addNotification } = useAppData();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { isRTL } = useI18n();
   const { showToast } = useToast();
 
@@ -123,8 +123,8 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
   const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);
   const textAlign = isRTL ? ('right' as const) : ('left' as const);
   const textSpacing = {
-    marginLeft: isRTL ? 0 : 12,
-    marginRight: isRTL ? 12 : 0,
+    marginLeft: isRTL ? 0 : spacing.md,
+    marginRight: isRTL ? spacing.md : 0,
   };
 
   return (
@@ -133,15 +133,16 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
         style={styles.content}
         contentContainerStyle={{
           paddingTop: getSinglePillContentPaddingTop(insets.top),
-          paddingBottom: 60 + insets.bottom,
+          paddingHorizontal: spacing.screenPadding,
+          paddingBottom: spacing.bottomNavClearance + insets.bottom,
         }}
         showsVerticalScrollIndicator={false}
       >
         {/* Current Radar Card */}
-        <GlassCard variant="thick" style={styles.heroCard}>
+        <GlassCard variant="thick" style={[styles.heroCard, { borderColor: colors.glassBorderActive }]}>
           <View style={[styles.heroHeader, { flexDirection: rowDir }]}>
-            <View style={[styles.iconBox, { backgroundColor: 'rgba(16,185,129,0.15)' }]}>
-              <Navigation size={22} color="#10b981" />
+            <View style={[styles.iconBox, { backgroundColor: colors.glassPillBg }]}>
+              <Navigation size={22} color={colors.brandGreen} />
             </View>
             <View style={[{ flex: 1 }, textSpacing]}>
               <Text style={[styles.heroTitle, { color: colors.textPrimary, textAlign }]}>
@@ -173,8 +174,8 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
                   style={[
                     styles.radiusBtn,
                     {
-                      backgroundColor: active ? 'rgba(16,185,129,0.2)' : colors.glassThinBg,
-                      borderColor: active ? '#10b981' : colors.glassBorder,
+                      backgroundColor: active ? colors.glassPillBg : colors.glassThinBg,
+                      borderColor: active ? colors.brandGreen : colors.glassBorder,
                     },
                   ]}
                 >
@@ -182,7 +183,7 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
                     style={[
                       styles.radiusBtnText,
                       {
-                        color: active ? '#10b981' : colors.textSecondary,
+                        color: active ? colors.brandGreen : colors.textSecondary,
                         fontWeight: active ? '700' : '600',
                       },
                     ]}
@@ -203,7 +204,7 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8, paddingVertical: 4, flexDirection: rowDir, flexGrow: 1 }}
+            contentContainerStyle={{ gap: spacing.sm, paddingVertical: spacing.xs, flexDirection: rowDir, flexGrow: 1 }}
           >
             {cities.map((c) => {
               const isSelected = selectedCity === c;
@@ -215,24 +216,24 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
                     styles.cityChip,
                     {
                       flexDirection: rowDir,
-                      backgroundColor: isSelected ? 'rgba(236,72,153,0.15)' : colors.glassThinBg,
-                      borderColor: isSelected ? '#ec4899' : colors.glassBorder,
+                      backgroundColor: isSelected ? colors.glassPillBg : colors.glassThinBg,
+                      borderColor: isSelected ? colors.brandPink : colors.glassBorder,
                     },
                   ]}
                 >
-                  <MapPin size={12} color={isSelected ? '#ec4899' : colors.textTertiary} />
+                  <MapPin size={12} color={isSelected ? colors.brandPink : colors.textTertiary} />
                   <Text
                     style={[
                       styles.cityChipText,
                       {
-                        color: isSelected ? '#ec4899' : colors.textSecondary,
+                        color: isSelected ? colors.brandPink : colors.textSecondary,
                         fontWeight: isSelected ? '700' : '600',
                       },
                     ]}
                   >
                     {c}
                   </Text>
-                  {isSelected && <Check size={12} color="#ec4899" />}
+                  {isSelected && <Check size={12} color={colors.brandPink} />}
                 </TouchableOpacity>
               );
             })}
@@ -294,7 +295,7 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
             {isRTL ? 'مکان‌های ذخیره شده' : 'SAVED LOCATIONS'}
           </Text>
           <TouchableOpacity onPress={() => setShowAddPlaceModal(true)}>
-            <Text style={styles.addText}>
+            <Text style={[styles.addText, { color: colors.brandPink }]}>
               {isRTL ? '+ افزودن مکان' : '+ Add Place'}
             </Text>
           </TouchableOpacity>
@@ -306,7 +307,7 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
               {idx > 0 && <View style={[styles.divider, { backgroundColor: colors.divider }]} />}
               <View style={[styles.placeRow, { flexDirection: rowDir }]}>
                 <View style={[styles.iconBox, { backgroundColor: colors.glassThinBg }]}>
-                  <Compass size={18} color="#ec4899" />
+                  <Compass size={18} color={colors.brandPink} />
                 </View>
                 <View style={[{ flex: 1 }, textSpacing]}>
                   <Text style={[styles.settingTitle, { color: colors.textPrimary, textAlign }]}>
@@ -318,9 +319,9 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
                 </View>
                 <TouchableOpacity
                   onPress={() => handleRemovePlace(place.id, place.name)}
-                  style={{ padding: 6 }}
+                  style={{ padding: spacing.xs }}
                 >
-                  <Trash size={15} color="#ef4444" />
+                  <Trash size={15} color={colors.danger} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -334,7 +335,7 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
         onClose={() => setShowAddPlaceModal(false)}
         title={isRTL ? 'افزودن مکان برگزیده' : 'Add Favorite Place'}
       >
-        <View style={{ paddingVertical: 10 }}>
+        <View style={{ paddingVertical: spacing.sm }}>
           <Text style={[styles.inputLabel, { color: colors.textSecondary, textAlign }]}>
             {isRTL ? 'نام مکان' : 'LABEL NAME'}
           </Text>
@@ -342,7 +343,7 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
             style={[
               styles.input,
               {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)',
+                backgroundColor: colors.glassInputBg,
                 borderColor: colors.glassBorder,
                 color: colors.textPrimary,
                 textAlign,
@@ -357,7 +358,7 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
           <Text
             style={[
               styles.inputLabel,
-              { marginTop: 14, color: colors.textSecondary, textAlign },
+              { marginTop: spacing.md, color: colors.textSecondary, textAlign },
             ]}
           >
             {isRTL ? 'آدرس یا محدوده' : 'ADDRESS OR COORDINATES'}
@@ -366,7 +367,7 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
             style={[
               styles.input,
               {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.05)',
+                backgroundColor: colors.glassInputBg,
                 borderColor: colors.glassBorder,
                 color: colors.textPrimary,
                 textAlign,
@@ -378,7 +379,7 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
             placeholderTextColor={colors.textTertiary}
           />
 
-          <View style={{ marginTop: 22 }}>
+          <View style={{ marginTop: spacing.xxl }}>
             <GlassButton variant="primary" fullWidth onPress={handleAddPlace}>
               {isRTL ? 'ذخیره مکان' : 'Save Place'}
             </GlassButton>
@@ -391,26 +392,23 @@ export function LocationScreen({ onBack }: LocationScreenProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
   },
   heroCard: {
-    padding: 16,
-    borderRadius: 22,
-    borderColor: 'rgba(16,185,129,0.3)',
+    padding: spacing.screenPadding,
+    borderRadius: radii.xl,
     borderWidth: 1,
   },
   heroHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    ...sharedStyles.row,
   },
   iconBox: {
     width: 44,
     height: 44,
-    borderRadius: 14,
+    borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -420,18 +418,18 @@ const styles = StyleSheet.create({
   },
   heroDesc: {
     fontSize: 11,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   radiusRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 16,
+    ...sharedStyles.row,
+    gap: spacing.sm,
+    marginTop: spacing.lg,
   },
   radiusBtn: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: radii.input,
     borderWidth: 1,
   },
   radiusBtnText: {
@@ -441,45 +439,39 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
-    marginTop: 22,
-    marginBottom: 8,
-    marginHorizontal: 4,
+    marginTop: spacing.xxl,
+    marginBottom: spacing.sm,
+    marginHorizontal: spacing.xs,
   },
   sectionHeadingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 22,
-    marginBottom: 8,
-    marginHorizontal: 4,
+    ...sharedStyles.rowBetween,
+    marginTop: spacing.xxl,
+    marginBottom: spacing.sm,
+    marginHorizontal: spacing.xs,
   },
   addText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#ec4899',
   },
   cardSection: {
-    padding: 14,
-    borderRadius: 20,
+    padding: spacing.md,
+    borderRadius: radii.lg,
   },
   cityChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 14,
+    ...sharedStyles.row,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.md,
     borderWidth: 1,
   },
   cityChipText: {
     fontSize: 12,
   },
   settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-    gap: 16,
+    ...sharedStyles.rowBetween,
+    paddingVertical: spacing.xs,
+    gap: spacing.lg,
   },
   settingTitle: {
     fontSize: 14,
@@ -487,27 +479,26 @@ const styles = StyleSheet.create({
   },
   settingDesc: {
     fontSize: 11,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   divider: {
-    height: StyleSheet.hairlineWidth,
-    marginVertical: 12,
+    ...sharedStyles.divider,
+    marginVertical: spacing.md,
   },
   placeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    ...sharedStyles.row,
   },
   inputLabel: {
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.8,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderRadius: radii.input,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     fontSize: 14,
   },
 });

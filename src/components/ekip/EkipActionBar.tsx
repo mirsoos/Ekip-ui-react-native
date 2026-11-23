@@ -1,11 +1,11 @@
 // --- START OF FILE EkipActionBar.tsx ---
 
-import React, { useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, Platform, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassButton } from '../Glass';
 import { FrostedGlass } from '../FrostedGlass';
-import { getIcon } from '../../lib/icons';
+import { Icons } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useAppData } from '../../lib/appData';
 import { useI18n } from '../../lib/i18n';
@@ -28,9 +28,8 @@ export function EkipActionBarComponent({
   const { me, members, requests, conversations } = useAppData();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
-  const ClockIcon = getIcon('Clock');
 
-  const enterAnim = useRef(new Animated.Value(0)).current;
+  const [enterAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     enterAnim.setValue(0);
@@ -150,7 +149,7 @@ export function EkipActionBarComponent({
         ) : myRequest?.status === 'pending' ? (
           <View style={[styles.row, rowDirStyle]}>
             <View style={[styles.pendingIndicator, rowDirStyle]}>
-              <ClockIcon
+              <Icons.Clock
                 size={16}
                 color={colors.textSecondary}
                 style={{ marginRight: isRTL ? 0 : 6, marginLeft: isRTL ? 6 : 0 }}

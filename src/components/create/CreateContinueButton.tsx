@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FrostedGlass } from '../FrostedGlass';
-import { getIcon } from '../../lib/icons';
+import { Icon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 
@@ -21,7 +21,6 @@ export function CreateContinueButtonComponent({
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
   const isFinal = step === totalSteps - 1;
-  const IconComp = getIcon(isFinal ? 'Check' : isRTL ? 'ArrowLeft' : 'ArrowRight');
 
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -89,7 +88,8 @@ export function CreateContinueButtonComponent({
           <Text style={[styles.continueText, { color: colors.textPrimary }]}>
             {isFinal ? t('create.deployOperation') : t('create.continue')}
           </Text>
-          <IconComp
+          <Icon
+            name={isFinal ? 'Check' : isRTL ? 'ArrowLeft' : 'ArrowRight'}
             size={18}
             color={colors.textPrimary}
             strokeWidth={2.4}

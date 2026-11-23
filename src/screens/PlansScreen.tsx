@@ -1,11 +1,11 @@
 // --- START OF FILE PlansScreen.tsx ---
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, BackHandler } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassCard, GlassButton } from '../components/Glass';
 import { getIcon } from '../lib/icons';
-import { useTheme } from '../lib/theme';
+import { useTheme, spacing, radii, sharedStyles } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
@@ -49,7 +49,7 @@ export function PlansScreenComponent({ onBack }: PlansScreenProps) {
             'جستجوی دورهمی‌های اطراف تا شعاع ۱۵ کیلومتر',
             'شخصی‌سازی پایه پروفایل و علایق',
           ],
-          color: '#3b82f6',
+          color: colors.brandBlue,
         },
         {
           id: 'pro',
@@ -66,7 +66,7 @@ export function PlansScreenComponent({ onBack }: PlansScreenProps) {
             'پوسته‌های شیشه‌ای اختصاصی چت و نشان‌های خاص',
             'دسترسی کامل به دستیار هوشمند برنامه‌ریزی',
           ],
-          color: '#ec4899',
+          color: colors.brandPink,
         },
         {
           id: 'elite',
@@ -82,7 +82,7 @@ export function PlansScreenComponent({ onBack }: PlansScreenProps) {
             'تخفیف‌های اختصاصی کافه‌ها و بوردگیم‌های همکار',
             'پشتیبانی اختصاصی و اولویت در پیشنهادات هفتگی',
           ],
-          color: '#f59e0b',
+          color: colors.brandAmber,
         },
       ]
     : [
@@ -99,7 +99,7 @@ export function PlansScreenComponent({ onBack }: PlansScreenProps) {
             'Discovery range up to 15km',
             'Basic profile & interests setup',
           ],
-          color: '#3b82f6',
+          color: colors.brandBlue,
         },
         {
           id: 'pro',
@@ -116,7 +116,7 @@ export function PlansScreenComponent({ onBack }: PlansScreenProps) {
             'Custom glass themes and exclusive stickers',
             'Unlimited AI Assistant hangout planner',
           ],
-          color: '#ec4899',
+          color: colors.brandPink,
         },
         {
           id: 'elite',
@@ -132,7 +132,7 @@ export function PlansScreenComponent({ onBack }: PlansScreenProps) {
             'Exclusive cafe partner discounts',
             'VIP priority support line',
           ],
-          color: '#f59e0b',
+          color: colors.brandAmber,
         },
       ];
 
@@ -147,15 +147,15 @@ export function PlansScreenComponent({ onBack }: PlansScreenProps) {
           {
             alignItems: 'center',
             paddingTop: getSinglePillContentPaddingTop(insets.top),
-            paddingBottom: 40 + insets.bottom,
+            paddingBottom: spacing.bottomNavClearance + insets.bottom,
           },
         ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header Info */}
         <View style={styles.header}>
-          <View style={styles.iconCircle}>
-            <Crown size={32} color="#ec4899" strokeWidth={2.4} />
+          <View style={[styles.iconCircle, { backgroundColor: colors.glassPillBg }]}>
+            <Crown size={32} color={colors.brandPink} strokeWidth={2.4} />
           </View>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             {isRTL ? 'ارتقای حساب کاربری' : 'Upgrade Membership'}
@@ -175,25 +175,26 @@ export function PlansScreenComponent({ onBack }: PlansScreenProps) {
               glow={p.recommended}
               style={[
                 styles.planCard,
-                p.recommended && styles.recommendedCard,
+                p.recommended && [styles.recommendedCard, { borderColor: colors.glassBorderActive }],
               ]}
             >
               {p.recommended && (
                 <View
                   style={[
                     styles.recommendedBadge,
+                    { backgroundColor: colors.brandPink },
                     isRTL ? { left: 14 } : { right: 14 },
                     { flexDirection: rowDir },
                   ]}
                 >
-                  <Sparkles size={12} color="#ffffff" strokeWidth={2.5} />
-                  <Text style={styles.recommendedBadgeText}>
+                  <Sparkles size={12} color={colors.white} strokeWidth={2.5} />
+                  <Text style={[styles.recommendedBadgeText, { color: colors.white }]}>
                     {isRTL ? 'پیشنهاد ویژه' : 'POPULAR'}
                   </Text>
                 </View>
               )}
 
-              <View style={[styles.planHeader, p.recommended && { marginTop: 18 }]}>
+              <View style={[styles.planHeader, p.recommended && { marginTop: spacing.lg }]}>
                 <View>
                   <Text style={[styles.planName, { color: colors.textPrimary, textAlign }]}>
                     {p.name}
@@ -269,27 +270,26 @@ export const PlansScreen = React.memo(PlansScreenComponent);
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: 40,
-    paddingHorizontal: 16,
+    paddingBottom: spacing.huge,
+    paddingHorizontal: spacing.screenPadding,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
     maxWidth: 420,
   },
   iconCircle: {
     width: 64,
     height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(236, 72, 153, 0.15)',
+    borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   title: {
     fontSize: 24,
     fontWeight: '800',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   subtitle: {
@@ -300,54 +300,50 @@ const styles = StyleSheet.create({
   plansList: {
     width: '100%',
     maxWidth: 460,
-    gap: 16,
+    gap: spacing.lg,
   },
   planCard: {
-    padding: 20,
-    borderRadius: 24,
+    padding: spacing.xl,
+    borderRadius: radii.xl,
     position: 'relative',
     overflow: 'hidden',
   },
   recommendedCard: {
-    borderColor: 'rgba(236, 72, 153, 0.4)',
     borderWidth: 1.5,
   },
   recommendedBadge: {
     position: 'absolute',
     top: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ec4899',
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    gap: 4,
+    ...sharedStyles.row,
+    paddingVertical: spacing.xxs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radii.input,
+    gap: spacing.xs,
     zIndex: 10,
   },
   recommendedBadgeText: {
-    color: '#ffffff',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   planHeader: {
-    marginTop: 6,
-    marginBottom: 14,
+    marginTop: spacing.xs,
+    marginBottom: spacing.md,
   },
   planName: {
     fontSize: 18,
     fontWeight: '800',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   planDesc: {
     fontSize: 12,
     lineHeight: 16,
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
   priceContainer: {
-    flexDirection: 'row',
+    ...sharedStyles.row,
     alignItems: 'baseline',
-    gap: 4,
+    gap: spacing.xs,
   },
   priceText: {
     fontSize: 26,
@@ -357,22 +353,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   divider: {
-    height: 1,
-    marginBottom: 14,
+    ...sharedStyles.divider,
+    marginBottom: spacing.md,
   },
   perksList: {
-    gap: 10,
-    marginBottom: 18,
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
   },
   perkItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    ...sharedStyles.row,
+    gap: spacing.sm,
   },
   checkCircle: {
     width: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: radii.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -381,6 +376,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   actionContainer: {
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
 });

@@ -6,7 +6,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { getIcon, type IconName } from '../../lib/icons';
+import { Icon, type IconName } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { GLASS_THEME_STYLES } from './theme';
@@ -47,7 +47,6 @@ export function GlassInputComponent({
   const { colors, isDark } = useTheme();
   const themeStyles = GLASS_THEME_STYLES[isDark ? 'dark' : 'light'];
   const { isRTL } = useI18n();
-  const IconComp = icon ? getIcon(icon) : null;
   const internalInputRef = React.useRef<any>(null);
 
   const inputStyle = React.useMemo(
@@ -81,8 +80,9 @@ export function GlassInputComponent({
       onPress={() => internalInputRef.current?.focus()}
       style={inputStyle}
     >
-      {IconComp && (
-        <IconComp
+      {icon && (
+        <Icon
+          name={icon}
           size={18}
           color={colors.textTertiary}
           style={{

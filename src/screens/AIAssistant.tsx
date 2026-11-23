@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AIChatBubble } from '../components/ai/AIChatBubble';
 import { AITypingIndicator } from '../components/ai/AITypingIndicator';
 import { useI18n } from '../lib/i18n';
+import { spacing, sharedStyles } from '../lib/theme';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
 interface AIMessage {
@@ -192,7 +193,7 @@ export const AIAssistant = React.memo(
           styles.messagesContent,
           {
             paddingTop: getSinglePillContentPaddingTop(insets.top),
-            paddingBottom: 70 + insets.bottom + keyboardHeight,
+            paddingBottom: spacing.bottomNavClearance + insets.bottom + keyboardHeight,
           },
         ]}
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
@@ -215,10 +216,10 @@ export const AIAssistant = React.memo(
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
   messagesContent: {
-    paddingBottom: 80,
-    paddingHorizontal: 16,
+    paddingBottom: spacing.bottomNavClearance,
+    paddingHorizontal: spacing.screenPadding,
   },
 });

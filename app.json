@@ -2,20 +2,17 @@
   "expo": {
     "name": "Ekip",
     "slug": "ekip",
+    "scheme": "ekip",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#080c14"
-    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "app.ekip.ios"
     },
     "android": {
-      "package": "com.mirsoos.antigravity",
+      "package": "app.ekip.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",

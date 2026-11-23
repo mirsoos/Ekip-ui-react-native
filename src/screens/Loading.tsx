@@ -1,6 +1,6 @@
 // --- START OF FILE Loading.tsx ---
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Animated,
@@ -18,7 +18,7 @@ import Svg, {
   Rect,
   Circle,
 } from 'react-native-svg';
-import { useTheme } from '../lib/theme';
+import { useTheme, brandColors, palette, darkThemeColors, spacing, radii } from '../lib/theme';
 import { EkipTopPiece, EkipMidPiece, EkipBotPiece } from '../components/ekip/EkipLogoButton';
 
 export interface LoadingProps {
@@ -31,31 +31,31 @@ const BRAND_TEXT_WIDTH = 130;
 const USE_NATIVE_DRIVER = Platform.OS !== 'web';
 
 export function Loading({ onFinish, minDuration = 2000, canFinish = true }: LoadingProps) {
-  const { isDark } = useTheme();
-  const startedAt = useRef(Date.now()).current;
+  const { isDark, colors } = useTheme();
+  const [startedAt] = useState(() => Date.now());
 
   // Screen level transitions
-  const containerOpacity = useRef(new Animated.Value(1)).current;
-  const sceneScale = useRef(new Animated.Value(0.92)).current;
-  const contentOpacity = useRef(new Animated.Value(0)).current;
+  const [containerOpacity] = useState(() => new Animated.Value(1));
+  const [sceneScale] = useState(() => new Animated.Value(0.92));
+  const [contentOpacity] = useState(() => new Animated.Value(0));
   const [isFadingOut, setIsFadingOut] = useState(false);
 
   // Twinkling stars anims (Group A & Group B alternating)
-  const twinkleA = useRef(new Animated.Value(0.2)).current;
-  const twinkleB = useRef(new Animated.Value(0.7)).current;
+  const [twinkleA] = useState(() => new Animated.Value(0.2));
+  const [twinkleB] = useState(() => new Animated.Value(0.7));
 
   // Ekip 3-Piece SVG Logo kinetic animations
-  const logoScaleAnim = useRef(new Animated.Value(0.9)).current;
-  const pieceSeparationAnim = useRef(new Animated.Value(0)).current;
-  const floatAnim = useRef(new Animated.Value(0)).current;
+  const [logoScaleAnim] = useState(() => new Animated.Value(0.9));
+  const [pieceSeparationAnim] = useState(() => new Animated.Value(0));
+  const [floatAnim] = useState(() => new Animated.Value(0));
 
   // 3 Sequential Pulse Rings (Blue -> Orange -> Green)
-  const pulseBlueAnim = useRef(new Animated.Value(0)).current;
-  const pulseOrangeAnim = useRef(new Animated.Value(0)).current;
-  const pulseGreenAnim = useRef(new Animated.Value(0)).current;
+  const [pulseBlueAnim] = useState(() => new Animated.Value(0));
+  const [pulseOrangeAnim] = useState(() => new Animated.Value(0));
+  const [pulseGreenAnim] = useState(() => new Animated.Value(0));
 
   // Typographic Progress
-  const textFillProgress = useRef(new Animated.Value(0)).current;
+  const [textFillProgress] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     // 1. Scene entrance
@@ -219,7 +219,20 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
       twinkleLoopB.stop();
       floatLoop.stop();
     };
-  }, [minDuration]);
+  }, [
+    minDuration,
+    contentOpacity,
+    floatAnim,
+    logoScaleAnim,
+    pieceSeparationAnim,
+    pulseBlueAnim,
+    pulseGreenAnim,
+    pulseOrangeAnim,
+    sceneScale,
+    textFillProgress,
+    twinkleA,
+    twinkleB,
+  ]);
 
   useEffect(() => {
     if (!canFinish) return;
@@ -321,7 +334,7 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
       style={[
         styles.container,
         {
-          backgroundColor: isDark ? '#060814' : '#edf1fa',
+          backgroundColor: colors.bgCanvas,
           opacity: containerOpacity,
         },
       ]}
@@ -338,23 +351,23 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
         <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
           <Defs>
             <RadialGradient id="meshCyan" cx={isDark ? '18%' : '25%'} cy={isDark ? '20%' : '15%'} r={isDark ? '55%' : '65%'}>
-              <Stop offset="0%" stopColor="#38bdf8" stopOpacity={isDark ? 0.24 : 0.20} />
-              <Stop offset="55%" stopColor="#38bdf8" stopOpacity={isDark ? 0.08 : 0.06} />
-              <Stop offset="100%" stopColor="#38bdf8" stopOpacity={0} />
+              <Stop offset="0%" stopColor={colors.brandCyan} stopOpacity={isDark ? 0.24 : 0.20} />
+              <Stop offset="55%" stopColor={colors.brandCyan} stopOpacity={isDark ? 0.08 : 0.06} />
+              <Stop offset="100%" stopColor={colors.brandCyan} stopOpacity={0} />
             </RadialGradient>
             <RadialGradient id="meshRose" cx={isDark ? '50%' : '60%'} cy={isDark ? '48%' : '52%'} r={isDark ? '48%' : '60%'}>
-              <Stop offset="0%" stopColor="#ec4899" stopOpacity={isDark ? 0.28 : 0.16} />
-              <Stop offset="60%" stopColor="#ec4899" stopOpacity={isDark ? 0.07 : 0.04} />
-              <Stop offset="100%" stopColor="#ec4899" stopOpacity={0} />
+              <Stop offset="0%" stopColor={colors.brandPink} stopOpacity={isDark ? 0.28 : 0.16} />
+              <Stop offset="60%" stopColor={colors.brandPink} stopOpacity={isDark ? 0.07 : 0.04} />
+              <Stop offset="100%" stopColor={colors.brandPink} stopOpacity={0} />
             </RadialGradient>
             <RadialGradient id="meshIndigo" cx={isDark ? '80%' : '30%'} cy={isDark ? '82%' : '85%'} r={isDark ? '55%' : '65%'}>
-              <Stop offset="0%" stopColor="#6366f1" stopOpacity={isDark ? 0.26 : 0.18} />
-              <Stop offset="60%" stopColor="#6366f1" stopOpacity={isDark ? 0.06 : 0.05} />
-              <Stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+              <Stop offset="0%" stopColor={colors.brandIndigo} stopOpacity={isDark ? 0.26 : 0.18} />
+              <Stop offset="60%" stopColor={colors.brandIndigo} stopOpacity={isDark ? 0.06 : 0.05} />
+              <Stop offset="100%" stopColor={colors.brandIndigo} stopOpacity={0} />
             </RadialGradient>
             <SvgLinearGradient id="starGlow" x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0%" stopColor="#ffffff" stopOpacity={0.8} />
-              <Stop offset="100%" stopColor="#a855f7" stopOpacity={0.2} />
+              <Stop offset="0%" stopColor={colors.white} stopOpacity={0.8} />
+              <Stop offset="100%" stopColor={colors.brandPurple} stopOpacity={0.2} />
             </SvgLinearGradient>
           </Defs>
           <Rect x="0" y="0" width="100%" height="100%" fill="url(#meshCyan)" />
@@ -517,7 +530,7 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
             <Text
               style={[
                 styles.brandTitle,
-                { color: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(15, 23, 42, 0.12)' },
+                { color: colors.glassBorderStrong },
               ]}
             >
               EKIP
@@ -540,8 +553,8 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
                     style={[
                       styles.brandTitle,
                       {
-                        color: isDark ? '#ffffff' : '#0f172a',
-                        textShadowColor: isDark ? 'rgba(56, 189, 248, 0.75)' : 'rgba(15, 23, 42, 0.25)',
+                        color: colors.textPrimary,
+                        textShadowColor: isDark ? colors.brandCyan : colors.cardShadow,
                         textShadowOffset: { width: 0, height: 1 },
                         textShadowRadius: isDark ? 10 : 4,
                       },
@@ -557,7 +570,7 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
           <Text
             style={[
               styles.brandSubtitle,
-              { color: isDark ? '#94a3b8' : '#64748b' },
+              { color: colors.textMuted },
             ]}
           >
             An Anti Social Media
@@ -584,9 +597,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 3,
     height: 3,
-    borderRadius: 1.5,
-    backgroundColor: '#ffffff',
-    shadowColor: '#38bdf8',
+    borderRadius: radii.badge,
+    backgroundColor: palette.white,
+    shadowColor: brandColors.brandCyan,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.9,
     shadowRadius: 5,
@@ -616,20 +629,20 @@ const styles = StyleSheet.create({
     marginLeft: -36,
   },
   pulseBlue: {
-    borderColor: '#0084f0',
-    backgroundColor: 'rgba(0, 132, 240, 0.20)',
+    borderColor: brandColors.brandBlue,
+    backgroundColor: darkThemeColors.glassCardBg,
   },
   pulseOrange: {
-    borderColor: '#ff6b00',
-    backgroundColor: 'rgba(255, 107, 0, 0.20)',
+    borderColor: brandColors.brandAmber,
+    backgroundColor: darkThemeColors.glassCardBg,
   },
   pulseGreen: {
-    borderColor: '#3ea935',
-    backgroundColor: 'rgba(62, 169, 53, 0.20)',
+    borderColor: brandColors.brandGreen,
+    backgroundColor: darkThemeColors.glassCardBg,
   },
   telemetrySection: {
     alignItems: 'center',
-    marginTop: 32,
+    marginTop: spacing.xxxl,
   },
   progressTextContainer: {
     width: BRAND_TEXT_WIDTH,
@@ -637,7 +650,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   progressOuterClip: {
     position: 'absolute',

@@ -1,9 +1,10 @@
 // --- START OF FILE MotionView.tsx ---
 
-import React, { useEffect, useRef, type ReactNode } from 'react';
+import React, { useEffect, useState, type ReactNode } from 'react';
 import {
   Animated,
   Easing,
+  Platform,
   StyleSheet,
   type StyleProp,
   type ViewStyle,
@@ -43,7 +44,7 @@ export const MotionView = React.memo(function MotionView({
   duration = ENTRANCE_DURATION,
   animationKey,
 }: MotionViewProps) {
-  const anim = useRef(new Animated.Value(0)).current;
+  const [anim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     anim.setValue(0);
@@ -52,7 +53,7 @@ export const MotionView = React.memo(function MotionView({
       duration,
       delay,
       easing: Easing.bezier(0.16, 1, 0.3, 1), // Apple-style smooth cubic deceleration
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     });
     timing.start();
 

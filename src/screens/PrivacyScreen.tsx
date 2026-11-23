@@ -1,6 +1,6 @@
 // --- START OF FILE PrivacyScreen.tsx ---
 
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, BackHandler } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
@@ -9,7 +9,7 @@ import { TactileSegmented } from '../components/common/TactileSegmented';
 import { GlassSheet } from '../components/Overlays';
 import { LiquidGlassToggle } from '../components/common/LiquidGlassToggle';
 import { getIcon, Icons } from '../lib/icons';
-import { useTheme } from '../lib/theme';
+import { useTheme, spacing, radii, sharedStyles } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
@@ -130,23 +130,27 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
         style={styles.content}
         contentContainerStyle={{
           paddingTop: getSinglePillContentPaddingTop(insets.top),
-          paddingBottom: 60 + insets.bottom,
+          paddingHorizontal: spacing.screenPadding,
+          paddingBottom: spacing.bottomNavClearance + insets.bottom,
         }}
         showsVerticalScrollIndicator={false}
       >
         {/* Tactical Ghost Mode Hero */}
-        <GlassCard variant="thick" style={styles.ghostCard}>
+        <GlassCard
+          variant="thick"
+          style={[styles.ghostCard, { borderColor: ghostMode ? colors.glassBorderActive : colors.glassBorder }]}
+        >
           <View style={[styles.ghostHeader, { flexDirection: rowDir }]}>
             <View
               style={[
                 styles.iconBox,
                 {
-                  backgroundColor: ghostMode ? 'rgba(236,72,153,0.2)' : colors.glassThinBg,
+                  backgroundColor: ghostMode ? colors.glassPillBg : colors.glassThinBg,
                 },
               ]}
             >
               {ghostMode ? (
-                <EyeOff size={22} color="#ec4899" />
+                <EyeOff size={22} color={colors.brandPink} />
               ) : (
                 <Eye size={22} color={colors.textPrimary} />
               )}
@@ -316,7 +320,7 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
           <Text style={[styles.segmentedLabel, { color: colors.textSecondary, textAlign }]}>
             {isRTL ? 'چه کسانی می‌توانند پیام خصوصی بفرستند' : 'WHO CAN DIRECT MESSAGE YOU'}
           </Text>
-          <View style={{ marginTop: 8 }}>
+          <View style={{ marginTop: spacing.sm }}>
             <TactileSegmented
               options={dmOptions}
               value={dmAudience}
@@ -332,14 +336,14 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
           <Text
             style={[
               styles.segmentedLabel,
-              { marginTop: 18, color: colors.textSecondary, textAlign },
+              { marginTop: spacing.lg, color: colors.textSecondary, textAlign },
             ]}
           >
             {isRTL
               ? 'چه کسانی می‌توانند شما را به اکیپ دعوت کنند'
               : 'WHO CAN INVITE YOU TO MISSIONS'}
           </Text>
-          <View style={{ marginTop: 8 }}>
+          <View style={{ marginTop: spacing.sm }}>
             <TactileSegmented
               options={inviteOptions}
               value={inviteAudience}
@@ -362,8 +366,8 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
             style={[styles.blockedRow, { flexDirection: rowDir }]}
             onPress={() => setShowBlockedSheet(true)}
           >
-            <View style={[styles.iconBox, { backgroundColor: 'rgba(239,68,68,0.15)' }]}>
-              <Ban size={18} color="#ef4444" />
+            <View style={[styles.iconBox, { backgroundColor: colors.glassPillBg }]}>
+              <Ban size={18} color={colors.danger} />
             </View>
             <View style={[{ flex: 1 }, textSpacing]}>
               <Text style={[styles.settingTitle, { color: colors.textPrimary, textAlign }]}>
@@ -386,9 +390,9 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
         onClose={() => setShowBlockedSheet(false)}
         title={isRTL ? 'کاربران مسدود شده' : 'Blocked Operators'}
       >
-        <View style={{ paddingVertical: 10 }}>
+        <View style={{ paddingVertical: spacing.sm }}>
           {blockedList.length === 0 ? (
-            <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+            <View style={{ paddingVertical: spacing.xxl, alignItems: 'center' }}>
               <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
                 {isRTL ? 'هیچ کاربری در لیست مسدودی نیست' : 'No blocked accounts'}
               </Text>
@@ -436,27 +440,24 @@ export function PrivacyScreen({ onBack }: PrivacyScreenProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
   },
   ghostCard: {
-    padding: 16,
-    borderRadius: 22,
-    borderColor: 'rgba(236,72,153,0.3)',
+    padding: spacing.screenPadding,
+    borderRadius: radii.xl,
     borderWidth: 1,
   },
   ghostHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    ...sharedStyles.row,
+    gap: spacing.md,
   },
   iconBox: {
     width: 44,
     height: 44,
-    borderRadius: 14,
+    borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -466,27 +467,25 @@ const styles = StyleSheet.create({
   },
   ghostDesc: {
     fontSize: 11,
-    marginTop: 2,
+    marginTop: spacing.xxs,
     lineHeight: 16,
   },
   sectionHeading: {
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
-    marginTop: 22,
-    marginBottom: 8,
-    marginHorizontal: 4,
+    marginTop: spacing.xxl,
+    marginBottom: spacing.sm,
+    marginHorizontal: spacing.xs,
   },
   cardSection: {
-    padding: 14,
-    borderRadius: 20,
+    padding: spacing.md,
+    borderRadius: radii.lg,
   },
   settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-    gap: 14,
+    ...sharedStyles.rowBetween,
+    paddingVertical: spacing.xs,
+    gap: spacing.md,
   },
   settingTitle: {
     fontSize: 14,
@@ -494,11 +493,11 @@ const styles = StyleSheet.create({
   },
   settingDesc: {
     fontSize: 11,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   divider: {
-    height: StyleSheet.hairlineWidth,
-    marginVertical: 12,
+    ...sharedStyles.divider,
+    marginVertical: spacing.md,
   },
   segmentedLabel: {
     fontSize: 11,
@@ -506,13 +505,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   blockedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    ...sharedStyles.row,
   },
   blockedUserItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
+    ...sharedStyles.row,
+    paddingVertical: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
 });

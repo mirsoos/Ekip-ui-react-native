@@ -8,7 +8,7 @@ import { OnboardingSlide, type SlideData } from '../components/onboarding/Onboar
 import { LanguageSwitcherPill } from '../components/common/LanguageSwitcherPill';
 import { FloatingGlassHeader } from '../components/common/FloatingGlassHeader';
 import { Icons } from '../lib/icons';
-import { useTheme } from '../lib/theme';
+import { useTheme, colors as themeColors, spacing, radii, sharedStyles } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
 
@@ -24,28 +24,28 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
         icon: 'Compass',
         title: t('onboarding.slide1Title'),
         desc: t('onboarding.slide1Desc'),
-        color: '#f472b6',
+        color: colors.brandPink,
       },
       {
         icon: 'Plus',
         title: t('onboarding.slide2Title'),
         desc: t('onboarding.slide2Desc'),
-        color: '#3b82f6',
+        color: colors.brandBlue,
       },
       {
         icon: 'MessageCircle',
         title: t('onboarding.slide3Title'),
         desc: t('onboarding.slide3Desc'),
-        color: '#10b981',
+        color: colors.brandGreen,
       },
       {
         icon: 'Trophy',
         title: t('onboarding.slide4Title'),
         desc: t('onboarding.slide4Desc'),
-        color: '#eab308',
+        color: colors.brandAmber,
       },
     ],
-    [t]
+    [t, colors]
   );
 
   // پشتیبانی از دکمه Back فیزیکی اندروید برای برگشت به اسلاید قبلی
@@ -80,7 +80,7 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
         animated
         onBack={step > 0 ? () => setStep((prev) => prev - 1) : undefined}
         trailing={
-          <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 8, zIndex: 10 }}>
+          <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: spacing.sm, zIndex: 10 }}>
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={onComplete}
@@ -112,10 +112,8 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
                   width: i === step ? 28 : 8,
                   backgroundColor:
                     i === step
-                      ? '#f472b6'
-                      : isDark
-                      ? 'rgba(255, 255, 255, 0.2)'
-                      : 'rgba(15, 23, 42, 0.18)',
+                      ? colors.brandPink
+                      : colors.glassBorderStrong,
                 },
               ]}
             />
@@ -187,13 +185,13 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingHorizontal: 24,
+    ...sharedStyles.screenContainer,
+    paddingHorizontal: spacing.xxl,
     justifyContent: 'space-between',
   },
   skipBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
   },
   skipText: {
     fontSize: 14,
@@ -209,17 +207,16 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    paddingTop: 12,
+    paddingTop: spacing.md,
   },
   dotsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 28,
-    alignItems: 'center',
+    ...sharedStyles.row,
+    gap: spacing.sm,
+    marginBottom: spacing.xxxl,
   },
   dot: {
-    height: 8,
-    borderRadius: 4,
+    height: spacing.sm,
+    borderRadius: radii.xxs,
   },
   actionWrap: {
     width: '100%',
@@ -228,12 +225,12 @@ const styles = StyleSheet.create({
   nextButton: {
     position: 'relative',
     height: 54,
-    borderRadius: 36,
+    borderRadius: radii.pill,
     borderWidth: 1,
     overflow: 'visible',
     ...(Platform.OS === 'ios'
       ? {
-          shadowColor: '#000',
+          shadowColor: themeColors.palette.black,
           shadowOffset: { width: 0, height: 16 },
           shadowOpacity: 0.35,
           shadowRadius: 28,
@@ -247,9 +244,7 @@ const styles = StyleSheet.create({
   buttonContent: {
     width: '100%',
     height: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    ...sharedStyles.rowCenter,
     zIndex: 10,
     position: 'relative',
   },

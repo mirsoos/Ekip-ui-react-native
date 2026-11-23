@@ -10,8 +10,7 @@ import {
   Easing,
   TouchableOpacity,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getIcon, type IconName } from './icons';
+import { Icon, type IconName } from './icons';
 import { useTheme } from './theme';
 import { useI18n } from './i18n';
 import { FrostedGlass } from '../components/FrostedGlass';
@@ -62,11 +61,10 @@ const TYPE_COLORS: Record<ToastType, string> = {
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [currentToast, setCurrentToast] = useState<ToastState | null>(null);
-  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { isRTL } = useI18n();
 
-  const anim = useRef(new Animated.Value(0)).current;
+  const [anim] = useState(() => new Animated.Value(0));
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastIdRef = useRef(0);
 
@@ -129,8 +127,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     [anim, hideToast]
   );
 
-  const topInset = Math.max(insets.top, Platform.OS === 'ios' ? 44 : 24) + 12;
-
   const translateY = anim.interpolate({
     inputRange: [0, 1],
     outputRange: [12, 0],
@@ -149,7 +145,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const activeIcon = currentToast
     ? currentToast.icon || DEFAULT_ICONS[currentToast.type]
     : 'Check';
-  const IconComp = getIcon(activeIcon);
   const accentColor = currentToast ? TYPE_COLORS[currentToast.type] : '#10b981';
 
   return (
@@ -203,7 +198,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   },
                 ]}
               >
-                <IconComp size={16} color={accentColor} strokeWidth={2.4} />
+                <Icon name={activeIcon} size={16} color={accentColor} strokeWidth={2.4} />
               </View>
 
               <Text

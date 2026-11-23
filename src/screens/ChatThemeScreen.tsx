@@ -1,9 +1,18 @@
 // --- START OF FILE ChatThemeScreen.tsx ---
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, BackHandler } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useChatTheme, useTheme, CHAT_THEMES, type ChatThemeId } from '../lib/theme';
+import {
+  useChatTheme,
+  useTheme,
+  colors as themeColors,
+  CHAT_THEMES,
+  type ChatThemeId,
+  spacing,
+  radii,
+  sharedStyles,
+} from '../lib/theme';
 import { GlassCard, GlassAvatar } from '../components/Glass';
 import { getIcon } from '../lib/icons';
 import { useI18n } from '../lib/i18n';
@@ -19,7 +28,7 @@ const Palette = getIcon('Palette');
 
 export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { chatTheme, setChatTheme } = useChatTheme();
   const { isRTL } = useI18n();
   const { showToast } = useToast();
@@ -57,7 +66,8 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
         style={styles.content}
         contentContainerStyle={{
           paddingTop: getSinglePillContentPaddingTop(insets.top),
-          paddingBottom: 60 + insets.bottom,
+          paddingHorizontal: spacing.screenPadding,
+          paddingBottom: spacing.bottomNavClearance + insets.bottom,
         }}
         showsVerticalScrollIndicator={false}
       >
@@ -73,7 +83,7 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
               { flexDirection: rowDir, borderBottomColor: colors.divider },
             ]}
           >
-            <View style={{ flexDirection: rowDir, alignItems: 'center', gap: 10 }}>
+            <View style={{ flexDirection: rowDir, alignItems: 'center', gap: spacing.md }}>
               <GlassAvatar name={isRTL ? 'النا روستوا' : 'Alex Rivera'} size={32} online />
               <View>
                 <Text style={[styles.previewSender, { color: colors.textPrimary, textAlign }]}>
@@ -87,7 +97,7 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
             <View
               style={[
                 styles.badgePill,
-                { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)' },
+                { backgroundColor: colors.glassPillBg },
               ]}
             >
               <Text style={[styles.badgeText, { color: colors.textPrimary }]}>
@@ -106,7 +116,7 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
                   styles.bubble,
                   styles.incomingBubble,
                   {
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.06)',
+                    backgroundColor: colors.glassInputBg,
                   },
                 ]}
               >
@@ -136,7 +146,7 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
                     ? 'دریافت شد! تله‌متری هماهنگ است. در جلسه می‌بینمت. 🔥'
                     : 'Roger that! Telemetry synced. See you at briefing. 🔥'}
                 </Text>
-                <Text style={[styles.timestamp, { color: 'rgba(255,255,255,0.75)' }]}>18:43</Text>
+                <Text style={[styles.timestamp, { color: colors.white }]}>18:43</Text>
               </View>
             </View>
           </View>
@@ -146,7 +156,7 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
         <Text style={[styles.sectionHeading, { color: colors.textTertiary, textAlign }]}>
           {isRTL ? 'تم‌های شیشه‌ای گفتگو' : 'AVAILABLE THEMES'}
         </Text>
-        <View style={{ gap: 10 }}>
+        <View style={{ gap: spacing.sm }}>
           {Object.values(CHAT_THEMES).map((item) => {
             const isSelected = chatTheme === item.id;
             return (
@@ -159,11 +169,11 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
                   style={[
                     styles.themeCard,
                     { flexDirection: rowDir },
-                    isSelected && styles.themeCardActive,
+                    isSelected && [styles.themeCardActive, { borderColor: colors.glassBorderActive }],
                   ]}
                 >
                   <View style={[styles.swatchBox, { backgroundColor: item.accentHex }]}>
-                    <Palette size={20} color="#fff" />
+                    <Palette size={20} color={colors.white} />
                   </View>
                   <View
                     style={{
@@ -172,13 +182,13 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
                       marginRight: isRTL ? 14 : 0,
                     }}
                   >
-                    <View style={{ flexDirection: rowDir, alignItems: 'center', gap: 8 }}>
+                    <View style={{ flexDirection: rowDir, alignItems: 'center', gap: spacing.sm }}>
                       <Text style={[styles.themeName, { color: colors.textPrimary, textAlign }]}>
                         {item.name}
                       </Text>
                       {isSelected && (
-                        <View style={styles.activePill}>
-                          <Text style={styles.activeText}>
+                        <View style={[styles.activePill, { backgroundColor: colors.glassPillBg }]}>
+                          <Text style={[styles.activeText, { color: colors.brandPink }]}>
                             {isRTL ? 'فعال' : 'Active'}
                           </Text>
                         </View>
@@ -188,7 +198,7 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
                       {item.description}
                     </Text>
                   </View>
-                  {isSelected && <Check size={18} color="#ec4899" />}
+                  {isSelected && <Check size={18} color={colors.brandPink} />}
                 </GlassCard>
               </TouchableOpacity>
             );
@@ -201,29 +211,26 @@ export function ChatThemeScreen({ onBack }: ChatThemeScreenProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
   },
   sectionHeading: {
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
-    marginBottom: 8,
-    marginHorizontal: 4,
+    marginBottom: spacing.sm,
+    marginHorizontal: spacing.xs,
   },
   previewCard: {
-    padding: 16,
-    borderRadius: 22,
-    marginBottom: 20,
+    padding: spacing.screenPadding,
+    borderRadius: radii.xl,
+    marginBottom: spacing.xl,
   },
   previewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: 12,
+    ...sharedStyles.rowBetween,
+    paddingBottom: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   previewSender: {
@@ -234,22 +241,22 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   badgePill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    borderRadius: radii.sm,
   },
   badgeText: {
     fontSize: 10,
     fontWeight: '700',
   },
   bubblesContainer: {
-    paddingTop: 14,
-    gap: 12,
+    paddingTop: spacing.md,
+    gap: spacing.md,
   },
   incomingRow: {
-    flexDirection: 'row',
+    ...sharedStyles.row,
     alignItems: 'flex-end',
-    gap: 8,
+    gap: spacing.sm,
     maxWidth: '85%',
   },
   outgoingRow: {
@@ -257,20 +264,20 @@ const styles = StyleSheet.create({
     maxWidth: '85%',
   },
   bubble: {
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 18,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.lg,
   },
   incomingBubble: {
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: radii.xxs,
   },
   outgoingBubble: {
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: radii.xxs,
   },
   senderName: {
     fontSize: 10,
     fontWeight: '700',
-    marginBottom: 2,
+    marginBottom: spacing.xxs,
   },
   incomingText: {
     fontSize: 12,
@@ -278,28 +285,26 @@ const styles = StyleSheet.create({
   },
   outgoingText: {
     fontSize: 12,
-    color: '#fff',
+    color: themeColors.palette.white,
     lineHeight: 17,
   },
   timestamp: {
     fontSize: 9,
     alignSelf: 'flex-end',
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   themeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 20,
+    ...sharedStyles.row,
+    padding: spacing.md,
+    borderRadius: radii.lg,
   },
   themeCardActive: {
-    borderColor: '#ec4899',
     borderWidth: 1.5,
   },
   swatchBox: {
     width: 44,
     height: 44,
-    borderRadius: 14,
+    borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -309,17 +314,15 @@ const styles = StyleSheet.create({
   },
   themeDesc: {
     fontSize: 11,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   activePill: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    backgroundColor: 'rgba(236,72,153,0.2)',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+    borderRadius: radii.xs,
   },
   activeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#ec4899',
   },
 });

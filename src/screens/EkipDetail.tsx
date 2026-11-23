@@ -28,7 +28,7 @@ import { EkipRequirementsCard } from '../components/ekip/EkipRequirementsCard';
 import { EkipActionBar } from '../components/ekip/EkipActionBar';
 import { EkipJoinModal } from '../components/ekip/EkipJoinModal';
 import { EkipShareSheet } from '../components/ekip/EkipShareSheet';
-import { useTheme } from '../lib/theme';
+import { useTheme, colors as themeColors, spacing, radii, sharedStyles } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { useToast } from '../lib/ToastContext';
 import type { Group } from '../types/database';
@@ -53,7 +53,7 @@ export function EkipDetailComponent({
   initialScrollOffset?: number;
   onScrollOffsetChange?: (offset: number) => void;
 }) {
-  const { me, members, requests, addRequest, updateRequest, addNotification, conversations } = useAppData();
+  const { me, members, requests, addRequest, updateRequest, addNotification } = useAppData();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, isRTL } = useI18n();
@@ -120,10 +120,6 @@ export function EkipDetailComponent({
   );
 
   const isOwner = group.owner_id === 'me';
-  const isMember = useMemo(
-    () => groupMembers.some((m) => m.user_id === 'me'),
-    [groupMembers]
-  );
 
   // Eligibility check
   const levelOk = !group.required_level || me.level >= group.required_level;
@@ -137,8 +133,6 @@ export function EkipDetailComponent({
     me.gender === group.gender_preference;
   const premiumOk = !group.premium_only || me.is_premium;
   const eligible = levelOk && honorOk && ageOk && genderOk && premiumOk;
-  const spotsLeft = group.max_members ? group.max_members - group.member_count : null;
-  const full = spotsLeft !== null && spotsLeft <= 0;
 
   const handleJoin = useCallback(() => {
     if (group.auto_accept) {
@@ -184,12 +178,6 @@ export function EkipDetailComponent({
       setShowCancel(false);
     }
   }, [myRequest, updateRequest, isRTL, showToast]);
-
-  const handleStartChat = useCallback(() => {
-    const existing = conversations.find((c) => c.group_id === group.id);
-    if (existing) onOpenChat(existing.id);
-    else onOpenChat('c2');
-  }, [conversations, group.id, onOpenChat]);
 
   const handleOpenHostProfile = useCallback(() => {
     if (group.owner) {
@@ -246,7 +234,7 @@ export function EkipDetailComponent({
             paddingTop: getSinglePillContentPaddingTop(insets.top),
           },
           Platform.OS !== 'web' && {
-            paddingBottom: 110 + insets.bottom,
+            paddingBottom: spacing.bottomNavClearance + spacing.sm + insets.bottom,
           },
         ]}
       >
@@ -270,6 +258,7 @@ export function EkipDetailComponent({
             style={[
               styles.categoryBadge,
               {
+                backgroundColor: colors.brandPink,
                 alignSelf: isRTL ? 'flex-end' : 'flex-start',
                 flexDirection: isRTL ? 'row-reverse' : 'row',
               },
@@ -277,7 +266,7 @@ export function EkipDetailComponent({
           >
             <CatIcon
               size={12}
-              color="#ffffff"
+              color={colors.white}
               strokeWidth={2.4}
               style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }}
             />
@@ -314,13 +303,13 @@ export function EkipDetailComponent({
           )}
 
           {/* Event info card */}
-          <View style={{ marginTop: 14 }}>
+          <View style={{ marginTop: spacing.md }}>
             <EkipEventInfoCard group={group} />
           </View>
 
           {/* Host card */}
           {group.owner && (
-            <View style={{ marginTop: 2 }}>
+            <View style={{ marginTop: spacing.xxs }}>
               <EkipHostCard
                 host={group.owner}
                 onOpenProfile={handleOpenHostProfile}
@@ -329,12 +318,12 @@ export function EkipDetailComponent({
           )}
 
           {/* Requirements card */}
-          <View style={{ marginTop: 2 }}>
+          <View style={{ marginTop: spacing.xxs }}>
             <EkipRequirementsCard group={group} user={me} />
           </View>
 
           {/* Deployed Operatives Section */}
-          <View style={{ marginTop: 2 }}>
+          <View style={{ marginTop: spacing.xxs }}>
             <EkipMembersSection
               members={groupMembers}
               memberCount={group.member_count}
@@ -382,7 +371,7 @@ export function EkipDetailComponent({
         onClose={() => setShowCancel(false)}
         title={isRTL ? 'لغو درخواست عضویت؟' : 'Revoke Clearance Request?'}
       >
-        <View style={{ gap: 14, paddingVertical: 10 }}>
+        <View style={{ gap: spacing.md, paddingVertical: spacing.sm }}>
           <Text
             style={{
               fontSize: 14,
@@ -411,27 +400,26 @@ export const EkipDetail = React.memo(EkipDetailComponent);
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
   scrollContent: {
-    paddingBottom: 90,
+    paddingBottom: spacing.bottomNavClearance,
   },
   bodyWrap: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingHorizontal: spacing.screenPadding,
+    paddingTop: spacing.screenPadding,
   },
   categoryBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f472b6',
+    ...sharedStyles.row,
+    backgroundColor: themeColors.brand.brandPink,
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    marginBottom: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.pill,
+    marginBottom: spacing.sm,
   },
   categoryText: {
-    color: '#ffffff',
+    color: themeColors.palette.white,
     fontSize: 10,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -445,18 +433,18 @@ const styles = StyleSheet.create({
   desc: {
     fontSize: 14,
     lineHeight: 20,
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
   tagsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 12,
+    gap: spacing.xs,
+    marginTop: spacing.md,
   },
   tagPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.pill,
     borderWidth: 1,
   },
   tagText: {
@@ -464,12 +452,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   ownerCoverShadow: {
-    marginHorizontal: 16,
-    marginBottom: 8,
-    borderRadius: 24,
+    marginHorizontal: spacing.screenPadding,
+    marginBottom: spacing.sm,
+    borderRadius: radii.xl,
     ...(Platform.OS === 'ios'
       ? {
-          shadowColor: '#000',
+          shadowColor: themeColors.palette.black,
           shadowOffset: { width: 0, height: 8 },
           shadowOpacity: 0.25,
           shadowRadius: 16,
@@ -478,7 +466,7 @@ const styles = StyleSheet.create({
   },
   ownerCoverCard: {
     height: 180,
-    borderRadius: 24,
+    borderRadius: radii.xl,
     overflow: 'hidden',
     borderWidth: 1,
     ...(Platform.OS === 'android' ? { elevation: 6 } : {}),
@@ -490,11 +478,11 @@ const styles = StyleSheet.create({
   headerActionBtn: {
     width: 42,
     height: 42,
-    borderRadius: 21,
+    borderRadius: radii.pill,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: themeColors.palette.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,

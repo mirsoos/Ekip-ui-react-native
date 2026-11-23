@@ -19,8 +19,8 @@ import { GlassCard, GlassEmpty, GlassBadgeIcon, GlassButton } from '../component
 import { StatBox } from '../components/common/StatBox';
 import { RequestsModal } from '../components/activity/RequestsModal';
 import { MembersSheet } from '../components/activity/MembersSheet';
-import { getIcon, Icons, type IconName } from '../lib/icons';
-import { useTheme } from '../lib/theme';
+import { Icons, type IconName } from '../lib/icons';
+import { useTheme, colors as themeColors, spacing, radii, sharedStyles } from '../lib/theme';
 import { useI18n } from '../lib/i18n';
 import { useToast } from '../lib/ToastContext';
 import { getMultiRowContentPaddingTop } from '../lib/headerLayout';
@@ -252,7 +252,7 @@ export function ActivityScreenComponent({
                 <View style={[styles.bannerImage, { backgroundColor: colors.glassThinBg }]} />
               )}
               <LinearGradient
-                colors={['transparent', 'rgba(0, 0, 0, 0.72)']}
+                colors={[colors.transparent, colors.overlay]}
                 style={styles.bannerGradient}
               />
 
@@ -262,7 +262,7 @@ export function ActivityScreenComponent({
                   <View style={[styles.tagChip, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                     <CatIcon
                       size={11}
-                      color="#ffffff"
+                      color={colors.white}
                       strokeWidth={2.4}
                       style={{ marginRight: isRTL ? 0 : 3, marginLeft: isRTL ? 3 : 0 }}
                     />
@@ -277,15 +277,15 @@ export function ActivityScreenComponent({
                   </View>
                   {group.premium_only && (
                     <LinearGradient
-                      colors={['#eab308', '#f59e0b']}
+                      colors={[colors.warning, colors.brandAmber]}
                       style={[
                         styles.tagChip,
-                        { borderColor: 'transparent', flexDirection: isRTL ? 'row-reverse' : 'row' },
+                        { borderColor: colors.transparent, flexDirection: isRTL ? 'row-reverse' : 'row' },
                       ]}
                     >
                       <CrownIcon
                         size={11}
-                        color="#ffffff"
+                        color={colors.white}
                         strokeWidth={2.4}
                         style={{ marginRight: isRTL ? 0 : 3, marginLeft: isRTL ? 3 : 0 }}
                       />
@@ -299,7 +299,7 @@ export function ActivityScreenComponent({
               <View style={[styles.datePill, isRTL ? styles.datePillRTL : styles.datePillLTR]}>
                 <CalendarIcon
                   size={11}
-                  color="#ffffff"
+                  color={colors.white}
                   strokeWidth={2.2}
                   style={{ marginRight: isRTL ? 0 : 4, marginLeft: isRTL ? 4 : 0 }}
                 />
@@ -521,7 +521,7 @@ export function ActivityScreenComponent({
       styles.scrollContent,
       {
         paddingTop: getMultiRowContentPaddingTop(insets.top),
-        paddingBottom: 100 + insets.bottom,
+        paddingBottom: spacing.bottomNavClearance + insets.bottom,
       },
     ],
     [insets.top, insets.bottom]
@@ -572,12 +572,12 @@ export const ActivityScreen = React.memo(ActivityScreenComponent);
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
   headerRow: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
     borderBottomWidth: 1,
     zIndex: 50,
   },
@@ -592,14 +592,14 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 100,
+    paddingHorizontal: spacing.screenPadding,
+    paddingBottom: spacing.bottomNavClearance,
   },
   itemSeparator: {
-    height: 12,
+    height: spacing.md,
   },
   cardContainer: {
-    borderRadius: 28,
+    borderRadius: radii.xxl,
     overflow: 'hidden',
   },
   bannerWrapper: {
@@ -621,97 +621,91 @@ const styles = StyleSheet.create({
   },
   topBadgesRow: {
     position: 'absolute',
-    top: 10,
-    left: 10,
-    right: 10,
+    top: spacing.sm,
+    left: spacing.sm,
+    right: spacing.sm,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     zIndex: 10,
   },
   chipsGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    ...sharedStyles.row,
+    gap: spacing.xs,
   },
   tagChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    ...sharedStyles.row,
+    backgroundColor: themeColors.dark.overlay,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.input,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: themeColors.dark.glassBorder,
   },
   tagChipText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#ffffff',
+    color: themeColors.palette.white,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   datePill: {
     position: 'absolute',
-    bottom: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 14,
+    bottom: spacing.sm,
+    ...sharedStyles.row,
+    backgroundColor: themeColors.dark.overlay,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: themeColors.dark.glassBorder,
   },
   datePillLTR: {
-    left: 10,
+    left: spacing.sm,
   },
   datePillRTL: {
-    right: 10,
+    right: spacing.sm,
     flexDirection: 'row-reverse',
   },
   datePillText: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#ffffff',
+    color: themeColors.palette.white,
   },
   cardBody: {
-    padding: 14,
+    padding: spacing.md,
   },
   groupCardTitle: {
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: -0.2,
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   statsGrid: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
+    ...sharedStyles.row,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
   actionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    ...sharedStyles.row,
+    gap: spacing.sm,
   },
   joinedCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 24,
-    gap: 12,
+    ...sharedStyles.row,
+    padding: spacing.md,
+    borderRadius: radii.xl,
+    gap: spacing.md,
   },
   thumbImage: {
     width: 64,
     height: 64,
-    borderRadius: 16,
+    borderRadius: radii.card,
   },
   joinedInfo: {
     flex: 1,
     minWidth: 0,
     justifyContent: 'center',
-    gap: 5,
+    gap: spacing.xs,
   },
   groupTitle: {
     fontSize: 15,

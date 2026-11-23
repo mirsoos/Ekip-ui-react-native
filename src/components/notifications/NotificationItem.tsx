@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { GlassCard } from '../Glass';
-import { getIcon, type IconName } from '../../lib/icons';
+import { Icon, type IconName } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import type { Notification } from '../../types/database';
@@ -27,7 +27,6 @@ export function NotificationItemComponent({
 }) {
   const { colors } = useTheme();
   const { isRTL } = useI18n();
-  const IconComp = getIcon(notification.icon as IconName);
   const cfg = typeConfig[notification.type] ?? typeConfig.admin;
 
   return (
@@ -41,7 +40,7 @@ export function NotificationItemComponent({
         ]}
       >
         <View style={[styles.iconBox, { backgroundColor: cfg.bg }]}>
-          <IconComp size={20} color={cfg.color} strokeWidth={2.2} />
+          <Icon name={notification.icon as IconName} size={20} color={cfg.color} strokeWidth={2.2} />
         </View>
 
         <View

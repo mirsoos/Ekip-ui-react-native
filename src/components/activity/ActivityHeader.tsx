@@ -103,6 +103,7 @@ export function ActivityHeaderComponent({
             ]}
             value={tab}
             onChange={onChangeTab}
+            size="sm"
           />
         </View>
       </View>

@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { getIcon, type IconName } from '../../lib/icons';
+import { Icon, type IconName } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { GlassAvatar } from './GlassAvatar';
@@ -44,23 +44,21 @@ export function GlassListItemComponent({
   const { colors, isDark } = useTheme();
   const themeStyles = GLASS_THEME_STYLES[isDark ? 'dark' : 'light'];
   const { isRTL } = useI18n();
-  const IconComp = icon ? getIcon(icon) : null;
-  const ChevronIcon = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
-  const hasLeading = Boolean(avatar || IconComp);
+  const hasLeading = Boolean(avatar || icon);
   const direction = isRTL ? 'rtl' : 'ltr';
 
   const content = (
     <View style={[styles.listItemRow, LIST_ROW_STYLES[direction]]}>
       {avatar ? (
         <GlassAvatar src={avatar} name={avatarName ?? title} size={40} />
-      ) : IconComp ? (
+      ) : icon ? (
         <View
           style={[
             styles.listIconBox,
             { backgroundColor: iconBg ?? 'rgba(244, 114, 182, 0.2)' },
           ]}
         >
-          <IconComp size={18} color="#ffffff" strokeWidth={2.2} />
+          <Icon name={icon} size={18} color="#ffffff" strokeWidth={2.2} />
         </View>
       ) : null}
 
@@ -93,7 +91,8 @@ export function GlassListItemComponent({
 
       {right}
       {showChevron && (
-        <ChevronIcon
+        <Icon
+          name={isRTL ? 'ChevronLeft' : 'ChevronRight'}
           size={18}
           color={colors.textTertiary}
           style={LIST_CHEVRON_STYLES[direction]}

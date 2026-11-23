@@ -1,6 +1,6 @@
 // --- START OF FILE SettingsScreen.tsx ---
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,13 +12,13 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../lib/appData';
-import { GlassCard, GlassListItem, GlassToggle, GlassButton, GlassAvatar } from '../components/Glass';
+import { GlassCard, GlassListItem, GlassButton, GlassAvatar } from '../components/Glass';
 import { GlassSheet } from '../components/Overlays';
 import { SettingsSection } from '../components/settings/SettingsSection';
 import { SettingsDivider } from '../components/settings/SettingsDivider';
 import { HorizonThemeToggle } from '../components/common/HorizonThemeToggle';
 import { getIcon, Icons } from '../lib/icons';
-import { useTheme } from '../lib/theme';
+import { useTheme, brandColors, spacing, radii, sharedStyles } from '../lib/theme';
 import { useI18n, LANGUAGES } from '../lib/i18n';
 import { useToast } from '../lib/ToastContext';
 import { getSinglePillContentPaddingTop } from '../lib/headerLayout';
@@ -103,7 +103,7 @@ export function SettingsScreenComponent({
           styles.scrollContent,
           {
             paddingTop: getSinglePillContentPaddingTop(insets.top),
-            paddingBottom: 40 + insets.bottom,
+            paddingBottom: spacing.bottomNavClearance + insets.bottom,
           },
         ]}
       >
@@ -135,11 +135,11 @@ export function SettingsScreenComponent({
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={() => setShowPremiumSheet(true)}
-          style={{ marginTop: 14 }}
+          style={{ marginTop: spacing.md }}
         >
           <GlassCard glow style={[styles.plusCard, { flexDirection: rowDir }]}>
-            <View style={styles.plusIconCircle}>
-              <Crown size={22} color="#f59e0b" strokeWidth={2.4} />
+            <View style={[styles.plusIconCircle, { backgroundColor: colors.glassPillBg }]}>
+              <Crown size={22} color={colors.brandAmber} strokeWidth={2.4} />
             </View>
             <View style={[{ flex: 1 }, textSpacing]}>
               <Text style={[styles.plusTitle, { color: colors.textPrimary, textAlign }]}>
@@ -154,12 +154,12 @@ export function SettingsScreenComponent({
         </TouchableOpacity>
 
         {/* Account Section */}
-        <View style={{ marginTop: 20 }}>
+        <View style={{ marginTop: spacing.xl }}>
           <SettingsSection title={t('settings.account')}>
             <GlassCard style={styles.sectionCard}>
               <GlassListItem
                 icon="User"
-                iconBg="rgba(59, 130, 246, 0.2)"
+                iconBg={`${colors.brandBlue}33`}
                 title={t('settings.personalInfo')}
                 subtitle={t('settings.personalInfoSub')}
                 onPress={onOpenPersonalInfo}
@@ -168,12 +168,20 @@ export function SettingsScreenComponent({
               <SettingsDivider />
               <GlassListItem
                 icon="ShieldCheck"
-                iconBg="rgba(244, 114, 182, 0.22)"
+                iconBg={`${colors.brandPink}33`}
                 title={t('settings.verification')}
                 subtitle={t('settings.verificationSub')}
                 onPress={onOpenVerification}
                 right={
-                  <View style={styles.verifiedBadge}>
+                  <View
+                    style={[
+                      styles.verifiedBadge,
+                      {
+                        backgroundColor: colors.glassPillBg,
+                        borderColor: colors.glassBorderActive,
+                      },
+                    ]}
+                  >
                     <Text style={styles.verifiedText}>
                       {me.is_verified ? t('common.verified') : isRTL ? 'در انتظار' : 'Pending'}
                     </Text>
@@ -184,7 +192,7 @@ export function SettingsScreenComponent({
               <SettingsDivider />
               <GlassListItem
                 icon="Lock"
-                iconBg="rgba(168, 85, 247, 0.2)"
+                iconBg={`${colors.brandPurple}33`}
                 title={t('settings.privacy')}
                 subtitle={t('settings.privacySub')}
                 onPress={onOpenPrivacy}
@@ -193,7 +201,7 @@ export function SettingsScreenComponent({
               <SettingsDivider />
               <GlassListItem
                 icon="Fingerprint"
-                iconBg="rgba(16, 185, 129, 0.2)"
+                iconBg={`${colors.brandGreen}33`}
                 title={isRTL ? 'امنیت و ورود دو مرحله‌ای' : 'Security & 2FA'}
                 subtitle={isRTL ? 'گذرواژه، کلیدهای امنیتی و نشست‌های فعال' : 'Cryptographic passkeys & sessions'}
                 onPress={onOpenSecurity}
@@ -202,7 +210,7 @@ export function SettingsScreenComponent({
               <SettingsDivider />
               <GlassListItem
                 icon="MapPin"
-                iconBg="rgba(234, 179, 8, 0.2)"
+                iconBg={`${colors.brandAmber}33`}
                 title={t('settings.location')}
                 subtitle={t('settings.locationSub')}
                 onPress={onOpenLocation}
@@ -213,18 +221,26 @@ export function SettingsScreenComponent({
         </View>
 
         {/* Preferences / System Interface Section */}
-        <View style={{ marginTop: 20 }}>
+        <View style={{ marginTop: spacing.xl }}>
           <SettingsSection title={t('settings.preferences')}>
             <GlassCard style={styles.sectionCard}>
               {/* Language Selector */}
               <GlassListItem
                 icon="Globe"
-                iconBg="rgba(59, 130, 246, 0.2)"
+                iconBg={`${colors.brandBlue}33`}
                 title={t('settings.language')}
                 subtitle={language === 'fa' ? 'فارسی (Persian)' : 'English (US)'}
                 onPress={() => setShowLanguageSheet(true)}
                 right={
-                  <View style={styles.langBadge}>
+                  <View
+                    style={[
+                      styles.langBadge,
+                      {
+                        backgroundColor: colors.glassPillBg,
+                        borderColor: colors.glassBorderActive,
+                      },
+                    ]}
+                  >
                     <Text style={styles.langText}>
                       {language === 'fa' ? '🇮🇷 فارسی' : '🇺🇸 English'}
                     </Text>
@@ -237,7 +253,7 @@ export function SettingsScreenComponent({
               {/* Chat Theme */}
               <GlassListItem
                 icon="Palette"
-                iconBg="rgba(244, 114, 182, 0.2)"
+                iconBg={`${colors.brandPink}33`}
                 title={t('settings.commsTheme')}
                 subtitle={t('settings.commsThemeSub')}
                 onPress={onOpenChatTheme}
@@ -252,11 +268,11 @@ export function SettingsScreenComponent({
                 style={[styles.toggleRow, { flexDirection: rowDir }]}
               >
                 <View style={{ flexDirection: rowDir, alignItems: 'center', flex: 1 }}>
-                  <View style={[styles.iconBox, { backgroundColor: 'rgba(99, 102, 241, 0.2)' }]}>
+                  <View style={[styles.iconBox, { backgroundColor: `${colors.brandIndigo}33` }]}>
                     {theme === 'dark' ? (
-                      <Moon size={18} color="#ffffff" strokeWidth={2.2} />
+                      <Moon size={18} color={colors.white} strokeWidth={2.2} />
                     ) : (
-                      <Sun size={18} color="#4f46e5" strokeWidth={2.2} />
+                      <Sun size={18} color={colors.brandIndigo} strokeWidth={2.2} />
                     )}
                   </View>
                   <View style={[{ flex: 1 }, textSpacing]}>
@@ -275,7 +291,7 @@ export function SettingsScreenComponent({
               {/* Notification protocols */}
               <GlassListItem
                 icon="Bell"
-                iconBg="rgba(239, 68, 68, 0.2)"
+                iconBg={`${colors.danger}33`}
                 title={t('settings.notifications')}
                 subtitle={t('settings.notificationsSub')}
                 onPress={onOpenNotifications}
@@ -287,7 +303,7 @@ export function SettingsScreenComponent({
                   <SettingsDivider />
                   <GlassListItem
                     icon="Compass"
-                    iconBg="rgba(244, 114, 182, 0.2)"
+                    iconBg={`${colors.brandPink}33`}
                     title={isRTL ? 'تور و راهنمای برنامه' : 'App Tour & Onboarding'}
                     subtitle={
                       isRTL ? 'مشاهده اسلایدهای راهنمای اکیپ' : 'View the 4 introductory slides'
@@ -302,7 +318,7 @@ export function SettingsScreenComponent({
         </View>
 
         {/* Test Error Boundary Simulator */}
-        <View style={{ marginTop: 20 }}>
+        <View style={{ marginTop: spacing.xl }}>
           <GlassButton
             variant="secondary"
             fullWidth
@@ -314,7 +330,7 @@ export function SettingsScreenComponent({
         </View>
 
         {/* Danger Zone */}
-        <View style={{ marginTop: 24, marginBottom: 40 }}>
+        <View style={{ marginTop: spacing.xxl, marginBottom: spacing.huge }}>
           <GlassButton variant="danger" fullWidth onPress={onSignOut} icon="LogOut">
             {t('settings.signOut')}
           </GlassButton>
@@ -327,7 +343,7 @@ export function SettingsScreenComponent({
         onClose={() => setShowLanguageSheet(false)}
         title={t('settings.selectLanguage')}
       >
-        <View style={{ gap: 10, paddingVertical: 8 }}>
+        <View style={{ gap: spacing.md, paddingVertical: spacing.sm }}>
           {LANGUAGES.map((lang) => {
             const isSelected = language === lang.code;
             return (
@@ -346,9 +362,9 @@ export function SettingsScreenComponent({
                     styles.langOptionCard,
                     { flexDirection: rowDir },
                     isSelected && {
-                      borderColor: '#f472b6',
+                      borderColor: colors.brandPink,
                       borderWidth: 1.5,
-                      backgroundColor: 'rgba(244, 114, 182, 0.12)',
+                      backgroundColor: `${colors.brandPink}20`,
                     },
                   ]}
                 >
@@ -356,7 +372,7 @@ export function SettingsScreenComponent({
                     style={{
                       flexDirection: rowDir,
                       alignItems: 'center',
-                      gap: 12,
+                      gap: spacing.md,
                     }}
                   >
                     <Text style={{ fontSize: 24 }}>{lang.flag}</Text>
@@ -372,7 +388,7 @@ export function SettingsScreenComponent({
 
                   {isSelected && (
                     <View style={styles.checkCircle}>
-                      <Check size={16} color="#ffffff" strokeWidth={3} />
+                      <Check size={16} color={colors.white} strokeWidth={3} />
                     </View>
                   )}
                 </GlassCard>
@@ -388,7 +404,7 @@ export function SettingsScreenComponent({
         onClose={() => setShowPremiumSheet(false)}
         title={isRTL ? 'مدیریت اشتراک ویژه' : 'Manage Subscription'}
       >
-        <View style={{ gap: 14, paddingVertical: 10 }}>
+        <View style={{ gap: spacing.md, paddingVertical: spacing.sm }}>
           <Text
             style={{
               fontSize: 14,
@@ -427,17 +443,16 @@ export const SettingsScreen = React.memo(SettingsScreenComponent);
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...sharedStyles.screenContainer,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingHorizontal: spacing.screenPadding,
+    paddingBottom: spacing.huge,
   },
   profileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 22,
+    ...sharedStyles.row,
+    padding: spacing.md,
+    borderRadius: radii.xl,
   },
   profileName: {
     fontSize: 16,
@@ -445,19 +460,17 @@ const styles = StyleSheet.create({
   },
   profileHandle: {
     fontSize: 12,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   plusCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 22,
+    ...sharedStyles.row,
+    padding: spacing.md,
+    borderRadius: radii.xl,
   },
   plusIconCircle: {
     width: 44,
     height: 44,
-    borderRadius: 14,
-    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -467,37 +480,33 @@ const styles = StyleSheet.create({
   },
   plusSub: {
     fontSize: 11,
-    marginTop: 2,
+    marginTop: spacing.xxs,
     lineHeight: 15,
   },
   sectionCard: {
-    borderRadius: 22,
+    borderRadius: radii.xl,
     overflow: 'hidden',
   },
   verifiedBadge: {
-    backgroundColor: 'rgba(244, 114, 182, 0.15)',
-    borderColor: 'rgba(244, 114, 182, 0.3)',
     borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    borderRadius: radii.pill,
   },
   verifiedText: {
-    color: '#f472b6',
+    color: brandColors.brandPink,
     fontSize: 10,
     fontWeight: '700',
   },
   toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    ...sharedStyles.rowBetween,
+    paddingHorizontal: spacing.screenPadding,
+    paddingVertical: spacing.md,
   },
   iconBox: {
     width: 38,
     height: 38,
-    borderRadius: 12,
+    borderRadius: radii.input,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -507,28 +516,24 @@ const styles = StyleSheet.create({
   },
   rowSub: {
     fontSize: 12,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   langBadge: {
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
-    borderColor: 'rgba(59, 130, 246, 0.3)',
     borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-    marginHorizontal: 2,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    borderRadius: radii.pill,
+    marginHorizontal: spacing.xxs,
   },
   langText: {
-    color: '#3b82f6',
+    color: brandColors.brandBlue,
     fontSize: 11,
     fontWeight: '700',
   },
   langOptionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 20,
+    ...sharedStyles.rowBetween,
+    padding: spacing.screenPadding,
+    borderRadius: radii.card,
   },
   langOptionTitle: {
     fontSize: 15,
@@ -536,13 +541,13 @@ const styles = StyleSheet.create({
   },
   langOptionSub: {
     fontSize: 12,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   checkCircle: {
     width: 26,
     height: 26,
-    borderRadius: 13,
-    backgroundColor: '#f472b6',
+    borderRadius: radii.pill,
+    backgroundColor: brandColors.brandPink,
     alignItems: 'center',
     justifyContent: 'center',
   },
