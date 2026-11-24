@@ -18,6 +18,7 @@ export default function ChatConversationRoute() {
     <ScreenLayout
       header={<ChatHeader conversation={conv} onBack={() => router.back()} />}
       screenKey={`conversation-${convId}`}
+      disableAnimation={true}
     >
       <ConversationScreen conversationId={convId} onBack={() => router.back()} />
     </ScreenLayout>

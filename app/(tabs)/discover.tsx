@@ -10,6 +10,7 @@ export default function DiscoverRoute() {
   const router = useRouter();
   const me = useAuthStore((s) => s.me);
   const unreadCount = useNotificationStore((s) => s.notifications.filter((n) => !n.is_read).length);
+  const openNotifications = useNotificationStore((s) => s.openSheet);
   const [search, setSearch] = useState('');
   const discoverRef = useRef<DiscoverScreenHandle>(null);
 
@@ -23,7 +24,7 @@ export default function DiscoverRoute() {
           onChangeSearch={setSearch}
           hasActiveFilters={false}
           onOpenFilters={() => discoverRef.current?.openFilters()}
-          onOpenNotifications={() => router.push('/notifications')}
+          onOpenNotifications={openNotifications}
           onOpenOwnProfile={() => router.navigate('/(tabs)/profile')}
         />
       }
@@ -36,7 +37,7 @@ export default function DiscoverRoute() {
         onOpenProfile={(uid) => uid === 'me' ? router.navigate('/(tabs)/profile') : router.push({ pathname: '/profile/[id]', params: { id: uid } })}
         onOpenOwnProfile={() => router.navigate('/(tabs)/profile')}
         onOpenAI={() => router.push('/ai')}
-        onOpenNotifications={() => router.push('/notifications')}
+        onOpenNotifications={openNotifications}
       />
     </ScreenLayout>
   );

@@ -14,8 +14,10 @@ import { ToastProvider } from '../src/lib/ToastContext';
 import { ErrorBoundary } from '../src/components/common/ErrorBoundary';
 import { AppChrome } from '../src/components/common/AppChrome';
 import { AuroraBackground } from '../src/components/AuroraBackground';
+import { NotificationsSheet } from '../src/components/notifications/NotificationsSheet';
 import { Loading } from '../src/screens/Loading';
 import { useAuthStore } from '../src/store/authStore';
+import { useNotificationStore } from '../src/store/notificationStore';
 
 if (Platform.OS !== 'web') {
   try {
@@ -57,7 +59,7 @@ function NavigationGuard({ isLoading }: { isLoading: boolean }) {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: 'transparent' },
-        animation: Platform.OS === 'android' ? 'fade' : 'default',
+        animation: 'none',
       }}
     >
       <Stack.Screen name="(tabs)" />
@@ -82,7 +84,10 @@ function NavigationGuard({ isLoading }: { isLoading: boolean }) {
 }
 
 function MainLayout() {
+  const router = useRouter();
   const { isDark } = useTheme();
+  const isSheetOpen = useNotificationStore((s) => s.isSheetOpen);
+  const closeSheet = useNotificationStore((s) => s.closeSheet);
   const [fontsLoaded] = useFonts({
     IranianSans: require('../assets/fonts/IranianSans.ttf'),
     'Iranian Sans': require('../assets/fonts/IranianSans.ttf'),
@@ -107,6 +112,13 @@ function MainLayout() {
       >
         <AuroraBackground isDark={isDark} />
         <NavigationGuard isLoading={isLoading} />
+        <NotificationsSheet
+          open={isSheetOpen}
+          onClose={closeSheet}
+          onOpenConversation={(cid) => router.push({ pathname: '/chat/[id]', params: { id: cid } })}
+          onOpenGroup={(g) => router.push({ pathname: '/group/[id]', params: { id: g.id } })}
+          onOpenSettings={() => router.push('/settings')}
+        />
         {isLoading && (
           <Loading
             minDuration={2000}

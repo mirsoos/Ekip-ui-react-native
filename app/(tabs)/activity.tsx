@@ -10,6 +10,7 @@ export default function ActivityRoute() {
   const router = useRouter();
   const me = useAuthStore((s) => s.me);
   const unreadCount = useNotificationStore((s) => s.notifications.filter((n) => !n.is_read).length);
+  const openNotifications = useNotificationStore((s) => s.openSheet);
   const [tab, setTab] = useState('created');
 
   return (
@@ -20,7 +21,7 @@ export default function ActivityRoute() {
           unreadCount={unreadCount}
           tab={tab}
           onChangeTab={setTab}
-          onOpenNotifications={() => router.push('/notifications')}
+          onOpenNotifications={openNotifications}
           onOpenOwnProfile={() => router.navigate('/(tabs)/profile')}
         />
       }
@@ -30,7 +31,7 @@ export default function ActivityRoute() {
         onChangeTab={setTab}
         onOpenGroup={(g) => router.push({ pathname: '/group/[id]', params: { id: g.id } })}
         onOpenProfile={(uid) => router.push({ pathname: '/profile/[id]', params: { id: uid } })}
-        onOpenNotifications={() => router.push('/notifications')}
+        onOpenNotifications={openNotifications}
       />
     </ScreenLayout>
   );
