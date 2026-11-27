@@ -1,6 +1,6 @@
 import React, { type ReactNode } from 'react';
 import { View, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
-import { GlassBackButton } from '../Glass';
+import { GlassBackButton } from '../glass';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 

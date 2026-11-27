@@ -1,9 +1,8 @@
 import React, { useRef } from 'react';
 import { useLocalSearchParams, useRouter, Redirect } from 'expo-router';
-import { EkipDetail, type EkipDetailHandle } from '../../src/screens/EkipDetail';
-import { EkipDetailHeader } from '../../src/components/ekip/EkipDetailHeader';
-import { ScreenLayout } from '../../src/components/common/ScreenLayout';
-import { useEkipStore } from '../../src/store/ekipStore';
+import { EkipDetail, EkipDetailHeader, type EkipDetailHandle } from '@/src/features/ekip';
+import { ScreenLayout } from '@/src/components/common/ScreenLayout';
+import { useEkipStore } from '@/src/store/ekipStore';
 
 export default function GroupDetailRoute() {
   const router = useRouter();

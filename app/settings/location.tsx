@@ -1,9 +1,8 @@
 import React from 'react';
 import { useRouter } from 'expo-router';
-import { LocationScreen } from '../../src/screens/LocationScreen';
-import { SettingsHeader } from '../../src/components/settings/SettingsHeader';
-import { ScreenLayout } from '../../src/components/common/ScreenLayout';
-import { useI18n } from '../../src/lib/i18n';
+import { LocationScreen, SettingsHeader } from '@/src/features/settings';
+import { ScreenLayout } from '@/src/components/common/ScreenLayout';
+import { useI18n } from '@/src/lib/i18n';
 
 export default function LocationRoute() {
   const router = useRouter();

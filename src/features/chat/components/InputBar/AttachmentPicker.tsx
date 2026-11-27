@@ -11,7 +11,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { Image as ImageIcon, Camera, Mic, FileText } from 'lucide-react-native';
 
-import { GlassSheet } from '../../../../components/Overlays';
+import { GlassSheet } from '@/src/components/common';
 import { useTheme } from '../../../../lib/theme';
 import { useI18n } from '../../../../lib/i18n';
 import type { Attachment } from '../../types/chat.types';

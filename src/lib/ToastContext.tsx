@@ -13,7 +13,7 @@ import {
 import { Icon, type IconName } from './icons';
 import { useTheme } from './theme';
 import { useI18n } from './i18n';
-import { FrostedGlass } from '../components/FrostedGlass';
+import { FrostedGlass } from '../components/glass';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 

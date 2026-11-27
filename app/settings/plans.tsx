@@ -1,9 +1,8 @@
 import React from 'react';
 import { useRouter } from 'expo-router';
-import { PlansScreen } from '../../src/screens/PlansScreen';
-import { SettingsHeader } from '../../src/components/settings/SettingsHeader';
-import { ScreenLayout } from '../../src/components/common/ScreenLayout';
-import { useI18n } from '../../src/lib/i18n';
+import { PlansScreen, SettingsHeader } from '@/src/features/settings';
+import { ScreenLayout } from '@/src/components/common/ScreenLayout';
+import { useI18n } from '@/src/lib/i18n';
 
 export default function PlansRoute() {
   const router = useRouter();

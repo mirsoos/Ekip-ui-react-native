@@ -1,0 +1,383 @@
+// --- START OF FILE DiscoverScreen.tsx ---
+
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Platform,
+  type ListRenderItem,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppData } from '@/src/lib/appData';
+import { EkipCard } from '@/src/features/ekip/components/EkipCard';
+import { GlassEmpty, GlassButton } from '@/src/components/glass';
+import { AIAssistantBanner } from '../components/AIAssistantBanner';
+import { CommunityMembersRow } from '../components/CommunityMembersRow';
+import { DiscoverFilterSheet } from '../components/DiscoverFilterSheet';
+import { EkipCardSkeleton, CommunityMembersRowSkeleton } from '@/src/components/common';
+import { cities } from '@/src/lib/demoData';
+import { useTheme, spacing, sharedStyles } from '@/src/lib/theme';
+import { useI18n } from '@/src/lib/i18n';
+import { getMultiRowContentPaddingTop } from '@/src/lib/headerLayout';
+import type { Group } from '@/src/types/database';
+
+export interface DiscoverScreenHandle {
+  openFilters: () => void;
+}
+
+const keyExtractor = (group: Group) => group.id;
+
+function GroupCardSeparator() {
+  return <View style={styles.groupCardSeparator} />;
+}
+
+// کامپوننت Memoized برای جلوگیری ۱۰۰٪ از ساختن تابع ناشناس () => onOpenGroup(item) در هر رندر
+const DiscoverGroupRow = React.memo(function DiscoverGroupRow({
+  item,
+  onOpenGroup,
+}: {
+  item: Group;
+  onOpenGroup: (group: Group) => void;
+}) {
+  const handlePress = useCallback(() => {
+    onOpenGroup(item);
+  }, [item, onOpenGroup]);
+
+  return (
+    <View style={styles.groupCardWrap}>
+      <EkipCard group={item} onPress={handlePress} />
+    </View>
+  );
+});
+
+export const DiscoverScreen = React.memo(
+  React.forwardRef<
+    DiscoverScreenHandle,
+    {
+      search?: string;
+      onChangeSearch?: (val: string) => void;
+      onOpenGroup: (group: Group) => void;
+      onOpenProfile: (userId: string) => void;
+      onOpenOwnProfile: () => void;
+      onOpenAI: () => void;
+      onOpenNotifications: () => void;
+      isLoading?: boolean;
+      initialScrollOffset?: number;
+      onScrollOffsetChange?: (offset: number) => void;
+    }
+  >(function DiscoverScreen(
+    {
+      search = '',
+      onChangeSearch,
+      onOpenGroup,
+      onOpenProfile,
+      onOpenAI,
+      isLoading = false,
+      initialScrollOffset = 0,
+      onScrollOffsetChange,
+    },
+    ref
+  ) {
+    const { groups, profiles } = useAppData();
+    const insets = useSafeAreaInsets();
+    const { colors } = useTheme();
+    const { t, isRTL } = useI18n();
+
+    const flatListRef = useRef<FlatList<Group>>(null);
+    const initialOffset = useMemo(
+      () => (initialScrollOffset > 0 ? { x: 0, y: initialScrollOffset } : undefined),
+      [initialScrollOffset]
+    );
+
+    const handleScroll = useCallback(
+      (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+        onScrollOffsetChange?.(e.nativeEvent.contentOffset.y);
+      },
+      [onScrollOffsetChange]
+    );
+
+    useEffect(() => {
+      if (initialScrollOffset > 0) {
+        const timer = setTimeout(() => {
+          flatListRef.current?.scrollToOffset({ offset: initialScrollOffset, animated: false });
+        }, 20);
+        return () => clearTimeout(timer);
+      }
+    }, [initialScrollOffset]);
+
+    const [showFilters, setShowFilters] = useState(false);
+    const [categoryFilter, setCategoryFilter] = useState<'all' | 'work' | 'entertainment'>('all');
+    const [cityFilter, setCityFilter] = useState('all');
+    const [premiumOnly, setPremiumOnly] = useState(false);
+
+    React.useImperativeHandle(
+      ref,
+      () => ({
+        openFilters: () => setShowFilters(true),
+      }),
+      []
+    );
+
+    const handleCloseFilters = useCallback(() => {
+      setShowFilters(false);
+    }, []);
+
+    const filtered = useMemo(() => {
+      let result = groups;
+      if (categoryFilter !== 'all') {
+        result = result.filter((g) => g.category === categoryFilter);
+      }
+      if (cityFilter !== 'all') {
+        result = result.filter((g) => g.city === cityFilter);
+      }
+      if (premiumOnly) {
+        result = result.filter((g) => g.premium_only);
+      }
+      if (search) {
+        const q = search.trim().toLowerCase();
+        if (q) {
+          result = result.filter(
+            (g) =>
+              g.title.toLowerCase().includes(q) ||
+              g.description.toLowerCase().includes(q) ||
+              g.tags?.some((tag) => tag.toLowerCase().includes(q)) ||
+              g.city.toLowerCase().includes(q)
+          );
+        }
+      }
+      return result;
+    }, [groups, search, categoryFilter, cityFilter, premiumOnly]);
+
+    const featured = filtered[0];
+    const remaining = useMemo(() => (filtered.length > 1 ? filtered.slice(1) : []), [filtered]);
+    const otherProfiles = useMemo(
+      () => profiles.filter((p) => p.id !== 'me').slice(0, 6),
+      [profiles]
+    );
+
+    const hasActiveFilters = categoryFilter !== 'all' || cityFilter !== 'all' || premiumOnly;
+
+    const handleResetFilters = useCallback(() => {
+      setCategoryFilter('all');
+      setCityFilter('all');
+      setPremiumOnly(false);
+      onChangeSearch?.('');
+      setShowFilters(false);
+    }, [onChangeSearch]);
+
+    const handleOpenFeatured = useCallback(() => {
+      if (featured) {
+        onOpenGroup(featured);
+      }
+    }, [featured, onOpenGroup]);
+
+    const renderGroup: ListRenderItem<Group> = useCallback(
+      ({ item }) => <DiscoverGroupRow item={item} onOpenGroup={onOpenGroup} />,
+      [onOpenGroup]
+    );
+
+    const listHeader = useMemo(
+      () => (
+        <View>
+          <AIAssistantBanner onPress={onOpenAI} />
+
+          {isLoading ? (
+            <View style={styles.sectionWrap}>
+              <View style={[styles.sectionHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <Text
+                  style={[
+                    styles.sectionTitle,
+                    { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+                  ]}
+                >
+                  {t('ekip.featured')}
+                </Text>
+              </View>
+              <EkipCardSkeleton variant="featured" />
+            </View>
+          ) : featured ? (
+            <View style={styles.sectionWrap}>
+              <View style={[styles.sectionHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <Text
+                  style={[
+                    styles.sectionTitle,
+                    { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' },
+                  ]}
+                >
+                  {t('ekip.featured')}
+                </Text>
+                <Text style={[styles.sectionBadge, { color: colors.brandPink }]}>
+                  {t('ekip.priority')}
+                </Text>
+              </View>
+              <EkipCard
+                group={featured}
+                variant="featured"
+                onPress={handleOpenFeatured}
+              />
+            </View>
+          ) : null}
+
+          {isLoading ? (
+            <CommunityMembersRowSkeleton />
+          ) : (
+            <CommunityMembersRow
+              profiles={otherProfiles}
+              onOpenProfile={onOpenProfile}
+              isRTL={isRTL}
+            />
+          )}
+
+          <View style={styles.sectionWrap}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                {
+                  color: colors.textPrimary,
+                  marginBottom: spacing.md,
+                  textAlign: isRTL ? 'right' : 'left',
+                },
+              ]}
+            >
+              {t('discover.allSquads')} {isLoading ? '' : `(${filtered.length})`}
+            </Text>
+          </View>
+        </View>
+      ),
+      [
+        colors.brandPink,
+        colors.textPrimary,
+        featured,
+        filtered.length,
+        handleOpenFeatured,
+        isLoading,
+        isRTL,
+        onOpenAI,
+        onOpenProfile,
+        otherProfiles,
+        t,
+      ]
+    );
+
+    const listEmptyComponent = useMemo(() => {
+      if (isLoading) {
+        return (
+          <View style={styles.sectionWrap}>
+            <EkipCardSkeleton />
+            <EkipCardSkeleton />
+          </View>
+        );
+      }
+
+      if (filtered.length === 0) {
+        return (
+          <View style={styles.sectionWrap}>
+            <GlassEmpty
+              icon="Search"
+              title={t('discover.emptyTitle')}
+              subtitle={t('discover.emptyDesc')}
+              action={
+                hasActiveFilters ? (
+                  <GlassButton variant="secondary" onPress={handleResetFilters}>
+                    {t('discover.filterReset')}
+                  </GlassButton>
+                ) : undefined
+              }
+            />
+          </View>
+        );
+      }
+
+      return undefined;
+    }, [filtered.length, handleResetFilters, hasActiveFilters, isLoading, t]);
+
+    const contentContainerStyle = useMemo(
+      () => [
+        styles.scrollContent,
+        {
+          paddingTop: getMultiRowContentPaddingTop(insets.top),
+          paddingBottom: spacing.bottomNavClearance + insets.bottom,
+        },
+      ],
+      [insets.top, insets.bottom]
+    );
+
+    return (
+      <View style={styles.container}>
+        <FlatList<Group>
+          ref={flatListRef}
+          contentOffset={initialOffset}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          data={isLoading ? [] : remaining}
+          renderItem={renderGroup}
+          ItemSeparatorComponent={GroupCardSeparator}
+          keyExtractor={keyExtractor}
+          initialNumToRender={4}
+          maxToRenderPerBatch={4}
+          updateCellsBatchingPeriod={50}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={contentContainerStyle}
+          ListHeaderComponent={listHeader}
+          ListEmptyComponent={listEmptyComponent}
+        />
+
+        <DiscoverFilterSheet
+          open={showFilters}
+          onClose={handleCloseFilters}
+          categoryFilter={categoryFilter}
+          onChangeCategory={setCategoryFilter}
+          cityFilter={cityFilter}
+          onChangeCity={setCityFilter}
+          premiumOnly={premiumOnly}
+          onChangePremiumOnly={setPremiumOnly}
+          cities={cities}
+          onReset={handleResetFilters}
+        />
+      </View>
+    );
+  })
+);
+
+const styles = StyleSheet.create({
+  container: {
+    ...sharedStyles.screenContainer,
+  },
+  scrollContent: {
+    paddingBottom: spacing.bottomNavClearance,
+  },
+  sectionWrap: {
+    paddingHorizontal: spacing.screenPadding,
+    marginTop: spacing.lg,
+  },
+  groupCardWrap: {
+    paddingHorizontal: spacing.screenPadding,
+  },
+  groupCardSeparator: {
+    height: spacing.md,
+  },
+  sectionHeader: {
+    ...sharedStyles.rowBetween,
+    marginBottom: spacing.sm,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  sectionBadge: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  categoryWrap: {
+    paddingHorizontal: spacing.screenPadding,
+    marginTop: spacing.lg,
+  },
+});

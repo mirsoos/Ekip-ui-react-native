@@ -7,17 +7,17 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useFonts } from 'expo-font';
 
-import { ThemeProvider, useTheme } from '../src/lib/theme';
-import { I18nProvider } from '../src/lib/i18n';
-import { AppDataProvider } from '../src/lib/appData';
-import { ToastProvider } from '../src/lib/ToastContext';
-import { ErrorBoundary } from '../src/components/common/ErrorBoundary';
-import { AppChrome } from '../src/components/common/AppChrome';
-import { AuroraBackground } from '../src/components/AuroraBackground';
-import { NotificationsSheet } from '../src/components/notifications/NotificationsSheet';
-import { Loading } from '../src/screens/Loading';
-import { useAuthStore } from '../src/store/authStore';
-import { useNotificationStore } from '../src/store/notificationStore';
+import { ThemeProvider, useTheme } from '@/src/lib/theme';
+import { I18nProvider } from '@/src/lib/i18n';
+import { AppDataProvider } from '@/src/lib/appData';
+import { ToastProvider } from '@/src/lib/ToastContext';
+import { ErrorBoundary as ReactErrorBoundary, DedicatedErrorSheet } from '@/src/components/common/ErrorBoundary';
+import { AppChrome } from '@/src/components/common/AppChrome';
+import { AuroraBackground } from '@/src/components/AuroraBackground';
+import { NotificationsSheet } from '@/src/features/notifications';
+import { Loading } from '@/src/features/auth';
+import { useAuthStore } from '@/src/store/authStore';
+import { useNotificationStore } from '@/src/store/notificationStore';
 
 if (Platform.OS !== 'web') {
   try {
@@ -131,6 +131,25 @@ function MainLayout() {
   );
 }
 
+export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
+  const router = useRouter();
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <I18nProvider>
+          <ThemeProvider>
+            <DedicatedErrorSheet
+              error={error}
+              onRetry={retry}
+              onGoHome={() => router.replace('/(tabs)/discover')}
+            />
+          </ThemeProvider>
+        </I18nProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}
+
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -141,9 +160,9 @@ export default function RootLayout() {
               <ToastProvider>
                 <BottomSheetModalProvider>
                   <KeyboardProvider preload={false}>
-                    <ErrorBoundary>
+                    <ReactErrorBoundary>
                       <MainLayout />
-                    </ErrorBoundary>
+                    </ReactErrorBoundary>
                   </KeyboardProvider>
                 </BottomSheetModalProvider>
               </ToastProvider>

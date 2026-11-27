@@ -1,10 +1,9 @@
 import React, { useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { DiscoverScreen, type DiscoverScreenHandle } from '../../src/screens/DiscoverScreen';
-import { DiscoverHeader } from '../../src/components/discover/DiscoverHeader';
-import { ScreenLayout } from '../../src/components/common/ScreenLayout';
-import { useAuthStore } from '../../src/store/authStore';
-import { useNotificationStore } from '../../src/store/notificationStore';
+import { DiscoverScreen, DiscoverHeader, type DiscoverScreenHandle } from '@/src/features/discover';
+import { ScreenLayout } from '@/src/components/common/ScreenLayout';
+import { useAuthStore } from '@/src/store/authStore';
+import { useNotificationStore } from '@/src/store/notificationStore';
 
 export default function DiscoverRoute() {
   const router = useRouter();

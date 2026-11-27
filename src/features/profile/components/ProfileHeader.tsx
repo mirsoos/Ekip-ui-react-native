@@ -1,0 +1,497 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, Easing, type LayoutChangeEvent } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GlassBackButton, GlassAvatar, getAvatarMetrics, FrostedGlass } from '@/src/components/glass';
+import { getIcon } from '@/src/lib/icons';
+import { darkColors, lightColors, useTheme } from '@/src/lib/theme';
+import { useI18n } from '@/src/lib/i18n';
+import { HEADER_METRICS, getHeaderTopInset } from '@/src/lib/headerLayout';
+import type { Profile } from '@/src/types/database';
+
+const SettingsIcon = getIcon('Settings');
+
+const actionButtonStyles = {
+  light: { borderColor: lightColors.glassBorderStrong },
+  dark: { borderColor: darkColors.glassBorderStrong },
+};
+
+interface HeaderLayout {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+function updateHeaderLayout(
+  setLayout: React.Dispatch<React.SetStateAction<HeaderLayout | null>>,
+  event: LayoutChangeEvent
+) {
+  const { x, y, width, height } = event.nativeEvent.layout;
+  setLayout((current) =>
+    current && current.x === x && current.y === y &&
+    current.width === width && current.height === height
+      ? current
+      : { x, y, width, height }
+  );
+}
+
+export function ProfileHeaderComponent({
+  profile,
+  isOwnProfile,
+  onBack,
+  onOpenSettings,
+  scrollY,
+  initialScrollOffset = 0,
+  onScrollOffsetChange,
+}: {
+  profile: Profile;
+  isOwnProfile: boolean;
+  onBack?: () => void;
+  onOpenSettings: () => void;
+  scrollY: Animated.Value;
+  initialScrollOffset?: number;
+  onScrollOffsetChange?: (offset: number) => void;
+}) {
+  const insets = useSafeAreaInsets();
+  const { theme, colors, isDark } = useTheme();
+  const { isRTL } = useI18n();
+  const actionButtonStyle = React.useMemo(
+    () => [styles.actionBtn, actionButtonStyles[theme]],
+    [theme]
+  );
+
+  const SCROLL_DISTANCE = 65;
+  const [avatarLayout, setAvatarLayout] = useState<HeaderLayout | null>(null);
+  const [capsuleLayout, setCapsuleLayout] = useState<HeaderLayout | null>(null);
+  const [avatarSlotLayout, setAvatarSlotLayout] = useState<HeaderLayout | null>(null);
+  const topPad = getHeaderTopInset(insets.top);
+  const fallbackTranslateY = topPad + 32 - 180;
+  const initialDocked = initialScrollOffset >= 60;
+  const [isDocked, setIsDocked] = useState(initialDocked);
+  const [isMounted, setIsMounted] = useState(initialDocked);
+  const [capsuleAnim] = useState(() => new Animated.Value(initialDocked ? 1 : 0));
+  const isDockedRef = useRef(initialDocked);
+  const onAvatarLayout = useCallback(
+    (event: LayoutChangeEvent) => updateHeaderLayout(setAvatarLayout, event),
+    []
+  );
+  const onCapsuleLayout = useCallback(
+    (event: LayoutChangeEvent) => updateHeaderLayout(setCapsuleLayout, event),
+    []
+  );
+  const onAvatarSlotLayout = useCallback(
+    (event: LayoutChangeEvent) => updateHeaderLayout(setAvatarSlotLayout, event),
+    []
+  );
+
+  // Avatar entrance animation when navigating into Profile screen
+  const [avatarEnterAnim] = useState(() => new Animated.Value(0));
+
+  useEffect(() => {
+    avatarEnterAnim.setValue(0);
+    Animated.spring(avatarEnterAnim, {
+      toValue: 1,
+      bounciness: 6,
+      speed: 12,
+      useNativeDriver: Platform.OS !== 'web',
+    }).start();
+  }, [avatarEnterAnim, profile.id]);
+
+  useEffect(() => {
+    const id = scrollY.addListener(({ value }) => {
+      onScrollOffsetChange?.(value);
+      const docked = value >= 60;
+      if (docked !== isDockedRef.current) {
+        isDockedRef.current = docked;
+        setIsDocked(docked);
+        if (docked) {
+          setIsMounted(true);
+          capsuleAnim.stopAnimation();
+          Animated.spring(capsuleAnim, {
+            toValue: 1,
+            bounciness: 4,
+            speed: 14,
+            useNativeDriver: Platform.OS !== 'web',
+          }).start();
+        } else {
+          capsuleAnim.stopAnimation();
+          Animated.timing(capsuleAnim, {
+            toValue: 0,
+            duration: 200,
+            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+            useNativeDriver: Platform.OS !== 'web',
+          }).start(({ finished }) => {
+            if (finished) {
+              setIsMounted(false);
+            }
+          });
+        }
+      }
+    });
+    return () => {
+      scrollY.removeListener(id);
+    };
+  }, [scrollY, capsuleAnim, onScrollOffsetChange]);
+
+  // Entrance & Exit animations for header capsule and unscrolled bar
+  const capsuleTranslateY = React.useMemo(
+    () => capsuleAnim.interpolate({ inputRange: [0, 1], outputRange: [-85, 0] }),
+    [capsuleAnim]
+  );
+  const unscrolledTranslateY = React.useMemo(
+    () => capsuleAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -70] }),
+    [capsuleAnim]
+  );
+
+  // GPU-Accelerated Transforms for the Avatar
+  const targetTranslateY = avatarLayout && capsuleLayout
+    ? capsuleLayout.y + capsuleLayout.height / 2 - (avatarLayout.y + avatarLayout.height / 2)
+    : fallbackTranslateY;
+  const targetTranslateX = avatarLayout && capsuleLayout && avatarSlotLayout
+    ? capsuleLayout.x + avatarSlotLayout.x + avatarSlotLayout.width / 2 -
+      (avatarLayout.x + avatarLayout.width / 2)
+    : isRTL
+    ? (!isOwnProfile && onBack ? -29 : 15)
+    : (!isOwnProfile && onBack ? 29 : -15);
+
+  const translateY = React.useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [-100, 0, SCROLL_DISTANCE],
+        outputRange: [100, 0, targetTranslateY],
+        extrapolateRight: 'clamp',
+      }),
+    [scrollY, targetTranslateY]
+  );
+  const translateX = React.useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [0, SCROLL_DISTANCE],
+        outputRange: [0, targetTranslateX],
+        extrapolate: 'clamp',
+      }),
+    [scrollY, targetTranslateX]
+  );
+  const scale = React.useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [0, SCROLL_DISTANCE],
+        outputRange: [1, 38 / 88],
+        extrapolate: 'clamp',
+      }),
+    [scrollY]
+  );
+
+  // Avatar page entrance animations
+  const avatarEnterOpacity = React.useMemo(
+    () => avatarEnterAnim.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 0.8, 1] }),
+    [avatarEnterAnim]
+  );
+  const avatarEnterScale = React.useMemo(
+    () => avatarEnterAnim.interpolate({ inputRange: [0, 1], outputRange: [0.65, 1] }),
+    [avatarEnterAnim]
+  );
+  const avatarEnterTranslateY = React.useMemo(
+    () => avatarEnterAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }),
+    [avatarEnterAnim]
+  );
+
+  const combinedTranslateY = React.useMemo(
+    () => Animated.add(translateY, avatarEnterTranslateY),
+    [avatarEnterTranslateY, translateY]
+  );
+  const combinedScale = React.useMemo(
+    () => Animated.multiply(scale, avatarEnterScale),
+    [avatarEnterScale, scale]
+  );
+
+  const dockedSlotWidth = getAvatarMetrics(38).containerSize;
+
+  const capsuleStyle = React.useMemo(
+    () => [
+      styles.container,
+      {
+        marginTop: topPad,
+        flexDirection: isRTL ? 'row-reverse' as const : 'row' as const,
+        borderColor: colors.glassBorderStrong,
+        transform: [{ translateY: capsuleTranslateY }],
+      },
+    ],
+    [capsuleTranslateY, colors.glassBorderStrong, isRTL, topPad]
+  );
+  const avatarStyle = React.useMemo(
+    () => [
+      styles.avatarContainer,
+      {
+        [isRTL ? 'right' : 'left']: 16,
+        opacity: avatarEnterOpacity,
+        transform: [
+          { translateY: combinedTranslateY },
+          { translateX },
+          { scale: combinedScale },
+        ],
+      },
+    ],
+    [
+      avatarEnterOpacity,
+      combinedScale,
+      combinedTranslateY,
+      isRTL,
+      translateX,
+    ]
+  );
+  const outerStyle = styles.outerContainer;
+
+  return (
+    <View style={outerStyle} pointerEvents="box-none">
+      {/* Docked Authentic Liquid Glass Header Capsule with Slide Enter/Exit */}
+      {isMounted && (
+        <Animated.View
+          onLayout={onCapsuleLayout}
+          style={capsuleStyle}
+          pointerEvents={isDocked ? 'auto' : 'none'}
+        >
+          <FrostedGlass
+            borderRadius={28}
+            marginWidth={14}
+            scale={28}
+            blurDeviation={2.0}
+            overlayOpacity={isDark ? 0.08 : 0.15}
+            style={StyleSheet.absoluteFill}
+          />
+
+          {!isOwnProfile && onBack ? (
+            <GlassBackButton onPress={onBack} style={{ marginRight: 6, zIndex: 10 }} />
+          ) : null}
+
+          {/* Reserved slot for docked avatar */}
+          <View onLayout={onAvatarSlotLayout} style={{ width: dockedSlotWidth }} />
+
+          {/* Title that appears when docked */}
+          <View style={styles.titleWrap}>
+            <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
+              {profile.first_name} {profile.last_name}
+            </Text>
+            <Text style={[styles.status, { color: colors.textTertiary }]} numberOfLines={1}>
+              {profile.is_verified ? 'Verified Operative' : 'Sector Operative'}
+            </Text>
+          </View>
+
+          {/* Right Action Buttons */}
+          <View style={styles.rightActions}>
+            {isOwnProfile && (
+              <TouchableOpacity
+                activeOpacity={0.75}
+                onPress={onOpenSettings}
+                style={actionButtonStyle}
+              >
+                <FrostedGlass
+                  borderRadius={21}
+                  marginWidth={9}
+                  scale={21}
+                  blurDeviation={1.6}
+                  overlayOpacity={isDark ? 0.10 : 0.22}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View style={styles.iconWrap}>
+                  <SettingsIcon size={20} color={colors.textPrimary} strokeWidth={2.2} />
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
+        </Animated.View>
+      )}
+
+      {/* Top actions bar when unscrolled (no capsule, no shadow, no border) */}
+      <Animated.View
+        style={[
+          styles.unscrolledBar,
+          {
+            top: topPad,
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+            transform: [{ translateY: unscrolledTranslateY }],
+          },
+        ]}
+        pointerEvents={isDocked ? 'none' : 'box-none'}
+      >
+        {!isDocked && (
+          <>
+            {!isOwnProfile && onBack ? (
+              <GlassBackButton onPress={onBack} style={{ zIndex: 30 }} />
+            ) : (
+              <View />
+            )}
+
+            <View style={styles.rightActions}>
+              {isOwnProfile && (
+                <TouchableOpacity
+                  activeOpacity={0.75}
+                  onPress={onOpenSettings}
+                  style={actionButtonStyle}
+                >
+                  <FrostedGlass
+                    borderRadius={21}
+                    marginWidth={9}
+                    scale={21}
+                    blurDeviation={1.6}
+                    overlayOpacity={isDark ? 0.10 : 0.22}
+                    style={StyleSheet.absoluteFill}
+                  />
+                  <View style={styles.iconWrap}>
+                    <SettingsIcon size={20} color={colors.textPrimary} strokeWidth={2.2} />
+                  </View>
+                </TouchableOpacity>
+              )}
+            </View>
+          </>
+        )}
+      </Animated.View>
+
+      {/* GPU-Accelerated Shrinking Avatar */}
+      <Animated.View
+        onLayout={onAvatarLayout}
+        style={avatarStyle}
+        pointerEvents="none"
+      >
+        <GlassAvatar
+          user={profile}
+          size={88}
+          online={!isOwnProfile && !!profile.is_online}
+        />
+      </Animated.View>
+    </View>
+  );
+}
+
+export const ProfileHeader = React.memo(ProfileHeaderComponent);
+
+const styles = StyleSheet.create({
+  outerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 900,
+  },
+  container: {
+    position: 'relative',
+    marginHorizontal: HEADER_METRICS.marginHorizontal,
+    height: HEADER_METRICS.pillHeight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 28,
+    borderWidth: 1,
+    paddingVertical: HEADER_METRICS.paddingVertical,
+    paddingHorizontal: HEADER_METRICS.paddingHorizontal,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.38,
+          shadowRadius: 28,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 10, shadowColor: '#000' }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: 0.38,
+          shadowRadius: 28,
+          elevation: 14,
+        }),
+    overflow: 'visible',
+    ...(Platform.OS === 'web'
+      ? ({
+          boxShadow: '0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 4px 16px rgba(0, 0, 0, 0.40)',
+        } as any)
+      : {}),
+  },
+  unscrolledBar: {
+    position: 'absolute',
+    left: HEADER_METRICS.marginHorizontal,
+    right: HEADER_METRICS.marginHorizontal,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: HEADER_METRICS.paddingVertical + 1,
+    paddingHorizontal: HEADER_METRICS.paddingHorizontal + 1,
+    height: HEADER_METRICS.pillHeight,
+  },
+  titleWrap: {
+    flex: 1,
+    marginLeft: 6,
+    justifyContent: 'center',
+  },
+  name: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  status: {
+    fontSize: 11,
+    marginTop: 1,
+  },
+  rightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    zIndex: 20,
+  },
+  actionBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 6,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 6,
+          elevation: 4,
+        }),
+    overflow: 'hidden',
+    position: 'relative',
+    ...(Platform.OS === 'web'
+      ? ({
+          cursor: 'pointer',
+        } as any)
+      : {}),
+  },
+  iconWrap: {
+    zIndex: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarContainer: {
+    position: 'absolute',
+    top: 136,
+    overflow: 'visible',
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.35,
+          shadowRadius: 12,
+        }
+      : Platform.OS === 'android'
+      ? { elevation: 0 }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.35,
+          shadowRadius: 12,
+          elevation: 12,
+        }),
+    zIndex: 950,
+  },
+});

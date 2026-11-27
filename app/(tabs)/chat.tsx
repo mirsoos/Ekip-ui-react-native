@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { ChatListScreen } from '../../src/screens/ChatScreens';
-import { ChatListHeader } from '../../src/components/chat/ChatListHeader';
-import { ScreenLayout } from '../../src/components/common/ScreenLayout';
-import { useAppData } from '../../src/lib/appData';
-import { useNotificationStore } from '../../src/store/notificationStore';
+import { ChatListScreen, ChatListHeader } from '@/src/features/chat';
+import { ScreenLayout } from '@/src/components/common/ScreenLayout';
+import { useAppData } from '@/src/lib/appData';
+import { useNotificationStore } from '@/src/store/notificationStore';
 
 export default function ChatRoute() {
   const router = useRouter();

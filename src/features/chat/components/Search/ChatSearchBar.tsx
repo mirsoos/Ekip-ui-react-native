@@ -210,8 +210,7 @@ const styles = StyleSheet.create({
       },
       web: {
         boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)',
-        backdropFilter: 'blur(16px)',
-      } as any,
+      },
     }),
   },
   searchIcon: {

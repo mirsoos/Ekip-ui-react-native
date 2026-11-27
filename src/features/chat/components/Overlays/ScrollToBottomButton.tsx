@@ -103,8 +103,6 @@ const styles = StyleSheet.create({
     ...Platform.select({
       web: {
         boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
       },
       default: {
         shadowColor: '#000000',

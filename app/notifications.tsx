@@ -1,9 +1,9 @@
 import React from 'react';
 import { useRouter } from 'expo-router';
-import { NotificationsScreen } from '../src/screens/NotificationsScreen';
-import { SettingsHeader } from '../src/components/settings/SettingsHeader';
-import { ScreenLayout } from '../src/components/common/ScreenLayout';
-import { useI18n } from '../src/lib/i18n';
+import { NotificationsScreen } from '@/src/features/notifications';
+import { SettingsHeader } from '@/src/features/settings';
+import { ScreenLayout } from '@/src/components/common/ScreenLayout';
+import { useI18n } from '@/src/lib/i18n';
 
 export default function NotificationsRoute() {
   const router = useRouter();

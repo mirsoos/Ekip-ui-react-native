@@ -544,7 +544,6 @@ const styles = StyleSheet.create({
   },
   nativeSwitchContainer: {
     position: 'relative',
-    direction: 'ltr',
     ...(Platform.OS === 'web' ? ({ cursor: 'pointer', userSelect: 'none' } as any) : {}),
   },
   nativeBaseOuter: {

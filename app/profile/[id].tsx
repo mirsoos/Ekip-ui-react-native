@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Animated } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ProfileScreen } from '../../src/screens/ProfileScreen';
-import { ProfileHeader } from '../../src/components/profile/ProfileHeader';
-import { ScreenLayout } from '../../src/components/common/ScreenLayout';
-import { useAuthStore } from '../../src/store/authStore';
-import { useUserStore } from '../../src/store/userStore';
+import { ProfileScreen, ProfileHeader } from '@/src/features/profile';
+import { ScreenLayout } from '@/src/components/common/ScreenLayout';
+import { useAuthStore } from '@/src/store/authStore';
+import { useUserStore } from '@/src/store/userStore';
 
 export default function UserProfileRoute() {
   const router = useRouter();

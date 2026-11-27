@@ -1,9 +1,8 @@
 import React from 'react';
 import { useRouter } from 'expo-router';
-import { PrivacyScreen } from '../../src/screens/PrivacyScreen';
-import { SettingsHeader } from '../../src/components/settings/SettingsHeader';
-import { ScreenLayout } from '../../src/components/common/ScreenLayout';
-import { useI18n } from '../../src/lib/i18n';
+import { PrivacyScreen, SettingsHeader } from '@/src/features/settings';
+import { ScreenLayout } from '@/src/components/common/ScreenLayout';
+import { useI18n } from '@/src/lib/i18n';
 
 export default function PrivacyRoute() {
   const router = useRouter();

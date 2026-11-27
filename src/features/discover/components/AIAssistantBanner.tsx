@@ -1,0 +1,75 @@
+import React from 'react';
+import { View, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { GlassCard } from '@/src/components/glass';
+import { AiEkipLogo } from '@/src/components/common/AiEkipLogo';
+import { getIcon } from '@/src/lib/icons';
+import { useTheme, spacing, radii } from '@/src/lib/theme';
+import { useI18n } from '@/src/lib/i18n';
+
+export const AIAssistantBanner = React.memo(function AIAssistantBanner({
+  onPress,
+  style,
+}: {
+  onPress: () => void;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const { colors } = useTheme();
+  const { t, isRTL } = useI18n();
+  const ChevronIcon = getIcon(isRTL ? 'ChevronLeft' : 'ChevronRight');
+
+  return (
+    <View style={[{ paddingHorizontal: spacing.screenPadding }, style]}>
+      <GlassCard
+        glow
+        onPress={onPress}
+        style={[styles.card, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
+      >
+        <LinearGradient
+          colors={['rgba(244, 114, 182, 0.35)', 'rgba(59, 130, 246, 0.35)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.iconBox}
+        >
+          <AiEkipLogo size={32} />
+        </LinearGradient>
+
+        <View style={{ flex: 1, marginLeft: isRTL ? 0 : spacing.md, marginRight: isRTL ? spacing.md : 0 }}>
+          <Text style={[styles.title, { color: colors.textPrimary, textAlign: isRTL ? 'right' : 'left' }]}>
+            {t('discover.askAI')}
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
+            {t('discover.askAISub')}
+          </Text>
+        </View>
+
+        <ChevronIcon size={18} color={colors.textTertiary} />
+      </GlassCard>
+    </View>
+  );
+});
+
+const styles = StyleSheet.create({
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: radii.xl,
+  },
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: radii.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  subtitle: {
+    fontSize: 12,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+});

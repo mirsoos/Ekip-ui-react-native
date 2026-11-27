@@ -1,9 +1,8 @@
 import React from 'react';
 import { useLocalSearchParams, useRouter, Redirect } from 'expo-router';
-import { ConversationScreen } from '../../src/screens/ChatScreens';
-import { ChatHeader } from '../../src/components/chat/ChatHeader';
-import { ScreenLayout } from '../../src/components/common/ScreenLayout';
-import { useAppData } from '../../src/lib/appData';
+import { ConversationScreen, ChatHeader } from '@/src/features/chat';
+import { ScreenLayout } from '@/src/components/common/ScreenLayout';
+import { useAppData } from '@/src/lib/appData';
 
 export default function ChatConversationRoute() {
   const router = useRouter();

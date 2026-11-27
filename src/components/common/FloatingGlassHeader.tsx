@@ -12,8 +12,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GlassBackButton } from '../Glass';
-import { FrostedGlass } from '../FrostedGlass';
+import { GlassBackButton, FrostedGlass } from '../glass';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
 import { HEADER_METRICS, getHeaderTopInset } from '../../lib/headerLayout';

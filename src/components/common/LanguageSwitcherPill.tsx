@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { FrostedGlass } from '../FrostedGlass';
-import { GlassSheet } from '../Overlays';
-import { GlassCard } from '../Glass';
+import { FrostedGlass, GlassCard } from '../glass';
+import { GlassSheet } from './Overlays';
 import { useI18n, LANGUAGES } from '../../lib/i18n';
 import { useTheme } from '../../lib/theme';
 import { useToast } from '../../lib/ToastContext';

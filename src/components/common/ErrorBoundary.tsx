@@ -8,19 +8,13 @@ import {
   Platform,
   Animated,
   Easing,
-  Modal,
 } from 'react-native';
-import { createPortal } from 'react-dom';
-import { GlassButton } from '../Glass';
+import { GlassButton } from '../glass';
+import { AuroraBackground } from '../AuroraBackground';
 import { PixelFightStage } from './PixelFightStage';
 import { Icons } from '../../lib/icons';
 import { useTheme } from '../../lib/theme';
 import { useI18n } from '../../lib/i18n';
-
-function getPortalTarget(): HTMLElement | null {
-  if (typeof document === 'undefined') return null;
-  return document.getElementById('phone-container') || document.body;
-}
 
 export interface ErrorBoundaryProps {
   children: ReactNode;
@@ -39,8 +33,8 @@ interface ErrorBoundaryState {
 
 /**
  * Dedicated Glass Error Boundary
- * Portals directly above all screen headers and bottom navigation (zIndex: 99999).
- * Non-dismissible via backdrop or 'X' button; executes full slide-down exit animation on user action.
+ * Renders directly with full-screen Liquid Glass coverage (zIndex: 99999).
+ * Bulletproof on iOS, Android, and Web without native Modal or WebView dependencies.
  */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
@@ -97,24 +91,27 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 }
 
+export interface DedicatedErrorSheetProps {
+  title?: string;
+  message?: string;
+  error: Error | null;
+  errorInfo?: ErrorInfo | null;
+  onRetry: () => void;
+  onGoHome?: () => void;
+}
+
 /**
  * Custom Dedicated Error Bottom Sheet
+ * Native-safe, zero webview dependencies, styled with authentic Liquid Glass tokens.
  */
-function DedicatedErrorSheet({
+export function DedicatedErrorSheet({
   title,
   message,
   error,
   errorInfo,
   onRetry,
   onGoHome,
-}: {
-  title?: string;
-  message?: string;
-  error: Error | null;
-  errorInfo: ErrorInfo | null;
-  onRetry: () => void;
-  onGoHome?: () => void;
-}) {
+}: DedicatedErrorSheetProps) {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const [showDetails, setShowDetails] = useState(false);
@@ -168,20 +165,23 @@ function DedicatedErrorSheet({
     });
   };
 
-  const sheetContent = (
-    <View style={styles.portalOverlay} pointerEvents="box-none">
-      {/* 1. Backdrop: Soft frosted blur over transparent Aurora. Persistent & non-dismissible */}
+  return (
+    <View style={styles.rootContainer} pointerEvents="box-none">
+      {/* 1. Underlying Aurora Background */}
+      <AuroraBackground isDark={isDark} />
+
+      {/* 2. Frosted backdrop overlay */}
       <Animated.View
         style={[
           styles.backdrop,
           {
             opacity: backdropAnim,
-            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.60)' : 'rgba(0, 0, 0, 0.30)',
+            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.65)' : 'rgba(0, 0, 0, 0.35)',
           },
         ]}
       />
 
-      {/* 2. Interactive Retro 8-bit Combat Stage (Fun Easter Egg above sheet!) */}
+      {/* 3. Interactive Retro 8-bit Combat Stage */}
       <Animated.View
         style={[
           styles.fightStageWrap,
@@ -189,11 +189,12 @@ function DedicatedErrorSheet({
             opacity: backdropAnim,
           },
         ]}
+        pointerEvents="auto"
       >
         <PixelFightStage height={Platform.OS === 'web' ? 240 : 200} />
       </Animated.View>
 
-      {/* 3. Sheet Container: slides up from bottom */}
+      {/* 4. Sheet Container: slides up from bottom */}
       <View style={styles.sheetWrap} pointerEvents="box-none">
         <Animated.View
           style={[
@@ -213,7 +214,7 @@ function DedicatedErrorSheet({
             ]}
           />
 
-          {/* Header Row: Dedicated Alert Badge & Text (NO close 'X' button) */}
+          {/* Header Row: Dedicated Alert Badge & Text */}
           <View style={styles.headerRow}>
             <View
               style={[
@@ -309,59 +310,33 @@ function DedicatedErrorSheet({
       </View>
     </View>
   );
-
-  if (Platform.OS === 'web') {
-    const target = getPortalTarget();
-    return target ? createPortal(sheetContent, target) : sheetContent;
-  }
-
-  return (
-    <Modal transparent visible animationType="none">
-      {sheetContent}
-    </Modal>
-  );
 }
 
 const styles = StyleSheet.create({
-  portalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  rootContainer: {
+    ...StyleSheet.absoluteFill,
     zIndex: 99999,
     justifyContent: 'flex-end',
+    backgroundColor: '#060814',
     overflow: 'hidden',
   },
   backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 99998,
-    pointerEvents: 'auto',
-    ...(Platform.OS === 'web'
-      ? ({
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-        } as any)
-      : {}),
+    ...StyleSheet.absoluteFill,
+    zIndex: 1,
   },
   fightStageWrap: {
     position: 'absolute',
     top: Platform.OS === 'web' ? 65 : (Platform.OS === 'ios' ? 140 : 125),
     left: 0,
     right: 0,
-    zIndex: 99999,
+    zIndex: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    pointerEvents: 'auto',
   },
   sheetWrap: {
     position: 'relative',
     width: '100%',
-    zIndex: 99999,
+    zIndex: 3,
   },
   sheetContainer: {
     width: '100%',
@@ -378,12 +353,6 @@ const styles = StyleSheet.create({
     shadowRadius: 28,
     elevation: 32,
     overflow: 'hidden',
-    ...(Platform.OS === 'web'
-      ? ({
-          backdropFilter: 'blur(32px) saturate(190%)',
-          WebkitBackdropFilter: 'blur(32px) saturate(190%)',
-        } as any)
-      : {}),
   },
   handle: {
     width: 38,

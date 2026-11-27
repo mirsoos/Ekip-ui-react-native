@@ -21,7 +21,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { Paperclip, X, CornerUpLeft } from 'lucide-react-native';
-import { FrostedGlass } from '../../../../components/FrostedGlass';
+import { FrostedGlass } from '@/src/components/glass';
 import { SendButton } from './SendButton';
 import { AttachmentPicker } from './AttachmentPicker';
 import { AudioRecorder } from '../VoiceNote/AudioRecorder';

@@ -1,9 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { CreateScreen, type CreateScreenHandle } from '../../src/screens/CreateScreen';
-import { CreateHeader } from '../../src/components/create/CreateHeader';
-import { CreateContinueButton } from '../../src/components/create/CreateContinueButton';
-import { ScreenLayout } from '../../src/components/common/ScreenLayout';
+import {
+  CreateScreen,
+  CreateHeader,
+  CreateContinueButton,
+  type CreateScreenHandle,
+} from '@/src/features/create';
+import { ScreenLayout } from '@/src/components/common/ScreenLayout';
 
 export default function CreateRoute() {
   const router = useRouter();

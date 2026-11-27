@@ -1,0 +1,241 @@
+// --- START OF FILE ProfileHeaderCard.tsx ---
+
+import React, { useMemo } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { GlassAvatar, GlassBadgeIcon, GlassButton } from '@/src/components/glass';
+import { InfoPill } from '@/src/components/common/InfoPill';
+import { getIcon } from '@/src/lib/icons';
+import { useTheme } from '@/src/lib/theme';
+import { useI18n } from '@/src/lib/i18n';
+import type { Profile } from '@/src/types/database';
+
+export const ProfileHeaderCard = React.memo(function ProfileHeaderCard({
+  profile,
+  isOwnProfile,
+  isFriend,
+  onAddFriend,
+  onOpenActions,
+  onOpenVerification,
+  hideAvatar = false,
+}: {
+  profile: Profile;
+  isOwnProfile: boolean;
+  isFriend: boolean;
+  onAddFriend?: () => void;
+  onOpenActions?: () => void;
+  onOpenVerification?: () => void;
+  hideAvatar?: boolean;
+}) {
+  const { colors } = useTheme();
+  const { t, isRTL } = useI18n();
+  const MoreHorizontal = getIcon('MoreHorizontal');
+  const Smile = getIcon('Smile');
+
+  const genderLabels = useMemo<Record<string, string>>(
+    () => ({
+      male: t('create.genderMale'),
+      female: t('create.genderFemale'),
+    }),
+    [t]
+  );
+
+  const rowDir = isRTL ? ('row-reverse' as const) : ('row' as const);
+  const textAlign = isRTL ? ('right' as const) : ('left' as const);
+
+  return (
+    <View style={styles.container}>
+      <View style={[styles.topRow, { flexDirection: rowDir }]}>
+        <View style={styles.avatarWrap}>
+          {hideAvatar ? (
+            <GlassAvatar
+              user={profile}
+              size={88}
+              style={{ opacity: 0 }}
+              pointerEvents="none"
+            />
+          ) : (
+            <GlassAvatar
+              user={profile}
+              size={88}
+              online={!isOwnProfile && !!profile.is_online}
+            />
+          )}
+        </View>
+
+        {!isOwnProfile && (
+          <View style={[styles.actionsGroup, { flexDirection: rowDir }]}>
+            {onOpenActions && (
+              <TouchableOpacity
+                activeOpacity={0.75}
+                onPress={onOpenActions}
+                style={[
+                  styles.moreBtn,
+                  { backgroundColor: colors.glassThickBg, borderColor: colors.glassBorder },
+                ]}
+              >
+                <MoreHorizontal size={20} color={colors.textPrimary} strokeWidth={2.2} />
+              </TouchableOpacity>
+            )}
+
+            {onAddFriend && (
+              <GlassButton size="sm" icon="UserPlus" onPress={onAddFriend}>
+                {isFriend ? t('profile.connected') : t('profile.connect')}
+              </GlassButton>
+            )}
+          </View>
+        )}
+      </View>
+
+      <View style={{ marginTop: 12, alignItems: isRTL ? 'flex-end' : 'flex-start' }}>
+        <View style={[styles.nameRow, { flexDirection: rowDir }]}>
+          <Text style={[styles.name, { color: colors.textPrimary, textAlign }]}>
+            {profile.first_name} {profile.last_name}
+          </Text>
+          {profile.is_verified && (
+            <TouchableOpacity activeOpacity={0.8} onPress={onOpenVerification}>
+              <GlassBadgeIcon icon="Verified" label={t('common.verified')} color="pink" />
+            </TouchableOpacity>
+          )}
+          {profile.is_premium && (
+            <GlassBadgeIcon icon="Crown" label={t('ekip.premium')} color="amber" />
+          )}
+        </View>
+
+        <Text style={[styles.handle, { color: colors.textTertiary, textAlign }]}>
+          @{profile.username}
+        </Text>
+
+        {profile.bio && (
+          <Text style={[styles.bio, { color: colors.textSecondary, textAlign }]}>
+            {profile.bio}
+          </Text>
+        )}
+
+        {/* Quick info pills */}
+        <View style={[styles.pillsRow, { flexDirection: rowDir }]}>
+          {profile.age && <InfoPill icon="Calendar" label={t('profile.yearsOld', { age: profile.age })} />}
+          {profile.gender && <InfoPill icon="User" label={genderLabels[profile.gender] ?? profile.gender} />}
+          {profile.city && <InfoPill icon="MapPin" label={profile.city} />}
+          {profile.job && <InfoPill icon="Briefcase" label={profile.job} />}
+          {profile.personality_type && (
+            <InfoPill icon="Sparkles" label={profile.personality_type} />
+          )}
+        </View>
+
+        {/* Mood status */}
+        {profile.mood && (
+          <View
+            style={[
+              styles.moodBox,
+              {
+                flexDirection: rowDir,
+                backgroundColor: colors.glassThinBg,
+                borderColor: colors.glassBorder,
+              },
+            ]}
+          >
+            <Smile
+              size={16}
+              color="#f472b6"
+              style={{
+                marginRight: isRTL ? 0 : 6,
+                marginLeft: isRTL ? 6 : 0,
+              }}
+            />
+            <Text
+              style={[
+                styles.moodLabel,
+                {
+                  color: colors.textTertiary,
+                  marginRight: isRTL ? 0 : 4,
+                  marginLeft: isRTL ? 4 : 0,
+                },
+              ]}
+            >
+              {isRTL ? 'وضعیت:' : 'Status:'}
+            </Text>
+            <Text style={[styles.moodVal, { color: colors.textPrimary }]}>
+              {profile.mood}
+            </Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+});
+
+const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 16,
+    marginTop: -45,
+    zIndex: 10,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  avatarWrap: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 4,
+    overflow: 'visible',
+  },
+  actionsGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  moreBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  name: {
+    fontSize: 22,
+    fontWeight: '800',
+  },
+  handle: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  bio: {
+    fontSize: 13,
+    marginTop: 8,
+    lineHeight: 18,
+  },
+  pillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 12,
+  },
+  moodBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginTop: 10,
+  },
+  moodLabel: {
+    fontSize: 12,
+  },
+  moodVal: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+});

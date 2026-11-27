@@ -1,10 +1,10 @@
 import React, { useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { AuthScreen } from '../src/screens/AuthScreen';
-import { AuroraBackground } from '../src/components/AuroraBackground';
-import { useAuthStore } from '../src/store/authStore';
-import { useTheme } from '../src/lib/theme';
+import { AuthScreen } from '@/src/features/auth';
+import { AuroraBackground } from '@/src/components/AuroraBackground';
+import { useAuthStore } from '@/src/store/authStore';
+import { useTheme } from '@/src/lib/theme';
 
 export default function AuthRoute() {
   const router = useRouter();

@@ -1,11 +1,10 @@
 import React from 'react';
 import { useRouter } from 'expo-router';
-import { SettingsScreen } from '../../src/screens/SettingsScreen';
-import { SettingsHeader } from '../../src/components/settings/SettingsHeader';
-import { ScreenLayout } from '../../src/components/common/ScreenLayout';
-import { useI18n } from '../../src/lib/i18n';
-import { useAuthStore } from '../../src/store/authStore';
-import { useNotificationStore } from '../../src/store/notificationStore';
+import { SettingsScreen, SettingsHeader } from '@/src/features/settings';
+import { ScreenLayout } from '@/src/components/common/ScreenLayout';
+import { useI18n } from '@/src/lib/i18n';
+import { useAuthStore } from '@/src/store/authStore';
+import { useNotificationStore } from '@/src/store/notificationStore';
 
 export default function SettingsIndexRoute() {
   const router = useRouter();

@@ -1,0 +1,308 @@
+// --- START OF FILE Overlays.web.tsx ---
+
+import React, { type ReactNode, useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { type IconName } from '../../lib/icons';
+import { GlassButton, GlassCloseButton } from '../glass';
+import { useTheme } from '../../lib/theme';
+import { useI18n } from '../../lib/i18n';
+
+function getPortalTarget(): HTMLElement | null {
+  if (typeof document === 'undefined') return null;
+  return document.getElementById('phone-container') || document.body;
+}
+
+// ============================================
+// GLASS SHEET (Bottom Sheet Modal) — Web Platform
+// ============================================
+export interface GlassSheetProps {
+  open: boolean;
+  onClose: () => void;
+  children: ReactNode;
+  title?: string;
+  fullHeight?: boolean;
+  contentClassName?: string;
+  headerContent?: ReactNode;
+  footerContent?: ReactNode;
+}
+
+export function GlassSheet({
+  open,
+  onClose,
+  children,
+  title,
+  fullHeight,
+  contentClassName = '',
+  headerContent,
+  footerContent,
+}: GlassSheetProps) {
+  const { isDark } = useTheme();
+  const { isRTL } = useI18n();
+  const isMounted = useRef(false);
+  const [isRendered, setIsRendered] = useState(open);
+
+  useEffect(() => {
+    let timer: number | undefined;
+    if (open) {
+      isMounted.current = true;
+      timer = window.setTimeout(() => setIsRendered(true), 0);
+    } else if (isMounted.current) {
+      timer = window.setTimeout(() => setIsRendered(false), 520);
+    }
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
+  if (!isRendered) return null;
+
+  const content = (
+    <div
+      className="screen-overlay screen-overlay-sheet"
+      onClick={onClose}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'flex-end',
+        overflow: 'hidden',
+      }}
+    >
+      {/* 1. Backdrop */}
+      <div
+        onClick={onClose}
+        className={`ekip-sheet-backdrop ${open ? 'animate-fade' : 'animate-fade-out'}`}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: isDark ? 'rgba(0, 0, 0, 0.65)' : 'rgba(0, 0, 0, 0.40)',
+          willChange: 'opacity',
+          animationDuration: '500ms',
+          cursor: 'pointer',
+        }}
+      />
+
+      {/* 2. Sheet container */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={`ekip-sheet-container ${
+          open ? 'animate-sheet-up' : 'animate-sheet-down'
+        }`}
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          width: '100%',
+          maxHeight: '92%',
+          height: fullHeight ? '86%' : undefined,
+          borderTopLeftRadius: 32,
+          borderTopRightRadius: 32,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          animationDuration: open ? '620ms' : '460ms',
+          animationTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
+          backgroundColor: isDark ? 'rgba(14, 20, 34, 0.95)' : 'rgba(255, 255, 255, 0.96)',
+          borderTop: isDark ? '1px solid rgba(255, 255, 255, 0.22)' : '1px solid rgba(255, 255, 255, 0.85)',
+          borderLeft: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.60)',
+          borderRight: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.60)',
+          borderBottom: 'none',
+          boxShadow: isDark
+            ? 'inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.25), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.45), 0 -16px 48px -8px rgba(0, 0, 0, 0.70)'
+            : 'inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px 0 rgba(255, 255, 255, 0.35), 0 -16px 48px -8px rgba(15, 23, 42, 0.35)',
+        }}
+      >
+        <div className="ekip-sheet-handle" />
+
+        <div
+          className="ekip-sheet-header"
+          style={{
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+            gap: 12,
+          }}
+        >
+          {title ? (
+            <h2
+              className="ekip-sheet-title"
+              style={{
+                margin: '6px 0 0 0',
+                textAlign: isRTL ? 'right' : 'left',
+                direction: isRTL ? 'rtl' : 'ltr',
+                flex: 1,
+              }}
+            >
+              {title}
+            </h2>
+          ) : (
+            <div style={{ flex: 1, height: 24 }} />
+          )}
+          <GlassCloseButton onPress={onClose} />
+        </div>
+
+        {headerContent && (
+          <div style={{ padding: '4px 20px 6px 20px' }}>{headerContent}</div>
+        )}
+
+        <div className={`ekip-sheet-content ${contentClassName}`}>{children}</div>
+
+        {footerContent && (
+          <div style={{ padding: '8px 20px 24px 20px' }}>{footerContent}</div>
+        )}
+      </div>
+    </div>
+  );
+
+  const target = getPortalTarget();
+  return target ? createPortal(content, target) : content;
+}
+
+// ============================================
+// GLASS DIALOG (Centered Alert Modal) — Web Platform
+// ============================================
+export interface GlassDialogProps {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  body?: string;
+  children?: ReactNode;
+  actions?: {
+    label: string;
+    variant?: 'primary' | 'secondary' | 'danger';
+    onPress?: () => void;
+    onClick?: () => void;
+  }[];
+}
+
+export function GlassDialog({
+  open,
+  onClose,
+  title,
+  body,
+  children,
+  actions,
+}: GlassDialogProps) {
+  const [isRendered, setIsRendered] = useState(open);
+
+  useEffect(() => {
+    let timer: number | undefined;
+    if (open) {
+      timer = window.setTimeout(() => setIsRendered(true), 0);
+    } else {
+      timer = window.setTimeout(() => setIsRendered(false), 500);
+    }
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [open]);
+
+  if (!isRendered) return null;
+
+  const content = (
+    <div
+      className="screen-overlay screen-overlay-dialog"
+      onClick={onClose}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        onClick={onClose}
+        key={`dialog-backdrop-${open}`}
+        className={`ekip-dialog-backdrop ${open ? 'animate-fade' : 'animate-fade-out'}`}
+      />
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={`glass-thick glass-specular glass-edge ${
+          open ? 'animate-scale-in' : 'animate-scale-out'
+        }`}
+        style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: 340,
+          borderRadius: 28,
+          padding: 24,
+          zIndex: 1,
+        }}
+      >
+        <h2
+          style={{
+            fontSize: 20,
+            fontWeight: 700,
+            color: '#ffffff',
+            textAlign: 'center',
+            letterSpacing: -0.01,
+            margin: 0,
+          }}
+        >
+          {title}
+        </h2>
+        {body && (
+          <p
+            style={{
+              fontSize: 14,
+              color: '#a0aec0',
+              textAlign: 'center',
+              marginTop: 8,
+              marginBottom: 0,
+            }}
+          >
+            {body}
+          </p>
+        )}
+        {children}
+        {actions && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 20 }}>
+            {actions.map((act, i) => (
+              <GlassButton
+                key={i}
+                variant={act.variant ?? 'secondary'}
+                fullWidth
+                onPress={act.onPress ?? act.onClick}
+              >
+                {act.label}
+              </GlassButton>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const target = getPortalTarget();
+  return target ? createPortal(content, target) : content;
+}
+
+// ============================================
+// TOAST (Legacy wrapper for backward-compatibility)
+// ============================================
+export function Toast({
+  message,
+  visible,
+}: {
+  message?: string;
+  icon?: IconName;
+  visible?: boolean;
+}) {
+  return null;
+}
