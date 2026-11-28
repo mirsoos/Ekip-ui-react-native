@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
 import { Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import Animated, { ZoomIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 export interface ReactionBadgeProps {
@@ -26,30 +25,28 @@ export const ReactionBadge = React.memo(function ReactionBadge({
   }, [emoji, onPress]);
 
   return (
-    <Animated.View entering={ZoomIn.duration(150)}>
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={handlePress}
-        style={[
-          styles.badge,
-          hasReacted ? styles.badgeActive : styles.badgeInactive,
-          isMe && hasReacted && styles.badgeActiveMe,
-        ]}
-      >
-        <Text style={styles.emojiText}>{emoji}</Text>
-        {count > 1 && (
-          <Text
-            style={[
-              styles.countText,
-              hasReacted && styles.countTextActive,
-              isMe && hasReacted && styles.countTextActiveMe,
-            ]}
-          >
-            {count}
-          </Text>
-        )}
-      </TouchableOpacity>
-    </Animated.View>
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={handlePress}
+      style={[
+        styles.badge,
+        hasReacted ? styles.badgeActive : styles.badgeInactive,
+        isMe && hasReacted && styles.badgeActiveMe,
+      ]}
+    >
+      <Text style={styles.emojiText}>{emoji}</Text>
+      {count > 1 && (
+        <Text
+          style={[
+            styles.countText,
+            hasReacted && styles.countTextActive,
+            isMe && hasReacted && styles.countTextActiveMe,
+          ]}
+        >
+          {count}
+        </Text>
+      )}
+    </TouchableOpacity>
   );
 });
 

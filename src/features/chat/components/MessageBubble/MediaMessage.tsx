@@ -9,31 +9,37 @@ import { MediaGrid } from '../Media/MediaGrid';
 import { VideoPlayer } from '../Media/VideoPlayer';
 
 import { SpoilerView } from '../RichText/SpoilerView';
-import { useChatTheme, CHAT_THEMES } from '../../../../lib/theme';
+import { CHAT_THEMES, type ChatThemeConfig } from '../../../../lib/theme';
 
 export interface MediaMessageProps {
   message: Message;
   attachment: Attachment;
   isMe: boolean;
+  themeConfig?: ChatThemeConfig;
   onRetry?: () => void;
   onPressMedia?: (attachment: Attachment, index?: number, allAttachments?: Attachment[]) => void;
 }
 
+const TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
+
 const formatMessageTime = (timestamp: number): string => {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  return TIME_FORMATTER.format(new Date(timestamp));
 };
 
 export const MediaMessage = React.memo(function MediaMessage({
   message,
   attachment,
   isMe,
+  themeConfig = CHAT_THEMES.default,
   onRetry,
   onPressMedia,
 }: MediaMessageProps) {
-  const { chatTheme } = useChatTheme();
-  const themeConfig = CHAT_THEMES[chatTheme] ?? CHAT_THEMES.default;
-  const [spoilerRevealed, setSpoilerRevealed] = React.useState(!attachment.isSpoiler);
+  const [revealedAttachmentId, setRevealedAttachmentId] = React.useState<string | null>(null);
+  const spoilerRevealed = !attachment.isSpoiler || revealedAttachmentId === attachment.id;
   const timeStr = React.useMemo(() => formatMessageTime(message.createdAt), [message.createdAt]);
   const attachments = message.attachments || [attachment];
 
@@ -148,7 +154,8 @@ export const MediaMessage = React.memo(function MediaMessage({
         {attachment.isSpoiler && !spoilerRevealed && (
           <SpoilerView
             initialRevealed={false}
-            onReveal={() => setSpoilerRevealed(true)}
+            resetKey={attachment.id}
+            onReveal={() => setRevealedAttachmentId(attachment.id)}
             style={StyleSheet.absoluteFill}
           >
             <View style={StyleSheet.absoluteFill} />
@@ -177,7 +184,7 @@ export const MediaMessage = React.memo(function MediaMessage({
   // 5. Single Image Attachment
   const handleSingleImagePress = () => {
     if (attachment.isSpoiler && !spoilerRevealed) {
-      setSpoilerRevealed(true);
+      setRevealedAttachmentId(attachment.id);
       return;
     }
     onPressMedia?.(attachment, 0, [attachment]);
@@ -201,7 +208,8 @@ export const MediaMessage = React.memo(function MediaMessage({
       {attachment.isSpoiler && !spoilerRevealed && (
         <SpoilerView
           initialRevealed={false}
-          onReveal={() => setSpoilerRevealed(true)}
+          resetKey={attachment.id}
+          onReveal={() => setRevealedAttachmentId(attachment.id)}
           style={StyleSheet.absoluteFill}
         >
           <View style={StyleSheet.absoluteFill} />

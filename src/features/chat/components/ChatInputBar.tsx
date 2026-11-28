@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet, Platform, Animated, Keyboard, Easing } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -74,18 +74,27 @@ export function ChatInputBarComponent({
 
   useEffect(() => {
     enterAnim.setValue(0);
-    Animated.timing(enterAnim, {
+    const anim = Animated.timing(enterAnim, {
       toValue: 1,
       duration: 180,
       easing: Easing.out(Easing.quad),
       useNativeDriver: Platform.OS !== 'web',
-    }).start();
+    });
+    anim.start();
+    return () => {
+      anim.stop();
+      enterAnim.stopAnimation();
+    };
   }, [enterAnim]);
 
-  const enterTranslateY = enterAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [85, 0],
-  });
+  const enterTranslateY = useMemo(
+    () =>
+      enterAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [85, 0],
+      }),
+    [enterAnim]
+  );
 
   const hasText = Boolean(currentText.trim());
 

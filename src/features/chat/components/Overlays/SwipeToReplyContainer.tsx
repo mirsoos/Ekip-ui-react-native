@@ -1,14 +1,16 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  cancelAnimation,
   Easing,
   interpolate,
   Extrapolation,
   runOnJS,
+  type SharedValue,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { CornerUpLeft } from 'lucide-react-native';
@@ -24,81 +26,11 @@ interface SwipeToReplyContainerProps {
 const SWIPE_THRESHOLD = 52;
 const MAX_SWIPE = 78;
 
-export const SwipeToReplyContainer = React.memo(function SwipeToReplyContainer({
-  message,
-  onReply,
-  children,
-  enabled = true,
-}: SwipeToReplyContainerProps) {
-  const translateX = useSharedValue(0);
-  const hasTriggeredHaptic = useSharedValue(false);
-
-  const panGesture = useMemo(() => {
-    const triggerHaptic = () => {
-      try {
-        if (Platform.OS !== 'web') {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        }
-      } catch {
-        // safe fallback
-      }
-    };
-
-    const handleReplyRelease = (msg: Message) => {
-      onReply(msg);
-    };
-
-    return Gesture.Pan()
-      .enabled(enabled)
-      .activeOffsetX([-15, 15])
-      .failOffsetY([-8, 8])
-        .onUpdate((event) => {
-          'worklet';
-          // Restrict swipe: swipe rightwards for left-aligned messages, or leftwards
-          // Telegram style: swiping leftwards triggers reply
-          const rawX = -event.translationX;
-          if (rawX > 0) {
-            // Logarithmic / rubber-band resistance beyond threshold
-            if (rawX <= SWIPE_THRESHOLD) {
-              translateX.value = -rawX;
-            } else {
-              const excess = rawX - SWIPE_THRESHOLD;
-              const damped = excess * 0.28;
-              translateX.value = -(SWIPE_THRESHOLD + Math.min(damped, MAX_SWIPE - SWIPE_THRESHOLD));
-            }
-
-            // Trigger haptic once precisely upon crossing threshold
-            if (rawX >= SWIPE_THRESHOLD && !hasTriggeredHaptic.value) {
-              hasTriggeredHaptic.value = true;
-              runOnJS(triggerHaptic)();
-            } else if (rawX < SWIPE_THRESHOLD && hasTriggeredHaptic.value) {
-              hasTriggeredHaptic.value = false;
-            }
-          } else {
-            translateX.value = 0;
-          }
-        })
-        .onEnd(() => {
-          'worklet';
-          const shouldReply = -translateX.value >= SWIPE_THRESHOLD;
-          if (shouldReply) {
-            runOnJS(handleReplyRelease)(message);
-          }
-          hasTriggeredHaptic.value = false;
-          translateX.value = withTiming(0, {
-            duration: 180,
-            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          });
-        });
-  }, [enabled, message, onReply, translateX, hasTriggeredHaptic]);
-
-  const animatedRowStyle = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      transform: [{ translateX: translateX.value }],
-    };
-  });
-
+const SwipeReplyIcon = React.memo(function SwipeReplyIcon({
+  translateX,
+}: {
+  translateX: SharedValue<number>;
+}) {
   const animatedIconStyle = useAnimatedStyle(() => {
     'worklet';
     const swipeDistance = -translateX.value;
@@ -128,13 +60,147 @@ export const SwipeToReplyContainer = React.memo(function SwipeToReplyContainer({
   });
 
   return (
+    <View style={styles.iconTray} pointerEvents="none">
+      <Animated.View style={[styles.replyIconCircle, animatedIconStyle]}>
+        <CornerUpLeft size={16} color="#ffffff" strokeWidth={2.4} />
+      </Animated.View>
+    </View>
+  );
+});
+
+export const SwipeToReplyContainer = React.memo(function SwipeToReplyContainer({
+  message,
+  onReply,
+  children,
+  enabled = true,
+}: SwipeToReplyContainerProps) {
+  const translateX = useSharedValue(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+
+  const isMountedRef = useRef(true);
+  const messageRef = useRef(message);
+  messageRef.current = message;
+  const onReplyRef = useRef(onReply);
+  onReplyRef.current = onReply;
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      cancelAnimation(translateX);
+    };
+  }, [translateX]);
+
+  // Reset shared value cleanly when FlashList recycles cell for a different message
+  useEffect(() => {
+    cancelAnimation(translateX);
+    translateX.value = 0;
+    setIsSwiping(false);
+  }, [message.id, translateX]);
+
+  const triggerHaptic = useCallback(() => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch {
+      // safe fallback
+    }
+  }, []);
+
+  const handleReplyRelease = useCallback(() => {
+    onReplyRef.current(messageRef.current);
+  }, []);
+
+  const showIcon = useCallback(() => {
+    if (isMountedRef.current) setIsSwiping(true);
+  }, []);
+
+  const hideIcon = useCallback(() => {
+    if (isMountedRef.current) setIsSwiping(false);
+  }, []);
+
+  const panGesture = useMemo(() => {
+    return Gesture.Pan()
+      .enabled(enabled)
+      .activeOffsetX([-15, 15])
+      .failOffsetY([-8, 8])
+      .onStart(() => {
+        'worklet';
+        runOnJS(showIcon)();
+      })
+      .onUpdate((event) => {
+        'worklet';
+        // Telegram style: swiping leftwards triggers reply
+        const rawX = -event.translationX;
+        const prevSwiped = -translateX.value;
+        if (rawX > 0) {
+          // Logarithmic / rubber-band resistance beyond threshold
+          if (rawX <= SWIPE_THRESHOLD) {
+            translateX.value = -rawX;
+          } else {
+            const excess = rawX - SWIPE_THRESHOLD;
+            const damped = excess * 0.28;
+            translateX.value = -(SWIPE_THRESHOLD + Math.min(damped, MAX_SWIPE - SWIPE_THRESHOLD));
+          }
+
+          // Trigger haptic once precisely upon crossing threshold
+          if (rawX >= SWIPE_THRESHOLD && prevSwiped < SWIPE_THRESHOLD) {
+            runOnJS(triggerHaptic)();
+          }
+        } else {
+          translateX.value = 0;
+        }
+      })
+      .onEnd(() => {
+        'worklet';
+        const shouldReply = -translateX.value >= SWIPE_THRESHOLD;
+        if (shouldReply) {
+          runOnJS(handleReplyRelease)();
+        }
+        translateX.value = withTiming(
+          0,
+          {
+            duration: 180,
+            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          },
+          (finished) => {
+            if (finished) {
+              runOnJS(hideIcon)();
+            }
+          }
+        );
+      })
+      .onFinalize((_evt, success) => {
+        'worklet';
+        if (!success) {
+          translateX.value = withTiming(
+            0,
+            {
+              duration: 150,
+              easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+            },
+            (finished) => {
+              if (finished) {
+                runOnJS(hideIcon)();
+              }
+            }
+          );
+        }
+      });
+  }, [enabled, translateX, triggerHaptic, handleReplyRelease, showIcon, hideIcon]);
+
+  const animatedRowStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      transform: [{ translateX: translateX.value }],
+    };
+  });
+
+  return (
     <View style={styles.container}>
-      {/* Reply Action Icon revealed behind the swiped bubble */}
-      <View style={styles.iconTray} pointerEvents="none">
-        <Animated.View style={[styles.replyIconCircle, animatedIconStyle]}>
-          <CornerUpLeft size={16} color="#ffffff" strokeWidth={2.4} />
-        </Animated.View>
-      </View>
+      {/* Reply Action Icon revealed behind the swiped bubble only while swiping */}
+      {isSwiping && <SwipeReplyIcon translateX={translateX} />}
 
       <GestureDetector gesture={panGesture}>
         <Animated.View style={[styles.bubbleWrapper, animatedRowStyle]}>

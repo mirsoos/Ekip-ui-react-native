@@ -3,6 +3,7 @@ import {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  cancelAnimation,
   Easing,
   type SharedValue,
 } from 'react-native-reanimated';
@@ -58,6 +59,8 @@ export function useChatKeyboard(bottomInset: number = 0): ChatKeyboardState {
         viewport.removeEventListener('scroll', handleViewportChange);
       }
       window.removeEventListener('resize', handleViewportChange);
+      cancelAnimation(webKeyboardHeight);
+      cancelAnimation(webKeyboardProgress);
     };
   }, [webKeyboardHeight, webKeyboardProgress]);
 

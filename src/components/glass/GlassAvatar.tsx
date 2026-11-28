@@ -181,6 +181,7 @@ export function GlassAvatarComponent({
             style={{ width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }}
             contentFit="cover"
             cachePolicy="memory-disk"
+            recyclingKey={avatarSrc}
             transition={200}
           />
         ) : (

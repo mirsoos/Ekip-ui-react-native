@@ -11,6 +11,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
 import { Search, ChevronUp, ChevronDown, X } from 'lucide-react-native';
@@ -49,14 +50,16 @@ export const ChatSearchBar = React.memo(function ChatSearchBar({
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.97);
   const [isRendered, setIsRendered] = useState(visible);
+  const hasOpenedRef = useRef(visible);
 
   useEffect(() => {
     if (visible) {
+      hasOpenedRef.current = true;
       setIsRendered(true);
       translateY.value = withTiming(0, { duration: 260, easing: EASING_STANDARD });
       opacity.value = withTiming(1, { duration: 220, easing: EASING_STANDARD });
       scale.value = withTiming(1, { duration: 260, easing: EASING_STANDARD });
-    } else {
+    } else if (hasOpenedRef.current) {
       translateY.value = withTiming(-20, { duration: 180, easing: EASING_STANDARD });
       opacity.value = withTiming(0, { duration: 160, easing: EASING_STANDARD });
       scale.value = withTiming(0.97, { duration: 180, easing: EASING_STANDARD });
@@ -64,8 +67,18 @@ export const ChatSearchBar = React.memo(function ChatSearchBar({
       const timer = setTimeout(() => {
         setIsRendered(false);
       }, 190);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        cancelAnimation(translateY);
+        cancelAnimation(opacity);
+        cancelAnimation(scale);
+      };
     }
+    return () => {
+      cancelAnimation(translateY);
+      cancelAnimation(opacity);
+      cancelAnimation(scale);
+    };
   }, [visible, translateY, opacity, scale]);
 
   const animatedStyle = useAnimatedStyle(() => {

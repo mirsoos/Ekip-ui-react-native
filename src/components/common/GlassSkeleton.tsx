@@ -42,7 +42,10 @@ export function useBreathingValue(duration = 1400, enabled = true) {
     );
     animation.start();
 
-    return () => animation.stop();
+    return () => {
+      animation.stop();
+      pulse.stopAnimation();
+    };
   }, [pulse, duration, enabled]);
 
   return pulse;

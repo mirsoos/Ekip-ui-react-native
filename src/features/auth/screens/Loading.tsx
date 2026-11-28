@@ -1,6 +1,6 @@
 // --- START OF FILE Loading.tsx ---
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   Animated,
@@ -218,10 +218,23 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
       twinkleLoopA.stop();
       twinkleLoopB.stop();
       floatLoop.stop();
+      contentOpacity.stopAnimation();
+      sceneScale.stopAnimation();
+      twinkleA.stopAnimation();
+      twinkleB.stopAnimation();
+      logoScaleAnim.stopAnimation();
+      pieceSeparationAnim.stopAnimation();
+      floatAnim.stopAnimation();
+      pulseBlueAnim.stopAnimation();
+      pulseOrangeAnim.stopAnimation();
+      pulseGreenAnim.stopAnimation();
+      textFillProgress.stopAnimation();
+      containerOpacity.stopAnimation();
     };
   }, [
     minDuration,
     contentOpacity,
+    containerOpacity,
     floatAnim,
     logoScaleAnim,
     pieceSeparationAnim,
@@ -237,10 +250,11 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
   useEffect(() => {
     if (!canFinish) return;
 
+    let exitAnim: Animated.CompositeAnimation | null = null;
     const remainingDuration = Math.max(0, minDuration - (Date.now() - startedAt));
     const exitTimer = setTimeout(() => {
       setIsFadingOut(true);
-      Animated.parallel([
+      exitAnim = Animated.parallel([
         Animated.timing(containerOpacity, {
           toValue: 0,
           duration: 480,
@@ -253,70 +267,98 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
           easing: Easing.bezier(0.25, 0.1, 0.25, 1),
           useNativeDriver: USE_NATIVE_DRIVER,
         }),
-      ]).start(({ finished }) => {
+      ]);
+      exitAnim.start(({ finished }) => {
         if (finished) onFinish?.();
       });
     }, remainingDuration);
 
-    return () => clearTimeout(exitTimer);
+    return () => {
+      clearTimeout(exitTimer);
+      exitAnim?.stop();
+    };
   }, [canFinish, minDuration, startedAt, onFinish, containerOpacity, sceneScale]);
 
-  const topPieceTranslateY = Animated.add(
-    pieceSeparationAnim.interpolate({
-      inputRange: [-1, 0, 1.3],
-      outputRange: [4, 0, -6],
-    }),
-    floatAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, -3.2],
-    })
+  const topPieceTranslateY = useMemo(
+    () =>
+      Animated.add(
+        pieceSeparationAnim.interpolate({
+          inputRange: [-1, 0, 1.3],
+          outputRange: [4, 0, -6],
+        }),
+        floatAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -3.2],
+        })
+      ),
+    [pieceSeparationAnim, floatAnim]
   );
 
-  const midPieceTranslateX = Animated.add(
-    pieceSeparationAnim.interpolate({
-      inputRange: [-1, 0, 1.3],
-      outputRange: [-2.5, 0, 4.5],
-    }),
-    floatAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 2],
-    })
+  const midPieceTranslateX = useMemo(
+    () =>
+      Animated.add(
+        pieceSeparationAnim.interpolate({
+          inputRange: [-1, 0, 1.3],
+          outputRange: [-2.5, 0, 4.5],
+        }),
+        floatAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 2],
+        })
+      ),
+    [pieceSeparationAnim, floatAnim]
   );
 
-  const botPieceTranslateY = Animated.add(
-    pieceSeparationAnim.interpolate({
-      inputRange: [-1, 0, 1.3],
-      outputRange: [-4, 0, 6],
-    }),
-    floatAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 2.4],
-    })
+  const botPieceTranslateY = useMemo(
+    () =>
+      Animated.add(
+        pieceSeparationAnim.interpolate({
+          inputRange: [-1, 0, 1.3],
+          outputRange: [-4, 0, 6],
+        }),
+        floatAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 2.4],
+        })
+      ),
+    [pieceSeparationAnim, floatAnim]
   );
 
-  const clipTranslateX = textFillProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-BRAND_TEXT_WIDTH, 0],
-  });
-  const innerTextTranslateX = textFillProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [BRAND_TEXT_WIDTH, 0],
-  });
+  const clipTranslateX = useMemo(
+    () =>
+      textFillProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-BRAND_TEXT_WIDTH, 0],
+      }),
+    [textFillProgress]
+  );
+  const innerTextTranslateX = useMemo(
+    () =>
+      textFillProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [BRAND_TEXT_WIDTH, 0],
+      }),
+    [textFillProgress]
+  );
 
-  const getPulseStyle = (anim: Animated.Value) => {
-    const scale = anim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0.95, 1.8],
-    });
-    const opacity = anim.interpolate({
+  const makePulseStyle = (anim: Animated.Value) => ({
+    opacity: anim.interpolate({
       inputRange: [0, 0.15, 0.7, 1],
       outputRange: [0.8, 0.8, 0.25, 0],
-    });
-    return {
-      opacity,
-      transform: [{ scale }],
-    };
-  };
+    }),
+    transform: [
+      {
+        scale: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.95, 1.8],
+        }),
+      },
+    ],
+  });
+
+  const pulseBlueStyle = useMemo(() => makePulseStyle(pulseBlueAnim), [pulseBlueAnim]);
+  const pulseOrangeStyle = useMemo(() => makePulseStyle(pulseOrangeAnim), [pulseOrangeAnim]);
+  const pulseGreenStyle = useMemo(() => makePulseStyle(pulseGreenAnim), [pulseGreenAnim]);
 
   // Dimensions for Loading hero logo (size = 72)
   const logoSize = 72;
@@ -445,7 +487,7 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
                 styles.pulseRing,
                 styles.pulseBlue,
                 { width: logoSize, height: totalLogoHeight, borderRadius: logoBorderRadius },
-                getPulseStyle(pulseBlueAnim),
+                pulseBlueStyle,
               ]}
             />
             <Animated.View
@@ -454,7 +496,7 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
                 styles.pulseRing,
                 styles.pulseOrange,
                 { width: logoSize, height: totalLogoHeight, borderRadius: logoBorderRadius },
-                getPulseStyle(pulseOrangeAnim),
+                pulseOrangeStyle,
               ]}
             />
             <Animated.View
@@ -463,7 +505,7 @@ export function Loading({ onFinish, minDuration = 2000, canFinish = true }: Load
                 styles.pulseRing,
                 styles.pulseGreen,
                 { width: logoSize, height: totalLogoHeight, borderRadius: logoBorderRadius },
-                getPulseStyle(pulseGreenAnim),
+                pulseGreenStyle,
               ]}
             />
           </View>

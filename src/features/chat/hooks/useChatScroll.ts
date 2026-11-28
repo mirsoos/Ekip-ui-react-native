@@ -1,6 +1,5 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
 import {
-  Platform,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
@@ -93,26 +92,6 @@ export function useChatScroll({
     if (isFetchingHistoryRef.current || !hasMoreHistory || !onLoadMoreHistory) return;
     onLoadMoreHistory();
   }, [hasMoreHistory, onLoadMoreHistory]);
-
-  // Web Wheel Normalization for inverted virtualized lists
-  useEffect(() => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-
-    const node = webWheelRef.current;
-    if (!node) return;
-
-    const onWheel = (e: WheelEvent) => {
-      // Prevent browser synthetic jump during rapid inverted trackpad / mousewheel scrolling
-      if (Math.abs(e.deltaY) > 0) {
-        // Native wheel events pass through smoothly to FlashList's internal scroll container
-      }
-    };
-
-    node.addEventListener('wheel', onWheel, { passive: true });
-    return () => {
-      node.removeEventListener('wheel', onWheel);
-    };
-  }, []);
 
   return {
     flashListRef,

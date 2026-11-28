@@ -8,15 +8,14 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Check } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSequence,
   withTiming,
-  Easing,
-  SlideInRight,
-  SlideInLeft,
+  cancelAnimation,
 } from 'react-native-reanimated';
 
 import type { Message, Attachment, ReplyPreview, BubbleLayout } from '../../types/chat.types';
@@ -24,19 +23,57 @@ import { TextMessage } from './TextMessage';
 import { MediaMessage } from './MediaMessage';
 import { SwipeToReplyContainer } from '../Overlays/SwipeToReplyContainer';
 import { ReactionBadge } from '../Reactions/ReactionBadge';
-import { useIsMessageHighlighted, useChatStore } from '../../store/chatStore';
-import { useChatTheme, CHAT_THEMES } from '../../../../lib/theme';
+import { useIsMessageHighlighted } from '../../store/chatStore';
+import { CHAT_THEMES, darkColors, type ChatThemeConfig, type ThemeColors } from '../../../../lib/theme';
+
+const HighlightPulseOverlay = React.memo(function HighlightPulseOverlay() {
+  const highlightOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    highlightOpacity.value = withSequence(
+      withTiming(1, { duration: 180 }),
+      withTiming(0, { duration: 1200 })
+    );
+    return () => {
+      cancelAnimation(highlightOpacity);
+    };
+  }, [highlightOpacity]);
+
+  const highlightStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      opacity: highlightOpacity.value,
+    };
+  });
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        StyleSheet.absoluteFill,
+        styles.highlightOverlay,
+        highlightStyle,
+      ]}
+    />
+  );
+});
 
 export interface MessageBubbleProps {
   message: Message;
   currentUserId?: string;
   isGroupChat?: boolean;
+  isSelected?: boolean;
+  isSelectionMode?: boolean;
+  isSelectedInSelection?: boolean;
+  themeConfig?: ChatThemeConfig;
+  colors?: ThemeColors;
   onReply: (message: Message) => void;
   onLongPress: (message: Message, layout?: BubbleLayout) => void;
   onRetry: (messageId: string) => void;
   onPressMedia?: (attachment: Attachment, index?: number, allAttachments?: Attachment[]) => void;
   onPressReply?: (replyTo: ReplyPreview) => void;
   onToggleReaction?: (messageId: string, emoji: string) => void;
+  onToggleSelect?: (messageId: string) => void;
 }
 
 function arePropsEqual(prev: MessageBubbleProps, next: MessageBubbleProps): boolean {
@@ -46,10 +83,17 @@ function arePropsEqual(prev: MessageBubbleProps, next: MessageBubbleProps): bool
   if (prev.message.text !== next.message.text) return false;
   if (prev.currentUserId !== next.currentUserId) return false;
   if (prev.isGroupChat !== next.isGroupChat) return false;
+  if (prev.isSelected !== next.isSelected) return false;
+  if (prev.isSelectionMode !== next.isSelectionMode) return false;
+  if (prev.isSelectedInSelection !== next.isSelectedInSelection) return false;
+  if (prev.themeConfig !== next.themeConfig) return false;
+  if (prev.colors !== next.colors) return false;
   if (prev.message.error !== next.message.error) return false;
   if (prev.message.attachments !== next.message.attachments) return false;
   if (prev.message.isPinned !== next.message.isPinned) return false;
   if (prev.message.isEdited !== next.message.isEdited) return false;
+  if (prev.message.poll !== next.message.poll) return false;
+  if (prev.message.forwardedFrom !== next.message.forwardedFrom) return false;
 
   const prevReactions = prev.message.reactions;
   const nextReactions = next.message.reactions;
@@ -75,68 +119,36 @@ export const MessageBubble = React.memo(function MessageBubble({
   message,
   currentUserId = 'me',
   isGroupChat = false,
+  isSelected = false,
+  isSelectionMode = false,
+  isSelectedInSelection = false,
+  themeConfig = CHAT_THEMES.default,
+  colors = darkColors,
   onReply,
   onLongPress,
   onRetry,
   onPressMedia,
   onPressReply,
   onToggleReaction,
+  onToggleSelect,
 }: MessageBubbleProps) {
   const isMe = message.senderId === currentUserId;
 
-  const { chatTheme } = useChatTheme();
-  const themeConfig = CHAT_THEMES[chatTheme] ?? CHAT_THEMES.default;
-
-  // Active Message Focus & Scale on Long Press
-  const selectedMessage = useChatStore((s) => s.selectedMessage);
-  const isSelected = selectedMessage?.id === message.id;
-  const focusScale = useSharedValue(1);
-
-  useEffect(() => {
-    if (isSelected) {
-      focusScale.value = withTiming(1.02, {
-        duration: 150,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      });
-    } else {
-      focusScale.value = withTiming(1.0, {
-        duration: 150,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      });
-    }
-  }, [isSelected, focusScale]);
-
-  const focusStyle = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      transform: [{ scale: focusScale.value }],
-      zIndex: isSelected ? 9999 : 1,
-    };
-  });
-
-  // Targeted Quote-Jumping & Search Highlight Pulse
+  // Targeted Quote-Jumping & Search Highlight Pulse (mounts Animated.View only when highlighted)
   const isHighlighted = useIsMessageHighlighted(message.id);
-  const highlightAnim = useSharedValue(0);
-
-  useEffect(() => {
-    if (isHighlighted) {
-      highlightAnim.value = withSequence(
-        withTiming(1, { duration: 180 }),
-        withTiming(0, { duration: 1200 })
-      );
-    }
-  }, [isHighlighted, highlightAnim]);
-
-  const highlightStyle = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      opacity: highlightAnim.value,
-    };
-  });
 
   const bubbleRef = React.useRef<any>(null);
 
   const handleLongPress = useCallback(() => {
+    if (isSelectionMode) {
+      if (Platform.OS !== 'web') {
+        try {
+          Haptics.selectionAsync();
+        } catch {}
+      }
+      onToggleSelect?.(message.id);
+      return;
+    }
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -147,7 +159,18 @@ export const MessageBubble = React.memo(function MessageBubble({
     } else {
       onLongPress(message);
     }
-  }, [message, onLongPress]);
+  }, [message, onLongPress, isSelectionMode, onToggleSelect]);
+
+  const handlePress = useCallback(() => {
+    if (isSelectionMode) {
+      if (Platform.OS !== 'web') {
+        try {
+          Haptics.selectionAsync();
+        } catch {}
+      }
+      onToggleSelect?.(message.id);
+    }
+  }, [isSelectionMode, onToggleSelect, message.id]);
 
   const handleRetry = useCallback(() => {
     onRetry(message.id);
@@ -170,19 +193,34 @@ export const MessageBubble = React.memo(function MessageBubble({
   }, [message.reactions]);
 
   return (
-    <SwipeToReplyContainer message={message} onReply={onReply}>
-      <Animated.View
-        entering={
-          isMe
-            ? SlideInRight.duration(250).easing(Easing.out(Easing.quad))
-            : SlideInLeft.duration(250).easing(Easing.out(Easing.quad))
-        }
+    <SwipeToReplyContainer message={message} onReply={onReply} enabled={!isSelectionMode}>
+      <View
         style={[
           styles.rowContainer,
           isMe ? styles.rowMe : styles.rowOther,
           isSelected && styles.elevatedRow,
+          isSelectedInSelection && styles.rowSelectedInSelection,
         ]}
       >
+        {/* Telegram Multi-Selection Checkbox Pill */}
+        {isSelectionMode && (
+          <Pressable
+            onPress={handlePress}
+            style={[
+              styles.selectionIndicator,
+              isSelectedInSelection && {
+                backgroundColor: themeConfig.accentHex,
+                borderColor: themeConfig.accentHex,
+              },
+            ]}
+            hitSlop={8}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: isSelectedInSelection }}
+          >
+            {isSelectedInSelection && <Check size={13} color="#ffffff" strokeWidth={3} />}
+          </Pressable>
+        )}
+
         {/* Partner Avatar for Group Chats */}
         {!isMe && isGroupChat && (
           <View style={styles.avatarContainer}>
@@ -213,8 +251,9 @@ export const MessageBubble = React.memo(function MessageBubble({
             </Text>
           )}
 
-          <Animated.View ref={bubbleRef} style={focusStyle} collapsable={false}>
+          <View ref={bubbleRef} style={isSelected ? styles.bubbleFocused : undefined} collapsable={false}>
             <Pressable
+              onPress={handlePress}
               onLongPress={handleLongPress}
               delayLongPress={300}
               style={[
@@ -229,14 +268,7 @@ export const MessageBubble = React.memo(function MessageBubble({
               ]}
             >
               {/* Animated Highlight Pulse Overlay for Quote-Jumping & Search Focus */}
-              <Animated.View
-                pointerEvents="none"
-                style={[
-                  StyleSheet.absoluteFill,
-                  styles.highlightOverlay,
-                  highlightStyle,
-                ]}
-              />
+              {isHighlighted && <HighlightPulseOverlay />}
 
               {isMe ? (
                 <LinearGradient
@@ -250,6 +282,7 @@ export const MessageBubble = React.memo(function MessageBubble({
                       message={message}
                       attachment={primaryAttachment}
                       isMe={isMe}
+                      themeConfig={themeConfig}
                       onRetry={handleRetry}
                       onPressMedia={onPressMedia}
                     />
@@ -257,6 +290,9 @@ export const MessageBubble = React.memo(function MessageBubble({
                     <TextMessage
                       message={message}
                       isMe={isMe}
+                      currentUserId={currentUserId}
+                      themeConfig={themeConfig}
+                      colors={colors}
                       onRetry={handleRetry}
                       onPressReply={onPressReply}
                       textColor={themeConfig.myBubbleText}
@@ -270,6 +306,7 @@ export const MessageBubble = React.memo(function MessageBubble({
                       message={message}
                       attachment={primaryAttachment}
                       isMe={isMe}
+                      themeConfig={themeConfig}
                       onRetry={handleRetry}
                       onPressMedia={onPressMedia}
                     />
@@ -277,6 +314,9 @@ export const MessageBubble = React.memo(function MessageBubble({
                     <TextMessage
                       message={message}
                       isMe={isMe}
+                      currentUserId={currentUserId}
+                      themeConfig={themeConfig}
+                      colors={colors}
                       onRetry={handleRetry}
                       onPressReply={onPressReply}
                       textColor={themeConfig.theirBubbleText}
@@ -285,7 +325,7 @@ export const MessageBubble = React.memo(function MessageBubble({
                 </View>
               )}
             </Pressable>
-          </Animated.View>
+          </View>
 
           {/* Emoji Reaction Badges Pill Row */}
           {reactionEntries.length > 0 && (
@@ -311,7 +351,7 @@ export const MessageBubble = React.memo(function MessageBubble({
             </View>
           )}
         </View>
-      </Animated.View>
+      </View>
     </SwipeToReplyContainer>
   );
 }, arePropsEqual);
@@ -322,6 +362,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 3,
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rowSelectedInSelection: {
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    borderRadius: 8,
+  },
+  selectionIndicator: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
   },
   elevatedRow: {
     zIndex: 9999,
@@ -386,6 +441,10 @@ const styles = StyleSheet.create({
         elevation: 1,
       },
     }),
+  },
+  bubbleFocused: {
+    transform: [{ scale: 1.02 }],
+    zIndex: 9999,
   },
   bubbleSelectedElevation: {
     ...Platform.select({

@@ -129,7 +129,7 @@ export function ChatListScreenComponent({
         ref={flatListRef}
         contentOffset={initialOffset}
         onScroll={handleScroll}
-        scrollEventThrottle={16}
+        scrollEventThrottle={100}
         data={isLoading ? [] : filtered}
         keyExtractor={extractConversationKey}
         renderItem={renderItem}

@@ -108,6 +108,13 @@ export function LiquidGlassToggleComponent({
   // On Web: force a re-render tick during SVG stroke animations to ensure frame-by-frame updates in all browsers
   const [, setTick] = useState(0);
   useEffect(() => {
+    return () => {
+      nativeAnim.stopAnimation();
+      svgAnim.stopAnimation();
+    };
+  }, [nativeAnim, svgAnim]);
+
+  useEffect(() => {
     if (Platform.OS === 'web') {
       const id = svgAnim.addListener(() => {
         setTick((t) => (t + 1) % 100000);

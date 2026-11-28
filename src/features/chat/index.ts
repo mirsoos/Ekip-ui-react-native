@@ -6,12 +6,15 @@ export * from './hooks/useOptimisticMessages';
 export * from './components/ChatContainer';
 export * from './components/MessageList';
 export * from './components/MessageBubble';
+export * from './components/MessageBubble/PollView';
 export * from './components/InputBar/ChatInput';
 export * from './components/InputBar/SendButton';
 export * from './components/InputBar/AttachmentPicker';
 export * from './components/Overlays/SwipeToReplyContainer';
 export * from './components/Overlays/MessageActionSheet';
 export * from './components/Overlays/ScrollToBottomButton';
+export * from './components/Overlays/PinnedMessageBar';
+export * from './components/Overlays/SelectionActionBar';
 
 // Elite Feature Suite exports
 export * from './components/VoiceNote';

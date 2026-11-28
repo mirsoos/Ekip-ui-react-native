@@ -297,6 +297,14 @@ export const GlassDialog = React.memo(function GlassDialog({
 
   const [backdropAnim] = useState(() => new Animated.Value(open ? 1 : 0));
   const [scaleAnim] = useState(() => new Animated.Value(open ? 1 : 0.85));
+  const hasOpenedRef = useRef(open);
+
+  useEffect(() => {
+    return () => {
+      backdropAnim.stopAnimation();
+      scaleAnim.stopAnimation();
+    };
+  }, [backdropAnim, scaleAnim]);
 
   useEffect(() => {
     if (!open) return;
@@ -310,6 +318,7 @@ export const GlassDialog = React.memo(function GlassDialog({
 
   useEffect(() => {
     if (open) {
+      hasOpenedRef.current = true;
       setModalVisible(true);
       scaleAnim.setValue(0.85);
       backdropAnim.setValue(0);
@@ -327,7 +336,7 @@ export const GlassDialog = React.memo(function GlassDialog({
           useNativeDriver: true,
         }),
       ]).start();
-    } else {
+    } else if (hasOpenedRef.current) {
       Animated.parallel([
         Animated.timing(backdropAnim, {
           toValue: 0,

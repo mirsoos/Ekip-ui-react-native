@@ -13,14 +13,13 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  cancelAnimation,
   Easing,
   SlideInDown,
   SlideOutDown,
-  FadeIn,
-  FadeOut,
 } from 'react-native-reanimated';
 import { Image } from 'expo-image';
-import { Paperclip, X, CornerUpLeft } from 'lucide-react-native';
+import { Paperclip, X, CornerUpLeft, Edit3 } from 'lucide-react-native';
 import { FrostedGlass } from '@/src/components/glass';
 import { SendButton } from './SendButton';
 import { AttachmentPicker } from './AttachmentPicker';
@@ -36,6 +35,10 @@ export interface ChatInputProps {
   onSendMessage: (text: string, attachments?: Attachment[]) => void;
   replyingTo: Message | null;
   onClearReply: () => void;
+  editingMessage?: Message | null;
+  onClearEdit?: () => void;
+  onSaveEdit?: (messageId: string, newText: string) => void;
+  onCreatePoll?: () => void;
   placeholder?: string;
   isAttachmentPickerOpen?: boolean;
   onSetAttachmentPickerOpen?: (open: boolean) => void;
@@ -48,6 +51,10 @@ export const ChatInput = React.memo(function ChatInput({
   onSendMessage,
   replyingTo,
   onClearReply,
+  editingMessage = null,
+  onClearEdit,
+  onSaveEdit,
+  onCreatePoll,
   placeholder = 'Type a message...',
   isAttachmentPickerOpen = false,
   onSetAttachmentPickerOpen,
@@ -94,17 +101,65 @@ export const ChatInput = React.memo(function ChatInput({
   }));
 
   const inputRef = useRef<any>(null);
+  const textRef = useRef<string>(text);
+  textRef.current = text;
+  const preEditDraftRef = useRef<string | null>(null);
   const draftSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typingThrottleRef = useRef<number>(0);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const focusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const attachmentTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const keyboardSubRef = useRef<{ remove: () => void } | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (draftSaveTimeoutRef.current) clearTimeout(draftSaveTimeoutRef.current);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (focusTimeoutRef.current) clearTimeout(focusTimeoutRef.current);
+      if (attachmentTimeoutRef.current) clearTimeout(attachmentTimeoutRef.current);
+      if (keyboardSubRef.current) {
+        keyboardSubRef.current.remove();
+        keyboardSubRef.current = null;
+      }
+      cancelAnimation(sendOpacity);
+      cancelAnimation(micOpacity);
+    };
+  }, [sendOpacity, micOpacity]);
 
   // Auto-restore draft if conversationId changes
   useEffect(() => {
+    if (draftSaveTimeoutRef.current) {
+      clearTimeout(draftSaveTimeoutRef.current);
+      draftSaveTimeoutRef.current = null;
+    }
+    if (focusTimeoutRef.current) {
+      clearTimeout(focusTimeoutRef.current);
+      focusTimeoutRef.current = null;
+    }
+    preEditDraftRef.current = null;
+    setAttachments([]);
+    setInputHeight(38);
     const saved = draftStorage.getDraft(conversationId);
     setText(saved);
   }, [conversationId]);
 
-  // Debounced draft auto-save
+  // Load editing message text when edit mode is triggered
+  useEffect(() => {
+    if (editingMessage) {
+      if (preEditDraftRef.current === null) {
+        preEditDraftRef.current = textRef.current;
+      }
+      setText(editingMessage.text);
+      setInputMode('send');
+      if (focusTimeoutRef.current) clearTimeout(focusTimeoutRef.current);
+      focusTimeoutRef.current = setTimeout(() => {
+        focusTimeoutRef.current = null;
+        inputRef.current?.focus?.();
+      }, 50);
+    }
+  }, [editingMessage]);
+
+  // Debounced draft auto-save (bypassed during message editing)
   const handleTextChange = useCallback(
     (newText: string) => {
       setText(newText);
@@ -115,12 +170,14 @@ export const ChatInput = React.memo(function ChatInput({
         setInputMode('send');
       }
 
-      if (draftSaveTimeoutRef.current) {
-        clearTimeout(draftSaveTimeoutRef.current);
+      if (!editingMessage) {
+        if (draftSaveTimeoutRef.current) {
+          clearTimeout(draftSaveTimeoutRef.current);
+        }
+        draftSaveTimeoutRef.current = setTimeout(() => {
+          draftStorage.saveDraft(conversationId, newText);
+        }, 300);
       }
-      draftSaveTimeoutRef.current = setTimeout(() => {
-        draftStorage.saveDraft(conversationId, newText);
-      }, 300);
 
       // Debounced typing event emission (every 2s while actively typing)
       const now = Date.now();
@@ -136,7 +193,7 @@ export const ChatInput = React.memo(function ChatInput({
         onTyping?.(null);
       }, 3000);
     },
-    [conversationId, onTyping, inputMode]
+    [conversationId, onTyping, inputMode, editingMessage]
   );
 
   const pickerVisible =
@@ -168,22 +225,61 @@ export const ChatInput = React.memo(function ChatInput({
     };
 
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-    let timer: ReturnType<typeof setTimeout> | null = null;
+    if (attachmentTimeoutRef.current) {
+      clearTimeout(attachmentTimeoutRef.current);
+      attachmentTimeoutRef.current = null;
+    }
+    if (keyboardSubRef.current) {
+      keyboardSubRef.current.remove();
+      keyboardSubRef.current = null;
+    }
+
     const sub = Keyboard.addListener(hideEvent, () => {
-      if (timer) clearTimeout(timer);
+      if (attachmentTimeoutRef.current) {
+        clearTimeout(attachmentTimeoutRef.current);
+        attachmentTimeoutRef.current = null;
+      }
       sub.remove();
+      keyboardSubRef.current = null;
       showPicker();
     });
+    keyboardSubRef.current = sub;
 
-    timer = setTimeout(() => {
+    attachmentTimeoutRef.current = setTimeout(() => {
+      attachmentTimeoutRef.current = null;
       sub.remove();
+      keyboardSubRef.current = null;
       showPicker();
     }, 120);
   }, [setPickerVisible]);
 
+  const handleCancelEdit = useCallback(() => {
+    onClearEdit?.();
+    const restored = preEditDraftRef.current ?? '';
+    preEditDraftRef.current = null;
+    setText(restored);
+    if (!restored) {
+      inputRef.current?.clear?.();
+      setInputHeight(38);
+    }
+  }, [onClearEdit]);
+
   const handleSend = useCallback(() => {
     const trimmed = text.trim();
     if (!trimmed && attachments.length === 0) return;
+
+    if (editingMessage) {
+      onSaveEdit?.(editingMessage.id, trimmed);
+      const restored = preEditDraftRef.current ?? '';
+      preEditDraftRef.current = null;
+      setText(restored);
+      if (!restored) {
+        inputRef.current?.clear?.();
+        setInputHeight(38);
+      }
+      onClearEdit?.();
+      return;
+    }
 
     // 1. Cancel pending draft auto-save timer IMMEDIATELY to prevent resurrecting sent text
     if (draftSaveTimeoutRef.current) {
@@ -203,7 +299,7 @@ export const ChatInput = React.memo(function ChatInput({
     onSendMessage(trimmed, attachments.length > 0 ? attachments : undefined);
     onTyping?.(null);
     onClearReply?.();
-  }, [text, attachments, onSendMessage, conversationId, onTyping, onClearReply]);
+  }, [text, attachments, onSendMessage, conversationId, onTyping, onClearReply, editingMessage, onSaveEdit, onClearEdit]);
 
   const handleSendVoiceNote = useCallback(
     (voiceAttachment: Attachment) => {
@@ -267,16 +363,49 @@ export const ChatInput = React.memo(function ChatInput({
       ]}
       pointerEvents="box-none"
     >
-      {/* 1. Reply to message banner preview with Reanimated entrance & exit */}
-      {replyingTo && (
+      {/* 1. Edit message banner preview with Reanimated entrance & exit */}
+      {editingMessage && (
         <Animated.View
           entering={SlideInDown.duration(150)}
           exiting={SlideOutDown.duration(150)}
           style={styles.replyBannerWrapper}
         >
-          <Animated.View
-            entering={FadeIn.duration(150)}
-            exiting={FadeOut.duration(150)}
+          <View
+            style={[
+              styles.replyBanner,
+              {
+                backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                borderColor: '#eab3084D',
+              },
+            ]}
+          >
+            <View style={[styles.replyBar, { backgroundColor: '#eab308' }]} />
+            <View style={styles.replyContent}>
+              <View style={styles.replyHeaderRow}>
+                <Edit3 size={12} color="#eab308" />
+                <Text style={[styles.replyAuthor, { color: '#eab308' }]} numberOfLines={1}>
+                  Edit Message
+                </Text>
+              </View>
+              <Text style={[styles.replyPreviewText, { color: colors.textSecondary }]} numberOfLines={1}>
+                {editingMessage.text}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={handleCancelEdit} style={styles.closeReplyBtn} activeOpacity={0.7}>
+              <X size={16} color={colors.textTertiary} />
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      )}
+
+      {/* 2. Reply to message banner preview with Reanimated entrance & exit */}
+      {!editingMessage && replyingTo && (
+        <Animated.View
+          entering={SlideInDown.duration(150)}
+          exiting={SlideOutDown.duration(150)}
+          style={styles.replyBannerWrapper}
+        >
+          <View
             style={[
               styles.replyBanner,
               {
@@ -302,7 +431,7 @@ export const ChatInput = React.memo(function ChatInput({
             <TouchableOpacity onPress={onClearReply} style={styles.closeReplyBtn} activeOpacity={0.7}>
               <X size={16} color={colors.textTertiary} />
             </TouchableOpacity>
-          </Animated.View>
+          </View>
         </Animated.View>
       )}
 
@@ -455,6 +584,7 @@ export const ChatInput = React.memo(function ChatInput({
         visible={pickerVisible}
         onClose={() => setPickerVisible(false)}
         onSelectAttachment={handleAddAttachment}
+        onCreatePoll={onCreatePoll}
       />
     </View>
   );

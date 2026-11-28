@@ -14,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 export interface SpoilerViewProps {
   children: React.ReactNode;
   initialRevealed?: boolean;
+  resetKey?: string;
   onReveal?: () => void;
   isMe?: boolean;
   isInline?: boolean;
@@ -30,19 +31,26 @@ const STATIC_PARTICLES = Array.from({ length: 14 }).map((_, i) => ({
 export const SpoilerView = React.memo(function SpoilerView({
   children,
   initialRevealed = false,
+  resetKey,
   onReveal,
   isMe = false,
   isInline = false,
   style,
 }: SpoilerViewProps) {
-  const [isRevealed, setIsRevealed] = useState(initialRevealed);
+  const currentKey = resetKey ?? '__default__';
+  const [revealedKey, setRevealedKey] = useState<string | null>(
+    initialRevealed ? currentKey : null
+  );
+  const isRevealed = initialRevealed || revealedKey === currentKey;
 
   // Animated shimmer and dissolve
-  const maskOpacity = useSharedValue(initialRevealed ? 0 : 1);
+  const maskOpacity = useSharedValue(isRevealed ? 0 : 1);
   const shimmerTranslate = useSharedValue(0);
 
   useEffect(() => {
     if (!isRevealed) {
+      cancelAnimation(maskOpacity);
+      maskOpacity.value = 1;
       shimmerTranslate.value = withRepeat(
         withSequence(withTiming(1, { duration: 1400 }), withTiming(0, { duration: 1400 })),
         -1,
@@ -57,7 +65,7 @@ export const SpoilerView = React.memo(function SpoilerView({
       cancelAnimation(shimmerTranslate);
       cancelAnimation(maskOpacity);
     };
-  }, [isRevealed, shimmerTranslate, maskOpacity]);
+  }, [isRevealed, currentKey, shimmerTranslate, maskOpacity]);
 
   const handlePress = useCallback(() => {
     if (isRevealed) return;
@@ -69,13 +77,13 @@ export const SpoilerView = React.memo(function SpoilerView({
     maskOpacity.value = withTiming(0, { duration: 250 }, (finished) => {
       if (finished) {
         cancelAnimation(shimmerTranslate);
-        runOnJS(setIsRevealed)(true);
+        runOnJS(setRevealedKey)(currentKey);
         if (onReveal) {
           runOnJS(onReveal)();
         }
       }
     });
-  }, [isRevealed, maskOpacity, shimmerTranslate, onReveal]);
+  }, [isRevealed, currentKey, maskOpacity, shimmerTranslate, onReveal]);
 
   const maskAnimStyle = useAnimatedStyle(() => {
     'worklet';

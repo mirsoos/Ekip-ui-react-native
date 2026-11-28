@@ -18,30 +18,20 @@ interface StatusIndicatorProps {
   readColor?: string;
 }
 
-export const StatusIndicator = React.memo(function StatusIndicator({
-  status,
-  onRetry,
-  color = 'rgba(255, 255, 255, 0.65)',
-  readColor = '#38bdf8',
-}: StatusIndicatorProps) {
+const SendingSpinner = React.memo(function SendingSpinner({ color }: { color: string }) {
   const spin = useSharedValue(0);
 
   useEffect(() => {
-    if (status === 'SENDING') {
-      spin.value = withRepeat(
-        withTiming(360, { duration: 900, easing: Easing.linear }),
-        -1,
-        false
-      );
-    } else {
-      cancelAnimation(spin);
-      spin.value = 0;
-    }
+    spin.value = withRepeat(
+      withTiming(360, { duration: 900, easing: Easing.linear }),
+      -1,
+      false
+    );
 
     return () => {
       cancelAnimation(spin);
     };
-  }, [status, spin]);
+  }, [spin]);
 
   const spinStyle = useAnimatedStyle(() => {
     'worklet';
@@ -50,6 +40,21 @@ export const StatusIndicator = React.memo(function StatusIndicator({
     };
   });
 
+  return (
+    <View style={styles.container}>
+      <Animated.View style={[styles.spinnerDot, spinStyle]}>
+        <Clock size={11} color={color} strokeWidth={2} />
+      </Animated.View>
+    </View>
+  );
+});
+
+export const StatusIndicator = React.memo(function StatusIndicator({
+  status,
+  onRetry,
+  color = 'rgba(255, 255, 255, 0.65)',
+  readColor = '#38bdf8',
+}: StatusIndicatorProps) {
   if (status === 'QUEUED') {
     return (
       <View style={styles.container}>
@@ -59,13 +64,7 @@ export const StatusIndicator = React.memo(function StatusIndicator({
   }
 
   if (status === 'SENDING') {
-    return (
-      <View style={styles.container}>
-        <Animated.View style={[styles.spinnerDot, spinStyle]}>
-          <Clock size={11} color={color} strokeWidth={2} />
-        </Animated.View>
-      </View>
-    );
+    return <SendingSpinner color={color} />;
   }
 
   if (status === 'SENT') {

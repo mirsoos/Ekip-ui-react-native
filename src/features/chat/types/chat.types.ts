@@ -1,6 +1,6 @@
 /**
  * Production-Grade Universal Chat Types
- * Solid 60/120 FPS Frame Budget, Normalized Architecture
+ * Solid 60/120 FPS Frame Budget, Normalized Architecture, Telegram-Grade Feature Suite
  */
 
 export type MessageStatus =
@@ -11,7 +11,14 @@ export type MessageStatus =
   | 'READ'
   | 'FAILED';
 
-export type AttachmentType = 'image' | 'video' | 'audio' | 'document';
+export type AttachmentType =
+  | 'image'
+  | 'video'
+  | 'audio'
+  | 'document'
+  | 'sticker'
+  | 'gif'
+  | 'location';
 
 export interface Attachment {
   id: string;
@@ -27,6 +34,13 @@ export interface Attachment {
   blurhash?: string;
   waveform?: number[];
   isSpoiler?: boolean;
+  // Location & sticker extensions
+  latitude?: number;
+  longitude?: number;
+  locationName?: string;
+  locationAddress?: string;
+  stickerEmoji?: string;
+  stickerLabel?: string;
 }
 
 export interface LinkPreviewData {
@@ -63,6 +77,28 @@ export interface ReplyPreview {
   type?: AttachmentType | 'text';
 }
 
+export interface ForwardOrigin {
+  fromName: string;
+  fromId?: string;
+  originalMessageId?: string;
+}
+
+export interface PollOption {
+  id: string;
+  text: string;
+  voterIds: string[];
+}
+
+export interface PollData {
+  id: string;
+  question: string;
+  options: PollOption[];
+  isAnonymous: boolean;
+  allowsMultiple: boolean;
+  isClosed?: boolean;
+  creatorId?: string;
+}
+
 export interface Message {
   id: string;
   tempId?: string;
@@ -75,6 +111,8 @@ export interface Message {
   updatedAt?: number;
   attachments?: Attachment[];
   replyTo?: ReplyPreview | null;
+  forwardedFrom?: ForwardOrigin | null;
+  poll?: PollData | null;
   reactions?: Record<string, string[]>; // emoji key -> array of userIds
   isOptimistic?: boolean;
   error?: string | null;
@@ -82,6 +120,7 @@ export interface Message {
   linkPreview?: LinkPreviewData | null;
   isPinned?: boolean;
   isEdited?: boolean;
+  isSilent?: boolean;
 }
 
 export interface OutboxQueueItem {
@@ -94,6 +133,9 @@ export interface OutboxQueueItem {
   createdAt: number;
   attempts: number;
   nextRetryAt: number;
+  forwardedFrom?: ForwardOrigin | null;
+  poll?: PollData | null;
+  isSilent?: boolean;
 }
 
 export interface SearchState {
@@ -111,6 +153,28 @@ export interface UserTypingState {
   timestamp: number;
 }
 
+export type ChatFolder = 'all' | 'direct' | 'group' | 'unread';
+
+export interface ConversationMeta {
+  isPinned?: boolean;
+  isMuted?: boolean;
+  isBlocked?: boolean;
+  isMarkedUnread?: boolean;
+  pinnedOrder?: number;
+}
+
+export interface SendMessageOptions {
+  forwardedFrom?: ForwardOrigin | null;
+  poll?: PollData | null;
+  isSilent?: boolean;
+}
+
+export interface JumpToMessageRequest {
+  conversationId: string;
+  messageId: string;
+  nonce: number;
+}
+
 export interface ChatState {
   // Current logged in user for message authorship
   currentUser: Author;
@@ -120,9 +184,23 @@ export interface ChatState {
   conversationMessageIds: Record<string, string[]>;
   activeConversationId: string | null;
   replyingTo: Message | null;
+  editingMessage: Message | null;
   selectedMessage: Message | null;
   isActionSheetOpen: boolean;
   isAttachmentPickerOpen: boolean;
+  isChatInfoOpen: boolean;
+  // Multi-select mode
+  isSelectionMode: boolean;
+  selectedMessageIds: string[];
+  // Pinned messages per conversation (newest pinned first)
+  pinnedMessageIds: Record<string, string[]>;
+  activePinnedIndex: Record<string, number>;
+  // Conversation metadata (mute, pin chat, block, unread)
+  conversationMeta: Record<string, ConversationMeta>;
+  // Track explicitly cleared conversations so demo seeding doesn't resurrect cleared chats
+  clearedConversations: Record<string, boolean>;
+  // Jump-to-message signal (for pinned banner, shared media, search)
+  jumpToMessageRequest: JumpToMessageRequest | null;
   // Bi-directional pagination state
   isLoadingHistory: Record<string, boolean>;
   hasMoreHistory: Record<string, boolean>;
@@ -144,6 +222,8 @@ export interface ChatState {
   // Targeted Quote-Jumping & Flash Highlight
   highlightedMessageId: string | null;
   setHighlightedMessageId: (messageId: string | null) => void;
+  requestJumpToMessage: (conversationId: string, messageId: string) => void;
+  clearJumpRequest: () => void;
 
   // Search Engine
   isSearchBarOpen: boolean;
@@ -162,7 +242,8 @@ export interface ChatState {
     text: string,
     attachments?: Attachment[],
     replyTo?: Message | null,
-    author?: Author
+    author?: Author,
+    options?: SendMessageOptions
   ) => string;
   processOutboxQueue: () => Promise<void>;
 
@@ -174,7 +255,8 @@ export interface ChatState {
     text: string,
     attachments?: Attachment[],
     replyTo?: Message | null,
-    author?: Author
+    author?: Author,
+    options?: SendMessageOptions
   ) => Promise<string>;
   retryMessage: (messageId: string) => Promise<void>;
   receiveIncomingMessage: (conversationId: string, message: Message) => void;
@@ -182,19 +264,46 @@ export interface ChatState {
   addReaction: (messageId: string, emoji: string, userId: string) => void;
   removeReaction: (messageId: string, emoji: string, userId: string) => void;
   deleteMessage: (conversationId: string, messageId: string) => void;
+  deleteMessagesBatch: (conversationId: string, messageIds: string[]) => void;
   editMessage: (messageId: string, newText: string) => void;
+  setEditingMessage: (message: Message | null) => void;
   pinMessage: (conversationId: string, messageId: string) => void;
+  cyclePinnedMessage: (conversationId: string) => string | null;
+  unpinAllMessages: (conversationId: string) => void;
+  forwardMessages: (
+    targetConversationIds: string[],
+    messagesToForward: Message[],
+    author?: Author
+  ) => Promise<void>;
+  sendPollMessage: (
+    conversationId: string,
+    question: string,
+    options: string[],
+    isAnonymous?: boolean,
+    allowsMultiple?: boolean,
+    author?: Author
+  ) => Promise<string>;
+  votePoll: (messageId: string, optionId: string, userId: string) => void;
+  closePoll: (messageId: string) => void;
   setReplyingTo: (message: Message | null) => void;
   setSelectedMessage: (message: Message | null) => void;
   setActionSheetOpen: (isOpen: boolean) => void;
   setAttachmentPickerOpen: (isOpen: boolean) => void;
+  setChatInfoOpen: (isOpen: boolean) => void;
+  enterSelectionMode: (initialMessageId?: string) => void;
+  exitSelectionMode: () => void;
+  toggleMessageSelection: (messageId: string) => void;
+  togglePinConversation: (conversationId: string) => void;
+  toggleMuteConversation: (conversationId: string) => void;
+  toggleBlockConversation: (conversationId: string) => void;
+  markConversationUnread: (conversationId: string, unread?: boolean) => void;
   setTypingAction: (conversationId: string, author: Author, action: TypingAction | null) => void;
   loadHistoricalMessages: (conversationId: string, limit?: number) => Promise<number>;
   loadNewerMessages: (conversationId: string, limit?: number) => Promise<number>;
   seedConversation: (conversationId: string, messages: Message[]) => void;
   markConversationAsRead: (conversationId: string) => void;
   clearConversation: (conversationId: string) => void;
+  clearConversationTimeouts: (conversationId: string) => void;
   customBackgroundUri: string | null;
   setCustomBackgroundUri: (uri: string | null) => void;
 }
-

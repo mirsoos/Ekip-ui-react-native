@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, type ReactNode } from 'react';
+import React, { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import {
   View,
   StyleSheet,
@@ -47,6 +47,8 @@ export const ScreenLayout = React.memo(function ScreenLayout({
     }
 
     if (!isFocused) {
+      contentAnim.stopAnimation();
+      headerAnim.stopAnimation();
       return;
     }
 
@@ -79,15 +81,30 @@ export const ScreenLayout = React.memo(function ScreenLayout({
     };
   }, [isFocused, screenKey, disableAnimation, contentAnim, headerAnim]);
 
-  const contentTranslateY = contentAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [48, 0],
-  });
+  useEffect(() => {
+    return () => {
+      contentAnim.stopAnimation();
+      headerAnim.stopAnimation();
+    };
+  }, [contentAnim, headerAnim]);
 
-  const headerTranslateY = headerAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-36, 0],
-  });
+  const contentTranslateY = useMemo(
+    () =>
+      contentAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [48, 0],
+      }),
+    [contentAnim]
+  );
+
+  const headerTranslateY = useMemo(
+    () =>
+      headerAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-36, 0],
+      }),
+    [headerAnim]
+  );
 
   return (
     <View style={[styles.container, style]}>

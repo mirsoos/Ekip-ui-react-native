@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Play, Pause } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -34,19 +34,9 @@ export const AudioPlayer = React.memo(function AudioPlayer({
     speed,
     playAudio,
     pauseAudio,
-    stopAudio,
     seekAudio,
     setPlaybackSpeed,
   } = useChatAudioPlayback(messageId);
-
-  // Clean up if component unmounts while playing
-  useEffect(() => {
-    return () => {
-      if (isPlaying) {
-        stopAudio();
-      }
-    };
-  }, [isPlaying, stopAudio]);
 
   const togglePlay = useCallback(() => {
     if (Platform.OS !== 'web') {

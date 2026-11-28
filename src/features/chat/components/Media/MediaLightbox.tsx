@@ -17,6 +17,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  cancelAnimation,
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
@@ -51,6 +52,15 @@ export const MediaLightbox = React.memo(function MediaLightbox({
   const translateY = useSharedValue(0);
   const scale = useSharedValue(1);
   const bgOpacity = useSharedValue(1);
+
+  React.useEffect(() => {
+    return () => {
+      cancelAnimation(translateX);
+      cancelAnimation(translateY);
+      cancelAnimation(scale);
+      cancelAnimation(bgOpacity);
+    };
+  }, [translateX, translateY, scale, bgOpacity]);
 
   const initialDistanceRef = React.useRef<number>(0);
   const initialScaleRef = React.useRef<number>(1);

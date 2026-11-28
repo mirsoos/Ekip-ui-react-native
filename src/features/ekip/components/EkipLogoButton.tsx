@@ -1,6 +1,6 @@
 // --- START OF FILE EkipLogoButton.tsx ---
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import {
   TouchableOpacity,
   StyleSheet,
@@ -142,12 +142,14 @@ export interface EkipLogoButtonProps {
   active: boolean;
   onPress: () => void;
   size?: number;
+  paused?: boolean;
 }
 
 export const EkipLogoButton = React.memo(function EkipLogoButton({
   active,
   onPress,
   size = 44,
+  paused = false,
 }: EkipLogoButtonProps) {
   // Main logo transforms (Always full 1.0 opacity - never dimmed when inactive)
   const [logoScaleAnim] = useState(() => new Animated.Value(1.0));
@@ -197,7 +199,8 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
   }, [floatAnim]);
 
   useEffect(() => {
-    if (active) {
+    const shouldAnimate = active && !paused;
+    if (shouldAnimate) {
       isRunningRef.current = true;
       timeoutsRef.current.forEach((t) => clearTimeout(t));
       timeoutsRef.current = [];
@@ -299,16 +302,19 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
       runSinglePulseLoop(pulseGreenAnim, STAGGER_INTERVAL * 2);
     } else {
       isRunningRef.current = false;
+      timeoutsRef.current.forEach((t) => clearTimeout(t));
+      timeoutsRef.current = [];
 
       // 1. Smoothly dissolve any active pulse rings over 280ms
       Animated.timing(pulseContainerFade, {
         toValue: 0,
-        duration: 280,
+        duration: paused ? 0 : 280,
         easing: Easing.out(Easing.quad),
         useNativeDriver: Platform.OS !== 'web',
       }).start(() => {
-        timeoutsRef.current.forEach((t) => clearTimeout(t));
-        timeoutsRef.current = [];
+        pulseBlueAnim.stopAnimation();
+        pulseOrangeAnim.stopAnimation();
+        pulseGreenAnim.stopAnimation();
         pulseBlueAnim.setValue(0);
         pulseOrangeAnim.setValue(0);
         pulseGreenAnim.setValue(0);
@@ -354,10 +360,22 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
     return () => {
       isRunningRef.current = false;
       timeoutsRef.current.forEach((t) => clearTimeout(t));
-      if (floatLoopRef.current) floatLoopRef.current.stop();
+      timeoutsRef.current = [];
+      if (floatLoopRef.current) {
+        floatLoopRef.current.stop();
+        floatLoopRef.current = null;
+      }
+      pulseBlueAnim.stopAnimation();
+      pulseOrangeAnim.stopAnimation();
+      pulseGreenAnim.stopAnimation();
+      pulseContainerFade.stopAnimation();
+      floatAnim.stopAnimation();
+      logoScaleAnim.stopAnimation();
+      pieceSeparationAnim.stopAnimation();
     };
   }, [
     active,
+    paused,
     floatAnim,
     logoScaleAnim,
     pieceSeparationAnim,
@@ -395,57 +413,83 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
   const totalLogoHeight = pieceHeight * 2 + botHeight + baseGap * 2; // ~39px
   const logoBorderRadius = 14;
 
-  const combinedScale = Animated.multiply(logoScaleAnim, pressAnim);
-
-  const topPieceTranslateY = Animated.add(
-    pieceSeparationAnim.interpolate({
-      inputRange: [-1, 0, 1.3],
-      outputRange: [2.5, 0, -3.8],
-    }),
-    floatAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, -1.8],
-    })
+  const combinedScale = useMemo(
+    () => Animated.multiply(logoScaleAnim, pressAnim),
+    [logoScaleAnim, pressAnim]
   );
 
-  const midPieceTranslateX = Animated.add(
-    pieceSeparationAnim.interpolate({
-      inputRange: [-1, 0, 1.3],
-      outputRange: [-1.2, 0, 2.5],
-    }),
-    floatAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 1.0],
-    })
+  const topPieceTranslateY = useMemo(
+    () =>
+      Animated.add(
+        pieceSeparationAnim.interpolate({
+          inputRange: [-1, 0, 1.3],
+          outputRange: [2.5, 0, -3.8],
+        }),
+        floatAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -1.8],
+        })
+      ),
+    [pieceSeparationAnim, floatAnim]
   );
 
-  const botPieceTranslateY = Animated.add(
-    pieceSeparationAnim.interpolate({
-      inputRange: [-1, 0, 1.3],
-      outputRange: [-2.5, 0, 3.8],
-    }),
-    floatAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 1.2],
-    })
+  const midPieceTranslateX = useMemo(
+    () =>
+      Animated.add(
+        pieceSeparationAnim.interpolate({
+          inputRange: [-1, 0, 1.3],
+          outputRange: [-1.2, 0, 2.5],
+        }),
+        floatAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 1.0],
+        })
+      ),
+    [pieceSeparationAnim, floatAnim]
   );
 
-  const getPulseStyle = (anim: Animated.Value) => {
-    const scale = anim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [1.0, 1.55],
-    });
+  const botPieceTranslateY = useMemo(
+    () =>
+      Animated.add(
+        pieceSeparationAnim.interpolate({
+          inputRange: [-1, 0, 1.3],
+          outputRange: [-2.5, 0, 3.8],
+        }),
+        floatAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 1.2],
+        })
+      ),
+    [pieceSeparationAnim, floatAnim]
+  );
 
-    const opacity = anim.interpolate({
+  const makePulseStyle = (anim: Animated.Value) => ({
+    opacity: anim.interpolate({
       inputRange: [0, 0.1, 0.75, 1],
       outputRange: [0.8, 0.8, 0.25, 0.0],
-    });
+    }),
+    transform: [
+      {
+        scale: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [1.0, 1.55],
+        }),
+      },
+    ],
+  });
 
-    return {
-      opacity,
-      transform: [{ scale }],
-    };
-  };
+  const pulseBlueStyle = useMemo(
+    () => makePulseStyle(pulseBlueAnim),
+    [pulseBlueAnim]
+  );
+  const pulseOrangeStyle = useMemo(
+    () => makePulseStyle(pulseOrangeAnim),
+    [pulseOrangeAnim]
+  );
+  const pulseGreenStyle = useMemo(
+    () => makePulseStyle(pulseGreenAnim),
+    [pulseGreenAnim]
+  );
 
   return (
     <TouchableOpacity
@@ -469,7 +513,7 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
             styles.pulseRing,
             styles.pulseBlue,
             { width: logoWidth, height: totalLogoHeight, borderRadius: logoBorderRadius },
-            getPulseStyle(pulseBlueAnim),
+            pulseBlueStyle,
           ]}
         />
 
@@ -479,7 +523,7 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
             styles.pulseRing,
             styles.pulseOrange,
             { width: logoWidth, height: totalLogoHeight, borderRadius: logoBorderRadius },
-            getPulseStyle(pulseOrangeAnim),
+            pulseOrangeStyle,
           ]}
         />
 
@@ -489,7 +533,7 @@ export const EkipLogoButton = React.memo(function EkipLogoButton({
             styles.pulseRing,
             styles.pulseGreen,
             { width: logoWidth, height: totalLogoHeight, borderRadius: logoBorderRadius },
-            getPulseStyle(pulseGreenAnim),
+            pulseGreenStyle,
           ]}
         />
       </Animated.View>
@@ -579,7 +623,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 2,
     position: 'relative',
-    direction: 'ltr',
   },
   pulseRing: {
     position: 'absolute',

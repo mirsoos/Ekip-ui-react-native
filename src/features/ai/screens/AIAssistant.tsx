@@ -132,6 +132,21 @@ export const AIAssistant = React.memo(
   ]);
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<any>(null);
+  const replyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const keyboardScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (replyTimeoutRef.current) {
+        clearTimeout(replyTimeoutRef.current);
+        replyTimeoutRef.current = null;
+      }
+      if (keyboardScrollTimeoutRef.current) {
+        clearTimeout(keyboardScrollTimeoutRef.current);
+        keyboardScrollTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
@@ -143,7 +158,11 @@ export const AIAssistant = React.memo(
     setMessages((prev) => [...prev, userMsg]);
     setTyping(true);
 
-    setTimeout(() => {
+    if (replyTimeoutRef.current) {
+      clearTimeout(replyTimeoutRef.current);
+    }
+    replyTimeoutRef.current = setTimeout(() => {
+      replyTimeoutRef.current = null;
       const res = getAIResponse(text, isRTL);
       const aiMsg: AIMessage = { id: `a-${Date.now()}`, role: 'ai', body: res.body, chips: res.chips };
       setMessages((prev) => [...prev, aiMsg]);
@@ -160,7 +179,11 @@ export const AIAssistant = React.memo(
 
     const onShow = (e: any) => {
       setKeyboardHeight(e?.endCoordinates?.height ?? 0);
-      setTimeout(() => {
+      if (keyboardScrollTimeoutRef.current) {
+        clearTimeout(keyboardScrollTimeoutRef.current);
+      }
+      keyboardScrollTimeoutRef.current = setTimeout(() => {
+        keyboardScrollTimeoutRef.current = null;
         scrollRef.current?.scrollToEnd({ animated: true });
       }, 50);
     };

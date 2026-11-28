@@ -28,6 +28,7 @@ export type TabKey = 'discover' | 'activity' | 'create' | 'chat' | 'profile';
 interface BottomNavProps {
   active: TabKey;
   onChange: (tab: TabKey) => void;
+  paused?: boolean;
 }
 
 const tabs: { key: TabKey; label: string; icon: IconName }[] = [
@@ -59,6 +60,7 @@ interface BottomNavTabItemProps {
   icon: IconName;
   label: string;
   active: boolean;
+  paused?: boolean;
   badgeCount: number;
   avatarUrl?: string | null;
   accentColor: string;
@@ -72,6 +74,7 @@ const BottomNavTabItem = React.memo(function BottomNavTabItem({
   icon,
   label,
   active,
+  paused = false,
   badgeCount,
   avatarUrl,
   accentColor,
@@ -82,7 +85,7 @@ const BottomNavTabItem = React.memo(function BottomNavTabItem({
   if (tabKey === 'create') {
     return (
       <View style={styles.createSlot}>
-        <EkipLogoButton active={active} onPress={onPress} size={44} />
+        <EkipLogoButton active={active} paused={paused} onPress={onPress} size={44} />
       </View>
     );
   }
@@ -133,7 +136,7 @@ const BottomNavTabItem = React.memo(function BottomNavTabItem({
   );
 });
 
-export function BottomNavComponent({ active, onChange }: BottomNavProps) {
+export function BottomNavComponent({ active, onChange, paused = false }: BottomNavProps) {
   const insets = useSafeAreaInsets();
   const { me, conversations, notifications } = useAppData();
   const { colors, isDark } = useTheme();
@@ -200,8 +203,9 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
   const currentLensX = useRef(0);
   const lastLensXRef = useRef(0);
 
-  // Entrance animation
+  // Entrance animation & unmount cleanup
   const [enterAnim] = useState(() => new Animated.Value(0));
+  const webDragCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     enterAnim.setValue(0);
@@ -211,12 +215,25 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
       easing: Easing.out(Easing.cubic),
       useNativeDriver: USE_NATIVE_DRIVER,
     }).start();
-  }, [enterAnim]);
 
-  const enterTranslateY = enterAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [95, 0],
-  });
+    return () => {
+      webDragCleanupRef.current?.();
+      webDragCleanupRef.current = null;
+      enterAnim.stopAnimation();
+      lensX.stopAnimation();
+      lensScale.stopAnimation();
+      createRotate.stopAnimation();
+    };
+  }, [enterAnim, lensX, lensScale, createRotate]);
+
+  const enterTranslateY = useMemo(
+    () =>
+      enterAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [95, 0],
+      }),
+    [enterAnim]
+  );
 
   // Handle dock width layout
   const handleDockLayout = useCallback(
@@ -478,6 +495,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
     const onMouseUp = (ev: MouseEvent) => {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
+      webDragCleanupRef.current = null;
 
       if (hasMoved) {
         isDragging.current = false;
@@ -516,6 +534,11 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
       }
     };
 
+    webDragCleanupRef.current?.();
+    webDragCleanupRef.current = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
   };
@@ -631,6 +654,7 @@ export function BottomNavComponent({ active, onChange }: BottomNavProps) {
             icon={tab.icon}
             label={tabLabels[tab.key] || tab.label}
             active={tab.key === active}
+            paused={paused}
             badgeCount={badges[tab.key] ?? 0}
             avatarUrl={tab.key === 'profile' ? me?.avatar_url : undefined}
             accentColor={colors.accentPink}

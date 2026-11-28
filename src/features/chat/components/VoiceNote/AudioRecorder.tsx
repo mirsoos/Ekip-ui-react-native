@@ -64,6 +64,10 @@ export const AudioRecorder = React.memo(function AudioRecorder({
   const previewTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recordedAmplitudesRef = useRef<number[]>([]);
+  const stateRef = useRef<RecordingState>(state);
+  stateRef.current = state;
+  const onRecordingStateChangeRef = useRef(onRecordingStateChange);
+  onRecordingStateChangeRef.current = onRecordingStateChange;
 
   const clearAllTimers = useCallback(() => {
     if (holdTimerRef.current) {
@@ -82,16 +86,21 @@ export const AudioRecorder = React.memo(function AudioRecorder({
       clearInterval(previewTimerRef.current);
       previewTimerRef.current = null;
     }
-  }, []);
+    cancelAnimation(pulseOpacity);
+    pulseOpacity.value = 1;
+  }, [pulseOpacity]);
 
   useEffect(() => {
     return () => {
       clearAllTimers();
-      onRecordingStateChange?.(false);
-      cancelAnimation(pulseOpacity);
+      onRecordingStateChangeRef.current?.(false);
+      cancelAnimation(micScale);
+      cancelAnimation(lockY);
+      cancelAnimation(trashScale);
       cancelAnimation(trashShake);
+      cancelAnimation(pulseOpacity);
     };
-  }, [clearAllTimers, onRecordingStateChange, pulseOpacity, trashShake]);
+  }, [clearAllTimers, micScale, lockY, trashScale, trashShake, pulseOpacity]);
 
   // Start live recording
   const startRecording = useCallback(() => {
@@ -166,8 +175,11 @@ export const AudioRecorder = React.memo(function AudioRecorder({
   // Preview playback simulation
   const togglePreviewPlay = useCallback(() => {
     stopGlobalAudio();
+    if (previewTimerRef.current) {
+      clearInterval(previewTimerRef.current);
+      previewTimerRef.current = null;
+    }
     if (isPreviewPlaying) {
-      if (previewTimerRef.current) clearInterval(previewTimerRef.current);
       setIsPreviewPlaying(false);
     } else {
       setIsPreviewPlaying(true);
@@ -178,7 +190,10 @@ export const AudioRecorder = React.memo(function AudioRecorder({
         step++;
         const p = Math.min(1, step / totalSteps);
         if (p >= 1) {
-          if (previewTimerRef.current) clearInterval(previewTimerRef.current);
+          if (previewTimerRef.current) {
+            clearInterval(previewTimerRef.current);
+            previewTimerRef.current = null;
+          }
           setIsPreviewPlaying(false);
           setPreviewProgress(0);
         } else {
@@ -221,8 +236,18 @@ export const AudioRecorder = React.memo(function AudioRecorder({
 
   const pressStartRef = useRef(0);
   const hasMovedRef = useRef(false);
+  const startRecordingRef = useRef(startRecording);
+  startRecordingRef.current = startRecording;
+  const cancelRecordingRef = useRef(cancelRecording);
+  cancelRecordingRef.current = cancelRecording;
+  const lockRecordingRef = useRef(lockRecording);
+  lockRecordingRef.current = lockRecording;
+  const sendRecordingRef = useRef(sendRecording);
+  sendRecordingRef.current = sendRecording;
+  const onTapSwitchToSendRef = useRef(onTapSwitchToSend);
+  onTapSwitchToSendRef.current = onTapSwitchToSend;
 
-  // Gesture responder on Mic button
+  // Gesture responder on Mic button (stable across state transitions so mid-hold gestures never drop)
   const panResponder = useMemo(
     () =>
       PanResponder.create({
@@ -231,11 +256,11 @@ export const AudioRecorder = React.memo(function AudioRecorder({
         onPanResponderGrant: () => {
           pressStartRef.current = Date.now();
           hasMovedRef.current = false;
-          if (state === 'idle') {
+          if (stateRef.current === 'idle') {
             if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
             holdTimerRef.current = setTimeout(() => {
               holdTimerRef.current = null;
-              startRecording();
+              startRecordingRef.current();
             }, 220);
           }
         },
@@ -243,17 +268,17 @@ export const AudioRecorder = React.memo(function AudioRecorder({
           if (Math.abs(gesture.dx) > 6 || Math.abs(gesture.dy) > 6) {
             hasMovedRef.current = true;
           }
-          if (state !== 'recording') return;
+          if (stateRef.current !== 'recording') return;
 
           // Slide Left to Cancel threshold (-65px)
           if (gesture.dx < -65) {
-            cancelRecording();
+            cancelRecordingRef.current();
             return;
           }
 
           // Slide Up to Lock threshold (-65px)
           if (gesture.dy < -65) {
-            lockRecording();
+            lockRecordingRef.current();
             return;
           }
 
@@ -270,21 +295,21 @@ export const AudioRecorder = React.memo(function AudioRecorder({
             clearTimeout(holdTimerRef.current);
             holdTimerRef.current = null;
           }
-          if (state === 'idle') {
+          if (stateRef.current === 'idle') {
             if (Platform.OS !== 'web') {
               Haptics.selectionAsync();
             }
-            if (onTapSwitchToSend) {
-              onTapSwitchToSend();
+            if (onTapSwitchToSendRef.current) {
+              onTapSwitchToSendRef.current();
             } else {
-              startRecording();
-              lockRecording();
+              startRecordingRef.current();
+              lockRecordingRef.current();
             }
             return;
           }
-          if (state === 'recording') {
+          if (stateRef.current === 'recording') {
             // Released while recording normally: instant send!
-            sendRecording();
+            sendRecordingRef.current();
           }
         },
         onPanResponderTerminate: () => {
@@ -292,12 +317,12 @@ export const AudioRecorder = React.memo(function AudioRecorder({
             clearTimeout(holdTimerRef.current);
             holdTimerRef.current = null;
           }
-          if (state === 'recording') {
-            cancelRecording();
+          if (stateRef.current === 'recording') {
+            cancelRecordingRef.current();
           }
         },
       }),
-    [state, startRecording, cancelRecording, lockRecording, sendRecording, trashShake, lockY, onTapSwitchToSend]
+    [trashShake, lockY]
   );
 
   const micAnimStyle = useAnimatedStyle(() => ({

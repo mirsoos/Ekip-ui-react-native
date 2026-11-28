@@ -26,11 +26,12 @@ const getAnimationScript = (stageHeight: number) => `
   };
   setupCanvas();
 
-  window.addEventListener('resize', () => {
+  const handleResize = () => {
     setupCanvas();
     f1.baseX = width / 2 - 48;
     f2.baseX = width / 2 + 48;
-  });
+  };
+  window.addEventListener('resize', handleResize);
 
   const groundY = h - 34;
   const P = 3.5;
@@ -1076,7 +1077,12 @@ const getAnimationScript = (stageHeight: number) => `
   };
 
   animId = requestAnimationFrame(render);
-  window.__cleanupPixelFight = () => cancelAnimationFrame(animId);
+  const cleanup = () => {
+    cancelAnimationFrame(animId);
+    window.removeEventListener('resize', handleResize);
+  };
+  canvas.__cleanupPixelFight = cleanup;
+  window.__cleanupPixelFight = cleanup;
 })();
 `;
 
@@ -1086,7 +1092,7 @@ export function PixelFightStage({ height = 240 }: { height?: number }) {
   // اجرای مستقیم روی Web
   useEffect(() => {
     if (Platform.OS !== 'web') return;
-    const canvas = canvasRef.current;
+    const canvas = canvasRef.current as (HTMLCanvasElement & { __cleanupPixelFight?: () => void }) | null;
     if (!canvas) return;
 
     canvas.id = 'stage';
@@ -1094,7 +1100,10 @@ export function PixelFightStage({ height = 240 }: { height?: number }) {
     run();
 
     return () => {
-      if ((window as any).__cleanupPixelFight) {
+      if (canvas.__cleanupPixelFight) {
+        canvas.__cleanupPixelFight();
+        delete canvas.__cleanupPixelFight;
+      } else if ((window as any).__cleanupPixelFight) {
         (window as any).__cleanupPixelFight();
       }
     };

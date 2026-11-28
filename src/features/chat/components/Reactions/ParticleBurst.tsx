@@ -5,6 +5,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withDelay,
+  cancelAnimation,
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
@@ -54,6 +55,9 @@ function SingleParticle({
         }
       )
     );
+    return () => {
+      cancelAnimation(progress);
+    };
   }, [config, isLast, onFinish, progress]);
 
   const animStyle = useAnimatedStyle(() => {

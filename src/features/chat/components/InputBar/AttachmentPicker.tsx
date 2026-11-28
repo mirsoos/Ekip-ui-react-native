@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
-import { Image as ImageIcon, Camera, Mic, FileText } from 'lucide-react-native';
+import { Image as ImageIcon, Camera, Mic, FileText, BarChart2 } from 'lucide-react-native';
 
 import { GlassSheet } from '@/src/components/common';
 import { useTheme } from '../../../../lib/theme';
@@ -20,12 +20,14 @@ interface AttachmentPickerProps {
   visible: boolean;
   onClose: () => void;
   onSelectAttachment: (attachment: Attachment) => void;
+  onCreatePoll?: () => void;
 }
 
 export const AttachmentPicker = React.memo(function AttachmentPicker({
   visible,
   onClose,
   onSelectAttachment,
+  onCreatePoll,
 }: AttachmentPickerProps) {
   const { colors } = useTheme();
   const { isRTL } = useI18n();
@@ -124,6 +126,16 @@ export const AttachmentPicker = React.memo(function AttachmentPicker({
     onClose();
   }, [onSelectAttachment, onClose]);
 
+  const handlePoll = useCallback(() => {
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.selectionAsync();
+      } catch {}
+    }
+    onClose();
+    onCreatePoll?.();
+  }, [onCreatePoll, onClose]);
+
   return (
     <GlassSheet
       open={visible}
@@ -220,6 +232,29 @@ export const AttachmentPicker = React.memo(function AttachmentPicker({
           </View>
           <Text style={[styles.itemLabel, { color: colors.textPrimary }]}>
             {isRTL ? 'سند' : 'Document'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handlePoll}
+          style={styles.item}
+          activeOpacity={0.75}
+          accessibilityRole="button"
+          accessibilityLabel="Create Poll"
+        >
+          <View
+            style={[
+              styles.iconWrapper,
+              {
+                backgroundColor: 'rgba(234, 179, 8, 0.22)',
+                borderColor: 'rgba(234, 179, 8, 0.45)',
+              },
+            ]}
+          >
+            <BarChart2 size={24} color="#eab308" />
+          </View>
+          <Text style={[styles.itemLabel, { color: colors.textPrimary }]}>
+            {isRTL ? 'نظرسنجی' : 'Poll'}
           </Text>
         </TouchableOpacity>
       </View>

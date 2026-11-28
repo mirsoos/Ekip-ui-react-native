@@ -8,6 +8,7 @@ import Animated, {
   withRepeat,
   withTiming,
   withSequence,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import type { LinkPreviewData } from '../../types/chat.types';
 import { fetchLinkPreview } from '../../lib/openGraphService';
@@ -19,6 +20,41 @@ export interface LinkPreviewCardProps {
   isMe?: boolean;
 }
 
+const LinkPreviewSkeleton = React.memo(function LinkPreviewSkeleton({ isMe }: { isMe: boolean }) {
+  const shimmerOpacity = useSharedValue(0.3);
+
+  useEffect(() => {
+    shimmerOpacity.value = withRepeat(
+      withSequence(withTiming(0.8, { duration: 700 }), withTiming(0.3, { duration: 700 })),
+      -1,
+      true
+    );
+    return () => {
+      cancelAnimation(shimmerOpacity);
+    };
+  }, [shimmerOpacity]);
+
+  const shimmerAnimStyle = useAnimatedStyle(() => ({
+    opacity: shimmerOpacity.value,
+  }));
+
+  return (
+    <View
+      style={[
+        styles.container,
+        isMe ? styles.containerMe : styles.containerOther,
+        styles.loadingCard,
+      ]}
+    >
+      <Animated.View style={[styles.shimmerBox, shimmerAnimStyle]} />
+      <View style={styles.loadingTextRow}>
+        <Animated.View style={[styles.shimmerLine, { width: '60%' }, shimmerAnimStyle]} />
+        <Animated.View style={[styles.shimmerLine, { width: '85%' }, shimmerAnimStyle]} />
+      </View>
+    </View>
+  );
+});
+
 export const LinkPreviewCard = React.memo(function LinkPreviewCard({
   url,
   initialData,
@@ -27,22 +63,6 @@ export const LinkPreviewCard = React.memo(function LinkPreviewCard({
 }: LinkPreviewCardProps) {
   const [data, setData] = useState<LinkPreviewData | null>(initialData || null);
   const [isLoading, setIsLoading] = useState<boolean>(!initialData);
-
-  // Shimmer placeholder animation
-  const shimmerOpacity = useSharedValue(0.3);
-  useEffect(() => {
-    if (isLoading) {
-      shimmerOpacity.value = withRepeat(
-        withSequence(withTiming(0.8, { duration: 700 }), withTiming(0.3, { duration: 700 })),
-        -1,
-        true
-      );
-    }
-  }, [isLoading, shimmerOpacity]);
-
-  const shimmerAnimStyle = useAnimatedStyle(() => ({
-    opacity: shimmerOpacity.value,
-  }));
 
   // Fetch OpenGraph metadata asynchronously
   useEffect(() => {
@@ -82,21 +102,7 @@ export const LinkPreviewCard = React.memo(function LinkPreviewCard({
 
   // Loading state placeholder with shimmer
   if (isLoading) {
-    return (
-      <View
-        style={[
-          styles.container,
-          isMe ? styles.containerMe : styles.containerOther,
-          styles.loadingCard,
-        ]}
-      >
-        <Animated.View style={[styles.shimmerBox, shimmerAnimStyle]} />
-        <View style={styles.loadingTextRow}>
-          <Animated.View style={[styles.shimmerLine, { width: '60%' }, shimmerAnimStyle]} />
-          <Animated.View style={[styles.shimmerLine, { width: '85%' }, shimmerAnimStyle]} />
-        </View>
-      </View>
-    );
+    return <LinkPreviewSkeleton isMe={isMe} />;
   }
 
   if (!data) return null;

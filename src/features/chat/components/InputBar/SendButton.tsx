@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, Pressable, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -21,6 +22,12 @@ export const SendButton = React.memo(function SendButton({
   disabled = false,
 }: SendButtonProps) {
   const scale = useSharedValue(1);
+
+  useEffect(() => {
+    return () => {
+      cancelAnimation(scale);
+    };
+  }, [scale]);
 
   const handlePressIn = () => {
     scale.value = withTiming(0.94, {

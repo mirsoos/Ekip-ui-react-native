@@ -28,8 +28,13 @@ export const VideoPlayer = React.memo(function VideoPlayer({
   height = 180,
 }: VideoPlayerProps) {
   const duration = attachment.duration || 30;
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [playState, setPlayState] = useState<{
+    id: string;
+    isPlaying: boolean;
+    progress: number;
+  }>({ id: attachment.id, isPlaying: false, progress: 0 });
+  const isPlaying = playState.id === attachment.id ? playState.isPlaying : false;
+  const progress = playState.id === attachment.id ? playState.progress : 0;
   const [isMuted, setIsMuted] = useState(true);
 
   const playbackTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -41,14 +46,24 @@ export const VideoPlayer = React.memo(function VideoPlayer({
         clearInterval(playbackTimerRef.current);
         playbackTimerRef.current = null;
       }
-      setIsPlaying(false);
+      setPlayState((prev) =>
+        prev.id === attachment.id ? { ...prev, isPlaying: false } : prev
+      );
     }
-  }, [isVisibleInViewport, isPlaying]);
+  }, [isVisibleInViewport, isPlaying, attachment.id]);
+
+  useEffect(() => {
+    if (playbackTimerRef.current) {
+      clearInterval(playbackTimerRef.current);
+      playbackTimerRef.current = null;
+    }
+  }, [attachment.id]);
 
   useEffect(() => {
     return () => {
       if (playbackTimerRef.current) {
         clearInterval(playbackTimerRef.current);
+        playbackTimerRef.current = null;
       }
     };
   }, []);
@@ -58,14 +73,16 @@ export const VideoPlayer = React.memo(function VideoPlayer({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
+    if (playbackTimerRef.current) {
+      clearInterval(playbackTimerRef.current);
+      playbackTimerRef.current = null;
+    }
+
+    const attId = attachment.id;
     if (isPlaying) {
-      if (playbackTimerRef.current) {
-        clearInterval(playbackTimerRef.current);
-        playbackTimerRef.current = null;
-      }
-      setIsPlaying(false);
+      setPlayState({ id: attId, isPlaying: false, progress });
     } else {
-      setIsPlaying(true);
+      setPlayState({ id: attId, isPlaying: true, progress });
       const totalSteps = Math.max(10, Math.round(duration * 10));
       let step = Math.round(progress * totalSteps);
 
@@ -73,15 +90,17 @@ export const VideoPlayer = React.memo(function VideoPlayer({
         step++;
         const p = Math.min(1, step / totalSteps);
         if (p >= 1) {
-          if (playbackTimerRef.current) clearInterval(playbackTimerRef.current);
-          setIsPlaying(false);
-          setProgress(0);
+          if (playbackTimerRef.current) {
+            clearInterval(playbackTimerRef.current);
+            playbackTimerRef.current = null;
+          }
+          setPlayState({ id: attId, isPlaying: false, progress: 0 });
         } else {
-          setProgress(p);
+          setPlayState({ id: attId, isPlaying: true, progress: p });
         }
       }, 100);
     }
-  }, [isPlaying, duration, progress]);
+  }, [attachment.id, isPlaying, duration, progress]);
 
   const toggleMute = useCallback(() => {
     if (Platform.OS !== 'web') {
@@ -95,9 +114,13 @@ export const VideoPlayer = React.memo(function VideoPlayer({
       const { locationX } = e.nativeEvent;
       const targetWidth = width - 24;
       const newProgress = Math.max(0, Math.min(1, locationX / targetWidth));
-      setProgress(newProgress);
+      setPlayState((prev) => ({
+        id: attachment.id,
+        isPlaying: prev.id === attachment.id ? prev.isPlaying : false,
+        progress: newProgress,
+      }));
     },
-    [width]
+    [attachment.id, width]
   );
 
   const posterUrl = attachment.thumbnailUrl || attachment.url;

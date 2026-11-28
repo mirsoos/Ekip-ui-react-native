@@ -10,6 +10,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
 import { ChevronDown } from 'lucide-react-native';
@@ -37,6 +38,10 @@ export const ScrollToBottomButton = React.memo(function ScrollToBottomButton({
       scale.value = withTiming(0, { duration: 140, easing: Easing.out(Easing.quad) });
       opacity.value = withTiming(0, { duration: 140 });
     }
+    return () => {
+      cancelAnimation(scale);
+      cancelAnimation(opacity);
+    };
   }, [visible, scale, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => {

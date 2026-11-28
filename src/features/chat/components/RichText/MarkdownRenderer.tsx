@@ -8,6 +8,7 @@ import type { LinkPreviewData } from '../../types/chat.types';
 
 export interface MarkdownRendererProps {
   content: string;
+  messageId?: string;
   isMe?: boolean;
   baseColor?: string;
   onMentionPress?: (username: string) => void;
@@ -20,6 +21,7 @@ export { tokenizeMarkdown };
 
 export const MarkdownRenderer = React.memo(function MarkdownRenderer({
   content,
+  messageId,
   isMe = false,
   baseColor,
   onMentionPress,
@@ -108,7 +110,12 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({
               );
             case 'spoiler':
               return (
-                <SpoilerView key={index} isMe={isMe} isInline>
+                <SpoilerView
+                  key={index}
+                  isMe={isMe}
+                  isInline
+                  resetKey={`${messageId || ''}_${index}_${token.content}`}
+                >
                   <Text style={[styles.baseText, { color: textColor }]}>
                     {token.content}
                   </Text>

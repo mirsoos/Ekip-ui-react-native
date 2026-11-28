@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId, useMemo } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import Svg, { Defs, RadialGradient, Stop, Rect } from 'react-native-svg';
 
@@ -7,6 +7,12 @@ export const AuroraBackground = React.memo(function AuroraBackground({
 }: {
   isDark: boolean;
 }) {
+  const rawId = useId();
+  const uid = useMemo(() => rawId.replace(/[^a-zA-Z0-9_-]/g, '') || 'ab', [rawId]);
+  const cyanId = `auroraMeshCyan-${uid}`;
+  const roseId = `auroraMeshRose-${uid}`;
+  const indigoId = `auroraMeshIndigo-${uid}`;
+
   if (Platform.OS === 'web') {
     const bg = isDark ? '#060814' : '#edf1fa';
     const gradient = isDark
@@ -37,12 +43,7 @@ export const AuroraBackground = React.memo(function AuroraBackground({
 
   // Native (iOS & Android)
   return (
-    <View
-      style={StyleSheet.absoluteFill}
-      pointerEvents="none"
-      renderToHardwareTextureAndroid={true}
-      shouldRasterizeIOS={true}
-    >
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <View
         style={[
           StyleSheet.absoluteFill,
@@ -52,7 +53,7 @@ export const AuroraBackground = React.memo(function AuroraBackground({
       <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
         <Defs>
           <RadialGradient
-            id="auroraMeshCyan"
+            id={cyanId}
             cx={isDark ? '18%' : '25%'}
             cy={isDark ? '20%' : '15%'}
             r={isDark ? '55%' : '65%'}
@@ -62,7 +63,7 @@ export const AuroraBackground = React.memo(function AuroraBackground({
             <Stop offset="100%" stopColor="#38bdf8" stopOpacity={0} />
           </RadialGradient>
           <RadialGradient
-            id="auroraMeshRose"
+            id={roseId}
             cx={isDark ? '50%' : '60%'}
             cy={isDark ? '48%' : '52%'}
             r={isDark ? '48%' : '60%'}
@@ -72,7 +73,7 @@ export const AuroraBackground = React.memo(function AuroraBackground({
             <Stop offset="100%" stopColor="#ec4899" stopOpacity={0} />
           </RadialGradient>
           <RadialGradient
-            id="auroraMeshIndigo"
+            id={indigoId}
             cx={isDark ? '80%' : '30%'}
             cy={isDark ? '82%' : '85%'}
             r={isDark ? '55%' : '65%'}
@@ -82,9 +83,9 @@ export const AuroraBackground = React.memo(function AuroraBackground({
             <Stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
           </RadialGradient>
         </Defs>
-        <Rect x="0" y="0" width="100%" height="100%" fill="url(#auroraMeshCyan)" />
-        <Rect x="0" y="0" width="100%" height="100%" fill="url(#auroraMeshRose)" />
-        <Rect x="0" y="0" width="100%" height="100%" fill="url(#auroraMeshIndigo)" />
+        <Rect x="0" y="0" width="100%" height="100%" fill={`url(#${cyanId})`} />
+        <Rect x="0" y="0" width="100%" height="100%" fill={`url(#${roseId})`} />
+        <Rect x="0" y="0" width="100%" height="100%" fill={`url(#${indigoId})`} />
       </Svg>
     </View>
   );

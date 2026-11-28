@@ -1,6 +1,6 @@
 // --- START OF FILE FloatingGlassHeader.tsx ---
 
-import React, { useEffect, useState, type ReactNode } from 'react';
+import React, { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   View,
   Text,
@@ -72,13 +72,18 @@ export function FloatingGlassHeaderComponent({
 
     return () => {
       timing.stop();
+      anim.stopAnimation();
     };
   }, [animated, anim]);
 
-  const translateY = anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-50, 0],
-  });
+  const translateY = useMemo(
+    () =>
+      anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-50, 0],
+      }),
+    [anim]
+  );
 
   const headerContent = (
     <View

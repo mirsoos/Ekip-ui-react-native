@@ -7,6 +7,7 @@ import Animated, {
   withSequence,
   withTiming,
   withDelay,
+  cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
 import { Mic, UploadCloud } from 'lucide-react-native';
@@ -32,6 +33,9 @@ function BouncingDot({ delay }: { delay: number }) {
         false
       )
     );
+    return () => {
+      cancelAnimation(translateY);
+    };
   }, [delay, translateY]);
 
   const animStyle = useAnimatedStyle(() => {

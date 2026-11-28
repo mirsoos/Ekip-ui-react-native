@@ -11,6 +11,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
 
@@ -41,7 +42,17 @@ export const Waveform = React.memo(function Waveform({
   const containerWidth = useSharedValue<number>(180);
   const isDraggingRef = useRef<boolean>(false);
   const dragProgress = useSharedValue<number>(progress);
-  const isScrubbing = useSharedValue<boolean>(false);
+  const thumbScale = useSharedValue<number>(1);
+  const thumbOpacity = useSharedValue<number>(0.85);
+
+  React.useEffect(() => {
+    return () => {
+      cancelAnimation(containerWidth);
+      cancelAnimation(dragProgress);
+      cancelAnimation(thumbScale);
+      cancelAnimation(thumbOpacity);
+    };
+  }, [containerWidth, dragProgress, thumbScale, thumbOpacity]);
 
   // Sync dragProgress with props when not actively scrubbing
   React.useEffect(() => {
@@ -102,7 +113,8 @@ export const Waveform = React.memo(function Waveform({
         onMoveShouldSetPanResponder: () => true,
         onPanResponderGrant: (evt: GestureResponderEvent) => {
           isDraggingRef.current = true;
-          isScrubbing.value = true;
+          thumbScale.value = withTiming(1.2, { duration: 150, easing: Easing.out(Easing.quad) });
+          thumbOpacity.value = 1;
           updateSeekFromPosition(evt.nativeEvent.locationX);
         },
         onPanResponderMove: (
@@ -117,14 +129,16 @@ export const Waveform = React.memo(function Waveform({
         ) => {
           updateSeekFromPosition(evt.nativeEvent.locationX);
           isDraggingRef.current = false;
-          isScrubbing.value = false;
+          thumbScale.value = withTiming(1, { duration: 150, easing: Easing.out(Easing.quad) });
+          thumbOpacity.value = 0.85;
         },
         onPanResponderTerminate: () => {
           isDraggingRef.current = false;
-          isScrubbing.value = false;
+          thumbScale.value = withTiming(1, { duration: 150, easing: Easing.out(Easing.quad) });
+          thumbOpacity.value = 0.85;
         },
       }),
-    [updateSeekFromPosition, isScrubbing]
+    [updateSeekFromPosition, thumbScale, thumbOpacity]
   );
 
   const thumbAnimStyle = useAnimatedStyle(() => {
@@ -134,9 +148,9 @@ export const Waveform = React.memo(function Waveform({
     return {
       transform: [
         { translateX: x - 4 },
-        { scale: withTiming(isScrubbing.value ? 1.2 : 1, { duration: 150, easing: Easing.out(Easing.quad) }) },
+        { scale: thumbScale.value },
       ],
-      opacity: isScrubbing.value ? 1 : 0.85,
+      opacity: thumbOpacity.value,
     };
   });
 

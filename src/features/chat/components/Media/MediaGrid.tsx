@@ -26,11 +26,12 @@ function MediaTile({
   isLastWithMore?: boolean;
   moreCount?: number;
 }) {
-  const [revealed, setRevealed] = useState(!item.isSpoiler);
+  const [revealedAttachmentId, setRevealedAttachmentId] = useState<string | null>(null);
+  const revealed = !item.isSpoiler || revealedAttachmentId === item.id;
 
   const handlePress = () => {
     if (item.isSpoiler && !revealed) {
-      setRevealed(true);
+      setRevealedAttachmentId(item.id);
       return;
     }
     onPress();
@@ -50,6 +51,7 @@ function MediaTile({
           placeholder={{ blurhash: item.blurhash || 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
           transition={200}
           cachePolicy="memory-disk"
+          recyclingKey={item.id}
         />
         {item.type === 'video' && !isLastWithMore && (
           <View style={styles.videoBadge}>
@@ -65,7 +67,8 @@ function MediaTile({
       {item.isSpoiler && !revealed && (
         <SpoilerView
           initialRevealed={false}
-          onReveal={() => setRevealed(true)}
+          resetKey={item.id}
+          onReveal={() => setRevealedAttachmentId(item.id)}
           style={StyleSheet.absoluteFill}
         >
           <View style={StyleSheet.absoluteFill} />

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, Platform } from 'react-native';
 
 export const ActiveBottomNavTransition = React.memo(function ActiveBottomNavTransition({
@@ -24,10 +24,20 @@ export const ActiveBottomNavTransition = React.memo(function ActiveBottomNavTran
     wasShown.current = show;
   }, [show, anim]);
 
-  const translateY = anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [60, 0],
-  });
+  useEffect(() => {
+    return () => {
+      anim.stopAnimation();
+    };
+  }, [anim]);
+
+  const translateY = useMemo(
+    () =>
+      anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [60, 0],
+      }),
+    [anim]
+  );
 
   return (
     <Animated.View

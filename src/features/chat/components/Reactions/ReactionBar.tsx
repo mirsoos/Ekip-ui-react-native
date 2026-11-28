@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import Animated, {
   FadeIn,
@@ -30,6 +30,16 @@ export const ReactionBar = React.memo(function ReactionBar({
     x: number;
     y: number;
   }>({ active: false, emoji: '', x: 0, y: 0 });
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const handleEmojiPress = useCallback(
     (emoji: string, event: any) => {
@@ -47,7 +57,11 @@ export const ReactionBar = React.memo(function ReactionBar({
 
       onSelectReaction(emoji);
 
-      setTimeout(() => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+      }
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
         onClose();
       }, 250);
     },
@@ -69,11 +83,7 @@ export const ReactionBar = React.memo(function ReactionBar({
               : styles.positionRelative,
           ]}
         >
-          <Animated.View
-            entering={FadeIn.duration(150)}
-            exiting={FadeOut.duration(150)}
-            style={styles.capsule}
-          >
+          <View style={styles.capsule}>
             <View style={[StyleSheet.absoluteFill, styles.glassSurface]} />
 
             <View style={styles.emojisRow}>
@@ -88,7 +98,7 @@ export const ReactionBar = React.memo(function ReactionBar({
                 </TouchableOpacity>
               ))}
             </View>
-          </Animated.View>
+          </View>
         </Animated.View>
       )}
 

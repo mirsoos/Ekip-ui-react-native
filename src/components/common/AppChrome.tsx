@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Platform, Animated, Easing } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -46,6 +46,13 @@ export const AppChrome = React.memo(function AppChrome({
       }).start();
     }
   }, [darkOverlayOpacity, lightOverlayOpacity, isDark]);
+
+  useEffect(() => {
+    return () => {
+      darkOverlayOpacity.stopAnimation();
+      lightOverlayOpacity.stopAnimation();
+    };
+  }, [darkOverlayOpacity, lightOverlayOpacity]);
 
   return (
     <SafeAreaView

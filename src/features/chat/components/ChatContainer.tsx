@@ -11,6 +11,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,14 +28,20 @@ import {
   useChatSearchState,
   useChatTypingStates,
   useChatCustomBackgroundUri,
+  useChatEditingMessage,
+  useChatIsSelectionMode,
+  useChatJumpToMessageRequest,
+  useChatUnreadCount,
   clearAudioInterval,
-  clearActiveTimeouts,
+  clearConversationTimeouts,
 } from '../store/chatStore';
 
 import { MessageList } from './MessageList';
 import { ChatInput } from './InputBar/ChatInput';
 import { MessageActionSheet } from './Overlays/MessageActionSheet';
 import { ScrollToBottomButton } from './Overlays/ScrollToBottomButton';
+import { PinnedMessageBar } from './Overlays/PinnedMessageBar';
+import { SelectionActionBar } from './Overlays/SelectionActionBar';
 import { ChatSearchBar } from './Search/ChatSearchBar';
 import { TypingIndicator } from './Typing/TypingIndicator';
 import { MediaLightbox } from './Media/MediaLightbox';
@@ -203,6 +210,8 @@ function ChatContent({
 
   // Seed conversation messages in useEffect so it doesn't trigger synchronous store updates and double re-renders during Frame 1 on iOS
   useEffect(() => {
+    const isCleared = useChatStore.getState().clearedConversations[conversationId];
+    if (isCleared) return;
     const existingIds = useChatStore.getState().conversationMessageIds[conversationId];
     if (!existingIds || existingIds.length === 0) {
       const initialSeed = getInitialConversationMessages(
@@ -319,6 +328,9 @@ function ChatContent({
       duration: 150,
       easing: Easing.bezier(0.25, 0.1, 0.25, 1),
     });
+    return () => {
+      cancelAnimation(backdropOpacity);
+    };
   }, [isContextActive, backdropOpacity]);
 
   const animatedBackdropStyle = useAnimatedStyle(() => {
@@ -335,6 +347,42 @@ function ChatContent({
   // Highlight timer ref for quote jumping
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const editingMessage = useChatEditingMessage();
+  const setEditingMessageStore = useChatStore((state) => state.setEditingMessage);
+  const isSelectionMode = useChatIsSelectionMode();
+  const enterSelectionMode = useChatStore((state) => state.enterSelectionMode);
+  const jumpRequest = useChatJumpToMessageRequest();
+  const clearJumpRequest = useChatStore((state) => state.clearJumpRequest);
+
+  // Jump to message responder
+  useEffect(() => {
+    if (jumpRequest && jumpRequest.conversationId === conversationId) {
+      const targetId = jumpRequest.messageId;
+      const index = messageIds.indexOf(targetId);
+      if (index >= 0 && index < messageIds.length && flashListRef.current) {
+        flashListRef.current.scrollToIndex({
+          index,
+          animated: true,
+          viewPosition: 0.5,
+        });
+        useChatStore.getState().setHighlightedMessageId(targetId);
+        if (highlightTimeoutRef.current) {
+          clearTimeout(highlightTimeoutRef.current);
+        }
+        highlightTimeoutRef.current = setTimeout(() => {
+          useChatStore.getState().setHighlightedMessageId(null);
+          highlightTimeoutRef.current = null;
+        }, 1800);
+      } else if (index < 0 && hasMoreHistory && loadMoreHistory) {
+        loadMoreHistory();
+      }
+      clearJumpRequest();
+    }
+  }, [jumpRequest, conversationId, messageIds, flashListRef, clearJumpRequest, hasMoreHistory, loadMoreHistory]);
+
+  // Reactive Partner unread count for scroll to bottom indicator
+  const partnerUnreadCount = useChatUnreadCount(conversationId, currentUserId);
+
   // Ensure keyboard is dismissed and search closed on mount/unmount; mark conversation as read
   useEffect(() => {
     Keyboard.dismiss();
@@ -346,8 +394,13 @@ function ChatContent({
       Keyboard.dismiss();
       setSearchBarOpen(false);
       clearReplyingTo();
+      useChatStore.getState().setEditingMessage(null);
+      useChatStore.getState().setSelectedMessage(null);
+      useChatStore.getState().setHighlightedMessageId(null);
+      useChatStore.getState().exitSelectionMode();
+      useChatStore.getState().stopAudio();
       clearAudioInterval();
-      clearActiveTimeouts();
+      clearConversationTimeouts(conversationId);
       if (highlightTimeoutRef.current) {
         clearTimeout(highlightTimeoutRef.current);
         highlightTimeoutRef.current = null;
@@ -411,30 +464,38 @@ function ChatContent({
   // Targeted Quote-Jumping
   const handlePressReply = useCallback(
     (replyTo: ReplyPreview) => {
-      const targetId = replyTo.id;
-      let index = messageIds.indexOf(targetId);
-      if (index < 0) {
-        const allIds = useChatStore.getState().conversationMessageIds[conversationId] || [];
-        index = allIds.indexOf(targetId);
-      }
-      if (index >= 0 && flashListRef.current) {
-        flashListRef.current.scrollToIndex({
-          index,
-          animated: true,
-          viewPosition: 0.5,
-        });
-        useChatStore.getState().setHighlightedMessageId(targetId);
-        if (highlightTimeoutRef.current) {
-          clearTimeout(highlightTimeoutRef.current);
-        }
-        highlightTimeoutRef.current = setTimeout(() => {
-          useChatStore.getState().setHighlightedMessageId(null);
-          highlightTimeoutRef.current = null;
-        }, 1800);
-      }
+      useChatStore.getState().requestJumpToMessage(conversationId, replyTo.id);
     },
-    [messageIds, flashListRef, conversationId]
+    [conversationId]
   );
+
+  const handleForwardSelected = useCallback(
+    async (ids: string[]) => {
+      const messagesMap = useChatStore.getState().messages;
+      const msgs = ids.map((id) => messagesMap[id]).filter(Boolean) as Message[];
+      if (msgs.length > 0) {
+        await useChatStore.getState().forwardMessages([conversationId], msgs, currentUserAuthor);
+      }
+      useChatStore.getState().exitSelectionMode();
+    },
+    [conversationId, currentUserAuthor]
+  );
+
+  const handleCreatePoll = useCallback(() => {
+    useChatStore.getState().sendPollMessage(
+      conversationId,
+      'What feature should we ship next?',
+      [
+        '⚡ Zero-lag Voice Notes',
+        '🎨 Custom Glass Themes',
+        '🔒 Telegram Spoilers & Formats',
+        '📊 Interactive Polls',
+      ],
+      false,
+      false,
+      currentUserAuthor
+    );
+  }, [conversationId, currentUserAuthor]);
 
   // In-Chat Search match navigation
   const handleNavigateSearchMatch = useCallback(
@@ -489,9 +550,27 @@ function ChatContent({
 
   const handleEditMessage = useCallback(
     (msg: Message) => {
-      editMessageStore(msg.id, `${msg.text} (edited)`);
+      setEditingMessageStore(msg);
+    },
+    [setEditingMessageStore]
+  );
+
+  const handleSaveEdit = useCallback(
+    (messageId: string, newText: string) => {
+      editMessageStore(messageId, newText);
     },
     [editMessageStore]
+  );
+
+  const handleClearEdit = useCallback(() => {
+    setEditingMessageStore(null);
+  }, [setEditingMessageStore]);
+
+  const handleForwardMessage = useCallback(
+    (msg: Message) => {
+      enterSelectionMode(msg.id);
+    },
+    [enterSelectionMode]
   );
 
   const handlePinMessage = useCallback(
@@ -558,6 +637,12 @@ function ChatContent({
             topInset={getSinglePillContentPaddingTop(insets.top) - 6}
           />
 
+          {/* Top Telegram Pinned Message Bar */}
+          <PinnedMessageBar
+            conversationId={conversationId}
+            topOffset={getSinglePillContentPaddingTop(insets.top) + (isSearchBarOpen ? 64 : 10)}
+          />
+
           {/* iOS Native Status Bar Tap Receiver */}
           {Platform.OS === 'ios' && (
             <ScrollView
@@ -610,6 +695,7 @@ function ChatContent({
             <ScrollToBottomButton
               visible={showScrollToBottom}
               onPress={() => scrollToBottom(true)}
+              unreadCount={partnerUnreadCount}
             />
           </Animated.View>
 
@@ -622,24 +708,37 @@ function ChatContent({
           )}
 
           {/* Input Bar Shell */}
-          <Animated.View
-            pointerEvents="box-none"
-            style={[
-              styles.inputWrapper,
-              inputContainerAnimatedStyle,
-              isContextActive && { opacity: 0, pointerEvents: 'none' },
-            ]}
-          >
-            <ChatInput
-              conversationId={conversationId}
-              onSendMessage={handleSend}
-              replyingTo={replyingTo}
-              onClearReply={clearReplyingTo}
-              onTyping={handleTypingEvent}
-              placeholder={t('chat.transmitDispatch') || undefined}
-              bottomInsetAnimatedStyle={bottomInsetAnimatedStyle}
-            />
-          </Animated.View>
+          {!isSelectionMode && (
+            <Animated.View
+              pointerEvents="box-none"
+              style={[
+                styles.inputWrapper,
+                inputContainerAnimatedStyle,
+                isContextActive && { opacity: 0, pointerEvents: 'none' },
+              ]}
+            >
+              <ChatInput
+                conversationId={conversationId}
+                onSendMessage={handleSend}
+                replyingTo={replyingTo}
+                onClearReply={clearReplyingTo}
+                editingMessage={editingMessage}
+                onClearEdit={handleClearEdit}
+                onSaveEdit={handleSaveEdit}
+                onCreatePoll={handleCreatePoll}
+                onTyping={handleTypingEvent}
+                placeholder={t('chat.transmitDispatch') || undefined}
+                bottomInsetAnimatedStyle={bottomInsetAnimatedStyle}
+              />
+            </Animated.View>
+          )}
+
+          {/* Multi-Select Floating Action Bar */}
+          <SelectionActionBar
+            conversationId={conversationId}
+            onForwardSelected={handleForwardSelected}
+            onDeleteSelected={(ids) => useChatStore.getState().deleteMessagesBatch(conversationId, ids)}
+          />
         </Animated.View>
 
         {/* Action Sheet & Reaction Overlay */}
@@ -656,6 +755,8 @@ function ChatContent({
           onDelete={deleteMessage}
           onEditMessage={handleEditMessage}
           onPinMessage={handlePinMessage}
+          onForwardMessage={handleForwardMessage}
+          onSelectMessage={(msg) => enterSelectionMode(msg.id)}
           onDeleteForEveryone={handleDeleteForEveryone}
         />
 

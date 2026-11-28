@@ -1,49 +1,75 @@
-import React, { useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import {
   View,
   StyleSheet,
   ActivityIndicator,
   Platform,
+  Text,
   type ListRenderItemInfo,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
 import { FlashList } from '@shopify/flash-list';
-import { Text } from 'react-native';
-import { useChatMessage, useChatStore } from '../store/chatStore';
+import { useChatMessage, useChatStore, useChatIsSelectionMode } from '../store/chatStore';
 import { MessageBubble } from './MessageBubble';
 import { useI18n } from '../../../lib/i18n';
+import { useTheme, useChatTheme, CHAT_THEMES, type ChatThemeConfig, type ThemeColors } from '../../../lib/theme';
 import type { Message, Attachment, ReplyPreview, BubbleLayout } from '../types/chat.types';
+
+const DATE_FORMATTER_FA = new Intl.DateTimeFormat('fa-IR', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+});
+const DATE_FORMATTER_EN = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+});
+const DATE_LABEL_CACHE = new Map<string, string>();
+const MAX_DATE_CACHE_SIZE = 200;
+
+const toggleSelectStable = (id: string) => {
+  useChatStore.getState().toggleMessageSelection(id);
+};
 
 function formatDateSeparator(timestamp: number, isRTL?: boolean): string {
   const date = new Date(timestamp);
   const now = new Date();
 
-  const isToday =
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate();
+  const dYear = date.getFullYear();
+  const dMonth = date.getMonth();
+  const dDay = date.getDate();
 
-  if (isToday) return isRTL ? 'امروز' : 'Today';
+  const nYear = now.getFullYear();
+  const nMonth = now.getMonth();
+  const nDay = now.getDate();
 
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const isYesterday =
-    date.getFullYear() === yesterday.getFullYear() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getDate() === yesterday.getDate();
+  if (dYear === nYear && dMonth === nMonth && dDay === nDay) {
+    return isRTL ? 'امروز' : 'Today';
+  }
 
-  if (isYesterday) return isRTL ? 'دیروز' : 'Yesterday';
+  const yesterday = new Date(nYear, nMonth, nDay - 1);
+  if (
+    dYear === yesterday.getFullYear() &&
+    dMonth === yesterday.getMonth() &&
+    dDay === yesterday.getDate()
+  ) {
+    return isRTL ? 'دیروز' : 'Yesterday';
+  }
 
-  return date.toLocaleDateString(isRTL ? 'fa-IR' : 'en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const dayKey = dYear * 10000 + (dMonth + 1) * 100 + dDay;
+  const cacheKey = `${dayKey}_${isRTL ? 'fa' : 'en'}`;
+  const cached = DATE_LABEL_CACHE.get(cacheKey);
+  if (cached !== undefined) return cached;
+
+  const formatted = (isRTL ? DATE_FORMATTER_FA : DATE_FORMATTER_EN).format(date);
+  if (DATE_LABEL_CACHE.size >= MAX_DATE_CACHE_SIZE) {
+    const oldestKey = DATE_LABEL_CACHE.keys().next().value;
+    if (oldestKey !== undefined) {
+      DATE_LABEL_CACHE.delete(oldestKey);
+    }
+  }
+  DATE_LABEL_CACHE.set(cacheKey, formatted);
+  return formatted;
 }
 
 function isSameDay(t1: number, t2: number): boolean {
@@ -83,8 +109,10 @@ interface MessageListProps {
 
 interface RowItemProps {
   messageId: string;
-  olderMessageId?: string;
-  isOldest?: boolean;
+  conversationId: string;
+  isRTL: boolean;
+  themeConfig: ChatThemeConfig;
+  colors: ThemeColors;
   isGroupChat?: boolean;
   currentUserId?: string;
   onReply: (message: Message) => void;
@@ -95,11 +123,13 @@ interface RowItemProps {
   onToggleReaction?: (messageId: string, emoji: string) => void;
 }
 
-// Atomized single-message row subscriber with date separator grouping
+// Atomized single-message row subscriber with zero Reanimated allocations & primitive selectors
 const ConnectedMessageRow = React.memo(function ConnectedMessageRow({
   messageId,
-  olderMessageId,
-  isOldest = false,
+  conversationId,
+  isRTL,
+  themeConfig,
+  colors,
   isGroupChat,
   currentUserId,
   onReply,
@@ -110,38 +140,46 @@ const ConnectedMessageRow = React.memo(function ConnectedMessageRow({
   onToggleReaction,
 }: RowItemProps) {
   const message = useChatMessage(messageId);
-  const olderMessage = useChatMessage(olderMessageId || '');
-  const { isRTL } = useI18n();
-
-  const selectedMessageId = useChatStore((s) => s.selectedMessage?.id);
-  const isSelected = selectedMessageId === messageId;
-  const isDimmed = Boolean(selectedMessageId) && !isSelected;
-
-  const rowOpacity = useSharedValue(1);
-
-  useEffect(() => {
-    rowOpacity.value = withTiming(isDimmed ? 0.35 : 1, {
-      duration: 150,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-    });
-  }, [isDimmed, rowOpacity]);
-
-  const animatedRowStyle = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      opacity: rowOpacity.value,
-      zIndex: isSelected ? 9999 : 1,
-    };
+  const olderCacheRef = useRef<{ ids?: string[]; msgId?: string; val: number }>({ val: -1 });
+  const olderCreatedAt = useChatStore((s) => {
+    const ids = s.conversationMessageIds[conversationId];
+    if (!ids) return -1;
+    if (olderCacheRef.current.ids === ids && olderCacheRef.current.msgId === messageId) {
+      return olderCacheRef.current.val;
+    }
+    const idx = ids.indexOf(messageId);
+    const val =
+      idx < 0 || idx === ids.length - 1
+        ? -1
+        : ids[idx + 1]
+        ? s.messages[ids[idx + 1]]?.createdAt ?? -1
+        : -1;
+    olderCacheRef.current = { ids, msgId: messageId, val };
+    return val;
   });
+
+  const isSelectionMode = useChatIsSelectionMode();
+  const isSelectedInSelection = useChatStore(
+    (s) => s.isSelectionMode && s.selectedMessageIds.includes(messageId)
+  );
+  const isSelected = useChatStore((s) => s.selectedMessage?.id === messageId);
+  const isDimmed = useChatStore(
+    (s) => s.selectedMessage !== null && s.selectedMessage.id !== messageId
+  );
 
   if (!message) return null;
 
   const showDateSeparator =
-    isOldest ||
-    (olderMessage && !isSameDay(message.createdAt, olderMessage.createdAt));
+    olderCreatedAt === -1 || !isSameDay(message.createdAt, olderCreatedAt);
 
   return (
-    <Animated.View style={[styles.rowWrapper, animatedRowStyle]}>
+    <View
+      style={[
+        styles.rowWrapper,
+        isSelected && styles.rowElevated,
+        isDimmed && styles.rowDimmed,
+      ]}
+    >
       {showDateSeparator && (
         <View style={styles.dateSeparatorContainer}>
           <View style={styles.dateSeparatorPill}>
@@ -155,14 +193,20 @@ const ConnectedMessageRow = React.memo(function ConnectedMessageRow({
         message={message}
         isGroupChat={isGroupChat}
         currentUserId={currentUserId}
+        isSelected={isSelected}
+        isSelectionMode={isSelectionMode}
+        isSelectedInSelection={isSelectedInSelection}
+        themeConfig={themeConfig}
+        colors={colors}
         onReply={onReply}
         onLongPress={onLongPress}
         onRetry={onRetry}
         onPressMedia={onPressMedia}
         onPressReply={onPressReply}
         onToggleReaction={onToggleReaction}
+        onToggleSelect={toggleSelectStable}
       />
-    </Animated.View>
+    </View>
   );
 });
 
@@ -189,6 +233,11 @@ export const MessageList = React.memo(function MessageList({
   contentPaddingTop = 80,
   contentPaddingBottom = 12,
 }: MessageListProps) {
+  const { isRTL } = useI18n();
+  const { colors } = useTheme();
+  const { chatTheme } = useChatTheme();
+  const themeConfig = CHAT_THEMES[chatTheme] ?? CHAT_THEMES.default;
+
   // Key extractor
   const keyExtractor = useCallback((item: string) => item, []);
 
@@ -198,13 +247,15 @@ export const MessageList = React.memo(function MessageList({
     return msg?.attachments && msg.attachments.length > 0 ? 'media' : 'text';
   }, []);
 
-  // Memoized render item
+  // Memoized render item (independent of messageIds to avoid full-list re-renders)
   const renderItem = useCallback(
-    ({ item, index }: ListRenderItemInfo<string>) => (
+    ({ item }: ListRenderItemInfo<string>) => (
       <ConnectedMessageRow
         messageId={item}
-        olderMessageId={messageIds[index + 1]}
-        isOldest={index === messageIds.length - 1}
+        conversationId={conversationId}
+        isRTL={isRTL}
+        themeConfig={themeConfig}
+        colors={colors}
         isGroupChat={isGroupChat}
         currentUserId={currentUserId}
         onReply={onReply}
@@ -216,7 +267,10 @@ export const MessageList = React.memo(function MessageList({
       />
     ),
     [
-      messageIds,
+      conversationId,
+      isRTL,
+      themeConfig,
+      colors,
       isGroupChat,
       currentUserId,
       onReply,
@@ -276,6 +330,7 @@ export const MessageList = React.memo(function MessageList({
         keyExtractor={keyExtractor}
         getItemType={getItemType}
         estimatedItemSize={76}
+        drawDistance={400}
         inverted={true}
         scrollsToTop={false}
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
@@ -283,7 +338,7 @@ export const MessageList = React.memo(function MessageList({
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
         onScroll={onScroll}
-        scrollEventThrottle={16}
+        scrollEventThrottle={100}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={dynamicContentContainerStyle}
         ListHeaderComponent={listHeaderComponent}
@@ -292,8 +347,7 @@ export const MessageList = React.memo(function MessageList({
         maintainVisibleContentPosition={{
           minIndexForVisible: 0,
         }}
-        // Fix common Android inverted clipping bug
-        removeClippedSubviews={Platform.OS === 'android' ? false : true}
+        removeClippedSubviews={false}
       />
     </View>
   );

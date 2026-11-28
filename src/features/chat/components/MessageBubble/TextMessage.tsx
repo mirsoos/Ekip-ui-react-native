@@ -1,24 +1,33 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Pin } from 'lucide-react-native';
+import { Pin, Forward } from 'lucide-react-native';
 import type { Message, ReplyPreview } from '../../types/chat.types';
 import { StatusIndicator } from './StatusIndicator';
+import { PollView } from './PollView';
 import { MarkdownRenderer } from '../RichText/MarkdownRenderer';
 import { HighlightedText } from '../Search/HighlightedText';
 import { useIsMessageSearchMatching, useChatSearchQuery } from '../../store/chatStore';
-import { useTheme, useChatTheme, CHAT_THEMES } from '../../../../lib/theme';
+import { CHAT_THEMES, darkColors, type ChatThemeConfig, type ThemeColors } from '../../../../lib/theme';
 
 export interface TextMessageProps {
   message: Message;
   isMe: boolean;
+  currentUserId?: string;
+  themeConfig?: ChatThemeConfig;
+  colors?: ThemeColors;
   onRetry?: () => void;
   onPressReply?: (replyTo: ReplyPreview) => void;
   textColor?: string;
 }
 
+const TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
+
 const formatMessageTime = (timestamp: number): string => {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  return TIME_FORMATTER.format(new Date(timestamp));
 };
 
 const MatchingSearchText = React.memo(function MatchingSearchText({
@@ -43,14 +52,13 @@ const MatchingSearchText = React.memo(function MatchingSearchText({
 export const TextMessage = React.memo(function TextMessage({
   message,
   isMe,
+  currentUserId = 'me',
+  themeConfig = CHAT_THEMES.default,
+  colors = darkColors,
   onRetry,
   onPressReply,
   textColor,
 }: TextMessageProps) {
-  const { colors } = useTheme();
-  const { chatTheme } = useChatTheme();
-  const themeConfig = CHAT_THEMES[chatTheme] ?? CHAT_THEMES.default;
-
   const timeStr = React.useMemo(() => formatMessageTime(message.createdAt), [message.createdAt]);
 
   const defaultTextColor = isMe ? themeConfig.myBubbleText : themeConfig.theirBubbleText;
@@ -65,6 +73,22 @@ export const TextMessage = React.memo(function TextMessage({
         <View style={styles.pinnedRow}>
           <Pin size={11} color="#eab308" />
           <Text style={styles.pinnedText}>Pinned</Text>
+        </View>
+      )}
+
+      {/* Forward Origin Header */}
+      {message.forwardedFrom && (
+        <View style={styles.forwardedRow}>
+          <Forward size={12} color={themeConfig.accentHex} />
+          <Text
+            numberOfLines={1}
+            style={[
+              styles.forwardedText,
+              { color: isMe ? 'rgba(255, 255, 255, 0.85)' : themeConfig.accentHex },
+            ]}
+          >
+            Forwarded from {message.forwardedFrom.fromName}
+          </Text>
         </View>
       )}
 
@@ -107,12 +131,21 @@ export const TextMessage = React.memo(function TextMessage({
         </TouchableOpacity>
       )}
 
-      {/* Main message text: HighlightedText when searching, or zero-lag MarkdownRenderer */}
-      {isSearchMatching ? (
+      {/* Poll rendering or Main message text */}
+      {message.poll ? (
+        <PollView
+          poll={message.poll}
+          messageId={message.id}
+          isMe={isMe}
+          currentUserId={currentUserId}
+          textColor={resolvedTextColor}
+        />
+      ) : isSearchMatching ? (
         <MatchingSearchText text={message.text} textColor={resolvedTextColor} />
       ) : (
         <MarkdownRenderer
           content={message.text}
+          messageId={message.id}
           isMe={isMe}
           baseColor={resolvedTextColor}
           linkPreviewData={message.linkPreview}
@@ -179,6 +212,17 @@ const styles = StyleSheet.create({
     color: '#eab308',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  forwardedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: 4,
+  },
+  forwardedText: {
+    fontSize: 11,
+    fontStyle: 'italic',
+    fontWeight: '600',
   },
   replyContainer: {
     flexDirection: 'row',

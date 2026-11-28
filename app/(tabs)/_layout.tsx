@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, Platform, Keyboard } from 'react-native';
-import { Tabs, useRouter, usePathname } from 'expo-router';
+import { Tabs, useRouter, usePathname, useIsFocused } from 'expo-router';
 import { BottomNav, type TabKey } from '@/src/components/navigation/BottomNav';
 import { ActiveBottomNavTransition } from '@/src/components/common/ActiveBottomNavTransition';
 import { AuroraBackground } from '@/src/components/AuroraBackground';
@@ -9,6 +9,7 @@ import { useTheme } from '@/src/lib/theme';
 export default function TabsLayout() {
   const router = useRouter();
   const pathname = usePathname();
+  const isFocused = useIsFocused();
   const { isDark } = useTheme();
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
@@ -60,7 +61,7 @@ export default function TabsLayout() {
         <Tabs.Screen name="profile" />
       </Tabs>
       <ActiveBottomNavTransition show={!isKeyboardVisible}>
-        <BottomNav active={activeTab} onChange={handleTabChange} />
+        <BottomNav active={activeTab} onChange={handleTabChange} paused={!isFocused} />
       </ActiveBottomNavTransition>
     </View>
   );

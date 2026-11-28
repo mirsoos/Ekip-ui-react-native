@@ -25,6 +25,7 @@ import {
   Edit3,
   Pin,
   Forward,
+  CheckCircle2,
 } from 'lucide-react-native';
 import { ReactionBar } from '../Reactions/ReactionBar';
 import { useTheme, useChatTheme, CHAT_THEMES } from '../../../../lib/theme';
@@ -44,6 +45,7 @@ export interface MessageActionSheetProps {
   onEditMessage?: (message: Message) => void;
   onPinMessage?: (message: Message) => void;
   onForwardMessage?: (message: Message) => void;
+  onSelectMessage?: (message: Message) => void;
   onDeleteForEveryone?: (messageId: string) => void;
 }
 
@@ -66,6 +68,7 @@ export const MessageActionSheet = React.memo(function MessageActionSheet({
   onEditMessage,
   onPinMessage,
   onForwardMessage,
+  onSelectMessage,
   onDeleteForEveryone,
 }: MessageActionSheetProps) {
   const insets = useSafeAreaInsets();
@@ -74,11 +77,27 @@ export const MessageActionSheet = React.memo(function MessageActionSheet({
   const themeConfig = CHAT_THEMES[chatTheme] ?? CHAT_THEMES.default;
 
   const [isClosing, setIsClosing] = React.useState(false);
+  const dismissTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasShownRef = React.useRef(false);
   const sheetScale = useSharedValue(0.94);
   const sheetOpacity = useSharedValue(0);
 
   useEffect(() => {
+    return () => {
+      if (dismissTimerRef.current) {
+        clearTimeout(dismissTimerRef.current);
+        dismissTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (visible && message) {
+      hasShownRef.current = true;
+      if (dismissTimerRef.current) {
+        clearTimeout(dismissTimerRef.current);
+        dismissTimerRef.current = null;
+      }
       setIsClosing(false);
       sheetScale.value = withTiming(1, { duration: 140, easing: Easing.bezier(0.25, 0.1, 0.25, 1) });
       sheetOpacity.value = withTiming(1, { duration: 140, easing: Easing.out(Easing.quad) });
@@ -86,7 +105,8 @@ export const MessageActionSheet = React.memo(function MessageActionSheet({
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
-    } else {
+    } else if (hasShownRef.current) {
+      hasShownRef.current = false;
       sheetScale.value = withTiming(0.94, { duration: 120, easing: Easing.out(Easing.quad) });
       sheetOpacity.value = withTiming(0, { duration: 120, easing: Easing.out(Easing.quad) });
     }
@@ -103,7 +123,11 @@ export const MessageActionSheet = React.memo(function MessageActionSheet({
     sheetScale.value = withTiming(0.94, { duration: 120, easing: Easing.out(Easing.quad) });
     sheetOpacity.value = withTiming(0, { duration: 120, easing: Easing.out(Easing.quad) });
 
-    setTimeout(() => {
+    if (dismissTimerRef.current) {
+      clearTimeout(dismissTimerRef.current);
+    }
+    dismissTimerRef.current = setTimeout(() => {
+      dismissTimerRef.current = null;
       onClose();
       setIsClosing(false);
     }, 130);
@@ -266,6 +290,18 @@ export const MessageActionSheet = React.memo(function MessageActionSheet({
           >
             <Forward size={17} color={themeConfig.accentHex} />
             <Text style={[styles.actionText, { color: colors.textPrimary }]}>Forward</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Select */}
+        {onSelectMessage && (
+          <TouchableOpacity
+            onPress={() => handleActionPress(() => onSelectMessage(message))}
+            style={styles.actionRow}
+            activeOpacity={0.7}
+          >
+            <CheckCircle2 size={17} color={colors.textSecondary} />
+            <Text style={[styles.actionText, { color: colors.textPrimary }]}>Select</Text>
           </TouchableOpacity>
         )}
 

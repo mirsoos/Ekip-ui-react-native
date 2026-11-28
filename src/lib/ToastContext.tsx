@@ -1,6 +1,6 @@
 // --- START OF FILE ToastContext.tsx ---
 
-import React, { createContext, useContext, useState, useRef, useCallback, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useRef, useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import {
   View,
   Text,
@@ -127,20 +127,33 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     [anim, hideToast]
   );
 
-  const translateY = anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [12, 0],
-  });
+  useEffect(() => {
+    return () => {
+      if (dismissTimerRef.current) {
+        clearTimeout(dismissTimerRef.current);
+        dismissTimerRef.current = null;
+      }
+      anim.stopAnimation();
+    };
+  }, [anim]);
 
-  const scale = anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.88, 1],
-  });
-
-  const opacity = anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1],
-  });
+  const { translateY, scale, opacity } = useMemo(
+    () => ({
+      translateY: anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [12, 0],
+      }),
+      scale: anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.88, 1],
+      }),
+      opacity: anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 1],
+      }),
+    }),
+    [anim]
+  );
 
   const activeIcon = currentToast
     ? currentToast.icon || DEFAULT_ICONS[currentToast.type]

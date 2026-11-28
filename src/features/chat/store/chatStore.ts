@@ -10,6 +10,10 @@ import type {
   OutboxQueueItem,
   TypingAction,
   UserTypingState,
+  SendMessageOptions,
+  PollData,
+  ConversationMeta,
+  JumpToMessageRequest,
 } from '../types/chat.types';
 
 // Default current user profile for optimistic message authorship
@@ -25,6 +29,7 @@ export const CURRENT_USER: Author = {
 let audioInterval: ReturnType<typeof setInterval> | null = null;
 let isProcessingOutbox = false;
 const activeTimeouts = new Set<ReturnType<typeof setTimeout>>();
+const conversationTimeouts = new Map<string, Set<ReturnType<typeof setTimeout>>>();
 
 export const clearAudioInterval = () => {
   if (audioInterval) {
@@ -34,7 +39,8 @@ export const clearAudioInterval = () => {
 };
 
 export const registerTimeout = (fn: () => void, delayMs: number): ReturnType<typeof setTimeout> => {
-  const timer = setTimeout(() => {
+  let timer: ReturnType<typeof setTimeout>;
+  timer = setTimeout(() => {
     activeTimeouts.delete(timer);
     fn();
   }, delayMs);
@@ -42,9 +48,44 @@ export const registerTimeout = (fn: () => void, delayMs: number): ReturnType<typ
   return timer;
 };
 
+export const registerConversationTimeout = (
+  conversationId: string,
+  fn: () => void,
+  delayMs: number
+): ReturnType<typeof setTimeout> => {
+  let timer: ReturnType<typeof setTimeout>;
+  timer = setTimeout(() => {
+    activeTimeouts.delete(timer);
+    const set = conversationTimeouts.get(conversationId);
+    if (set) {
+      set.delete(timer);
+      if (set.size === 0) conversationTimeouts.delete(conversationId);
+    }
+    fn();
+  }, delayMs);
+  activeTimeouts.add(timer);
+  if (!conversationTimeouts.has(conversationId)) {
+    conversationTimeouts.set(conversationId, new Set());
+  }
+  conversationTimeouts.get(conversationId)!.add(timer);
+  return timer;
+};
+
 export const clearActiveTimeouts = () => {
   activeTimeouts.forEach((timer) => clearTimeout(timer));
   activeTimeouts.clear();
+  conversationTimeouts.clear();
+};
+
+export const clearConversationTimeouts = (conversationId: string) => {
+  const set = conversationTimeouts.get(conversationId);
+  if (set) {
+    set.forEach((t) => {
+      clearTimeout(t);
+      activeTimeouts.delete(t);
+    });
+    conversationTimeouts.delete(conversationId);
+  }
 };
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -53,9 +94,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
   conversationMessageIds: {},
   activeConversationId: null,
   replyingTo: null,
+  editingMessage: null,
   selectedMessage: null,
   isActionSheetOpen: false,
   isAttachmentPickerOpen: false,
+  isChatInfoOpen: false,
+  isSelectionMode: false,
+  selectedMessageIds: [],
+  pinnedMessageIds: {},
+  activePinnedIndex: {},
+  conversationMeta: {},
+  clearedConversations: {},
+  jumpToMessageRequest: null,
   customBackgroundUri: null,
   setCustomBackgroundUri: (uri: string | null) => set({ customBackgroundUri: uri }),
   isLoadingHistory: {},
@@ -128,7 +178,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   stopAudio: () => {
     clearAudioInterval();
-    clearActiveTimeouts();
     set({ activeAudioMessageId: null, audioPlaybackProgress: 0 });
   },
 
@@ -185,6 +234,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   setHighlightedMessageId: (messageId: string | null) => {
     set({ highlightedMessageId: messageId });
+  },
+
+  requestJumpToMessage: (conversationId: string, messageId: string) => {
+    set({
+      jumpToMessageRequest: {
+        conversationId,
+        messageId,
+        nonce: Date.now(),
+      },
+      highlightedMessageId: messageId,
+    });
+  },
+
+  clearJumpRequest: () => {
+    set({ jumpToMessageRequest: null });
   },
 
   setSearchQuery: (query: string, conversationId: string) => {
@@ -270,7 +334,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     text: string,
     attachments?: Attachment[],
     replyTo?: Message | null,
-    author?: Author
+    author?: Author,
+    options?: SendMessageOptions
   ): string => {
     const tempId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const now = Date.now();
@@ -299,6 +364,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       updatedAt: now,
       attachments: attachments && attachments.length > 0 ? attachments : undefined,
       replyTo: replyPreview,
+      forwardedFrom: options?.forwardedFrom ?? null,
+      poll: options?.poll ?? null,
+      isSilent: options?.isSilent ?? false,
       reactions: {},
       isOptimistic: true,
       error: null,
@@ -314,6 +382,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       createdAt: now,
       attempts: 0,
       nextRetryAt: now,
+      forwardedFrom: options?.forwardedFrom ?? null,
+      poll: options?.poll ?? null,
+      isSilent: options?.isSilent ?? false,
     };
 
     set((state) => {
@@ -413,7 +484,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
 
         // Schedule DELIVERED and READ transitions
-        registerTimeout(() => {
+        registerConversationTimeout(item.conversationId, () => {
           set((state) => {
             const msg = state.messages[serverId];
             if (!msg || msg.status === 'FAILED') return state;
@@ -426,7 +497,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           });
         }, 400);
 
-        registerTimeout(() => {
+        registerConversationTimeout(item.conversationId, () => {
           set((state) => {
             const msg = state.messages[serverId];
             if (!msg || msg.status === 'FAILED') return state;
@@ -489,10 +560,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
     text: string,
     attachments?: Attachment[],
     replyTo?: Message | null,
-    author?: Author
+    author?: Author,
+    options?: SendMessageOptions
   ): Promise<string> => {
     if (!get().isOnline) {
-      return get().enqueueOutboxMessage(conversationId, text, attachments, replyTo, author);
+      return get().enqueueOutboxMessage(conversationId, text, attachments, replyTo, author, options);
     }
 
     const tempId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -522,6 +594,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       updatedAt: now,
       attachments: attachments && attachments.length > 0 ? attachments : undefined,
       replyTo: replyPreview,
+      forwardedFrom: options?.forwardedFrom ?? null,
+      poll: options?.poll ?? null,
+      isSilent: options?.isSilent ?? false,
       reactions: {},
       isOptimistic: true,
       error: null,
@@ -547,7 +622,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     // Pipeline: SENDING -> SENT -> DELIVERED -> READ (or FAILED if test trigger)
     const isFailureSimulation = text.trim() === '/fail';
 
-    registerTimeout(() => {
+    registerConversationTimeout(conversationId, () => {
       if (isFailureSimulation) {
         set((state) => {
           const current = state.messages[tempId];
@@ -599,7 +674,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       });
 
       // After 600ms transition to DELIVERED
-      registerTimeout(() => {
+      registerConversationTimeout(conversationId, () => {
         set((state) => {
           const current = state.messages[serverId];
           if (!current || current.status === 'FAILED') return state;
@@ -617,7 +692,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }, 600);
 
       // After 1400ms transition to READ
-      registerTimeout(() => {
+      registerConversationTimeout(conversationId, () => {
         set((state) => {
           const current = state.messages[serverId];
           if (!current || current.status === 'FAILED') return state;
@@ -641,6 +716,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   retryMessage: async (messageId: string): Promise<void> => {
     const message = get().messages[messageId];
     if (!message || message.status !== 'FAILED') return;
+    const convId = message.conversationId;
 
     // Set to SENDING immediately without modifying list order
     set((state) => ({
@@ -655,9 +731,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       },
     }));
 
-    registerTimeout(() => {
+    registerConversationTimeout(convId, () => {
       const serverId = `srv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-      const convId = message.conversationId;
 
       set((state) => {
         const current = state.messages[messageId];
@@ -686,7 +761,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         };
       });
 
-      registerTimeout(() => {
+      registerConversationTimeout(convId, () => {
         set((state) => {
           const current = state.messages[serverId];
           if (!current) return state;
@@ -850,6 +925,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       const prevIds = state.conversationMessageIds[conversationId] || [];
       const filteredIds = prevIds.filter((id) => id !== messageId);
+      const currentPinned = state.pinnedMessageIds[conversationId] || [];
+      const updatedPinned = currentPinned.filter((id) => id !== messageId);
 
       return {
         messages: newMessages,
@@ -857,7 +934,40 @@ export const useChatStore = create<ChatState>((set, get) => ({
           ...state.conversationMessageIds,
           [conversationId]: filteredIds,
         },
+        pinnedMessageIds: {
+          ...state.pinnedMessageIds,
+          [conversationId]: updatedPinned,
+        },
         selectedMessage: state.selectedMessage?.id === messageId ? null : state.selectedMessage,
+        editingMessage: state.editingMessage?.id === messageId ? null : state.editingMessage,
+      };
+    });
+  },
+
+  deleteMessagesBatch: (conversationId: string, messageIds: string[]) => {
+    set((state) => {
+      const newMessages = { ...state.messages };
+      messageIds.forEach((id) => {
+        delete newMessages[id];
+      });
+      const prevIds = state.conversationMessageIds[conversationId] || [];
+      const filteredIds = prevIds.filter((id) => !messageIds.includes(id));
+      const currentPinned = state.pinnedMessageIds[conversationId] || [];
+      const updatedPinned = currentPinned.filter((id) => !messageIds.includes(id));
+
+      return {
+        messages: newMessages,
+        conversationMessageIds: {
+          ...state.conversationMessageIds,
+          [conversationId]: filteredIds,
+        },
+        pinnedMessageIds: {
+          ...state.pinnedMessageIds,
+          [conversationId]: updatedPinned,
+        },
+        selectedMessageIds: [],
+        isSelectionMode: false,
+        selectedMessage: null,
       };
     });
   },
@@ -876,21 +986,284 @@ export const useChatStore = create<ChatState>((set, get) => ({
             updatedAt: Date.now(),
           },
         },
+        editingMessage: state.editingMessage?.id === messageId ? null : state.editingMessage,
       };
     });
+  },
+
+  setEditingMessage: (message: Message | null) => {
+    set({ editingMessage: message });
   },
 
   pinMessage: (conversationId: string, messageId: string) => {
     set((state) => {
       const msg = state.messages[messageId];
       if (!msg) return state;
+      const newIsPinned = !msg.isPinned;
+      const currentPinned = state.pinnedMessageIds[conversationId] || [];
+      const updatedPinned = newIsPinned
+        ? [messageId, ...currentPinned.filter((id) => id !== messageId)]
+        : currentPinned.filter((id) => id !== messageId);
+
       return {
         messages: {
           ...state.messages,
           [messageId]: {
             ...msg,
-            isPinned: !msg.isPinned,
+            isPinned: newIsPinned,
             updatedAt: Date.now(),
+          },
+        },
+        pinnedMessageIds: {
+          ...state.pinnedMessageIds,
+          [conversationId]: updatedPinned,
+        },
+      };
+    });
+  },
+
+  cyclePinnedMessage: (conversationId: string): string | null => {
+    const pinned = get().pinnedMessageIds[conversationId] || [];
+    if (pinned.length === 0) return null;
+    const currentIndex = get().activePinnedIndex[conversationId] ?? 0;
+    const nextIndex = (currentIndex + 1) % pinned.length;
+    set((state) => ({
+      activePinnedIndex: {
+        ...state.activePinnedIndex,
+        [conversationId]: nextIndex,
+      },
+    }));
+    return pinned[nextIndex];
+  },
+
+  unpinAllMessages: (conversationId: string) => {
+    set((state) => {
+      const pinned = state.pinnedMessageIds[conversationId] || [];
+      const updatedMessages = { ...state.messages };
+      pinned.forEach((id) => {
+        if (updatedMessages[id]) {
+          updatedMessages[id] = { ...updatedMessages[id], isPinned: false, updatedAt: Date.now() };
+        }
+      });
+      return {
+        messages: updatedMessages,
+        pinnedMessageIds: {
+          ...state.pinnedMessageIds,
+          [conversationId]: [],
+        },
+        activePinnedIndex: {
+          ...state.activePinnedIndex,
+          [conversationId]: 0,
+        },
+      };
+    });
+  },
+
+  forwardMessages: async (
+    targetConversationIds: string[],
+    messagesToForward: Message[],
+    author?: Author
+  ): Promise<void> => {
+    const activeAuthor = author || get().currentUser || CURRENT_USER;
+    for (const targetConvId of targetConversationIds) {
+      for (const msg of messagesToForward) {
+        await get().sendMessage(
+          targetConvId,
+          msg.text,
+          msg.attachments,
+          null,
+          activeAuthor,
+          {
+            forwardedFrom: {
+              fromName: msg.sender?.name || 'Unknown',
+              fromId: msg.senderId,
+              originalMessageId: msg.id,
+            },
+          }
+        );
+      }
+    }
+  },
+
+  sendPollMessage: async (
+    conversationId: string,
+    question: string,
+    options: string[],
+    isAnonymous: boolean = false,
+    allowsMultiple: boolean = false,
+    author?: Author
+  ): Promise<string> => {
+    const activeAuthor = author || get().currentUser || CURRENT_USER;
+    const pollData: PollData = {
+      id: `poll_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      question: question.trim(),
+      options: options.map((opt, idx) => ({
+        id: `opt_${idx}_${Date.now()}`,
+        text: opt.trim(),
+        voterIds: [],
+      })),
+      isAnonymous,
+      allowsMultiple,
+      isClosed: false,
+      creatorId: activeAuthor.id,
+    };
+    return get().sendMessage(
+      conversationId,
+      `📊 ${question.trim()}`,
+      undefined,
+      null,
+      activeAuthor,
+      { poll: pollData }
+    );
+  },
+
+  votePoll: (messageId: string, optionId: string, userId: string) => {
+    set((state) => {
+      const msg = state.messages[messageId];
+      if (!msg || !msg.poll || msg.poll.isClosed) return state;
+
+      const allowsMultiple = msg.poll.allowsMultiple;
+      const updatedOptions = msg.poll.options.map((opt) => {
+        const hasVoted = opt.voterIds.includes(userId);
+        if (opt.id === optionId) {
+          return {
+            ...opt,
+            voterIds: hasVoted
+              ? opt.voterIds.filter((id) => id !== userId)
+              : [...opt.voterIds, userId],
+          };
+        }
+        if (!allowsMultiple && hasVoted) {
+          return {
+            ...opt,
+            voterIds: opt.voterIds.filter((id) => id !== userId),
+          };
+        }
+        return opt;
+      });
+
+      return {
+        messages: {
+          ...state.messages,
+          [messageId]: {
+            ...msg,
+            poll: {
+              ...msg.poll,
+              options: updatedOptions,
+            },
+            updatedAt: Date.now(),
+          },
+        },
+      };
+    });
+  },
+
+  closePoll: (messageId: string) => {
+    set((state) => {
+      const msg = state.messages[messageId];
+      if (!msg || !msg.poll) return state;
+      return {
+        messages: {
+          ...state.messages,
+          [messageId]: {
+            ...msg,
+            poll: {
+              ...msg.poll,
+              isClosed: true,
+            },
+            updatedAt: Date.now(),
+          },
+        },
+      };
+    });
+  },
+
+  setChatInfoOpen: (isOpen: boolean) => set({ isChatInfoOpen: isOpen }),
+
+  enterSelectionMode: (initialMessageId?: string) => {
+    set({
+      isSelectionMode: true,
+      selectedMessageIds: initialMessageId ? [initialMessageId] : [],
+      selectedMessage: null,
+      isActionSheetOpen: false,
+    });
+  },
+
+  exitSelectionMode: () => {
+    set({
+      isSelectionMode: false,
+      selectedMessageIds: [],
+    });
+  },
+
+  toggleMessageSelection: (messageId: string) => {
+    set((state) => {
+      const exists = state.selectedMessageIds.includes(messageId);
+      const updated = exists
+        ? state.selectedMessageIds.filter((id) => id !== messageId)
+        : [...state.selectedMessageIds, messageId];
+      return {
+        selectedMessageIds: updated,
+        isSelectionMode: updated.length > 0,
+      };
+    });
+  },
+
+  togglePinConversation: (conversationId: string) => {
+    set((state) => {
+      const prev = state.conversationMeta[conversationId] || {};
+      return {
+        conversationMeta: {
+          ...state.conversationMeta,
+          [conversationId]: {
+            ...prev,
+            isPinned: !prev.isPinned,
+          },
+        },
+      };
+    });
+  },
+
+  toggleMuteConversation: (conversationId: string) => {
+    set((state) => {
+      const prev = state.conversationMeta[conversationId] || {};
+      return {
+        conversationMeta: {
+          ...state.conversationMeta,
+          [conversationId]: {
+            ...prev,
+            isMuted: !prev.isMuted,
+          },
+        },
+      };
+    });
+  },
+
+  toggleBlockConversation: (conversationId: string) => {
+    set((state) => {
+      const prev = state.conversationMeta[conversationId] || {};
+      return {
+        conversationMeta: {
+          ...state.conversationMeta,
+          [conversationId]: {
+            ...prev,
+            isBlocked: !prev.isBlocked,
+          },
+        },
+      };
+    });
+  },
+
+  markConversationUnread: (conversationId: string, unread?: boolean) => {
+    set((state) => {
+      const prev = state.conversationMeta[conversationId] || {};
+      const newUnread = unread !== undefined ? unread : !prev.isMarkedUnread;
+      return {
+        conversationMeta: {
+          ...state.conversationMeta,
+          [conversationId]: {
+            ...prev,
+            isMarkedUnread: newUnread,
           },
         },
       };
@@ -1091,7 +1464,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   clearConversation: (conversationId: string) => {
     clearAudioInterval();
-    clearActiveTimeouts();
+    clearConversationTimeouts(conversationId);
     set((state) => {
       const ids = state.conversationMessageIds[conversationId] || [];
       const newMessages = { ...state.messages };
@@ -1104,10 +1477,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
           ...state.conversationMessageIds,
           [conversationId]: [],
         },
+        pinnedMessageIds: {
+          ...state.pinnedMessageIds,
+          [conversationId]: [],
+        },
+        activePinnedIndex: {
+          ...state.activePinnedIndex,
+          [conversationId]: 0,
+        },
+        clearedConversations: {
+          ...state.clearedConversations,
+          [conversationId]: true,
+        },
         replyingTo: state.replyingTo?.conversationId === conversationId ? null : state.replyingTo,
+        editingMessage: state.editingMessage?.conversationId === conversationId ? null : state.editingMessage,
         selectedMessage: state.selectedMessage?.conversationId === conversationId ? null : state.selectedMessage,
+        selectedMessageIds: [],
+        isSelectionMode: false,
+        jumpToMessageRequest: state.jumpToMessageRequest?.conversationId === conversationId ? null : state.jumpToMessageRequest,
       };
     });
+  },
+
+  clearConversationTimeouts: (conversationId: string) => {
+    clearConversationTimeouts(conversationId);
   },
 }));
 
@@ -1133,8 +1526,42 @@ export const useChatReplyingTo = (): Message | null => {
   return useChatStore((state) => state.replyingTo);
 };
 
+export const useChatEditingMessage = (): Message | null => {
+  return useChatStore((state) => state.editingMessage);
+};
+
 export const useChatSelectedMessage = (): Message | null => {
   return useChatStore((state) => state.selectedMessage);
+};
+
+export const useChatIsSelectionMode = (): boolean => {
+  return useChatStore((state) => state.isSelectionMode);
+};
+
+export const useChatSelectedMessageIds = (): string[] => {
+  return useChatStore(useShallow((state) => state.selectedMessageIds));
+};
+
+export const useChatPinnedMessageIds = (conversationId: string): string[] => {
+  return useChatStore(
+    useShallow((state) => state.pinnedMessageIds[conversationId] || [])
+  );
+};
+
+export const useChatActivePinnedIndex = (conversationId: string): number => {
+  return useChatStore((state) => state.activePinnedIndex[conversationId] ?? 0);
+};
+
+export const useChatConversationMeta = (conversationId: string): ConversationMeta | undefined => {
+  return useChatStore((state) => state.conversationMeta[conversationId]);
+};
+
+export const useChatJumpToMessageRequest = (): JumpToMessageRequest | null => {
+  return useChatStore((state) => state.jumpToMessageRequest);
+};
+
+export const useChatIsChatInfoOpen = (): boolean => {
+  return useChatStore((state) => state.isChatInfoOpen);
 };
 
 export const useChatActionSheetOpen = (): boolean => {
@@ -1161,27 +1588,33 @@ export const useChatHasMoreNewer = (conversationId: string): boolean => {
   return useChatStore((state) => state.hasMoreNewer[conversationId] === true);
 };
 
+const stablePlayAudio = (messageId: string, duration?: number) =>
+  useChatStore.getState().playAudio(messageId, duration);
+const stablePauseAudio = (messageId: string) =>
+  useChatStore.getState().pauseAudio(messageId);
+const stableStopAudio = () =>
+  useChatStore.getState().stopAudio();
+const stableSeekAudio = (messageId: string, progress: number) =>
+  useChatStore.getState().seekAudio(messageId, progress);
+const stableSetPlaybackSpeed = (speed: number) =>
+  useChatStore.getState().setAudioPlaybackSpeed(speed);
+
 export const useChatAudioPlayback = (messageId: string) => {
   const isPlaying = useChatStore((state) => state.activeAudioMessageId === messageId);
   const progress = useChatStore((state) =>
     state.activeAudioMessageId === messageId ? state.audioPlaybackProgress : 0
   );
   const speed = useChatStore((state) => state.audioPlaybackSpeed);
-  const playAudio = useChatStore((state) => state.playAudio);
-  const pauseAudio = useChatStore((state) => state.pauseAudio);
-  const stopAudio = useChatStore((state) => state.stopAudio);
-  const seekAudio = useChatStore((state) => state.seekAudio);
-  const setPlaybackSpeed = useChatStore((state) => state.setAudioPlaybackSpeed);
 
   return {
     isPlaying,
     progress,
     speed,
-    playAudio,
-    pauseAudio,
-    stopAudio,
-    seekAudio,
-    setPlaybackSpeed,
+    playAudio: stablePlayAudio,
+    pauseAudio: stablePauseAudio,
+    stopAudio: stableStopAudio,
+    seekAudio: stableSeekAudio,
+    setPlaybackSpeed: stableSetPlaybackSpeed,
   };
 };
 
@@ -1232,4 +1665,18 @@ export const useChatSearchQuery = (): string => {
 
 export const useIsMessageHighlighted = (messageId: string): boolean => {
   return useChatStore((state) => state.highlightedMessageId === messageId);
+};
+
+export const useChatUnreadCount = (conversationId: string, currentUserId: string = 'me'): number => {
+  return useChatStore((state) => {
+    const ids = state.conversationMessageIds[conversationId] || [];
+    let count = 0;
+    for (const id of ids) {
+      const msg = state.messages[id];
+      if (msg && msg.senderId !== currentUserId && msg.status !== 'READ') {
+        count++;
+      }
+    }
+    return count;
+  });
 };

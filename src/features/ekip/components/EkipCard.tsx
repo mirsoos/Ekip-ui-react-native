@@ -1,7 +1,8 @@
 // --- START OF FILE EkipCard.tsx ---
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, Platform } from 'react-native';
+import { useIsFocused } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { LucideIcon } from 'lucide-react-native';
@@ -30,53 +31,284 @@ const gradientAngles = gradientRotationInput.map((progress) => progress * Math.P
 
 // ============================================================================
 // یک تایمر سراسری با Native Driver برای موبایل (جلوگیری از ساخت ده‌ها تایمر مجزا برای هر کارت)
+// و توقف کامل هنگام خروج از صفحه (جلوگیری از مصرف CPU و حافظه در پس‌زمینه)
 // ============================================================================
-const sharedGoldRotation = new Animated.Value(0);
 const sharedGoldPulse = new Animated.Value(0);
 const sharedRgbRotation = new Animated.Value(0);
-let sharedAnimationsStarted = false;
+let goldNativeRefCount = 0;
+let rgbNativeRefCount = 0;
+let goldPulseLoop: Animated.CompositeAnimation | null = null;
+let rgbRotationLoop: Animated.CompositeAnimation | null = null;
 
-function ensureSharedNativeAnimations() {
-  if (sharedAnimationsStarted || Platform.OS === 'web') return;
-  sharedAnimationsStarted = true;
-
-  Animated.loop(
-    Animated.timing(sharedGoldRotation, {
-      toValue: 1,
-      duration: 10000,
-      easing: Easing.linear,
-      useNativeDriver: true, // 👈 100% روی GPU
-    })
-  ).start();
-
-  Animated.loop(
-    Animated.sequence([
-      Animated.timing(sharedGoldPulse, {
-        toValue: 1,
-        duration: 2800,
-        easing: Easing.inOut(Easing.sin),
-        useNativeDriver: true, // 👈 100% روی GPU
-      }),
-      Animated.timing(sharedGoldPulse, {
-        toValue: 0,
-        duration: 2800,
-        easing: Easing.inOut(Easing.sin),
-        useNativeDriver: true, // 👈 100% روی GPU
-      }),
-    ])
-  ).start();
-
-  Animated.loop(
-    Animated.timing(sharedRgbRotation, {
-      toValue: 1,
-      duration: 9000,
-      easing: Easing.linear,
-      useNativeDriver: true, // 👈 100% روی GPU
-    })
-  ).start();
+function acquireGoldNativeAnimations() {
+  if (Platform.OS === 'web') return;
+  goldNativeRefCount += 1;
+  if (goldNativeRefCount === 1) {
+    goldPulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(sharedGoldPulse, {
+          toValue: 1,
+          duration: 2800,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(sharedGoldPulse, {
+          toValue: 0,
+          duration: 2800,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    goldPulseLoop.start();
+  }
 }
 
+function releaseGoldNativeAnimations() {
+  if (Platform.OS === 'web') return;
+  goldNativeRefCount = Math.max(0, goldNativeRefCount - 1);
+  if (goldNativeRefCount === 0) {
+    goldPulseLoop?.stop();
+    goldPulseLoop = null;
+  }
+}
+
+function acquireRgbNativeAnimations() {
+  if (Platform.OS === 'web') return;
+  rgbNativeRefCount += 1;
+  if (rgbNativeRefCount === 1) {
+    rgbRotationLoop = Animated.loop(
+      Animated.timing(sharedRgbRotation, {
+        toValue: 1,
+        duration: 9000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    rgbRotationLoop.start();
+  }
+}
+
+function releaseRgbNativeAnimations() {
+  if (Platform.OS === 'web') return;
+  rgbNativeRefCount = Math.max(0, rgbNativeRefCount - 1);
+  if (rgbNativeRefCount === 0) {
+    rgbRotationLoop?.stop();
+    rgbRotationLoop = null;
+  }
+}
+
+const NativeGoldLayers = React.memo(function NativeGoldLayers({
+  svgWidth,
+  svgHeight,
+  inset,
+  width,
+  height,
+  borderRadius,
+  uid,
+}: {
+  svgWidth: number;
+  svgHeight: number;
+  inset: number;
+  width: number;
+  height: number;
+  borderRadius: number;
+  uid: string;
+}) {
+  const nativeCoreOpacity = useMemo(
+    () =>
+      sharedGoldPulse.interpolate({
+        inputRange: [0, 0.5, 1],
+        outputRange: [0.38, 1, 0.38],
+      }),
+    []
+  );
+  const nativeGlowOpacity = useMemo(
+    () =>
+      sharedGoldPulse.interpolate({
+        inputRange: [0, 0.5, 1],
+        outputRange: [0.05, 0.55, 0.05],
+      }),
+    []
+  );
+  const nativeGradId = `goldNativeGrad-${uid}`;
+
+  return (
+    <>
+      {/* لایه پایه ثابت طلایی */}
+      <Svg width={svgWidth} height={svgHeight} style={StyleSheet.absoluteFill}>
+        <Rect
+          x={inset}
+          y={inset}
+          width={width}
+          height={height}
+          rx={borderRadius}
+          fill="none"
+          stroke="#d4af37"
+          strokeWidth={1}
+          strokeOpacity={0.55}
+        />
+      </Svg>
+
+      {/* لایه درخشش و گرادینت طلایی با انیمیشن GPU */}
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: nativeCoreOpacity }]}>
+        <Svg width={svgWidth} height={svgHeight}>
+          <Defs>
+            <SvgLinearGradient id={nativeGradId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor="#d4af37" stopOpacity={0.35} />
+              <Stop offset="35%" stopColor="#ffd966" stopOpacity={0.85} />
+              <Stop offset="50%" stopColor="#fff7c2" stopOpacity={1} />
+              <Stop offset="65%" stopColor="#ffd966" stopOpacity={0.85} />
+              <Stop offset="100%" stopColor="#d4af37" stopOpacity={0.35} />
+            </SvgLinearGradient>
+          </Defs>
+          <Rect
+            x={inset}
+            y={inset}
+            width={width}
+            height={height}
+            rx={borderRadius}
+            fill="none"
+            stroke={`url(#${nativeGradId})`}
+            strokeWidth={2}
+          />
+        </Svg>
+      </Animated.View>
+
+      {/* لایه Glow طلایی روی GPU */}
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: nativeGlowOpacity }]}>
+        <Svg width={svgWidth} height={svgHeight}>
+          <Rect
+            x={inset}
+            y={inset}
+            width={width}
+            height={height}
+            rx={borderRadius}
+            fill="none"
+            stroke="#ffd966"
+            strokeWidth={5}
+          />
+        </Svg>
+      </Animated.View>
+    </>
+  );
+});
+
+const WebGoldLayers = React.memo(function WebGoldLayers({
+  svgWidth,
+  svgHeight,
+  inset,
+  width,
+  height,
+  borderRadius,
+  uid,
+  rotation,
+  pulse,
+}: {
+  svgWidth: number;
+  svgHeight: number;
+  inset: number;
+  width: number;
+  height: number;
+  borderRadius: number;
+  uid: string;
+  rotation: Animated.Value;
+  pulse: Animated.Value;
+}) {
+  const { glowOpacity, coreOpacity, glowWidth, coreWidth, x1, y1, x2, y2 } = useMemo(() => {
+    const getGradientCoordinate = (offset: number, direction: 'x' | 'y') =>
+      rotation.interpolate({
+        inputRange: gradientRotationInput,
+        outputRange: gradientAngles.map((angle) =>
+          direction === 'x'
+            ? 0.5 + Math.cos(angle + offset) * 0.5
+            : 0.5 + Math.sin(angle + offset) * 0.5
+        ),
+      });
+    return {
+      glowOpacity: pulse.interpolate({
+        inputRange: [0, 0.5, 1],
+        outputRange: [0.02, 0.62, 0.02],
+      }),
+      coreOpacity: pulse.interpolate({
+        inputRange: [0, 0.5, 1],
+        outputRange: [0.35, 0.98, 0.35],
+      }),
+      glowWidth: pulse.interpolate({
+        inputRange: [0, 0.5, 1],
+        outputRange: [3, 10, 3],
+      }),
+      coreWidth: pulse.interpolate({
+        inputRange: [0, 0.5, 1],
+        outputRange: [1.2, 2.5, 1.2],
+      }),
+      x1: getGradientCoordinate(Math.PI, 'x'),
+      y1: getGradientCoordinate(Math.PI, 'y'),
+      x2: getGradientCoordinate(0, 'x'),
+      y2: getGradientCoordinate(0, 'y'),
+    };
+  }, [pulse, rotation]);
+
+  const webSweepId = `premiumGoldSweep-${uid}`;
+
+  return (
+    <Svg width={svgWidth} height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`}>
+      <AnimatedSvgLinearGradient
+        id={webSweepId}
+        x1={x1}
+        y1={y1}
+        x2={x2}
+        y2={y2}
+        gradientUnits="objectBoundingBox"
+      >
+        <Stop offset="0%" stopColor="#d4af37" stopOpacity={0.28} />
+        <Stop offset="34%" stopColor="#e6bd52" stopOpacity={0.5} />
+        <Stop offset="46%" stopColor="#ffd966" stopOpacity={0.78} />
+        <Stop offset="50%" stopColor="#fff7c2" stopOpacity={1} />
+        <Stop offset="54%" stopColor="#ffd966" stopOpacity={0.78} />
+        <Stop offset="66%" stopColor="#e6bd52" stopOpacity={0.5} />
+        <Stop offset="100%" stopColor="#d4af37" stopOpacity={0.28} />
+      </AnimatedSvgLinearGradient>
+      <Rect
+        x={inset}
+        y={inset}
+        width={width}
+        height={height}
+        rx={borderRadius}
+        fill="none"
+        stroke="#d4af37"
+        strokeWidth={1}
+      />
+      <AnimatedRect
+        x={inset}
+        y={inset}
+        width={width}
+        height={height}
+        rx={borderRadius}
+        fill="none"
+        stroke={`url(#${webSweepId})`}
+        strokeWidth={glowWidth}
+        strokeOpacity={glowOpacity}
+      />
+      <AnimatedRect
+        x={inset}
+        y={inset}
+        width={width}
+        height={height}
+        rx={borderRadius}
+        fill="none"
+        stroke={`url(#${webSweepId})`}
+        strokeWidth={coreWidth}
+        strokeOpacity={coreOpacity}
+      />
+    </Svg>
+  );
+});
+
 function PremiumGoldBorder({ radius }: { radius: number }) {
+  const isFocused = useIsFocused();
+  const rawId = useId();
+  const uid = useMemo(() => rawId.replace(/[^a-zA-Z0-9_-]/g, '') || 'pg', [rawId]);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [rotation] = useState(() => new Animated.Value(0));
   const [pulse] = useState(() => new Animated.Value(0));
@@ -87,9 +319,12 @@ function PremiumGoldBorder({ radius }: { radius: number }) {
   const height = Math.max(0, size.height - 2 * inset);
 
   useEffect(() => {
+    if (!isFocused) return;
     if (Platform.OS !== 'web') {
-      ensureSharedNativeAnimations();
-      return;
+      acquireGoldNativeAnimations();
+      return () => {
+        releaseGoldNativeAnimations();
+      };
     }
     if (width <= 0 || height <= 0) return;
 
@@ -126,209 +361,203 @@ function PremiumGoldBorder({ radius }: { radius: number }) {
     return () => {
       movement.stop();
       breathing.stop();
+      rotation.stopAnimation();
+      pulse.stopAnimation();
     };
-  }, [height, pulse, rotation, width]);
-
-  // در محیط موبایل (iOS / Android): رندر ۱۰۰٪ با Native Driver (بدون افت حتی ۱ فریم)
-  if (Platform.OS !== 'web') {
-    const nativeCoreOpacity = sharedGoldPulse.interpolate({
-      inputRange: [0, 0.5, 1],
-      outputRange: [0.38, 1, 0.38],
-    });
-    const nativeGlowOpacity = sharedGoldPulse.interpolate({
-      inputRange: [0, 0.5, 1],
-      outputRange: [0.05, 0.55, 0.05],
-    });
-
-    return (
-      <View
-        pointerEvents="none"
-        onLayout={({ nativeEvent }) => {
-          const { width: lw, height: lh } = nativeEvent.layout;
-          setSize((c) => (c.width === lw && c.height === lh ? c : { width: lw, height: lh }));
-        }}
-        style={StyleSheet.absoluteFill}
-      >
-        {width > 0 && height > 0 && (
-          <>
-            {/* لایه پایه ثابت طلایی */}
-            <Svg width={size.width} height={size.height} style={StyleSheet.absoluteFill}>
-              <Rect
-                x={inset}
-                y={inset}
-                width={width}
-                height={height}
-                rx={borderRadius}
-                fill="none"
-                stroke="#d4af37"
-                strokeWidth={1}
-                strokeOpacity={0.55}
-              />
-            </Svg>
-
-            {/* لایه درخشش و گرادینت طلایی با انیمیشن GPU */}
-            <Animated.View
-              renderToHardwareTextureAndroid={true}
-              shouldRasterizeIOS={true}
-              style={[StyleSheet.absoluteFill, { opacity: nativeCoreOpacity }]}
-            >
-              <Svg width={size.width} height={size.height}>
-                <Defs>
-                  <SvgLinearGradient id="goldNativeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <Stop offset="0%" stopColor="#d4af37" stopOpacity={0.35} />
-                    <Stop offset="35%" stopColor="#ffd966" stopOpacity={0.85} />
-                    <Stop offset="50%" stopColor="#fff7c2" stopOpacity={1} />
-                    <Stop offset="65%" stopColor="#ffd966" stopOpacity={0.85} />
-                    <Stop offset="100%" stopColor="#d4af37" stopOpacity={0.35} />
-                  </SvgLinearGradient>
-                </Defs>
-                <Rect
-                  x={inset}
-                  y={inset}
-                  width={width}
-                  height={height}
-                  rx={borderRadius}
-                  fill="none"
-                  stroke="url(#goldNativeGrad)"
-                  strokeWidth={2}
-                />
-              </Svg>
-            </Animated.View>
-
-            {/* لایه Glow طلایی روی GPU */}
-            <Animated.View
-              renderToHardwareTextureAndroid={true}
-              shouldRasterizeIOS={true}
-              style={[StyleSheet.absoluteFill, { opacity: nativeGlowOpacity }]}
-            >
-              <Svg width={size.width} height={size.height}>
-                <Rect
-                  x={inset}
-                  y={inset}
-                  width={width}
-                  height={height}
-                  rx={borderRadius}
-                  fill="none"
-                  stroke="#ffd966"
-                  strokeWidth={5}
-                />
-              </Svg>
-            </Animated.View>
-          </>
-        )}
-      </View>
-    );
-  }
-
-  // در محیط وب: اجرای دقیق همان کد قبلی
-  const glowOpacity = pulse.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0.02, 0.62, 0.02],
-  });
-  const coreOpacity = pulse.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0.35, 0.98, 0.35],
-  });
-  const glowWidth = pulse.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [3, 10, 3],
-  });
-  const coreWidth = pulse.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [1.2, 2.5, 1.2],
-  });
-  const getGradientCoordinate = (offset: number, direction: 'x' | 'y') =>
-    rotation.interpolate({
-      inputRange: gradientRotationInput,
-      outputRange: gradientAngles.map((angle) =>
-        direction === 'x'
-          ? 0.5 + Math.cos(angle + offset) * 0.5
-          : 0.5 + Math.sin(angle + offset) * 0.5
-      ),
-    });
-  const x1 = getGradientCoordinate(Math.PI, 'x');
-  const y1 = getGradientCoordinate(Math.PI, 'y');
-  const x2 = getGradientCoordinate(0, 'x');
-  const y2 = getGradientCoordinate(0, 'y');
+  }, [height, isFocused, pulse, rotation, width]);
 
   return (
     <View
       pointerEvents="none"
       onLayout={({ nativeEvent }) => {
-        const { width: layoutWidth, height: layoutHeight } = nativeEvent.layout;
-        setSize((current) =>
-          current.width === layoutWidth && current.height === layoutHeight
-            ? current
-            : { width: layoutWidth, height: layoutHeight }
-        );
+        const { width: lw, height: lh } = nativeEvent.layout;
+        setSize((c) => (c.width === lw && c.height === lh ? c : { width: lw, height: lh }));
       }}
       style={StyleSheet.absoluteFill}
     >
       {width > 0 && height > 0 && (
-        <Svg width={size.width} height={size.height} viewBox={`0 0 ${size.width} ${size.height}`}>
-          <AnimatedSvgLinearGradient
-            id="premiumGoldSweep"
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
-            gradientUnits="objectBoundingBox"
-          >
-            <Stop offset="0%" stopColor="#d4af37" stopOpacity={0.28} />
-            <Stop offset="34%" stopColor="#e6bd52" stopOpacity={0.5} />
-            <Stop offset="46%" stopColor="#ffd966" stopOpacity={0.78} />
-            <Stop offset="50%" stopColor="#fff7c2" stopOpacity={1} />
-            <Stop offset="54%" stopColor="#ffd966" stopOpacity={0.78} />
-            <Stop offset="66%" stopColor="#e6bd52" stopOpacity={0.5} />
-            <Stop offset="100%" stopColor="#d4af37" stopOpacity={0.28} />
-          </AnimatedSvgLinearGradient>
-          <Rect
-            x={inset}
-            y={inset}
+        Platform.OS !== 'web' ? (
+          <NativeGoldLayers
+            svgWidth={size.width}
+            svgHeight={size.height}
+            inset={inset}
             width={width}
             height={height}
-            rx={borderRadius}
-            fill="none"
-            stroke="#d4af37"
-            strokeWidth={1}
+            borderRadius={borderRadius}
+            uid={uid}
           />
-          <AnimatedRect
-            x={inset}
-            y={inset}
+        ) : (
+          <WebGoldLayers
+            svgWidth={size.width}
+            svgHeight={size.height}
+            inset={inset}
             width={width}
             height={height}
-            rx={borderRadius}
-            fill="none"
-            stroke="url(#premiumGoldSweep)"
-            strokeWidth={glowWidth}
-            strokeOpacity={glowOpacity}
+            borderRadius={borderRadius}
+            uid={uid}
+            rotation={rotation}
+            pulse={pulse}
           />
-          <AnimatedRect
-            x={inset}
-            y={inset}
-            width={width}
-            height={height}
-            rx={borderRadius}
-            fill="none"
-            stroke="url(#premiumGoldSweep)"
-            strokeWidth={coreWidth}
-            strokeOpacity={coreOpacity}
-          />
-        </Svg>
+        )
       )}
     </View>
   );
 }
 
+const NativeRgbLayers = React.memo(function NativeRgbLayers({
+  width,
+  height,
+  uid,
+}: {
+  width: number;
+  height: number;
+  uid: string;
+}) {
+  const crossfade = useMemo(
+    () =>
+      sharedRgbRotation.interpolate({
+        inputRange: [0, 0.5, 1],
+        outputRange: [0, 1, 0],
+      }),
+    []
+  );
+  const gradAId = `rgbGradA-${uid}`;
+  const gradBId = `rgbGradB-${uid}`;
+
+  return (
+    <>
+      <View style={StyleSheet.absoluteFill}>
+        <Svg width={width} height={height}>
+          <Defs>
+            <SvgLinearGradient id={gradAId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor="#ff3b30" />
+              <Stop offset="20%" stopColor="#ffcc00" />
+              <Stop offset="40%" stopColor="#34c759" />
+              <Stop offset="60%" stopColor="#00c7be" />
+              <Stop offset="80%" stopColor="#007aff" />
+              <Stop offset="100%" stopColor="#af52de" />
+            </SvgLinearGradient>
+          </Defs>
+          <Rect
+            x={0.75}
+            y={0.75}
+            width={width - 1.5}
+            height={height - 1.5}
+            rx={24}
+            fill="none"
+            stroke={`url(#${gradAId})`}
+            strokeWidth={1.5}
+          />
+        </Svg>
+      </View>
+
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: crossfade }]}>
+        <Svg width={width} height={height}>
+          <Defs>
+            <SvgLinearGradient id={gradBId} x1="100%" y1="100%" x2="0%" y2="0%">
+              <Stop offset="0%" stopColor="#ff3b30" />
+              <Stop offset="20%" stopColor="#ffcc00" />
+              <Stop offset="40%" stopColor="#34c759" />
+              <Stop offset="60%" stopColor="#00c7be" />
+              <Stop offset="80%" stopColor="#007aff" />
+              <Stop offset="100%" stopColor="#af52de" />
+            </SvgLinearGradient>
+          </Defs>
+          <Rect
+            x={0.75}
+            y={0.75}
+            width={width - 1.5}
+            height={height - 1.5}
+            rx={24}
+            fill="none"
+            stroke={`url(#${gradBId})`}
+            strokeWidth={1.5}
+          />
+        </Svg>
+      </Animated.View>
+    </>
+  );
+});
+
+const WebRgbLayers = React.memo(function WebRgbLayers({
+  width,
+  height,
+  uid,
+  rotation,
+}: {
+  width: number;
+  height: number;
+  uid: string;
+  rotation: Animated.Value;
+}) {
+  const { x1, y1, x2, y2 } = useMemo(() => {
+    const getGradientCoordinate = (offset: number, direction: 'x' | 'y') =>
+      rotation.interpolate({
+        inputRange: gradientRotationInput,
+        outputRange: gradientAngles.map((angle) =>
+          direction === 'x'
+            ? 0.5 + Math.cos(angle + offset) * 0.5
+            : 0.5 + Math.sin(angle + offset) * 0.5
+        ),
+      });
+    return {
+      x1: getGradientCoordinate(Math.PI, 'x'),
+      y1: getGradientCoordinate(Math.PI, 'y'),
+      x2: getGradientCoordinate(0, 'x'),
+      y2: getGradientCoordinate(0, 'y'),
+    };
+  }, [rotation]);
+
+  const webRgbId = `featuredRgbBorder-${uid}`;
+
+  return (
+    <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+      <AnimatedSvgLinearGradient
+        id={webRgbId}
+        x1={x1}
+        y1={y1}
+        x2={x2}
+        y2={y2}
+        gradientUnits="objectBoundingBox"
+      >
+        <Stop offset="0%" stopColor="#ff3b30" />
+        <Stop offset="20%" stopColor="#ffcc00" />
+        <Stop offset="40%" stopColor="#34c759" />
+        <Stop offset="60%" stopColor="#00c7be" />
+        <Stop offset="80%" stopColor="#007aff" />
+        <Stop offset="100%" stopColor="#af52de" />
+      </AnimatedSvgLinearGradient>
+      <AnimatedRect
+        x={0.75}
+        y={0.75}
+        width={width - 1.5}
+        height={height - 1.5}
+        rx={24}
+        fill="none"
+        stroke={`url(#${webRgbId})`}
+        strokeWidth={1.5}
+      />
+    </Svg>
+  );
+});
+
 function FeaturedRgbBorder() {
+  const isFocused = useIsFocused();
+  const rawId = useId();
+  const uid = useMemo(() => rawId.replace(/[^a-zA-Z0-9_-]/g, '') || 'rgb', [rawId]);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [rotation] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
+    if (!isFocused) return;
     if (Platform.OS !== 'web') {
-      ensureSharedNativeAnimations();
-      return;
+      acquireRgbNativeAnimations();
+      return () => {
+        releaseRgbNativeAnimations();
+      };
     }
+    if (size.width <= 0 || size.height <= 0) return;
+
     rotation.setValue(0);
     const animation = Animated.loop(
       Animated.timing(rotation, {
@@ -340,109 +569,11 @@ function FeaturedRgbBorder() {
     );
     animation.start();
 
-    return () => animation.stop();
-  }, [rotation]);
-
-  // در محیط موبایل: تغییر فاز دو لایه گرادینت مکمل با useNativeDriver: true (صفر درصد درگیری CPU)
-  if (Platform.OS !== 'web') {
-    const crossfade = sharedRgbRotation.interpolate({
-      inputRange: [0, 0.5, 1],
-      outputRange: [0, 1, 0],
-    });
-
-    return (
-      <View
-        pointerEvents="none"
-        onLayout={({ nativeEvent }) => {
-          const { width, height } = nativeEvent.layout;
-          setSize((current) =>
-            current.width === width && current.height === height
-              ? current
-              : { width, height }
-          );
-        }}
-        style={StyleSheet.absoluteFill}
-      >
-        {size.width > 0 && size.height > 0 && (
-          <>
-            <View
-              renderToHardwareTextureAndroid={true}
-              shouldRasterizeIOS={true}
-              style={StyleSheet.absoluteFill}
-            >
-              <Svg width={size.width} height={size.height}>
-                <Defs>
-                  <SvgLinearGradient id="rgbGradA" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <Stop offset="0%" stopColor="#ff3b30" />
-                    <Stop offset="20%" stopColor="#ffcc00" />
-                    <Stop offset="40%" stopColor="#34c759" />
-                    <Stop offset="60%" stopColor="#00c7be" />
-                    <Stop offset="80%" stopColor="#007aff" />
-                    <Stop offset="100%" stopColor="#af52de" />
-                  </SvgLinearGradient>
-                </Defs>
-                <Rect
-                  x={0.75}
-                  y={0.75}
-                  width={size.width - 1.5}
-                  height={size.height - 1.5}
-                  rx={24}
-                  fill="none"
-                  stroke="url(#rgbGradA)"
-                  strokeWidth={1.5}
-                />
-              </Svg>
-            </View>
-
-            <Animated.View
-              renderToHardwareTextureAndroid={true}
-              shouldRasterizeIOS={true}
-              style={[StyleSheet.absoluteFill, { opacity: crossfade }]}
-            >
-              <Svg width={size.width} height={size.height}>
-                <Defs>
-                  <SvgLinearGradient id="rgbGradB" x1="100%" y1="100%" x2="0%" y2="0%">
-                    <Stop offset="0%" stopColor="#ff3b30" />
-                    <Stop offset="20%" stopColor="#ffcc00" />
-                    <Stop offset="40%" stopColor="#34c759" />
-                    <Stop offset="60%" stopColor="#00c7be" />
-                    <Stop offset="80%" stopColor="#007aff" />
-                    <Stop offset="100%" stopColor="#af52de" />
-                  </SvgLinearGradient>
-                </Defs>
-                <Rect
-                  x={0.75}
-                  y={0.75}
-                  width={size.width - 1.5}
-                  height={size.height - 1.5}
-                  rx={24}
-                  fill="none"
-                  stroke="url(#rgbGradB)"
-                  strokeWidth={1.5}
-                />
-              </Svg>
-            </Animated.View>
-          </>
-        )}
-      </View>
-    );
-  }
-
-  // در محیط وب: اجرای دقیق کد قبلی
-  const getGradientCoordinate = (offset: number, direction: 'x' | 'y') =>
-    rotation.interpolate({
-      inputRange: gradientRotationInput,
-      outputRange: gradientAngles.map((angle) =>
-        direction === 'x'
-          ? 0.5 + Math.cos(angle + offset) * 0.5
-          : 0.5 + Math.sin(angle + offset) * 0.5
-      ),
-    });
-
-  const x1 = getGradientCoordinate(Math.PI, 'x');
-  const y1 = getGradientCoordinate(Math.PI, 'y');
-  const x2 = getGradientCoordinate(0, 'x');
-  const y2 = getGradientCoordinate(0, 'y');
+    return () => {
+      animation.stop();
+      rotation.stopAnimation();
+    };
+  }, [isFocused, rotation, size.width, size.height]);
 
   return (
     <View
@@ -458,33 +589,11 @@ function FeaturedRgbBorder() {
       style={StyleSheet.absoluteFill}
     >
       {size.width > 0 && size.height > 0 && (
-        <Svg width={size.width} height={size.height} viewBox={`0 0 ${size.width} ${size.height}`}>
-          <AnimatedSvgLinearGradient
-            id="featuredRgbBorder"
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
-            gradientUnits="objectBoundingBox"
-          >
-            <Stop offset="0%" stopColor="#ff3b30" />
-            <Stop offset="20%" stopColor="#ffcc00" />
-            <Stop offset="40%" stopColor="#34c759" />
-            <Stop offset="60%" stopColor="#00c7be" />
-            <Stop offset="80%" stopColor="#007aff" />
-            <Stop offset="100%" stopColor="#af52de" />
-          </AnimatedSvgLinearGradient>
-          <AnimatedRect
-            x={0.75}
-            y={0.75}
-            width={size.width - 1.5}
-            height={size.height - 1.5}
-            rx={24}
-            fill="none"
-            stroke="url(#featuredRgbBorder)"
-            strokeWidth={1.5}
-          />
-        </Svg>
+        Platform.OS !== 'web' ? (
+          <NativeRgbLayers width={size.width} height={size.height} uid={uid} />
+        ) : (
+          <WebRgbLayers width={size.width} height={size.height} uid={uid} rotation={rotation} />
+        )
       )}
     </View>
   );
@@ -610,6 +719,7 @@ const EkipCardCompact = React.memo(function EkipCardCompact({
             style={styles.compactImage}
             contentFit="cover"
             cachePolicy="memory-disk"
+            recyclingKey={`compact_${group.id}`}
             transition={200}
           />
         ) : (
@@ -704,6 +814,7 @@ export function EkipCardComponent({
             style={styles.coverImage}
             contentFit="cover"
             cachePolicy="memory-disk"
+            recyclingKey={`cover_${group.id}`}
             transition={200}
           />
         )}
